@@ -1,12 +1,13 @@
 1) Scattering code uses
 
-optical_properties.py
-ARIA_module.py
-size_distribution.py
-quadrature.py
-mie_ewp.f90
++ optical_properties.py
++ ARIA_module.py
++ size_distribution.py
++ quadrature.py
++ mie_ewp.f90
 
 Compile the fortran  module to python using
+
 f2py -c mie_ewp.f90 -m mie_module
 
 This creates
