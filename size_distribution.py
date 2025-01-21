@@ -75,7 +75,7 @@ class LogNormalDistribution(SizeDistribution):
                 raise ValueError("s must be positive.")
             self.n = n
             self.surface_area_density = n*4*np.pi*r**2*np.exp(2*np.log(s)**2)
-            self.volume_density = n*4*np.pi*r**2*np.exp(9*np.log(s)**2/2)/3
+            self.volume_density = n*4*np.pi*r**3*np.exp(9*np.log(s)**2/2)/3
         elif surface_area_density is not None and r is not None and s is not None:
             if surface_area_density <= 0:
                 raise ValueError("surface_area_density must be greater than 0.")
@@ -85,7 +85,7 @@ class LogNormalDistribution(SizeDistribution):
                 raise ValueError("s must be positive.")
             self.n = surface_area_density /(4*np.pi*r**2*np.exp(2*np.log(s)**2))
             self.surface_area_density = surface_area_density
-            self.volume_density = self.n*4*np.pi*r**2*np.exp(9*np.log(s)**2/2)/3
+            self.volume_density = self.n*4*np.pi*r**3*np.exp(9*np.log(s)**2/2)/3
         elif volume_density is not None and r is not None and s is not None:
             if volume_density <= 0:
                 raise ValueError("volume_density must be greater than 0.")
