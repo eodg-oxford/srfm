@@ -1,20 +1,63 @@
-1) Scattering code uses
+# SRFM
+Welcome to SRFM, a package designed to manage satelitte data and perform retrievals.
 
-+ optical_properties.py
-+ ARIA_module.py
-+ size_distribution.py
-+ quadrature.py
-+ mie_ewp.f90
+## Components
+The package contains three external codes - RFM, DISORT and mie_ewp.
+The general idea is to run RFM first, mie_ewp after that and DISORT at the end.
 
-Compile the fortran  module to python using
+### DISORT
+The package contains DISORT code as and external addition.
+DISORT is a code that calculates radiative transfer (with scattering).
 
-f2py -c mie_ewp.f90 -m mie_module
+### RFM
+The code contains RFM as the reference forward model which calculates the gas absorption in the atmosphere. 
+This code should be run before DISORT is run, which can be done either manually or from python (see examples).
 
-This creates
-mie_module.mod
-and other files which you don't need to worry about
+### mie_ewp
+The mie_ewp module calculates mie scattering on particles.
+The main outputs are the extinction coefficient, single scatter albedo, the phas function and its Legendre polynomial expansion.
+The outputs are used by DISORT.
 
-2) The routines you want to use primarily in size_distribution.py to create a size distribution and optical_properties.py to get the extinction, 
+## Prerequisites
+The required python packages are:
+> numpy, matplotlib.pyplot, pandas, pickle, os, sys, pathlib and meson. 
+Another required package is 
+> f2py
+However, this should be part of numpy if installed correctly, in full and up-to-date.
+Next, a fortran compiler if required. This code was tested with the *gfortran* compiler on Linux.
+
+## Installation
+The package was built in Python3.13 and was not tested on earlier versions.
+The package incorporates RFM, DISORT and mie scattering codes, which are in Fortran.
+RFM and mie are in Fortran 90, DISORT is a mixture of both Fortran 77 and 90.
+
+## Usage
+First navigate to the folder srfm.
+Once there, run the provided bash script to compile required fortran modules by typing
+> bash prepare_all.sh
+
+After that, the package can be easily imported as a whole by typing
+    `from srfm import *`
+    or
+    `import srfm`
+Modules can also be imported individually.
+
+RFM also needs to be compiled prior to running (not importing though).
+This can be done from the package after the required inputs are set.
+
+The package comes with an example test script, which you should be able to just run,
+and also use as a template to create your own codes.
+
+## Particle scattering optical properties
+1. Scattering code uses
+
+- optical_properties.py
+- ARIA_module.py
+- size_distribution.py
+- quadrature.py
+- mie_ewp.f90
+
+2. The routines you want to use primarily in size_distribution.py to create a size distribution and optical_properties.py to get the extinction, 
 single scatter albedo and Legendre coefficients.  The other modules support these calculations.
 
 The calls are
@@ -33,12 +76,12 @@ volume_density        volume of the particles in um^3/cm^3
 
 NOTE: The concentration is set directly using n or indirectly using surface_area_density or volume_density.
 
-3) Once the size distribution object is formed the optical properties can be found through a call to 
+3. Once the size distribution object is formed the optical properties can be found through a call to 
 
 e, w, p, l = op.ewp_hs(wavelength, composition, sd, legendre_coefficients_flag=True)
 
 where
-wavelength           in um (can be an array)
+wavelength           in um (must be an array)
 composition          is one of these strings 'ice' 'ash' 'sulphuric acid'
 sd                   size distribution
 p                    phase function 
@@ -49,4 +92,11 @@ e is the extinction in 1/m
 w is the single scatter albedo
 p is the phase functions
 l are the Legendre coefficients
+
+# Developer instructions
+The full documentation and instructions can be found on the links below:
+
+Full documentation (working version) can be found here: https://www.overleaf.com/6287434921cxhkjptrnpvm#4c7cfa
+
+And some underlying science here: https://www.overleaf.com/8669653368vnvvvhdgsyvs#04edb8
 

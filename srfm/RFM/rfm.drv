@@ -1,0 +1,24 @@
+*HDR
+  30SEP24 IASI simulation 
+*FLG
+ OPT NAD SFC PRF LEV BBT
+*SPC
+  645 2760 0.001
+*GAS
+  N2 O2 CO2 O3 H2O CH4 N2O HNO3 CO NO2 N2O5 ClO HOCl ClONO2 NO
+  HNO4 HCN NH3 F11 F12 F14 F22 CCl4 COF2 H2O2 C2H2 C2H6 OCS SO2 SF6
+*ATM
+  ./rfm_files/hgt_std.atm
+  ./rfm_files/day.atm
+*SEC
+  1.0
+*HIT
+  /network/aopp/matin/eodg/crun/eodg/rfm/rfm_files/bin/hitran_2012.bin
+*XSC
+  /network/aopp/matin/eodg/crun/eodg/rfm/rfm_files/xsc/*.xsc
+*ILS
+  ./rfm_files/iasi.ils
+*LEV
+  ./rfm_files/alts.lev
+*END
+
