@@ -1,6 +1,7 @@
 import numpy as np
 from . import units
 import warnings
+import psutil
 
 
 def closest(lst_lon, lon, lst_lat, lat):
@@ -115,3 +116,78 @@ def line_break_str(txt, chars, delim, indent=0):
     else:
         return f"{ind}\n".join(lines)
         
+def memory_safe_np_zeros_2d(constraints=None, pct=99, max_sec_dim = None):
+    """Initialzes a numpy.zeros 2D array of maximum allowed size so as not to overflow 
+    system RAM.
+    constraints = list/tuple/1D-np.array with constraints on mimimum required shape
+    pct = maximum allowed percentage of available RAM to be used, defualt 99%
+    max_sec_dim = maximum allowed size of the second dimension
+    """
+    
+    # check inputs:
+    if not isinstance(pct,(int,float,type(None))):
+        raise TypeError("Parameter pct must be int, float or None")
+    if not isinstance(constraints, (list, tuple, np.ndarray)):
+        raiseTypeError("Parameter constraints must be list, tuple or np.ndarray")
+    if len(constraints) > 2:
+        raise ValueError("""Number of constraints exceeds the number of required 
+                        dimensions.""")
+    if not isinstance(max_sec_dim, int):
+        raise TypeError("Parameter max_sec_dim must be an array.")
+    
+    
+    #get machine ram data
+    ram = psutil.virtual_memory()
+    
+    # determine the size in bytes of one array item, should be 8, but in case this 
+    # changes in the future, it's determined here from runtime
+    isize = np.zeros(1).itemsize
+    
+    # calcualte the maximum number of elements the array can have
+    max_array_items = ram.available / isize
+    
+    # determine shape of array to be declared and declare
+    if constraints == None:
+        prime_factors = find_prime_factors(max_array_ram)
+        return np.zeros(
+                (int(max(prime_factors)), int(max_array_items / max(prime_factors))
+            )
+        )
+    
+    elif len(constraints) == 1:
+        # floor division to detemrine second dimension
+        second_dim = int(max_array_items // constraints[0])
+        
+        # reduce second dimension size if max value given
+        if second_dim > max_sec_dim:
+            second_dim = max_sec_dim
+        return np.zeros(
+                   (constraints[0],second_dim)
+               )
+
+    elif len(constraints) == 2:
+        if (constraints[0]*constraints[1] > max_array_items):
+            raise ValueError("Requested array too large, not enough memory available.")
+        else:
+            return np.zeros(
+                        (constraints[0],constraints[1]
+                    )
+                )
+    
+
+def find_prime_factors(num):
+    """Find prime factors of a number
+    inputs:
+        num - number
+    outputs:
+        factors - list of prime factors
+    """
+    factors = []
+    factor = 2
+    while num >= 2:
+        if (num % factor == 0):
+            factors.append(factor)
+            num = num / factor
+        else:
+            factor += 1
+    return factors

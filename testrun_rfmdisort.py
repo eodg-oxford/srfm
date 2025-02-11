@@ -3,6 +3,9 @@ from srfm import *
 import matplotlib.pyplot as plt
 import sys
 import datetime
+import time
+start_time = time.monotonic()
+
 
 ###################################
 # Assign some variables:
@@ -12,8 +15,8 @@ rfm_fldr = "./srfm/RFM"
 disort_fldr = "./srfm/DISORT"
 
 spec_res = 0.1 # model spectral resolution, [cm-1]
-low_wvn = 645 # model start wavenumber (lower), [cm-1]
-upp_wvn = 2760 # model end wavenumber (upper), [cm-1]
+low_wvn = 840 # model start wavenumber (lower), [cm-1]
+upp_wvn = 850 # model end wavenumber (upper), [cm-1]
 
 ###################################
 # prepare RFM driver table
@@ -339,3 +342,5 @@ if plot_residual == True:
         plt.legend()
         plt.show()
     
+end_time = time.monotonic()
+print(datetime.timedelta(seconds=end_time - start_time))

@@ -12,6 +12,7 @@ import numpy as np
 from . import quadrature as quad
 from . import ARIA_module as ARIA  # Import the RI class from ri_module
 from . import mie_module  # Assuming mie_module is the compiled Fortran module
+from . import utilities as utils
 
 
 def legendre_polynomial_expansion(inp, qv, qw, phase):
@@ -33,7 +34,7 @@ def legendre_polynomial_expansion(inp, qv, qw, phase):
         tuple: lc (Legendre coefficients), inlc (Number of coefficients used).
     """
     # Catch insensible inputs
-    Imaxnp = 20000  # maximum allowed Legendre points
+    Imaxnp = 10000  # maximum allowed Legendre points
     if inp > Imaxnp:
         raise ValueError(
             "Error in legendre_polynomial_expansion: Too many quadrature points"
@@ -97,7 +98,7 @@ def normalised_legendre_polynomial_expansion(inp, qv, qw, phase):
         inlc - Number of coefficients used
     """
     # Catch insensible inputs
-    Imaxnp = 20000  # maximum allowed Legendre points
+    Imaxnp = 10000  # maximum allowed Legendre points
     if inp > Imaxnp:
         raise ValueError(
             """"Error in normalised legendre_polynomial_expansion: 
@@ -276,13 +277,20 @@ def ewp_hs(
     phase_function_particle = np.zeros(angles, dtype=np.float64)  # Complex output array
     Error = np.array([0], dtype=np.int32)  # Error code as an integer array
 
-    # initialize array for legendre coefficients
+    # initialize array for legendre coefficients (take care not to overlow memory)
     if legendre_coefficients_flag:
-        legendre_coefficient = np.zeros((wavelengths, 20000))
-
+        legendre_coefficient = utils.memory_safe_np_zeros_2d(
+            constraints = [wavelengths], max_sec_dim=20000
+        )
+        
+    
+    max_lc = 0 # tracks length of legendre expansion in the main computational loop
+    # (number of Legendre polynomial coefficients used. Used to truncate the final 
+    # array.
+    
     # main computational loop, first iterate over wavelengths
     for i in range(wavelengths):
-
+        
         # make refractive index a complex number
         refractive_index = complex(ri_n[i], ri_k[i])
 
@@ -339,7 +347,13 @@ def ewp_hs(
             legendre_coefficient[i, 0:legendre_coefficient_number] = (
                 legendre_coefficient_temp[0:legendre_coefficient_number]
             )
-
+            
+            if legendre_coefficient_number > max_lc:
+                max_lc = legendre_coefficient_number
+    
+    # truncate zeros from legendre coefficient
+    legendre_coefficient = legendre_coefficient[:,:max_lc]
+    
     # Return the computed results
     if legendre_coefficients_flag:
         return (
@@ -427,3 +441,4 @@ def phase_from_normalised_legendre(inlc, lc, inp, qv):
             lpnm1[i] = lpn[i]
 
     return phase
+
