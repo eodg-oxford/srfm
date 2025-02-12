@@ -36,7 +36,11 @@ First navigate to the folder srfm.
 Once there, run the provided bash script to compile required fortran modules by typing
 > bash prepare_all.sh
 
-After that, the package can be easily imported as a whole by typing
+The package comes with an example test script, which you should be able to just run,
+and also use as a template to create your own codes.
+At this stage, users are recommended to develop their own script similar to the test script.
+
+If required, the package can be easily imported as a whole by typing
     `from srfm import *`
     or
     `import srfm`
@@ -46,8 +50,7 @@ RFM also needs to be compiled.
 This can be done manually or from python after the required inputs are set (recommended).
 There is a class method that does that from python and is shown in the example code.
 
-The package comes with an example test script, which you should be able to just run,
-and also use as a template to create your own codes.
+
 
 ## Particle scattering optical properties
 1. Scattering code uses
