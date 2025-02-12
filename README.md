@@ -42,8 +42,9 @@ After that, the package can be easily imported as a whole by typing
     `import srfm`
 Modules can also be imported individually.
 
-RFM also needs to be compiled prior to running (not importing though).
-This can be done from the package after the required inputs are set.
+RFM also needs to be compiled.
+This can be done manually or from python after the required inputs are set (recommended).
+There is a class method that does that from python and is shown in the example code.
 
 The package comes with an example test script, which you should be able to just run,
 and also use as a template to create your own codes.
