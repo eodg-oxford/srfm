@@ -50,8 +50,6 @@ RFM also needs to be compiled.
 This can be done manually or from python after the required inputs are set (recommended).
 There is a class method that does that from python and is shown in the example code.
 
-
-
 ## Particle scattering optical properties
 1. Scattering code uses
 
