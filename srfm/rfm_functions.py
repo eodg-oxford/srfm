@@ -90,7 +90,7 @@ def read_output_prf(filename):  # read bits of internal profile output file prf.
     return contents
 
 
-def get_rfm_optical_depths(fldr):
+def get_rfm_optical_depths(fldr,levels):
     """
     This function is designed to calculate optical depths for layers in
     the atmosphere from RFM with the LEV and OPT flags set on.
@@ -107,6 +107,12 @@ def get_rfm_optical_depths(fldr):
     ]  # this is the list of OD output spectra
 
     prf = read_output_prf(f"{fldr}/prf.asc")  # read rfm output profile, type dict
+    
+    # create a subset of prf that matches the user-desired output levels
+    lvls_idx =  [prf["HGT [km]"].index(lvl) for lvl in prf["HGT [km]"] if lvl in levels]
+    for pkey in prf.keys():
+        prf[pkey] = [prf[pkey][i] for i in lvls_idx]
+    
     if len(fls) != len(prf["PRE [mb]"]):
         raise ValueError(
             "length of pressure profile and the number of"
@@ -221,17 +227,6 @@ def get_rfm_optical_depths(fldr):
     iod_df = pd.DataFrame(int_OD, columns = iod_col_names)
 
     df = pd.concat([prf_df,dod_df,iod_df], axis=1, join='outer')
-    
-#    for num, val in enumerate(wnos):
-#        dod = pd.DataFrame({f"dOD_{val:.2f}" : delta_OD[:, num][::-1]}, 
-#                            dtype = "float"
-#                        )
-#        df.loc[:, f"dOD_{val:.2f}"] = dod
-#        
-#        iod = pd.DataFrame({f"iOD_{val:.2f}" : int_OD[:, num][::-1]}, 
-#                            dtype = "float"
-#                        )
-#        df.loc[:, f"iOD_{val:.2f}"] = iod
 
     return df
 
@@ -312,4 +307,50 @@ def construct_rfm_driver_table(inp, fldr, force=True,**kwargs):
     print("rfm.drv has been successfully created.")
     return
         
-        
+def construct_rfm_output_levels_file(levels,fldr,fname="alts.lev",force=True):
+    """Construct the levels file for RFM - specifies output levels.
+    Mind that the LEV flag for RFM must be enabled, or else this file will be ignored.
+    Mind that the filename must be passed to RFM in the LEV section of the RFM driver
+    table.
+    inputs:
+        levels - list/1d array of required output levels
+               - doesn't have to be sorted
+        fldr - RFM folder
+        fname - required output filename, default "alts.lev"
+        force - if True, overwrite current levels file, else saves a copy first 
+    outputs:
+        RFM levels file placed in the srfm/RFM/RFM_files folder
+    """
+    
+    if not isinstance(levels, (list, np.ndarray)):
+        raise TypeError("levels must be a list or a numpy.ndarray")
+    if isinstance(levels, np.ndarray):
+        if levels.ndim != 1:
+            raise ValueError("If levels is a np.ndarray, it must have one dimension")
+    if not os.path.isdir(fldr):
+        raise FileNotFoundError(f"{fldr} does not exist.")
+    if not isinstance(fname, str):
+        raise TypeError("Parameter fname must be a string.")
+
+    # open the file in its final directory
+    if force == True:    
+        print(f"Overwriting the current {fname} file.")
+        f = open(f"{fldr}/rfm_files/{fname}", "w")
+    elif force == False:
+        print(f"The current {fname} will be moved to old_{fname}.")
+        os.rename(f"{fldr}/rfm_files/{fname}", f"{fldr}/rfm_files/old_{fname}")
+        f = open(f"{fldr}/rfm_files/{fname}", "w")
+    else:
+        raise ValueError("'force' accepts only True or False. Default is True.")
+
+    f.write('!Output levels\n')
+
+    for i,ii in enumerate(levels):
+        if (i % 5) == 0 and i != 0:
+            f.write(f'\n{levels[i]:.4f}    ')
+        else:
+            f.write(f'{levels[i]:.4f}    ')
+
+    f.write('\n*END')
+    f.close()
+    

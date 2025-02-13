@@ -78,9 +78,6 @@ def calc_Rayleigh_opt_depths(ps, pl, pu, l):
     
     return tau_r
 
-   
-
-
 def line_break_str(txt, chars, delim, indent=0):
     r"""This function adds line ends ('\n') at desired places in a string.
     The original intention of this function is to ensure that no string
@@ -191,3 +188,93 @@ def find_prime_factors(num):
         else:
             factor += 1
     return factors
+    
+def calc_layer_extent(a,t):
+    """Calculates the upper and lower level of a layer (e.g. aerosol layer)
+    inputs:
+        a - altitude of the center of the layer
+        t - layer thickness
+    outputs:
+        u - upper boundary altitude
+        l - lower boundary altitude
+    """
+    
+    if not isinstance(a, (int, float)):
+        raise TypeError("Altitude must be int or float.")
+    if not isinstance(t, (int, float)):
+        raise TypeError("Thickness must be int or float.")
+    if a < 0:
+        warnings.warn("""Negative altitude doesn't make sense on rocky planets, 
+        are you sure?""")
+    
+    u = a + (t / 2)
+    l = a - (t / 2)
+    
+    if l < 0:
+        warnings.warn("""Layer is so thick that lower boundary is negative. This doesn't
+        make sense on rocky planets, are the inputs correct?""")
+    
+    return u, l
+
+def add_lyr(old_lev,u,l):
+    """Adds a layer to an existing atmoshperic level structure.
+    Deletes any levels from the existing structure that would fall within the new layer.
+    inputs:
+        old_lev - list with current user-desired layers
+        u, l - new layer upper and lower boundary
+    outputs:
+         lev - new atmospheric level structure
+         ilyr - particle layer index
+    """
+    if not isinstance(old_lev, (list, np.ndarray)):
+        raise TypeError("old_lev must be a list or a 1D np.ndarray")
+    if isinstance(old_lev, np.ndarray):
+        if old_lev.ndim != 1:
+            raise ValueError("if old_lev is a np.ndarray, it must be 1D.")
+        elif old_lev.ndim == 1:
+            try:
+                old_lev = old_lev.tolist()
+            except:
+                raise RuntimeError("Could not convert lev to list.")
+    if not isinstance(u, (int,float)):
+        raise TypeError("Parameter 'u' must be int or float.")
+    if not isinstance(l, (int,float)):
+        raise TypeError("Parameter 'l' must be int or float.")
+
+    to_remove = [i for i in old_lev if i <= u and i >= l]
+    lev = [float(i) for i in old_lev if i not in to_remove]
+    lev = lev + [float(u),float(l)]
+    lev.sort()
+    ilyr = lev.index(u)
+    return lev, ilyr
+
+def calc_tot_dtauc(tau_g,tau_R,tau_p):
+    """Calculate total optical depth of model layers, delta tau (dtau).
+    dtau = tau_g + tau_R + tau_p
+    dtau = layer optical depth
+    tau_g = layer optical depth from gas absorption
+    tau_R = layer optical depth from Rayleigh scattering
+    tau_p = layer optical depth from particle scattering
+    """
+    def check_convert_dtype(obj):
+        """Inner function that checks the input data types and tries to
+        convert them the a suitable dtype.
+        """
+        if isinstance(obj, np.ndarray):
+            pass
+        elif isinstance(obj, pd.Series):
+            obj = obj.to_numpy()
+        elif isinstance(obj, list):
+            obj = np.asarray(obj)
+        elif isinstance(obj, (int,float)):
+            pass
+        else:
+            raise TypeError(f'inputs must be np.ndarrays, pd.Series, lists, ints or floats.')
+        
+        return obj
+    
+    tau_g = check_convert_dtype(tau_g)
+    tau_R = check_convert_dtype(tau_R)
+    tau_p = check_convert_dtype(tau_p)
+
+    return tau_g + tau_R + tau_p

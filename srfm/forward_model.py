@@ -55,14 +55,8 @@ class RFM(Fwd_model):
         
         if wipe==True:
             try:
-                _ = [
-                os.remove(os.path.join(fldr,str(i))) 
-                for i in os.listdir() if i.endswith(".asc")
-                ]
-                _ = [
-                os.remove(os.path.join(fldr,str(i))) 
-                for i in os.listdir() if i.endswith(".log")
-                ]
+                _ = [os.remove(str(i)) for i in os.listdir() if i.endswith(".asc")]
+                _ = [os.remove(str(i)) for i in os.listdir() if i.endswith(".log")]
             except FileNotFoundError:
                 pass
             except PermissionError:
@@ -77,9 +71,10 @@ class RFM(Fwd_model):
         self.status = "RFM run completed, result not yet loaded."
         return
 
-    def add_rfm_opt_output(self, fldr):
-        self.rfm_output = rf.get_rfm_optical_depths(fldr=fldr)
+    def add_rfm_opt_output(self, fldr, levels):
+        self.rfm_output = rf.get_rfm_optical_depths(fldr=fldr, levels=levels)
         self.status = "RFM run completed and result loaded."
+        return
 
     def get_wnos_from_RFM(self):
         if self.rfm_output != None:
@@ -93,6 +88,7 @@ class RFM(Fwd_model):
                 print("Could not generate wavenumbers from rfm.")
         else:
             raise ValueError("rfm_output is empty (a NoneType object).")
+        return
 
 
 class DISORT(Fwd_model):
