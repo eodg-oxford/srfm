@@ -20,9 +20,11 @@ The outputs are used by DISORT.
 
 ## Prerequisites
 The required python packages are:
-> numpy, matplotlib.pyplot, pandas, pickle, os, sys, pathlib, psutil and meson. 
+> numpy, matplotlib.pyplot, pandas, pickle, os, sys, pathlib, psutil and meson.
+
 Another required package is 
 > f2py
+
 However, this should be part of numpy if installed correctly, in full and up-to-date.
 Next, a fortran compiler if required. This code was tested with the *gfortran* compiler on Linux.
 The code was also observed to _NOT_ work with ifort.
