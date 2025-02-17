@@ -10,9 +10,10 @@ import os
 import numpy as np
 
 
-def get_ri_filepathname(input_string):
+def get_ri_filepathname(input_string,aria=None):
     """Maps an input string to a file path."""
-    aria = "/network/group/aopp/eodg/RGG009_GRAINGER_EODGCOMN/ARIA/"
+    if aria==None:
+        aria = "/network/group/aopp/eodg/RGG009_GRAINGER_EODGCOMN/ARIA/"
     file_mapping = {
         "ash": aria
         + "Volcanic_Ash/Eyjafjallajokull/Reed1_2017/eyjafjallajokull-ash_Reed.ri",
@@ -216,7 +217,7 @@ class RI:
         return interpolated_n, interpolated_k
 
     def load_refractive_indices(
-        self, composition, wave=None, mode="wavelength", out_of_range="error"
+        self, composition, aria=None, wave=None, mode="wavelength", out_of_range="error"
     ):
         """
         Reads the refractive index data for a given ri file, interpolates to the wave values if provided,
@@ -232,6 +233,7 @@ class RI:
                    "ice"
                    "sulphuric acid"
                    "water". (NOT IMPLEMENTED)
+            aria (str): location of the aria database, if None, default assumed location in AOPP is used.
             wave (list or array, optional): The target wavelengths or wavenumbers to interpolate to. If None, returns data at full resolution.
             mode (str): 'wavelength' for wave in µm or 'wavenumber' for wave in cm⁻¹.
             out_of_range (str): Behavior for out-of-range values: 'error', 'clip', or 'nan'.
@@ -242,7 +244,7 @@ class RI:
                    - If wave is defined: (n, k), the interpolated real and imaginary parts of the refractive index.
         """
 
-        filepathname = get_ri_filepathname(composition)
+        filepathname = get_ri_filepathname(composition,aria)
 
         self.read(filepathname)
 
