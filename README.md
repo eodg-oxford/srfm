@@ -8,12 +8,10 @@ The general idea is to run RFM first, mie_ewp after that and DISORT at the end.
 ### DISORT
 The package contains DISORT code as and external addition.
 DISORT is a code that calculates radiative transfer (with scattering).
-The latest version of DISORT can be found here: http://www.rtatmocn.com/disort/
 
 ### RFM
 The code contains RFM as the reference forward model which calculates the gas absorption in the atmosphere. 
 This code should be run before DISORT is run, which can be done either manually or from python (see examples).
-The RFM can be obtained from Dr Anu Dudhia, Univ. of Oxford, anu.dudhia@physics.ox.ac.uk .
 
 ### mie_ewp
 The mie_ewp module calculates mie scattering on particles.
@@ -22,16 +20,14 @@ The outputs are used by DISORT.
 
 ## Prerequisites
 The required python packages are:
-> numpy, matplotlib.pyplot, pandas, pickle, os, sys, pathlib, psutil and meson. 
+> numpy, matplotlib.pyplot, pandas, pickle, os, sys, pathlib, psutil and meson.
+
 Another required package is 
 > f2py
+
 However, this should be part of numpy if installed correctly, in full and up-to-date.
 Next, a fortran compiler if required. This code was tested with the *gfortran* compiler on Linux.
-
-Refractive indices are required to calculate the particle scattering processes.
-The package uses the Aerosol Refractive Index Archive (ARIA) database of refractive indices.
-The database as well as further information can be found on https://eodg.atm.ox.ac.uk/ARIA/ .
-Using this database isn't necessary, refractive indices can be supplied to the code manually as well.
+The code was also observed to _NOT_ work with ifort.
 
 ## Installation
 The package was built in Python3.13 and was not tested on earlier versions.
