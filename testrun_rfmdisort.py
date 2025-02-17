@@ -5,18 +5,20 @@ import sys
 import datetime
 import time
 start_time = time.monotonic()
+import warnings
 
 
 ###################################
 # Assign some variables:
 ###################################
 
-rfm_fldr = "./srfm/RFM"
-disort_fldr = "./srfm/DISORT"
+rfm_fldr = "./srfm/RFM" # where rfm is
+disort_fldr = "./srfm/DISORT" # where disort is
+aria_fldr = "/network/group/aopp/eodg/RGG009_GRAINGER_EODGCOMN/ARIA/" # where ARIA is
 
-spec_res = 1 # model spectral resolution, [cm-1]
+spec_res = 0.5 # model spectral resolution, [cm-1]
 low_wvn = 645 # model start wavenumber (lower), [cm-1]
-upp_wvn = 2760 # model end wavenumber (upper), [cm-1]
+upp_wvn = 1800 # model end wavenumber (upper), [cm-1]
 
 ###################################
 # prepare RFM driver table
@@ -27,7 +29,7 @@ rfm_inp = {}
 
 # primary sections (mandatory), see the documentation for alternatives
 rfm_inp["HDR"] = f"{str(datetime.date.today())} test run" # RFM header
-rfm_inp["FLG"] = "OPT NAD SFC PRF LEV BBT" # RFM flags
+rfm_inp["FLG"] = "OPT NAD SFC PRF LEV BBT RAD" # RFM flags
 rfm_inp["SPC"] = f"{low_wvn} {upp_wvn} {spec_res}" # RFM spectral settings
 rfm_inp["GAS"] = "N2 O2 CO2 O3 H2O CH4 N2O HNO3 CO NO2 N2O5 ClO HOCl ClONO2 NO HNO4 HCN NH3 F11 F12 F14 F22 CCl4 COF2 H2O2 C2H2 C2H6 OCS SO2 SF6" # RFM chemical species
 rfm_inp["ATM"] = "./rfm_files/hgt_std.atm ./rfm_files/day.atm" # RFM vertical grids
@@ -49,15 +51,15 @@ rfm_functions.construct_rfm_driver_table(inp=rfm_inp,fldr=rfm_fldr)
 #######################################
 
 # define particle properties
-n = 100 # total particle concentration [cm-3]
-r = 8 # mean particle radius [um]
+n = 4e3 # total particle concentration [cm-3]
+r = 6 # mean particle radius [um]
 s = 1.5 # spread, for the lognormal distribution
 s_a_den = None # surf. area density, will be calculated in size dist.
 v_den = None # volume density, will be calculated in size dist.
 dist_type = "log_normal" # choose size distribution type
 comp = "ash" # define particle type (by composition)
-p_lyr_a_avg = 24 # avg particle layer altitude (center of layer altitude), [km]
-p_lyr_thick = 3 # particle layer thickness, [km]
+p_lyr_a_avg = 8 # avg particle layer altitude (center of layer altitude), [km]
+p_lyr_thick = 1 # particle layer thickness, [km]
 
 # calculate particle layer upper and lower boundary altitude
 p_lyr_u, p_lyr_l = utilities.calc_layer_extent(p_lyr_a_avg, p_lyr_thick)
@@ -90,12 +92,12 @@ RFM_wvnm = np.linspace(low_wvn,
 wvls = (1/RFM_wvnm)*1e4 # convert RFM wavenumber to wavelength in [um]
 
 # calculate the optical properties, where
-# e - extinction coefficient
-# w - single scatter albedo
-# p - phase function    
-# l - coefficients of the Legendre expansion of the phase function
-# c - quadrature points, cosines of the scattering angles
-# cw - quadrature point weights
+#   e - extinction coefficient
+#   w - single scatter albedo
+#   p - phase function    
+#   l - coefficients of the Legendre expansion of the phase function
+#   c - quadrature points, cosines of the scattering angles
+#   cw - quadrature point weights
 e, w, p, l, c, cw = optical_properties.ewp_hs(wavelength=wvls, 
                                               composition=comp, 
                                               distribution=sd,
@@ -105,9 +107,9 @@ e, w, p, l, c, cw = optical_properties.ewp_hs(wavelength=wvls,
                                               eta=eta,
                                               phase_quad_N=phase_quad_N,
                                               phase_quad_type=phase_quad_type,
-                                              radii_quad_type=radii_quad_type
+                                              radii_quad_type=radii_quad_type,
+                                              aria=aria_fldr
         )
-#print(l.shape)
 
 #######################################
 # prepare atmospheric layer structure
@@ -125,7 +127,7 @@ init_lev = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 
 #            ]
 
 # add upper and lower particle layer boundaries, delete any levels "within" the layer
-levels, ilyr = utilities.add_lyr(old_lev = init_lev, u = p_lyr_u, l = p_lyr_l)
+levels, ilyr, inv_ilyr = utilities.add_lyr(old_lev = init_lev, u = p_lyr_u, l = p_lyr_l)
 
 # write output levels file for RFM
 rfm_functions.construct_rfm_output_levels_file(levels=levels,
@@ -146,7 +148,7 @@ model_RFM = forward_model.RFM()
 print(model_RFM.status)
 
 # run rfm
-#model_RFM.run_rfm(rfm_fldr)    
+model_RFM.run_rfm(rfm_fldr)    
 
 # add rfm opt output to model_RFM
 model_RFM.add_rfm_opt_output(rfm_fldr, levels)
@@ -255,11 +257,11 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
     
     #particle layer optical depths (from particle scattering)
     tau_p = np.zeros( shape=( len(tau_g) ) )
-    tau_p[ilyr] = e[wvl_idx] * ( p_lyr_u - p_lyr_l )
+    tau_p[inv_ilyr] = e[wvl_idx] * ( p_lyr_u - p_lyr_l )
     
     #particle layer single scatter albedo
     w_p = np.zeros( shape=( len(tau_g) ) )
-    w_p[ilyr] = w[wvl_idx]
+    w_p[inv_ilyr] = w[wvl_idx]
     
     dtauc_tot = utilities.calc_tot_dtauc(tau_g=tau_g,
                                          tau_R=tau_R,
@@ -270,7 +272,6 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
     threshold_od = 1e-4 # threshold at which to truncate optical depths
     idx = next(
         (index for index,value in enumerate(list(dtauc_tot)) if value > threshold_od),None)
-    a = dtauc_tot
     dtauc_tot = dtauc_tot[idx:]
     tau_g = tau_g[idx:]
     tau_R = tau_R[idx:]
@@ -307,7 +308,12 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
     pmom_p = np.zeros((model_DISORT.disort_input["maxmom"] + 1,
                        model_DISORT.disort_input["maxcly"])
                      )
-    pmom_p[:,-ilyr] = l[wvl_idx,:]
+    if ilyr > (pmom_p.shape[1]-1):
+        print(f"""Scattering layer optical depth was < {threshold_od} and was
+        truncated from the optical depths profile. No particle scattering at this
+         wavelength.""")
+    else:
+        pmom_p[:,-(ilyr+1)] = l[wvl_idx,:]
 
     # set phase function moments      
     model_DISORT.set_pmom(pmom_R=pmom_R,
@@ -334,9 +340,10 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
 
 
 ################################################################################
-plot_disort = True
-plot_rfm = False
-plot_residual = False
+plot_disort = True # plot disort output?
+plot_rfm = True # plot rfm output?
+plot_residual = False # plot difference between rfm and diosrt?
+bbt_or_rad = "bbt" # plot in radiances (W m-2 sr-1 cm) or brightness temperatures [K]
 
 if plot_disort == True:
     plt.ion()
@@ -347,15 +354,22 @@ if plot_disort == True:
         model_DISORT.disort_out[i]["wavenumber (cm-1)"]
         for i in model_DISORT.disort_out.keys()
     ]
-    y = [
-        model_DISORT.disort_out[i]["uu_bbt"][0].item()
-        for i in model_DISORT.disort_out.keys()
-    ]
-
-    plt.plot(wavenumbers, y, label="opt. depths truncated below 1e-4, res. 0.1 cm-1")
+    
+    if bbt_or_rad == "bbt": 
+        y = [
+            model_DISORT.disort_out[i]["uu_bbt"][0].item()
+            for i in model_DISORT.disort_out.keys()
+        ]
+        plt.ylabel('Brightness temperature (K)')
+    elif bbt_or_rad == "rad":
+        y = [
+            model_DISORT.disort_out[i]["uu"][0].item()
+            for i in model_DISORT.disort_out.keys()
+        ]
+        plt.ylabel("Radiance (W m-2 sr-1 cm)")
+        
+    plt.plot(wavenumbers, y, label=f"opt. depths truncated below {threshold_od}, res. {spec_res} cm-1")
     plt.xlabel(r"Wavenumbers (cm$^{-1}$)")
-    plt.ylabel('Brightness temperature (K)')
-#    plt.ylabel("Radiance (W m-2 sr-1 cm)")
 
     plt.legend()
     plt.show()
@@ -363,26 +377,29 @@ if plot_disort == True:
 if plot_rfm == True:
     plt.ion()
     #    plt.cla()
-    filename = "./oxharp/RFM/rad_01000.asc"
-    data = rfm_functions.read_output(filename)
-    plt.plot(data["WNO"], data["SPC"]*1e-5, label=f"RFM_{filename}, res. 0.1 cm-1",alpha=0.5) #data['SPC']*1e-5 if plotting radiances to convert to W m-2 sr-1 cm
-    #    if data['NPNT'] > 0:
-    #        plt.xlabel(r'Wavenumber (cm$^{-1}$)')
-    #    else:
-    #        plt.xlabel('Frequency (GHz)')
-    #    plt.ylabel(data['LABSPC'])
+    if bbt_or_rad == "bbt":
+        filename = f"{rfm_fldr}/bbt_01000.asc"
+        data = rfm_functions.read_output(filename)
+        plt.plot(data["WNO"], data["SPC"], label=f"RFM_{filename}, res. {spec_res} cm-1",alpha=0.5)
+    elif bbt_or_rad == "rad":
+        filename = f"{rfm_fldr}/rad_01000.asc"
+        data = rfm_functions.read_output(filename)
+        plt.plot(data["WNO"], data["SPC"]*1e-5, label=f"RFM_{filename}, res. {spec_res} cm-1",alpha=0.5)
     plt.legend()
     plt.show()
 
 #plt.title("tau_g,temper=rfm; tau_R=0,ssalb=True;plank=true,rfm;res=0.25cm-1")
-#plt.savefig('2024_12_06_test_2_bbt.pdf')
+#plt.savefig('2025_02_17_test.pdf')
 
 if plot_residual == True:
     if plot_disort != True and plot_rfm != True:
         print(f"Can't plot residual difference without data.")
     else:
         plt.ion()
-        plt.plot(wavenumbers, y-(data["SPC"]*1e-5), label = "residual")
+        if bbt_or_rad == "bbt":
+            plt.plot(wavenumbers, y-(data["SPC"]), label = "residual")
+        elif bbt_or_rad == "rad":
+            plt.plot(wavenumbers, y-(data["SPC"]*1e-5), label = "residual")
         plt.legend()
         plt.show()
     

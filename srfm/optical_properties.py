@@ -156,6 +156,7 @@ def ewp_hs(
     phase_quad_N=181,
     phase_quad_type="L",
     radii_quad_type="T",
+    aria=None
 ):
     """
     return the extinction, singlescatter albedo and phase function for a particle
@@ -246,7 +247,7 @@ def ewp_hs(
     else:
         ri_object = ARIA.RI()
         ri_n, ri_k = ri_object.load_refractive_indices(
-            composition, wave=wavelength, mode="wavelength"
+            composition, aria=aria, wave=wavelength, mode="wavelength"
         )
         ri_k = -ri_k
 
@@ -290,7 +291,7 @@ def ewp_hs(
     
     # main computational loop, first iterate over wavelengths
     for i in range(wavelengths):
-        
+        print(f"Calculating optical properties for {wavelength[i]:.4f} um.")
         # make refractive index a complex number
         refractive_index = complex(ri_n[i], ri_k[i])
 
