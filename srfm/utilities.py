@@ -224,7 +224,10 @@ def add_lyr(old_lev,u,l):
         u, l - new layer upper and lower boundary
     outputs:
          lev - new atmospheric level structure
-         ilyr - particle layer index
+         ilyr - particle layer index, useful when atmosphere specified such that layer 0
+         is at the surface/lowerst altitude (e.g. in RFM)
+         inv_ilyr - particle layer index from an inverted profile, useful when 
+         atmosphere specified such that layer 0 is at the TOA (e.g. in DISORT).
     """
     if not isinstance(old_lev, (list, np.ndarray)):
         raise TypeError("old_lev must be a list or a 1D np.ndarray")
@@ -245,8 +248,9 @@ def add_lyr(old_lev,u,l):
     lev = [float(i) for i in old_lev if i not in to_remove]
     lev = lev + [float(u),float(l)]
     lev.sort()
-    ilyr = lev.index(u)
-    return lev, ilyr
+    ilyr = lev.index(l)
+    inv_ilyr = lev[::-1].index(u)
+    return lev, ilyr, inv_ilyr
 
 def calc_tot_dtauc(tau_g,tau_R,tau_p):
     """Calculate total optical depth of model layers, delta tau (dtau).
