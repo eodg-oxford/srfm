@@ -1,5 +1,6 @@
 """
-Name: ARIA_module
+Name: quadrature
+Parent package: srfm
 Author: Don Grainger
 Contributors: 
 Date: 24 January 2025

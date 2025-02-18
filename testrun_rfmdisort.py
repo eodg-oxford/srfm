@@ -16,9 +16,9 @@ rfm_fldr = "./srfm/RFM" # where rfm is
 disort_fldr = "./srfm/DISORT" # where disort is
 aria_fldr = "/network/group/aopp/eodg/RGG009_GRAINGER_EODGCOMN/ARIA/" # where ARIA is
 
-spec_res = 0.5 # model spectral resolution, [cm-1]
-low_wvn = 645 # model start wavenumber (lower), [cm-1]
-upp_wvn = 1800 # model end wavenumber (upper), [cm-1]
+spec_res = 1 # model spectral resolution, [cm-1]
+low_wvn = 800 # model start wavenumber (lower), [cm-1]
+upp_wvn = 1000 # model end wavenumber (upper), [cm-1]
 
 ###################################
 # prepare RFM driver table
@@ -184,7 +184,8 @@ model_DISORT.set_usrang(True)
 model_DISORT.set_usrtau(True)
 model_DISORT.set_ibcnd(0)
 model_DISORT.set_onlyfl(False)
-model_DISORT.set_prnt([True, True, True, False, True])
+#model_DISORT.set_prnt([True, True, True, False, True])
+model_DISORT.set_prnt([False, False, False, False, False])
 model_DISORT.set_plank(True)
 model_DISORT.set_lamber(True)
 model_DISORT.set_deltamplus(False)
@@ -267,7 +268,7 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
                                          tau_R=tau_R,
                                          tau_p=tau_p
                                         )
-    print(dtauc_tot)
+#    print(dtauc_tot)
     # truncate optical depths
     threshold_od = 1e-4 # threshold at which to truncate optical depths
     idx = next(

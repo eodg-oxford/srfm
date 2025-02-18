@@ -1,7 +1,17 @@
+"""
+Name: utilities
+Parent package: srfm
+Author: Antonin Knizek
+Contributors: 
+Date: 18 February 2025
+Purpose: Provides functions for srfm that do not fall in any other category, incl.
+decorator functions, memory-safe declarations, some physical formulas, etc.
+""" 
 import numpy as np
 from . import units
 import warnings
 import psutil
+import time
 
 
 def closest(lst_lon, lon, lst_lat, lat):
@@ -282,3 +292,14 @@ def calc_tot_dtauc(tau_g,tau_R,tau_p):
     tau_p = check_convert_dtype(tau_p)
 
     return tau_g + tau_R + tau_p
+    
+def show_runtime(func):
+    """Wrapper function to time other functions."""
+    def wrapper(*args,**kwargs):
+        t_start = time.perf_counter()
+        result = func(*args,**kwargs)
+        t_end = time.perf_counter()
+        elapsed = (t_end - t_start)
+        print(f"Time taken to execute {func.__name__}: {elapsed:.6f} seconds.")
+        return result
+    return wrapper

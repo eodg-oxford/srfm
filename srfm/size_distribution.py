@@ -1,5 +1,6 @@
 """
 Name: size_disitribution.py
+Parent package: srfm
 Author: Don Grainger
 Contributors: Antonin Knizek
 Date: 3 January 2025

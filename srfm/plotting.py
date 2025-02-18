@@ -1,3 +1,11 @@
+"""
+Name: plotting
+Parent package: srfm
+Author: Antonin Knizek
+Contributors: 
+Date: 18 February 2025
+Purpose: Provides functions useful for plotting data that are not default in python.
+""" 
 def map_extent(center_lon, center_lat, lon_span, lat_span):
     """calculates cartopy map extent from a known centrepoint
     coordinates + span on each side.

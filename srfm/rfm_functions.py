@@ -1,3 +1,12 @@
+"""
+Name: rfm_functions
+Parent package: srfm
+Author: Antonin Knizek
+Contributors: 
+Date: 18 February 2025
+Purpose: Provides functions that enable the user to work with RFM (which itself is
+in Fortran 90+) from a python interface.
+""" 
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -89,7 +98,7 @@ def read_output_prf(filename):  # read bits of internal profile output file prf.
 
     return contents
 
-
+@utils.show_runtime
 def get_rfm_optical_depths(fldr,levels):
     """
     This function is designed to calculate optical depths for layers in
@@ -229,7 +238,6 @@ def get_rfm_optical_depths(fldr,levels):
     df = pd.concat([prf_df,dod_df,iod_df], axis=1, join='outer')
 
     return df
-
 
 def compile_rfm(fldr):
     cwd = os.getcwd()

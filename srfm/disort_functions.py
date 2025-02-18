@@ -1,5 +1,15 @@
+"""
+Name: disort_functions
+Parent package: srfm
+Author: Antonin Knizek
+Contributors: 
+Date: 18 February 2025
+Purpose: Provides functions that enable the user to work with DISORT (which itself is
+in Fortran 77/90) from a python interface.
+""" 
 import numpy as np
 import warnings
+from . import utilities as utils
 
 
 def update_maxcmu(maxcmu):
@@ -21,7 +31,6 @@ def update_maxumu(maxumu, usrang, maxcmu):
         maxumu = maxcmu
         print(f"maxumu has been updated to {maxumu}")
     return maxumu
-
 
 def test_disort_input_format(
     maxcly,

@@ -1,3 +1,12 @@
+"""
+Name: forward_model
+Parent package: srfm
+Author: Antonin Knizek
+Contributors: 
+Date: 18 February 2025
+Purpose: Defines the base model class for the forward model and specific model 
+subclasses, currently RFM and DISORT, along with their methods.
+""" 
 import numpy as np
 from . import disort_functions as disf
 from . import rfm_functions as rf
@@ -427,7 +436,8 @@ class DISORT(Fwd_model):
         self.disort_input["uu"] = np.zeros(shape=(maxumu, maxulv, maxphi))
         self.disort_input["albmed"] = np.zeros(shape=(maxumu))
         self.disort_input["trnmed"] = np.zeros(shape=(maxumu))
-
+    
+    @utils.show_runtime
     def run_disort(self):
         if self.disort_fmt_passmark == True:
             if self.disort_integrity_passmark == True:
