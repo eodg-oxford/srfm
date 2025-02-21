@@ -149,7 +149,7 @@ model_RFM = forward_model.RFM()
 print(model_RFM.status)
 
 # run rfm
-#model_RFM.run_rfm(rfm_fldr)    
+model_RFM.run_rfm(rfm_fldr)    
 
 # add rfm opt output to model_RFM
 model_RFM.add_rfm_opt_output(rfm_fldr, levels)
@@ -240,7 +240,7 @@ model_DISORT.initialize_disort_output_arrays(
 
 # loop over columns, dynamically set disort input variables in each loop
 for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
-    model_DISORT.set_header("Now starting calculation for {col} cm-1.")
+    model_DISORT.set_header(f"Now starting calculation for {col} cm-1.")
 #    print(fr"Now starting calculation for {col} cm-1.")
 
     # get wavenumber from columns name
@@ -344,8 +344,8 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
     model_DISORT.store_disort(col, model_DISORT.run_disort(prec=prec), bbt=True)
 
     # print current status:
-    print(model_DISORT.status)
-
+#    print(model_DISORT.status)
+print("Main DISORT loop finished.")
 
 ################################################################################
 plot_disort = True # plot disort output?

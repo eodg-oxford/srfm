@@ -674,7 +674,6 @@ def test_disort_input_format(
             + "Warning: trnmed is an output variable, it's contents are not used by disort and will be overwritten."
         )
     passmark = True
-    print("The input has passed the format test.")
     return passmark
 
 
@@ -818,7 +817,6 @@ def test_disort_input_integrity(
         raise ValueError("Temis must be >= 0.")
 
     passmark = True
-    print("The input has passed the integrity test.")
     return passmark
 
 def get_pmom_from_disort(self, pmom, iphas, gg, nmom, lyrs=None):
