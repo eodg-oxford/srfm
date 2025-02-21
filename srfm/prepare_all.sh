@@ -5,7 +5,14 @@
 # compile mie_module
 f2py -c mie_ewp.f90 -m mie_module --f90flags='-O3 -g -fcheck=all -fdump-core -fbounds-check -Wall'
 
-# compile disort_module
+# compile disort_module in single precision
 cd ./DISORT
 cat DISOTESTAUX.f DISORT.f BDREF.f DISOBRDF.f ERRPACK.f LINPAK.f LAPACK.f RDI1MACH.f > code.f
-f2py -c code.f -m disort_module --backend meson --f90flags='-O3 -g -fcheck=all -fdump-core -fbounds-check -Wall'
+f2py -c code.f -m disort_module_s --backend meson --f90flags='-O3 -g -fcheck=all -fdump-core -fbounds-check -Wall'
+
+# compile disort_module in double precision
+cd ../DISORT_dbl
+cat DISOTESTAUX.f DISORT.f BDREF.f DISOBRDF.f ERRPACK.f LINPACK_D.f LAPACK.f RDI1MACH.f > code.f
+f2py -c code.f -m disort_module_d --backend meson --f90flags='-O3 -g -fcheck=all -fdump-core -fbounds-check -Wall'
+
+cd ..
