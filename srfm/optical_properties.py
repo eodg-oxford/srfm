@@ -1,5 +1,6 @@
 """
 Name: optical_properties
+Parent package: srfm
 Author: Don Grainger
 Contributors: Antonin Knizek
 Date: 24 January 2025
@@ -13,7 +14,6 @@ from . import quadrature as quad
 from . import ARIA_module as ARIA  # Import the RI class from ri_module
 from . import mie_module  # Assuming mie_module is the compiled Fortran module
 from . import utilities as utils
-
 
 def legendre_polynomial_expansion(inp, qv, qw, phase):
     """
@@ -143,6 +143,7 @@ def normalised_legendre_polynomial_expansion(inp, qv, qw, phase):
 
 # Determine the optical properties of a distribution of particles as a function of
 # composition and structure
+@utils.show_runtime
 def ewp_hs(
     wavelength,
     composition,

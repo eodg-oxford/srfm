@@ -10,6 +10,7 @@ __all__ = [
     "forward_model",
     "rfm_functions",
     "DISORT",
+    "DISORT_dbl",
     "ARIA_module",
     "optical_properties",
     "size_distribution",
@@ -26,6 +27,7 @@ from . import disort_functions
 from . import forward_model
 from . import rfm_functions
 from . import DISORT
+from . import DISORT_dbl
 from . import ARIA_module
 from . import optical_properties
 from . import quadrature

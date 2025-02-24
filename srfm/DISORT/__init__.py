@@ -1,6 +1,6 @@
-__all__ = ['disort_module',    
+__all__ = ['disort_module_s',    
           ]
           
 '''Import oxharp modules.'''
-from . import disort_module
+from . import disort_module_s
 

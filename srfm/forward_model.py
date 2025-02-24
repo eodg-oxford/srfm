@@ -1,3 +1,12 @@
+"""
+Name: forward_model
+Parent package: srfm
+Author: Antonin Knizek
+Contributors: 
+Date: 18 February 2025
+Purpose: Defines the base model class for the forward model and specific model 
+subclasses, currently RFM and DISORT, along with their methods.
+""" 
 import numpy as np
 from . import disort_functions as disf
 from . import rfm_functions as rf
@@ -7,7 +16,16 @@ from . import units
 import pandas as pd
 
 try:
-    from .DISORT import disort_module as dm
+    from .DISORT import disort_module_s as dms
+except ImportError:
+    print("Could not import disort as a python module.")
+    print('Is disort compiled?"')
+    print("Is the compiled module called disort_module?")
+    print("Is disort compiled in its folder?")
+    print("hint: run prepare_disort.sh in the DISORT folder.")
+
+try:
+    from .DISORT_dbl import disort_module_d as dmd
 except ImportError:
     print("Could not import disort as a python module.")
     print('Is disort compiled?"')
@@ -427,11 +445,91 @@ class DISORT(Fwd_model):
         self.disort_input["uu"] = np.zeros(shape=(maxumu, maxulv, maxphi))
         self.disort_input["albmed"] = np.zeros(shape=(maxumu))
         self.disort_input["trnmed"] = np.zeros(shape=(maxumu))
-
-    def run_disort(self):
+    
+    def run_disort(self,prec="double"):
+        """Calls function to run disort with required precision."""
+        if prec == "double":
+            res = self.run_disort_double()
+        elif prec == "single":
+            res = self.run_disort_single()
+        else:
+            raise ValueError("prec must be 'single' or 'double'.")
+        return res
+    
+    @utils.show_runtime
+    def run_disort_single(self):
+        """Runs disort, single precision."""
         if self.disort_fmt_passmark == True:
             if self.disort_integrity_passmark == True:
-                res = dm.disort(
+                res = dms.disort(
+                    maxcly=self.disort_input["maxcly"],
+                    maxmom=self.disort_input["maxmom"],
+                    maxcmu=self.disort_input["maxcmu"],
+                    maxumu=self.disort_input["maxumu"],
+                    maxphi=self.disort_input["maxphi"],
+                    maxulv=self.disort_input["maxulv"],
+                    usrang=self.disort_input["usrang"],
+                    usrtau=self.disort_input["usrtau"],
+                    ibcnd=self.disort_input["ibcnd"],
+                    onlyfl=self.disort_input["onlyfl"],
+                    prnt=self.disort_input["prnt"],
+                    plank=self.disort_input["plank"],
+                    lamber=self.disort_input["lamber"],
+                    deltamplus=self.disort_input["deltamplus"],
+                    do_pseudo_sphere=self.disort_input["do_pseudo_sphere"],
+                    dtauc=self.disort_input["dtauc"],
+                    ssalb=self.disort_input["ssalb"],
+                    pmom=self.disort_input["pmom"],
+                    temper=self.disort_input["temper"],
+                    wvnmlo=self.disort_input["wvnmlo"],
+                    wvnmhi=self.disort_input["wvnmhi"],
+                    utau=self.disort_input["utau"],
+                    umu0=self.disort_input["umu0"],
+                    phi0=self.disort_input["phi0"],
+                    umu=self.disort_input["umu"],
+                    phi=self.disort_input["phi"],
+                    fbeam=self.disort_input["fbeam"],
+                    fisot=self.disort_input["fisot"],
+                    albedo=self.disort_input["albedo"],
+                    btemp=self.disort_input["btemp"],
+                    ttemp=self.disort_input["ttemp"],
+                    temis=self.disort_input["temis"],
+                    earth_radius=self.disort_input["earth_radius"],
+                    h_lyr=self.disort_input["h_lyr"],
+                    rhoq=self.disort_input["rhoq"],
+                    rhou=self.disort_input["rhou"],
+                    rho_accurate=self.disort_input["rho_accurate"],
+                    bemst=self.disort_input["bemst"],
+                    emust=self.disort_input["emust"],
+                    accur=self.disort_input["accur"],
+                    header=self.disort_input["header"],
+                    rfldir=self.disort_input["rfldir"],
+                    rfldn=self.disort_input["rfldn"],
+                    flup=self.disort_input["flup"],
+                    dfdt=self.disort_input["dfdt"],
+                    uavg=self.disort_input["uavg"],
+                    uu=self.disort_input["uu"],
+                    albmed=self.disort_input["albmed"],
+                    trnmed=self.disort_input["trnmed"],
+                )
+                self.status = "DISORT run completed."
+            else:
+                raise ValueError(
+                    "Disort input passmark is not True, run input integrity test first."
+                )
+        else:
+            raise ValueError(
+                "Disort format passmark is not True, run format test first."
+            )
+
+        return res
+
+    @utils.show_runtime
+    def run_disort_double(self):
+        """Runs disort, double precision."""
+        if self.disort_fmt_passmark == True:
+            if self.disort_integrity_passmark == True:
+                res = dmd.disort(
                     maxcly=self.disort_input["maxcly"],
                     maxmom=self.disort_input["maxmom"],
                     maxcmu=self.disort_input["maxcmu"],
@@ -672,7 +770,30 @@ class DISORT(Fwd_model):
         self.disort_input["pmom"] = np.nan_to_num(pmom)
         return
         
-    def calc_pmom(self, iphas, gg=0):
+    def calc_pmom(self, iphas, prec="double", gg=0):
+        """Calls function to calculate phase function moments from disort using 
+        the getmom fucntion.
+        iphas - phase function option
+                1 : Isotropic
+                2 : Rayleigh
+                3 : Henyey-Greenstein with asymmetry factor GG
+                4 : Haze L as specified by Garcia/Siewert
+                5 : Cloud C.1 as specified by Garcia/Siewert
+                6 : Aerosol as specified by Kokhanovsky 
+                7 : Cloud as specified by Kokhanovsky
+        gg - assymetry factor for Heyney-Greenstein case
+        prec - required precision mode, accepted values "single" or "double" (default)
+        """
+        
+        if prec == "single":
+            pmom = self.calc_pmom_single(iphas,gg)
+        elif prec == "double":
+            pmom = self.calc_pmom_double(iphas,gg)
+        else:
+            raise ValueError("prec must be 'single' or 'double'.")
+        return pmom
+    
+    def calc_pmom_single(self, iphas, gg=0):
         """Calculates phase function moments from disort using the getmom
         function.
         This is a class method because it contains a loop which is inconvenient
@@ -690,6 +811,7 @@ class DISORT(Fwd_model):
         gg - assymetry factor for Heyney-Greenstein case
         nmom - index of the highest Legendre coefficient needed, 
              - set automatically
+        single precision
         """
         # check input and raise warning if necessary
         if iphas == 3 and gg == 0:
@@ -705,7 +827,48 @@ class DISORT(Fwd_model):
         
         # fill the array with phase function moments one layer at a time
         for i in range(self.disort_input["maxcly"]):
-            pmom[:,i] = dm.getmom(iphas=iphas,
+            pmom[:,i] = dms.getmom(iphas=iphas,
+                                  gg=gg,
+                                  nmom=self.disort_input["maxmom"],
+                                  pmom=pmom[:,i]
+                              )
+        return pmom
+
+    def calc_pmom_double(self, iphas, gg=0):
+        """Calculates phase function moments from disort using the getmom
+        function.
+        This is a class method because it contains a loop which is inconvenient
+        in the main code (getmom calcualtes phase function moments 
+        for a 1D array/list, not a 2D array.
+        pmom - empty pmom array of disort-required shape
+        iphas - phase function option
+                1 : Isotropic
+                2 : Rayleigh
+                3 : Henyey-Greenstein with asymmetry factor GG
+                4 : Haze L as specified by Garcia/Siewert
+                5 : Cloud C.1 as specified by Garcia/Siewert
+                6 : Aerosol as specified by Kokhanovsky 
+                7 : Cloud as specified by Kokhanovsky
+        gg - assymetry factor for Heyney-Greenstein case
+        nmom - index of the highest Legendre coefficient needed, 
+             - set automatically
+        double precision
+        """
+        # check input and raise warning if necessary
+        if iphas == 3 and gg == 0:
+            print(("Assymetry factor for the Heyney-Greenstein phase function"
+                   " is 0 (default). If you wish to use a different value, pass"
+                   " it to the function as gg = [your value]."))
+        
+        # initialize empty pmom array of required shape
+        pmom = np.zeros(
+            shape=(self.disort_input["maxmom"] + 1,
+            self.disort_input["maxcly"])
+        )
+        
+        # fill the array with phase function moments one layer at a time
+        for i in range(self.disort_input["maxcly"]):
+            pmom[:,i] = dmd.getmom(iphas=iphas,
                                   gg=gg,
                                   nmom=self.disort_input["maxmom"],
                                   pmom=pmom[:,i]

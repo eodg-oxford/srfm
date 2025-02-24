@@ -1,5 +1,6 @@
 """
 Name: ARIA_module
+Parent package: srfm
 Author: Don Grainger
 Contributors: Antonin Knizek
 Date: 24 January 2025

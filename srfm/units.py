@@ -1,3 +1,11 @@
+"""
+Name: units
+Parent package: srfm
+Author: Antonin Knizek
+Contributors: 
+Date: 18 February 2025
+Purpose: Provides functions for unit conversion.
+""" 
 def decimal_degree_to_DMS(dec):
     negative = dec < 0
     dec = abs(dec)

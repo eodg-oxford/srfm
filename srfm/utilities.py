@@ -1,7 +1,17 @@
+"""
+Name: utilities
+Parent package: srfm
+Author: Antonin Knizek
+Contributors: 
+Date: 18 February 2025
+Purpose: Provides functions for srfm that do not fall in any other category, incl.
+decorator functions, memory-safe declarations, some physical formulas, etc.
+""" 
 import numpy as np
 from . import units
 import warnings
 import psutil
+import time
 
 
 def closest(lst_lon, lon, lst_lat, lat):
@@ -98,20 +108,24 @@ def line_break_str(txt, chars, delim, indent=0):
     if not isinstance(delim, str):
         raise TypeError("delimiter must be a string.")
     
+    orig_txt = txt
     lines = []
     while len(txt) > chars:
-        line = txt[0:txt.rfind(delim)+len(delim)+1]
-        lines.append(line)
-        txt = txt[txt.rfind(delim)+len(delim)+1:]
+        occur = (txt.rfind(delim))
+        if occur > -1:
+           line = txt[0:(occur+len(delim)-1)]
+           lines.append(line)
+           txt = txt[(occur+len(delim)):]
+        elif occur == -1:
+            msg = """Could not split the string - strings longer than the
+            required chars limit without the occurence of the required delimiter
+            detected. RFM line character limit is 200 characters."""
+            warnings.warn(msg)
+            return orig_txt
+    lines.append(txt)
     ind = " "*indent
     
-    if len(lines) == 0:
-        warnings.warn("""No occurences of the required delimiter
-             were found before the line break limit.
-             String not split.""")
-        return txt
-    else:
-        return f"{ind}\n".join(lines)
+    return f"{ind}\n".join(lines)
         
 def memory_safe_np_zeros_2d(constraints=None, pct=99, max_sec_dim = None):
     """Initialzes a numpy.zeros 2D array of maximum allowed size so as not to overflow 
@@ -282,3 +296,14 @@ def calc_tot_dtauc(tau_g,tau_R,tau_p):
     tau_p = check_convert_dtype(tau_p)
 
     return tau_g + tau_R + tau_p
+    
+def show_runtime(func):
+    """Wrapper function to time other functions."""
+    def wrapper(*args,**kwargs):
+        t_start = time.perf_counter()
+        result = func(*args,**kwargs)
+        t_end = time.perf_counter()
+        elapsed = (t_end - t_start)
+        print(f"Time taken to execute {func.__name__}: {elapsed:.6f} seconds.")
+        return result
+    return wrapper

@@ -13,12 +13,13 @@ import warnings
 ###################################
 
 rfm_fldr = "./srfm/RFM" # where rfm is
-disort_fldr = "./srfm/DISORT" # where disort is
 aria_fldr = "/network/group/aopp/eodg/RGG009_GRAINGER_EODGCOMN/ARIA/" # where ARIA is
 
-spec_res = 0.5 # model spectral resolution, [cm-1]
-low_wvn = 645 # model start wavenumber (lower), [cm-1]
-upp_wvn = 1800 # model end wavenumber (upper), [cm-1]
+spec_res = 1 # model spectral resolution, [cm-1]
+low_wvn = 800 # model start wavenumber (lower), [cm-1]
+upp_wvn = 900 # model end wavenumber (upper), [cm-1]
+
+prec = "single" # choose disort precision, accepted values "single" or "double"
 
 ###################################
 # prepare RFM driver table
@@ -184,7 +185,8 @@ model_DISORT.set_usrang(True)
 model_DISORT.set_usrtau(True)
 model_DISORT.set_ibcnd(0)
 model_DISORT.set_onlyfl(False)
-model_DISORT.set_prnt([True, True, True, False, True])
+#model_DISORT.set_prnt([True, True, True, False, True])
+model_DISORT.set_prnt([False, False, False, False, False])
 model_DISORT.set_plank(True)
 model_DISORT.set_lamber(True)
 model_DISORT.set_deltamplus(False)
@@ -227,7 +229,7 @@ model_DISORT.set_rho_accurate(
 model_DISORT.set_bemst(np.zeros(shape=(int(model_DISORT.disort_input["maxcmu"] / 2))))
 model_DISORT.set_emust(np.zeros(shape=(model_DISORT.disort_input["maxumu"])))
 model_DISORT.set_accur(0)
-model_DISORT.set_header("")
+
 
 # initialize disort input arrays for output variables
 model_DISORT.initialize_disort_output_arrays(
@@ -238,7 +240,8 @@ model_DISORT.initialize_disort_output_arrays(
 
 # loop over columns, dynamically set disort input variables in each loop
 for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
-    print(fr"Now starting calculation for {col} cm-1.")
+    model_DISORT.set_header(f"Now starting calculation for {col} cm-1.")
+#    print(fr"Now starting calculation for {col} cm-1.")
 
     # get wavenumber from columns name
     wvnm = RFM_wvnm[wvl_idx]
@@ -247,7 +250,7 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
     tau_g = model_RFM.rfm_output[col].to_numpy()
         
     # layer optical depths from Rayleigh scattering
-#    tau_R = np.zeros(shape=(model_DISORT.disort_input["maxcly"]))
+#    tau_R = np.zeros(shape=(tau_g.shape))
     tau_R=utilities.calc_Rayleigh_opt_depths(
                                       ps = model_RFM.rfm_output['p_lower (mbar)'].iloc[-1],
                                       pu = model_RFM.rfm_output['p_upper (mbar)'],
@@ -267,9 +270,9 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
                                          tau_R=tau_R,
                                          tau_p=tau_p
                                         )
-    print(dtauc_tot)
+#    print(dtauc_tot)
     # truncate optical depths
-    threshold_od = 1e-4 # threshold at which to truncate optical depths
+    threshold_od = 5e-4 # threshold at which to truncate optical depths
     idx = next(
         (index for index,value in enumerate(list(dtauc_tot)) if value > threshold_od),None)
     dtauc_tot = dtauc_tot[idx:]
@@ -300,11 +303,11 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
                            tau_p=tau_p,
                            w_p=w_p)
     
-    # calculate phase function moments for Rayleigh and particle scattering
-    pmom_R = model_DISORT.calc_pmom(iphas=2)
-#    pmom_p = model_DISORT.calc_pmom(iphas=6)
-#    print(model_DISORT.disort_input["maxmom"] + 1)
-#    print(model_DISORT.disort_input["maxcly"])
+    # calculate phase function moments for Rayleigh and particle scattering from DISORT
+    pmom_R = model_DISORT.calc_pmom(iphas=2,prec=prec)
+
+
+    #set phase function moments for particle scattering from Mie code
     pmom_p = np.zeros((model_DISORT.disort_input["maxmom"] + 1,
                        model_DISORT.disort_input["maxcly"])
                      )
@@ -314,14 +317,18 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
          wavelength.""")
     else:
         pmom_p[:,-(ilyr+1)] = l[wvl_idx,:]
+        Legendre_precision = 1/pmom_p[:,-(ilyr+1)][0] # determine the Legendre expansion precision
+        pmom_p[:,-(ilyr+1)][0] = 1.0 # default the first coefficient to 0
 
-    # set phase function moments      
+    # calcualte the weighted sum of phase function moments      
     model_DISORT.set_pmom(pmom_R=pmom_R,
                           tau_R=tau_R,
                           w_p=w_p,
                           tau_p=tau_p,
                           pmom_p=pmom_p)
-#    print(model_DISORT.disort_input["pmom"])    
+#    print(model_DISORT.disort_input["pmom"]).shape  
+
+    # set wavenumber range for DISORT (for Planck function)
     model_DISORT.set_wvnm_range(wvnm - 0.5, wvnm + 0.5)
 
     # run disort input tests
@@ -331,18 +338,19 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
     # initialize dictionary to store results
     model_DISORT.disort_out[col] = {}
     model_DISORT.disort_input['dtauc'][model_DISORT.disort_input['dtauc']<0] = 0
-
+    
+#    input()
     # run disort itself
-    model_DISORT.store_disort(col, model_DISORT.run_disort(), bbt=True)
+    model_DISORT.store_disort(col, model_DISORT.run_disort(prec=prec), bbt=True)
 
     # print current status:
-    print(model_DISORT.status)
-
+#    print(model_DISORT.status)
+print("Main DISORT loop finished.")
 
 ################################################################################
 plot_disort = True # plot disort output?
 plot_rfm = True # plot rfm output?
-plot_residual = False # plot difference between rfm and diosrt?
+plot_residual = True # plot difference between rfm and diosrt?
 bbt_or_rad = "bbt" # plot in radiances (W m-2 sr-1 cm) or brightness temperatures [K]
 
 if plot_disort == True:
