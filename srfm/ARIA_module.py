@@ -12,21 +12,24 @@ import numpy as np
 
 
 def get_ri_filepathname(input_string,aria=None):
+    # input_string is either an ARIA filename or from the list below
     """Maps an input string to a file path."""
+    if input_string == "ash":
+        input_string = "eyjafjallajokull-ash_Reed.ri"
+    if input_string == "ice":
+        input_string = "ICE_Warren_2008.ri"   
+    if input_string == "sulphuric acid":
+        input_string = "H2SO4_75_Palmer_1975.ri"
+       
     if aria==None:
         aria = "/network/group/aopp/eodg/RGG009_GRAINGER_EODGCOMN/ARIA/"
-    file_mapping = {
-        "ash": aria
-        + "Volcanic_Ash/Eyjafjallajokull/Reed1_2017/eyjafjallajokull-ash_Reed.ri",
-        "ice": aria
-        + "Water_and_Ice/Ice/200_K_to_300_K/266_K_(Warren_and_Brandt_2008)/ICE_Warren_2008.ri",
-        "sulphuric acid": aria
-        + "Acids/Sulphuric/70%_to_79%/75%_300_K_(Palmer_and_Williams_1975)/interpolated/H2SO4_75_Palmer_1975.ri",
-    }
-    filepathname = file_mapping.get(input_string.lower())
-    if not filepathname or not os.path.isfile(filepathname):
-        return f"Error: File not found for input '{input_string}'."
-    return filepathname
+
+    # Recursively search for the file within the ARIA directory tree
+    for root, dirs, files in os.walk(aria):
+        if input_string in files:
+            return os.path.join(root, input_string)  # Return the absolute file path
+
+    return f"Error: File '{input_string}' not found in ARIA directory tree."   
 
 
 class ReadError(Exception):
@@ -60,7 +63,6 @@ class RI:
 
     def read(self, filepathname):
         """Reads and parses an .ri file into the object's attributes."""
-
         with open(filepathname, "r") as f:
             t = f.readlines()
             t = [x.strip() for x in t]  # Strip whitespace from lines

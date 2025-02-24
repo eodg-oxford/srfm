@@ -10,10 +10,10 @@ Purpose: Used to calculate particle optical properties, such as extinction coeff
 """
 
 import numpy as np
-from . import quadrature as quad
-from . import ARIA_module as ARIA  # Import the RI class from ri_module
-from . import mie_module  # Assuming mie_module is the compiled Fortran module
-from . import utilities as utils
+import quadrature as quad
+import ARIA_module as ARIA  # Import the RI class from ri_module
+import mie_module  # Assuming mie_module is the compiled Fortran module
+import utilities as utils
 
 def legendre_polynomial_expansion(inp, qv, qw, phase):
     """
@@ -292,8 +292,16 @@ def ewp_hs(
     
     # main computational loop, first iterate over wavelengths
     for i in range(wavelengths):
-        print(f"Calculating optical properties for {wavelength[i]:.4f} um.")
-        # make refractive index a complex number
+
+        # Report progress at 25%, 50%, and 75%
+        if i == int(0.25 * wavelengths):
+            print("25% done...")
+        elif i == int(0.50 * wavelengths):
+            print("50% done...")
+        elif i == int(0.75 * wavelengths):
+            print("75% done...")
+            
+        # make refractive index a complex number            
         refractive_index = complex(ri_n[i], ri_k[i])
 
         # loop over radii
@@ -352,12 +360,12 @@ def ewp_hs(
             
             if legendre_coefficient_number > max_lc:
                 max_lc = legendre_coefficient_number
-    
-    # truncate zeros from legendre coefficient
-    legendre_coefficient = legendre_coefficient[:,:max_lc]
-    
+                # truncate zeros from legendre coefficient
+                legendre_coefficient = legendre_coefficient[:,:max_lc]   
+   
     # Return the computed results
     if legendre_coefficients_flag:
+
         return (
             beta_ext,
             beta_sca / beta_ext,

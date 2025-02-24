@@ -8,7 +8,7 @@ Purpose: Provides functions for srfm that do not fall in any other category, inc
 decorator functions, memory-safe declarations, some physical formulas, etc.
 """ 
 import numpy as np
-from . import units
+import units
 import warnings
 import psutil
 import time
