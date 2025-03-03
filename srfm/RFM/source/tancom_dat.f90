@@ -21,7 +21,7 @@ MODULE TANCOM_DAT
   SAVE
 !
 ! GLOBAL CONSTANTS
-    INTEGER, PARAMETER :: LENTAN = 6 ! Max length of tan.ht string in filenames
+    INTEGER, PARAMETER :: LENTAN = 7 ! Max length of tan.ht string in filenames
 !
   TYPE :: TANTYP
     LOGICAL     :: CLC ! T = Radiance.calc reqd for Tan.Hgt

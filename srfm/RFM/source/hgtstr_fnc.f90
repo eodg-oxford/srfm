@@ -8,10 +8,10 @@ CHARACTER(LENTAN) PURE FUNCTION HGTSTR ( HGT )
 !   01MAY17 AD F90 orginal. Checked.
 !
 ! DESCRIPTION
-!   Convert altitude to C*5 string
+!   Convert altitude to C*6 string
 !   General purpose module.
 !   Used for constructing altitude component of RFM output filenames.
-!   This converts any altitude in range -99:999km to metres, altitudes outside
+!   This converts any altitude in range -999:999km to metres, altitudes outside
 !   this range are kept as km.
 !
 ! VARIABLE KINDS
@@ -28,20 +28,20 @@ CHARACTER(LENTAN) PURE FUNCTION HGTSTR ( HGT )
 ! EXECUTABLE CODE --------------------------------------------------------------
 !
   IF ( HGT .GE. 0.0 ) THEN
-    IF ( NINT ( HGT * 1000.0 ) .LE. 99999 ) THEN
-      WRITE ( HGTSTR, '(I5.5)' ) NINT ( HGT * 1000.0 ) 
+    IF ( NINT ( HGT * 1000.0 ) .LE. 999999 ) THEN
+      WRITE ( HGTSTR, '(I6.6)' ) NINT ( HGT * 1000.0 ) 
     ELSE
-      WRITE ( HGTSTR, '(I5.5)' ) NINT ( HGT ) 
+      WRITE ( HGTSTR, '(I6.6)' ) NINT ( HGT ) 
     ENDIF
   ELSE
-    IF ( NINT ( HGT * 1000.0 ) .GE. -99999 ) THEN
-      WRITE ( HGTSTR, '(I6.5)' ) NINT ( HGT * 1000.0 ) 
+    IF ( NINT ( HGT * 1000.0 ) .GE. -999999 ) THEN
+      WRITE ( HGTSTR, '(I7.6)' ) NINT ( HGT * 1000.0 ) 
 ! For small negative values, there's a chance that rounding may lead to 0
 ! in which case ensure that there is a minus sign otherwise there will be a
 ! space in the output filename
-      IF ( HGTSTR .EQ. ' 00000' ) HGTSTR = '-00000'
+      IF ( HGTSTR .EQ. ' 000000' ) HGTSTR = '-000000'
     ELSE
-      WRITE ( HGTSTR, '(I6.5)' ) NINT ( HGT )
+      WRITE ( HGTSTR, '(I7.6)' ) NINT ( HGT )
     ENDIF
   END IF
 !

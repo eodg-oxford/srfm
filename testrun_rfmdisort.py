@@ -6,6 +6,7 @@ import datetime
 import time
 start_time = time.monotonic()
 import warnings
+from multiprocessing import Process, Manager
 
 
 ###################################
@@ -15,12 +16,14 @@ import warnings
 rfm_fldr = "./srfm/RFM" # where rfm is
 aria_fldr = "/network/group/aopp/eodg/RGG009_GRAINGER_EODGCOMN/ARIA/" # where ARIA is
 
-spec_res = 1 # model spectral resolution, [cm-1]
-low_wvn = 800 # model start wavenumber (lower), [cm-1]
-upp_wvn = 900 # model end wavenumber (upper), [cm-1]
+spec_res = 0.01 # model spectral resolution, [cm-1]
+low_wvn = 645 # model start wavenumber (lower), [cm-1]
+upp_wvn = 2760 # model end wavenumber (upper), [cm-1]
 
-prec = "single" # choose disort precision, accepted values "single" or "double"
+prec = "double" # choose disort precision, accepted values "single" or "double"
 
+multiprocess = False # if True, parallelizes some calculations, 
+#WARNING: EXPERIMENTAL, MAY OR MAY NOT WORK, IF UNSURE, SET FALSE
 
 ###################################
 # prepare RFM driver table
@@ -93,25 +96,44 @@ RFM_wvnm = np.linspace(low_wvn,
                       ) # mirrors the RFM wavenumber grid
 wvls = (1/RFM_wvnm)*1e4 # convert RFM wavenumber to wavelength in [um]
 
-# calculate the optical properties, where
-#   e - extinction coefficient
-#   w - single scatter albedo
-#   p - phase function    
-#   l - coefficients of the Legendre expansion of the phase function
-#   c - quadrature points, cosines of the scattering angles
-#   cw - quadrature point weights
-e, w, p, l, c, cw = optical_properties.ewp_hs(wavelength=wvls, 
-                                              composition=comp, 
-                                              distribution=sd,
-                                              legendre_coefficients_flag=leg_coeffs,
-                                              legendre_coefficients_type="normalised",
-                                              radii=radii,
-                                              eta=eta,
-                                              phase_quad_N=phase_quad_N,
-                                              phase_quad_type=phase_quad_type,
-                                              radii_quad_type=radii_quad_type,
-                                              aria=aria_fldr
-        )
+#calculate optical properties either standard or parallelized, where
+#   op_dict["beta_ext"] - extinction coefficient
+#   op_dict["ss_alb"] - single scatter albedo
+#   op_dict["phase_function"] - phase function    
+#   op_dict["legendre_coefficient"] - coefficients of the Legendre expansion of the phase function, optional
+if multiprocess == True:
+    op_proxy_dict = Manager().dict()
+    op_process = Process(target = optical_properties.ewp_hs,
+                         kwargs = {"wavelength" : wvls, 
+                                 "composition" : comp, 
+                                 "distribution" : sd,
+                                 "legendre_coefficients_flag" : leg_coeffs,
+                                 "legendre_coefficients_type" : leg_coeffs_type,
+                                 "radii" : radii,
+                                 "eta" : eta,
+                                 "phase_quad_N" : phase_quad_N,
+                                 "phase_quad_type" : phase_quad_type,
+                                 "radii_quad_type" : radii_quad_type,
+                                 "aria" : aria_fldr,
+                                 "return_dict"  :  op_proxy_dict,
+                                 "multiprocess" : True
+                             }
+                        )
+    op_process.start()
+    
+else:
+    op_dict = optical_properties.ewp_hs(wavelength=wvls, 
+                                        composition=comp, 
+                                        distribution=sd,
+                                        legendre_coefficients_flag=leg_coeffs,
+                                        legendre_coefficients_type=leg_coeffs_type,
+                                        radii=radii,
+                                        eta=eta,
+                                        phase_quad_N=phase_quad_N,
+                                        phase_quad_type=phase_quad_type,
+                                        radii_quad_type=radii_quad_type,
+                                        aria=aria_fldr
+                                    )
 
 #######################################
 # prepare atmospheric layer structure
@@ -121,7 +143,9 @@ e, w, p, l, c, cw = optical_properties.ewp_hs(wavelength=wvls,
 init_lev = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0,
             14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0,
             27.5, 30.0, 32.5, 35.0, 37.5, 40.0, 42.5, 45.0, 47.5, 50.0, 55.0, 60.0,
-            65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0, 105.0, 110.0, 115.0,120.0
+            65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0, 101.0, 102.0, 103.0, 104.0,
+            105.0, 106.0, 107.0, 108.0, 109.0, 110.0, 111.0, 112.0, 113.0, 114.0, 115.0,
+            116.0, 117.0, 118.0, 119.0, 120.0
             ]
 
 #init_lev = [
@@ -150,7 +174,13 @@ model_RFM = forward_model.RFM()
 print(model_RFM.status)
 
 # run rfm
-model_RFM.run_rfm(rfm_fldr)    
+model_RFM.run_rfm(rfm_fldr)
+
+# join output of the optical properties calculation (if multiprocessing)
+if multiprocess == True:
+    op_process.join()
+    op_dict = {}
+    op_dict.update(op_proxy_dict)    
 
 # add rfm opt output to model_RFM
 model_RFM.add_rfm_opt_output(rfm_fldr, levels)
@@ -174,8 +204,7 @@ if len(cols) != len(wvls):
 
 # set disort_input parameters common to all loop iterations
 # these need to be set first:
-
-model_DISORT.set_maxmom(l.shape[1]-1)
+model_DISORT.set_maxmom(op_dict["legendre_coefficient"].shape[1]-1)
 model_DISORT.set_maxcmu(16)
 model_DISORT.set_maxumu(1)
 model_DISORT.set_maxphi(1)
@@ -186,7 +215,7 @@ model_DISORT.set_usrang(True)
 model_DISORT.set_usrtau(True)
 model_DISORT.set_ibcnd(0)
 model_DISORT.set_onlyfl(False)
-#model_DISORT.set_prnt([True, True, True, False, True])
+#model_DISORT.set_prnt([True, True, True, False, False])
 model_DISORT.set_prnt([False, False, False, False, False])
 model_DISORT.set_plank(True)
 model_DISORT.set_lamber(True)
@@ -261,11 +290,11 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
     
     #particle layer optical depths (from particle scattering)
     tau_p = np.zeros( shape=( len(tau_g) ) )
-    tau_p[inv_ilyr] = e[wvl_idx] * ( p_lyr_u - p_lyr_l )
+    tau_p[inv_ilyr] = op_dict["beta_ext"][wvl_idx] * ( p_lyr_u - p_lyr_l )
     
     #particle layer single scatter albedo
     w_p = np.zeros( shape=( len(tau_g) ) )
-    w_p[inv_ilyr] = w[wvl_idx]
+    w_p[inv_ilyr] = op_dict["ssalb"][wvl_idx]
     
     dtauc_tot = utilities.calc_tot_dtauc(tau_g=tau_g,
                                          tau_R=tau_R,
@@ -317,7 +346,7 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
         truncated from the optical depths profile. No particle scattering at this
          wavelength.""")
     else:
-        pmom_p[:,-(ilyr+1)] = l[wvl_idx,:]
+        pmom_p[:,-(ilyr+1)] = op_dict["legendre_coefficient"][wvl_idx,:]
         Legendre_precision = 1/pmom_p[:,-(ilyr+1)][0] # determine the Legendre expansion precision
         pmom_p[:,-(ilyr+1)][0] = 1.0 # default the first coefficient to 0
 
@@ -340,10 +369,9 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
     model_DISORT.disort_out[col] = {}
     model_DISORT.disort_input['dtauc'][model_DISORT.disort_input['dtauc']<0] = 0
     
-#    input()
     # run disort itself
     model_DISORT.store_disort(col, model_DISORT.run_disort(prec=prec), bbt=True)
-
+    
     # print current status:
 #    print(model_DISORT.status)
 print("Main DISORT loop finished.")
@@ -387,11 +415,11 @@ if plot_rfm == True:
     plt.ion()
     #    plt.cla()
     if bbt_or_rad == "bbt":
-        filename = f"{rfm_fldr}/bbt_01000.asc"
+        filename = f"{rfm_fldr}/bbt_001000.asc"
         data = rfm_functions.read_output(filename)
         plt.plot(data["WNO"], data["SPC"], label=f"RFM_{filename}, res. {spec_res} cm-1",alpha=0.5)
     elif bbt_or_rad == "rad":
-        filename = f"{rfm_fldr}/rad_01000.asc"
+        filename = f"{rfm_fldr}/rad_001000.asc"
         data = rfm_functions.read_output(filename)
         plt.plot(data["WNO"], data["SPC"]*1e-5, label=f"RFM_{filename}, res. {spec_res} cm-1",alpha=0.5)
     plt.legend()
@@ -413,4 +441,4 @@ if plot_residual == True:
         plt.show()
     
 end_time = time.monotonic()
-print(datetime.timedelta(seconds=end_time - start_time))
+print(f"Total run time: {datetime.timedelta(seconds=end_time - start_time)}")

@@ -10,10 +10,11 @@ Purpose: Used to calculate particle optical properties, such as extinction coeff
 """
 
 import numpy as np
-import quadrature as quad
-import ARIA_module as ARIA  # Import the RI class from ri_module
-import mie_module  # Assuming mie_module is the compiled Fortran module
-import utilities as utils
+from . import quadrature as quad
+from . import ARIA_module as ARIA  # Import the RI class from ri_module
+from . import mie_module  # Assuming mie_module is the compiled Fortran module
+from . import utilities as utils
+import multiprocessing
 
 def legendre_polynomial_expansion(inp, qv, qw, phase):
     """
@@ -139,8 +140,7 @@ def normalised_legendre_polynomial_expansion(inp, qv, qw, phase):
     inlc = n - 1
     #    print(f'lc = {lc}')
     return lc, inlc
-
-
+            
 # Determine the optical properties of a distribution of particles as a function of
 # composition and structure
 @utils.show_runtime
@@ -157,7 +157,9 @@ def ewp_hs(
     phase_quad_N=181,
     phase_quad_type="L",
     radii_quad_type="T",
-    aria=None
+    aria=None,
+    return_dict = None,
+    multiprocess = False
 ):
     """
     return the extinction, singlescatter albedo and phase function for a particle
@@ -176,7 +178,9 @@ def ewp_hs(
     valid input are "G" (Gaussian), "R" (Radau), "L" (Lobatto)
     refractive_index - if compositon is "ri", then refractive indices are required
     from the user.
-    szd_quad_type = quadrature type for the particle size distribution, currently "T"
+    szd_quad_type - quadrature type for the particle size distribution, currently "T"
+    return_dict - multiprocess.Manager().dict() object to return values in when doing
+    multiprocessing (parallel computations), default None
     """
     # get size of the wavelength array (amount of elements)
     wavelengths = wavelength.size
@@ -241,7 +245,7 @@ def ewp_hs(
     # load refractive indices (expected in the form (n - ik)
     if composition == "ri":
         if refractive_index is None:
-            print("Error: refractive index not defned")
+            print("Error: refractive index not defined")
         else:
             ri_n = np.array(np.full(wavelengths, np.real(refractive_index)))
             ri_k = np.array(np.full(wavelengths, np.imag(refractive_index)))
@@ -258,7 +262,9 @@ def ewp_hs(
             """Refractive index (k) contains invalid values. 
                Ensure all values are zero or negative."""
         )
-
+    
+    refractive_index_arr = np.array(ri_n + 1j*ri_k, dtype=complex)
+    
     # Initialize arrays with the same size as 'wavelengths'
     beta_ext = np.zeros(wavelengths)  # 1D array for extinction
     beta_sca = np.zeros(wavelengths)  # 1D array for scattering
@@ -277,40 +283,42 @@ def ewp_hs(
 
     # initialize arrays for the phase function and error
     phase_function_particle = np.zeros(angles, dtype=np.float64)  # Complex output array
-    Error = np.array([0], dtype=np.int32)  # Error code as an integer array
+    Error = np.array([0], dtype=np.int32)  # Error code as an integer array, "message"
 
     # initialize array for legendre coefficients (take care not to overlow memory)
     if legendre_coefficients_flag:
         legendre_coefficient = utils.memory_safe_np_zeros_2d(
             constraints = [wavelengths], max_sec_dim=20000
         )
-        
     
+    
+            
     max_lc = 0 # tracks length of legendre expansion in the main computational loop
     # (number of Legendre polynomial coefficients used. Used to truncate the final 
     # array.
     
+    # create some helper arrays
+    wavelength_arr = np.resize(wavelength,(radius.shape[0],wavelength.shape[0]))
+    radius_arr = np.resize(radius,(wavelength.shape[0],radius.shape[0])).T
+    size_parameters = 2 * np.pi * radius_arr / wavelength_arr 
+    
     # main computational loop, first iterate over wavelengths
     for i in range(wavelengths):
-
-        # Report progress at 25%, 50%, and 75%
-        if i == int(0.25 * wavelengths):
-            print("25% done...")
-        elif i == int(0.50 * wavelengths):
-            print("50% done...")
-        elif i == int(0.75 * wavelengths):
-            print("75% done...")
-            
-        # make refractive index a complex number            
-        refractive_index = complex(ri_n[i], ri_k[i])
+        
+        # Report progress as percentage completed
+        pct = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100] # percent completed to report
+        pct_val = [int(i*wavelengths/100) for i in pct]
+        
+        if i in pct_val:
+            val_idx = pct_val.index(i)
+            print(f"Calculating particle optical properties. {pct[val_idx]}% done...")
 
         # loop over radii
         for j in range(radii):
-            size_parameter = 2 * np.pi * radius[j] / wavelength[i]
 
             # Perform Mie calculations
             Q_ext, Q_sca, phase_function_particle, error = mie_module.mie_ewp(
-                size_parameter, refractive_index, cos_angle_value
+                size_parameters[j,i], refractive_index_arr[i], cos_angle_value
             )
 
             # Store results for this radius
@@ -360,23 +368,41 @@ def ewp_hs(
             
             if legendre_coefficient_number > max_lc:
                 max_lc = legendre_coefficient_number
-                # truncate zeros from legendre coefficient
-                legendre_coefficient = legendre_coefficient[:,:max_lc]   
-   
-    # Return the computed results
+    
+    # truncate trailing zeros from legendre coefficient
     if legendre_coefficients_flag:
-
-        return (
-            beta_ext,
-            beta_sca / beta_ext,
-            phase_function,
-            legendre_coefficient,
-            cos_angle_value,
-            cos_angle_weight,
-        )
+        legendre_coefficient = legendre_coefficient[:,:max_lc]
+    
+    # Return the computed results
+    if multiprocess == True:
+        native_return_dict = {}
+        if legendre_coefficients_flag:
+            native_return_dict["beta_ext"] = beta_ext
+            native_return_dict["ssalb"] = beta_sca / beta_ext
+            native_return_dict["phase_function"] = phase_function
+            native_return_dict["legendre_coefficient"] = legendre_coefficient
+        else:
+            native_return_dict["beta_ext"] = beta_ext
+            native_return_dict["ssalb"] = beta_sca / beta_ext
+            native_return_dict["phase_function"] = phase_function
+        return_dict.update(native_return_dict)
+        return
+        
+    elif multiprocess == False:
+        native_return_dict = {} 
+        if legendre_coefficients_flag:
+            native_return_dict["beta_ext"] = beta_ext
+            native_return_dict["ssalb"] = beta_sca / beta_ext
+            native_return_dict["phase_function"] = phase_function
+            native_return_dict["legendre_coefficient"] = legendre_coefficient
+        else:
+            native_return_dict["beta_ext"] = beta_ext
+            native_return_dict["ssalb"] = beta_sca / beta_ext
+            native_return_dict["phase_function"] = phase_function
+        return native_return_dict
+    
     else:
-        return beta_ext, beta_sca / beta_ext, phase_function
-
+        raise ValueError("multiprocess must be True or False.")
 
 def phase_from_legendre(inlc, lc, inp, qv):
     """Recomputes the phase function from Legendre polynomial expansion.

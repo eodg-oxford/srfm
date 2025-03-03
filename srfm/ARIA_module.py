@@ -12,16 +12,21 @@ import numpy as np
 
 
 def get_ri_filepathname(input_string,aria=None):
-    # input_string is either an ARIA filename or from the list below
-    """Maps an input string to a file path."""
+    """Maps an input string to a file path.
+    input_string is either an ARIA filename or any of: "ash", "ice", "sulphuric acid"
+    output - absolute file path of the refractive indices file.
+    """
+    
     if input_string == "ash":
         input_string = "eyjafjallajokull-ash_Reed.ri"
+    
     if input_string == "ice":
         input_string = "ICE_Warren_2008.ri"   
+    
     if input_string == "sulphuric acid":
         input_string = "H2SO4_75_Palmer_1975.ri"
        
-    if aria==None:
+    if aria == None:
         aria = "/network/group/aopp/eodg/RGG009_GRAINGER_EODGCOMN/ARIA/"
 
     # Recursively search for the file within the ARIA directory tree
@@ -29,7 +34,7 @@ def get_ri_filepathname(input_string,aria=None):
         if input_string in files:
             return os.path.join(root, input_string)  # Return the absolute file path
 
-    return f"Error: File '{input_string}' not found in ARIA directory tree."   
+    return f"Error: File '{input_string}' not found in ARIA directory tree." 
 
 
 class ReadError(Exception):
@@ -63,6 +68,7 @@ class RI:
 
     def read(self, filepathname):
         """Reads and parses an .ri file into the object's attributes."""
+
         with open(filepathname, "r") as f:
             t = f.readlines()
             t = [x.strip() for x in t]  # Strip whitespace from lines

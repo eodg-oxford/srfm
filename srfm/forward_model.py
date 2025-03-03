@@ -57,7 +57,8 @@ class RFM(Fwd_model):
         self.status = status
         for key, val in parameters.items():
             self.key = val
-
+    
+    @utils.show_runtime
     def run_rfm(self, fldr, wipe=True):
         """Attempts to run rfm from python. Can also be run manually.
         inputs are;
@@ -107,7 +108,12 @@ class RFM(Fwd_model):
         else:
             raise ValueError("rfm_output is empty (a NoneType object).")
         return
-
+    
+    def load_output_prf(self,fldr):
+        """"Loads the output profile (default prf.asc) file from RFM.
+        fldr - path to RFM"""
+        self.output_prf = rf.read_output_prf(f"{fldr}/prf.asc")
+        return
 
 class DISORT(Fwd_model):
     def __init__(
@@ -456,7 +462,7 @@ class DISORT(Fwd_model):
             raise ValueError("prec must be 'single' or 'double'.")
         return res
     
-    @utils.show_runtime
+
     def run_disort_single(self):
         """Runs disort, single precision."""
         if self.disort_fmt_passmark == True:
@@ -524,7 +530,7 @@ class DISORT(Fwd_model):
 
         return res
 
-    @utils.show_runtime
+
     def run_disort_double(self):
         """Runs disort, double precision."""
         if self.disort_fmt_passmark == True:
@@ -874,8 +880,6 @@ class DISORT(Fwd_model):
                                   pmom=pmom[:,i]
                               )
         return pmom
-        
-        
-        
+
         
         

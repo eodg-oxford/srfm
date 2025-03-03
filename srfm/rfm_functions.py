@@ -14,6 +14,7 @@ from pathlib import Path
 import sys
 import pandas as pd
 from . import utilities as utils
+import warnings
 
 
 def read_output(filename):  # read output file from RFM into a dictionary
@@ -109,10 +110,11 @@ def get_rfm_optical_depths(fldr,levels):
     """
 
     # load relevant rfm output files, sort by modification time (i.e. altitude)
-    fls = sorted(Path(fldr).iterdir(), key=os.path.getmtime)
+    fls = sorted(Path(fldr).iterdir())
     fls = [str(p.absolute()) for p in fls]
     fls = [
-        i for i in fls if "down" in i and "opt" in i
+        i for i in fls if "up" in str(i)[str(i).rfind("/"):]
+        and "opt" in str(i)[str(i).rfind("/"):]
     ]  # this is the list of OD output spectra
 
     prf = read_output_prf(f"{fldr}/prf.asc")  # read rfm output profile, type dict
@@ -147,7 +149,7 @@ def get_rfm_optical_depths(fldr,levels):
         upper_level = read_output(fls[l + 1])
         lower_level = read_output(fls[l])
 
-        d_OD = upper_level["SPC"] - lower_level["SPC"]  # layer optical depths
+        d_OD = lower_level["SPC"] - upper_level["SPC"]  # layer optical depths
         delta_OD.append(d_OD)
 
         u_p.append(prf["PRE [mb]"][l + 1])
@@ -227,7 +229,15 @@ def get_rfm_optical_depths(fldr,levels):
     
     tav = pd.DataFrame({"T_avg (K)" : avg_t[::-1]}, dtype = "float")
     prf_df.loc[:,"T_avg (K)"] = tav
-
+    
+    #check if there are too large temperature steps (10 K difference)
+    for i in range(len(tav)-1):
+        if abs(tav["T_avg (K)"][i+1] - tav["T_avg (K)"][i]) >= 10:
+            warnings.warn(f"""Temperature step between {hav['h_avg (km)'][i+1]} and 
+            {hav['h_avg (km)'][i]} larger than 10K, calculation may be 
+            inaccurate in DISORT.""")
+        else:
+            pass 
 
     dod_col_names = [f"dOD_{val:.4f}" for val in wnos]
     iod_col_names = [f"iOD_{val:.4f}" for val in wnos]
