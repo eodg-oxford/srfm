@@ -49,7 +49,7 @@ for file in all_fnames:
         pass
 
 #directories to remove
-dirs = ["./srfm/__pycache__/", "./.git", "./.idea"]
+dirs = ["./srfm/__pycache__/", "./.idea"]
 
 for d in dirs:
     if os.path.isdir(d):

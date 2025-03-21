@@ -10,7 +10,6 @@ Purpose: Used to access the ARIA database (https://eodg.atm.ox.ac.uk/ARIA/)
 import os
 import numpy as np
 
-
 def get_ri_filepathname(input_string,aria=None):
     """Maps an input string to a file path.
     input_string is either an ARIA filename or any of: "ash", "ice", "sulphuric acid"

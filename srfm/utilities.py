@@ -12,6 +12,7 @@ from . import units
 import warnings
 import psutil
 import time
+from numba import njit
 
 
 def closest(lst_lon, lon, lst_lat, lat):
@@ -126,7 +127,7 @@ def line_break_str(txt, chars, delim, indent=0):
     ind = " "*indent
     
     return f"{ind}\n".join(lines)
-        
+
 def memory_safe_np_zeros_2d(constraints=None, pct=99, max_sec_dim = None):
     """Initialzes a numpy.zeros 2D array of maximum allowed size so as not to overflow 
     system RAM.
@@ -162,18 +163,20 @@ def memory_safe_np_zeros_2d(constraints=None, pct=99, max_sec_dim = None):
         prime_factors = find_prime_factors(max_array_ram)
         return np.zeros(
                 (int(max(prime_factors)), int(max_array_items / max(prime_factors))
-            )
+            ),
+            dtype=np.float64
         )
     
     elif len(constraints) == 1:
-        # floor division to detemrine second dimension
+        # floor division to determine second dimension
         second_dim = int(max_array_items // constraints[0])
         
         # reduce second dimension size if max value given
         if second_dim > max_sec_dim:
             second_dim = max_sec_dim
         return np.zeros(
-                   (constraints[0],second_dim)
+                   (constraints[0], second_dim),
+                   dtype=np.float64
                )
 
     elif len(constraints) == 2:
@@ -181,8 +184,8 @@ def memory_safe_np_zeros_2d(constraints=None, pct=99, max_sec_dim = None):
             raise ValueError("Requested array too large, not enough memory available.")
         else:
             return np.zeros(
-                        (constraints[0],constraints[1]
-                    )
+                        (constraints[0],constraints[1]),
+                        dtype=np.float64
                 )
     
 
@@ -307,3 +310,86 @@ def show_runtime(func):
         print(f"Time taken to execute {func.__name__}: {elapsed:.6f} seconds.")
         return result
     return wrapper
+    
+def number_conc_from_particle_loading(l, rho, thick, r=None, d=None):
+    """Calculates particle number concentration from particle column loading.
+    Inputs:
+        l - particle column loading, [g m-2]
+        rho - particle density, [kg m-3]
+            - uniform density assumed
+            - can be either a value in [kg m-3] or one of the following strings:
+                "pumice" - 950 kg m-3
+                "glass" - 2400 kg m-3
+                "mineral" - 3000 kg m-3
+                "rock" - 2900 kg m-3
+            - note that the densities are average densities from https://volcanoes.usgs.
+            gov/volcanic_ash/density_hardness.html#:~:text=Volcanic%20Ash,-Ash%20Particl
+            e%20Size&text=For%20example%2C%20700%2D1200%20kilograms,material%20if%20depo
+            sited%20on%20water.
+            who in their turn take their data from Shipley and Sarna-Wojcicki, 1982
+            (and don't give details on this reference at all).
+            using the strings should serve only an illustrative purpose and should not
+            be relied on as the data in a given eruption may vary!
+        thick - particle layer thickness, [km]
+        r - particle radius, [um], either r or d has to be given
+        d - particle diameter, [um], either r or d has to be given
+    Outputs:
+        n - particle number concentration, [particles cm-3]
+    """
+    
+    rho_dict = {"pumice" : 950,
+                "glass" : 2400,
+                "mineral" : 3000,
+                "rock" : 2900
+            }
+    
+    for i in [l, thick]:
+        if not isinstance(i,(float, int)):
+            raise TypeError(f"l and thick must be ints or floats.")
+    
+    if not isinstance(rho, (int, float, str)):
+        raise TypeError("rho must be an int, float or str")
+    elif isinstance(rho, str) and rho not in rho_dict.keys():
+        raise ValueError(f"If rho is a string, it must be one of {rho_dict.keys()}.")
+    elif isinstance(rho, str) and rho in rho_dict.keys():
+        rho = rho_dict[rho]
+    
+    if r == None and d == None:
+        raise ValueError(f"Both r and d are None. One has to be given.")
+    elif r != None and d != None:
+        if d/2 == r:
+            pass
+        else:
+            raise ValueError(f"""Conflicting r and d are given. 
+            Providing one is sufficient.""")
+    elif r == None and d != None:
+        r = d/2
+    elif r != None and d == None:
+        pass
+    
+    #factor 1e6 comes from unit conversions
+    return 3 / 4 * l / (rho * np.pi * r**3) * 1e6
+
+#@njit
+def monotonic(x):
+    """Check is list/1D array is monotonic and increasing or decreasing.
+    input - x, input array/list, must be 1D
+    returns values:
+        0 - not monotonic
+        1 - strictly increasing
+        2 - strictly decreasing
+    
+    """
+    if isinstance(x,list):
+        x = np.array(x, dtype=np.float64)
+        
+    dx = np.diff(x)
+    
+    if np.all(dx<=0): # is decreasing
+        return 2
+    elif np.all(dx >= 0): # is increasing
+        return 1
+    else:
+        return 0
+    
+    

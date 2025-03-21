@@ -20,7 +20,7 @@ The outputs are used by DISORT.
 
 ## Prerequisites
 The required python packages are:
-> numpy, matplotlib.pyplot, pandas, pickle, os, sys, pathlib, psutil and meson.
+> numpy, matplotlib.pyplot, pandas, pickle, os, sys, pathlib, psutil, numba and meson.
 
 Another required package is 
 > f2py

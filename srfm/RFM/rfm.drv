@@ -1,21 +1,23 @@
 *HDR
-2025-03-03 test run
+  2025-03-20 test run
 *FLG
-OPT NAD SFC PRF LEV BBT RAD
+  OPT NAD SFC PRF LEV BBT RAD REJ DBL
 *SPC
-645 2760 0.01
+  750 1250 0.001
 *GAS
-N2 O2 CO2 O3 H2O CH4 N2O HNO3 CO NO2 N2O5 ClO HOCl ClONO2 NO HNO4 HCN NH3 F11 F12 F14 F22 CCl4 COF2 H2O2 C2H2 C2H6 OCS SO2 SF6
+  N2 O2 CO2 O3 H2O CH4 N2O HNO3 CO NO2 N2O5 ClO HOCl ClONO2 NO HNO4 HCN NH3 F11 F12 F14 F22 CCl4 COF2 H2O2 C2H2 C2H6 OCS SO2 SF6
 *ATM
-./rfm_files/hgt_std.atm ./rfm_files/day.atm
+  ./rfm_files/hgt_std.atm ./rfm_files/day.atm
 *SEC
-1.0
+  1.0
 *LEV
-./rfm_files/alts.lev
+  ./rfm_files/alts.lev
 *ILS
-./rfm_files/iasi.ils
+  ./rfm_files/iasi.ils
 *XSC
-/network/aopp/matin/eodg/crun/eodg/rfm/rfm_files/xsc/*.xsc
+  /network/aopp/matin/eodg/crun/eodg/rfm/rfm_files/xsc/*.xsc
 *HIT
-/network/aopp/matin/eodg/crun/eodg/rfm/rfm_files/bin/hitran_2012.bin
+  /network/aopp/matin/eodg/crun/eodg/rfm/rfm_files/bin/hitran_2012.bin
+*REJ
+  *   1.0E-5
 *END

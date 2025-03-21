@@ -307,17 +307,17 @@ def construct_rfm_driver_table(inp, fldr, force=True,**kwargs):
     # write the first five sections
     for fs in first_five_secs:
         f.write(f"*{fs}\n")
-        f.write(f"{inp[fs]}\n")
+        f.write(f"  {inp[fs]}\n")
     
     # write sixth section
     f.write(f"*{ss[0]}\n")
-    f.write(f"{inp[ss[0]]}\n")
+    f.write(f"  {inp[ss[0]]}\n")
     
     # write the remaining sections
     for kkey in inp.keys():
         if kkey not in first_five_secs and kkey not in sixth_sec:
             f.write(f"*{kkey}\n")
-            f.write(f"{inp[kkey]}\n")
+            f.write(f"  {inp[kkey]}\n")
     f.write("*END")
     
     f.close()

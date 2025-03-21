@@ -8,6 +8,7 @@ Purpose: Calculates quadrature points, can do Gaussian, Lobatto and Radau quadra
 """ 
 
 import numpy as np
+from numba import jit_module
 
 # Function to calculate BesselZero
 def bessel_zero(s):
@@ -137,8 +138,8 @@ def quadrature101(quad_type, npts):
     quad_type = quad_type.upper()
     
     if quad_type == "T":
-        abscissa = -1 + 2 * np.arange(npts) / (npts-1)
-        weight = np.full(npts, (2/(npts-1)))
+        abscissa = -1 + 2 * np.arange(npts,dtype=np.float64) / (npts-1)
+        weight = np.full(npts, (2/(npts-1)),dtype=np.float64)
         weight[0] = 1/(npts-1)
         weight[-1] = 1/(npts-1)
     
@@ -146,8 +147,8 @@ def quadrature101(quad_type, npts):
         raise ValueError("Simpson method not implemented yet.")
     
     elif quad_type in ["G", "R", "L"]:        
-        abscissa = np.zeros(npts) # quadrature points
-        weight = np.zeros(npts) # quadrature weigths       
+        abscissa = np.zeros(npts,dtype=np.float64) # quadrature points
+        weight = np.zeros(npts,dtype=np.float64) # quadrature weigths       
         
         # set-up boundary conditions
         if quad_type == "G":
@@ -205,7 +206,7 @@ def test_quadrature101():
         abscissa in quadrature101 returns a wrong value."""
 
     assert float(quadrature101("R",181)[1][50]) == 0.013290800444751914, """Radau
-        weight in quadrature101 returns a wrong value."""
+        weight in quadrature101 returns a wrong valunew_wavelengthse."""
 
     assert float(quadrature101("L",181)[0][50]) == -0.641312349855755, """Lobatto
         abscissa in quadrature101 returns a wrong value."""
@@ -275,4 +276,5 @@ if __name__ == "__main__":
     test_quadrature()
     
     print("Module quadrature has passed all unit tests.")
-    
+
+#jit_module(nopython=True, error_model="numpy", parallel=False, fastmath=True)    
