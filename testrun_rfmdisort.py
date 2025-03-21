@@ -4,9 +4,10 @@ import matplotlib.pyplot as plt
 import sys
 import datetime
 import time
-start_time = time.monotonic()
 import warnings
 from multiprocessing import Process, Manager
+
+start_time = time.monotonic()
 
 
 ###################################
@@ -16,7 +17,7 @@ from multiprocessing import Process, Manager
 rfm_fldr = "./srfm/RFM" # where rfm is
 aria_fldr = "/network/group/aopp/eodg/RGG009_GRAINGER_EODGCOMN/ARIA/" # where ARIA is
 
-spec_res = 0.001 # model spectral resolution, [cm-1]
+spec_res = 0.1 # model spectral resolution, [cm-1]
 low_wvn = 750 # model start wavenumber (lower), [cm-1]
 upp_wvn = 1250 # model end wavenumber (upper), [cm-1]
 
@@ -103,7 +104,7 @@ RFM_wvnm = np.linspace(low_wvn,
                       ) # mirrors the RFM wavenumber grid
 wvls = (1/RFM_wvnm)*1e4 # convert RFM wavenumber to wavelength in [um]
 
-ewp_res = 0.001 # resolution of the grid to calculate optical properties at
+ewp_res = 1 # resolution of the grid to calculate optical properties at
 ewp_wvnm = np.linspace(low_wvn,
                        upp_wvn,
                        int((upp_wvn-low_wvn) / ewp_res + 1),
