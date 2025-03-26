@@ -593,6 +593,7 @@ def loop_mie_over_radii(radii,
     return Q_ext_value, Q_sca_value, phase_function_value
 
 #@jit(nopython=True, error_model="numpy", parallel=False, fastmath=True)
+@utils.show_runtime
 def regrid(op_dict,wvls,track_diff=False, diff_type="pct"):
     """Linearly interpolates calculated values from ewp_hs to a new grid.
     inputs:

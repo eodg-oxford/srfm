@@ -392,4 +392,58 @@ def monotonic(x):
     else:
         return 0
     
+def calc_grids(lo, hi, res, units):
+    """Calculates spectral grids from a given lower and upper limit and resolution
+    in given units.
+    inputs:
+        lo - lower limit
+        hi - upper limit
+        res - resolution
+        units - units of input parameters, can be "cm-1", "nm", "um"
+    outputs:
+        wvnm - wavenumber grid, [cm-1]
+        wvls - wavelength grid, [um]
+    The output grids are regular in the input units.
+    """    
+    # perform checks
+    if not isinstance(lo, (int, float)):
+        raise TypeError("lo must be int or float.")
+    if not isinstance(hi, (int, float)):
+        raise TypeError("lo must be int or float.")
+    if not isinstance(res, (int, float)):
+        raise TypeError("lo must be int or float.")
+    if not isinstance(units, str):
+        raise TypeError("units must be a string.")
+    if units not in ["cm-1", "um", "nm"]:
+        raise ValueError("Accepted values for units are 'cm-1', 'nm', and 'um'.")    
+    
+    if units == "cm-1":
+        if not lo < hi and not lo >= 0.001:
+            raise ValueError("lo must satisfy 0.001 cm-1 <= lo < hi.")
+        if hi > 50000:
+            raise ValueError("hi must satisfy lo < hi <= 50,000.")    
+    elif units == "um":
+        if not lo < hi and not lo >= 0.2:
+            raise ValueError("lo must satisfy 0.2 um <= lo < hi.")
+        if hi > 1e7:
+            raise ValueError("hi must satisfy lo < hi <= 1e7 um.")    
+    elif units == "nm":
+        if not lo < hi and not lo >= 200:
+            raise ValueError("lo must satisfy 200 nm <= lo < hi.")
+        if hi > 1e10:
+            raise ValueError("hi must satisfy lo < hi <= 1e10 nm.")
+    
+    # calculate the grids
+    if units == "cm-1":
+        wvnm = np.linspace(lo, hi, int((hi-lo)/res+1))
+        wvls = (1/wvnm)*1e4
+    elif units == "um":
+        wvls = np.linspace(lo, hi, int((hi-lo)/res+1))[::-1]
+        wvnm = (1/wvls)*1e4
+    elif units == "nm":
+        lo, hi, res = lo*1e-3, hi*1e-3, res*1e-3
+        wvls = np.linspace(lo, hi, int((hi-lo)/res+1))[::-1]
+        wvnm = (1/wvls)*1e4
+    return wvnm, wvls
+        
     

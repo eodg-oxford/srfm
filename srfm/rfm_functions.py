@@ -371,4 +371,33 @@ def construct_rfm_output_levels_file(levels,fldr,fname="alts.lev",force=True):
 
     f.write('\n*END')
     f.close()
+    return
+
+def construct_rfm_grid_file(wvnm,filename="grid.spc",rfm_fldr="./srfm/RFM"):
+    """
+    Creates a grid.spc file for rfm. RFM is run in the "irregular grid mode" where the
+    SPC section in the driver table contains the filename of this file.
+    inputs:
+        wvnm - a list of wavenumbers, the calculation grid
+        filename - optional, the output filename, default "grid.spc"
+        rfm_fldr - RFM folder, default "./srfm/RFM"
+    outputs:
+        calculation grid file for RFM
+    """
     
+    if not isinstance(wvnm, (np.ndarray, list, pd.core.series.Series)):
+        raise TypeError("wvnm must be a np.ndarray, pandas.core.series.Series or list")
+    if not isinstance(filename,str):
+        raise TypeError("filename must be a string.")
+    
+    path = f"{rfm_fldr}/rfm_files/{filename}"
+    with open(path, "w") as f:
+        f.write("!\n")
+        f.write("!\n")
+        f.write("!\n")
+        f.write(f"{len(wvnm)} {wvnm[0]:.4f} 0 {wvnm[-1]:.4f}\n")
+        for i in wvnm:
+            f.write(f"{i:.4f} 0\n")
+    f.close()
+    print(f"{path} successfully created.")
+    return f"./rfm_files/{filename}"
