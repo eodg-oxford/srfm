@@ -214,6 +214,7 @@ def calc_layer_extent(a,t):
     outputs:
         u - upper boundary altitude
         l - lower boundary altitude
+    Input and output units match.
     """
     
     if not isinstance(a, (int, float)):
@@ -233,6 +234,28 @@ def calc_layer_extent(a,t):
     
     return u, l
 
+def calc_layer_bounds(u,l):
+    """Calculate atmospheric layer center altitude and vertical extent.
+    inputs:
+        u - layer upper boundary altitude
+        l  - layer lower boundary altitude
+    outputs:
+        a - layer center altitude
+        t - layer vertical extent (thickness)
+    
+    """
+    if not isinstance(u, (int,float)):
+        raise TypeError("Layer upper boundary altitude must be int or float.")
+    if not isinstance(l, (int,float)):
+        raise TypeError("Layer lower boundary altitude must be int or float.")
+    if u <= l:
+        raise ValueError("""Layer upper boundary altitude must
+                          be > than lower boundary altitude.""")
+    t = u - l
+    a = l + t/2
+    
+    return a, t
+    
 def add_lyr(old_lev,u,l):
     """Adds a layer to an existing atmoshperic level structure.
     Deletes any levels from the existing structure that would fall within the new layer.
@@ -311,7 +334,7 @@ def show_runtime(func):
         return result
     return wrapper
     
-def number_conc_from_particle_loading(l, rho, thick, r=None, d=None):
+def number_conc_from_mass_loading(l, rho, thick, r=None, d=None):
     """Calculates particle number concentration from particle column loading.
     Inputs:
         l - particle column loading, [g m-2]
@@ -368,7 +391,65 @@ def number_conc_from_particle_loading(l, rho, thick, r=None, d=None):
         pass
     
     #factor 1e6 comes from unit conversions
-    return 3 / 4 * l / (rho * np.pi * r**3) * 1e6
+    return 3 / 4 * l / (rho * thick * np.pi * r**3) * 1e6
+
+def mass_loading_from_number_conc(n, thick, rho, r=None, d=None):
+    """Calculate particle mass loading from number concentration.
+     Inputs:
+        n - particle number concentration, [particles cm-3]
+        rho - particle density, [kg m-3]
+            - uniform density assumed
+            - can be either a value in [kg m-3] or one of the following strings:
+                "pumice" - 950 kg m-3
+                "glass" - 2400 kg m-3
+                "mineral" - 3000 kg m-3
+                "rock" - 2900 kg m-3
+            - note that the densities are average densities from https://volcanoes.usgs.
+            gov/volcanic_ash/density_hardness.html#:~:text=Volcanic%20Ash,-Ash%20Particl
+            e%20Size&text=For%20example%2C%20700%2D1200%20kilograms,material%20if%20depo
+            sited%20on%20water.
+            who in their turn take their data from Shipley and Sarna-Wojcicki, 1982
+            (and don't give details on this reference at all).
+            using the strings should serve only an illustrative purpose and should not
+            be relied on as the data in a given eruption may vary!
+        thick - particle layer thickness, [km]
+        r - particle radius, [um], either r or d has to be given
+        d - particle diameter, [um], either r or d has to be given
+    Outputs:
+        l - particle column loading, [g m-2]
+    """
+    
+    rho_dict = {"pumice" : 950,
+                "glass" : 2400,
+                "mineral" : 3000,
+                "rock" : 2900
+            }
+    
+    for i in [l, thick]:
+        if not isinstance(i,(float, int)):
+            raise TypeError(f"l and thick must be ints or floats.")
+    
+    if not isinstance(rho, (int, float, str)):
+        raise TypeError("rho must be an int, float or str")
+    elif isinstance(rho, str) and rho not in rho_dict.keys():
+        raise ValueError(f"If rho is a string, it must be one of {rho_dict.keys()}.")
+    elif isinstance(rho, str) and rho in rho_dict.keys():
+        rho = rho_dict[rho]
+    
+    if r == None and d == None:
+        raise ValueError(f"Both r and d are None. One has to be given.")
+    elif r != None and d != None:
+        if d/2 == r:
+            pass
+        else:
+            raise ValueError(f"""Conflicting r and d are given. 
+            Providing one is sufficient.""")
+    elif r == None and d != None:
+        r = d/2
+    elif r != None and d == None:
+        pass
+
+    return 4 / 3 * np.pi * r**3 * thick * rho * n * 1e-6
 
 #@njit
 def monotonic(x):
@@ -445,5 +526,4 @@ def calc_grids(lo, hi, res, units):
         wvls = np.linspace(lo, hi, int((hi-lo)/res+1))[::-1]
         wvnm = (1/wvls)*1e4
     return wvnm, wvls
-        
     

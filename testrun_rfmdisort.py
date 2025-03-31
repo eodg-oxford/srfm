@@ -25,12 +25,12 @@ multiprocess = True # if True, parallelizes some calculations,
 # specify spectral calculation grid
 ########################################################################################
 spec_res = 0.1 # model spectral resolution,[spec_units]
-low_wvn = 645 # model start wavenumber (lower), [spec_units]
-upp_wvn = 2760 # model end wavenumber (upper), [spec_units]
+low_spc = 645 # model start wavenumber (lower), [spec_units]
+upp_spc = 2760 # model end wavenumber (upper), [spec_units]
 spec_units = "cm-1" # accepted values "cm-1", "um", "nm"
 
-RFM_wvnm, wvls = utilities.calc_grids(low_wvn,
-                                  upp_wvn,
+RFM_wvnm, wvls = utilities.calc_grids(low_spc,
+                                  upp_spc,
                                   spec_res,
                                   spec_units)
 
@@ -38,96 +38,41 @@ rfm_grid_fname = rfm_functions.construct_rfm_grid_file(RFM_wvnm,
                                                        filename="grid.spc",
                                                        rfm_fldr=rfm_fldr
                                                    )
-
 ########################################################################################
-# prepare particle scattering properties
+# define an atmospheric scattering layer
 ########################################################################################
+scat_lyr_1 = layer.MieLayer(name="Mie_1")
+scat_lyr_1_inp = {
+    "low_spc" : low_spc, # spectral claculation grid lower limit 
+    "upp_spc" : upp_spc, # spectral calculation grid upper limit
+    "res" : 1, # specral calculation grid resolution
+    "spec_units" : spec_units, # spectral calculation grid units
+    "mass_loading" : 3.23, #column particle loading, [g m-2]
+    "rho" : "glass", # particle density, can be number or one of permitted strings
+    "n" : None, # total particle concentration [cm-3]
+    "r" : 2,  # mean particle radius [um]
+    "s" : 1.5, # spread, for the lognormal distribution
+    "s_a_den" : None, # surf. area density, will be calculated in size dist.
+    "v_den" : None, # volume density, will be calculated in size dist.
+    "dist_type" : "log_normal", # choose size distribution type
+    "comp" : "ash", # define particle type (by composition)
+    "center_alt" : 3.5, # avg particle layer altitude (center of layer altitude), [km]
+    "thick" : 1, # particle layer thickness, [km]
+    "alt_upp" : None, # particle layer upper boundary altitude, [km]
+    "alt_low" : None, # particle layer lower boundary altitude, [km],
+    "radii" : 200, # number of radii in size distribution quadrature
+    "eta" : 1e-6, # value n(r) at which the size distribution upper and lower limits are set
+    "phase_quad_N" : 181, # number of quadrature points for the phase function (no. of angles)
+    "phase_quad_type" : "L", # type of phase function quadrature
+    "radii_quad_type" : "T", # type of radii size distribution quadrature
+    "leg_coeffs" : True, # toggle legendre expansion coefficients for the phase function
+    "leg_coeffs_type" : "normalised", # type of Legendre coeffs, normalised or regular
+    "aria" : aria_fldr, # where ARIA is
+    "multiprocess" : False, # type of Legendre polynomial expansion coefficients     
+    }
 
-# define particle properties
-particle_loading = 3.23 #column particle loading, [g m-2]
-rho = "glass" # particle density, can be number or one of permitted strings
-#n = 1e4 # total particle concentration [cm-3]
-r = 2 # mean particle radius [um]
-s = 1.5 # spread, for the lognormal distribution
-s_a_den = None # surf. area density, will be calculated in size dist.
-v_den = None # volume density, will be calculated in size dist.
-dist_type = "log_normal" # choose size distribution type
-comp = "ash" # define particle type (by composition)
-p_lyr_a_avg = 3.5 # avg particle layer altitude (center of layer altitude), [km]
-
-p_lyr_thick = 1 # particle layer thickness, [km]
-n = utilities.number_conc_from_particle_loading(l = particle_loading,
-                                                rho = rho,
-                                                thick = p_lyr_thick,
-                                                r = r)
-
-# calculate particle layer upper and lower boundary altitude
-p_lyr_u, p_lyr_l = utilities.calc_layer_extent(p_lyr_a_avg, p_lyr_thick)
-#alternatively can specify layer in terms of lower and upper boundary altitude by 
-# directly setting p_lyr_u and p_lyr_l here
-
-# create particle size distribution
-sd = size_distribution.create_distribution(dist_type = dist_type,
-                                           n = n,
-                                           r = r,
-                                           s = s,
-                                           surface_area_density = s_a_den,
-                                           volume_density = v_den
-    )
-
-# set-up the scattering calculation
-radii = 200 # number of radii in size distribution quadrature
-eta = 1e-6 # value n(r) at which the size distribution upper and lower limits are set
-phase_quad_N = 181 # number of quadrature points for the phase function (no. of angles)
-phase_quad_type = "L" # type of phase function quadrature
-radii_quad_type = "T" # type of radii size distribution quadrature
-leg_coeffs = True # toggle legendre expansion coefficients for the phase function
-leg_coeffs_type = "normalised" # type of Legendre polynomial expansion coefficients
-
-ewp_res = 1 # resolution of the grid to calculate optical properties at
-ewp_wvnm, ewp_wvls = utilities.calc_grids(low_wvn,
-                                upp_wvn,
-                                ewp_res,
-                                spec_units)
-
-#calculate optical properties either standard or parallelized, where
-#   op_dict["beta_ext"] - extinction coefficient
-#   op_dict["ss_alb"] - single scatter albedo
-#   op_dict["phase_function"] - phase function    
-#   op_dict["legendre_coefficient"] - Legendre expansion of the phase function coeffs
-if multiprocess == True:
-    op_proxy_dict = Manager().dict()
-    op_process = Process(target = optical_properties.ewp_hs,
-                         kwargs = {"wavelengths" : ewp_wvls, 
-                                 "composition" : comp, 
-                                 "distribution" : sd,
-                                 "legendre_coefficients_flag" : leg_coeffs,
-                                 "legendre_coefficients_type" : leg_coeffs_type,
-                                 "radii" : radii,
-                                 "eta" : eta,
-                                 "phase_quad_N" : phase_quad_N,
-                                 "phase_quad_type" : phase_quad_type,
-                                 "radii_quad_type" : radii_quad_type,
-                                 "aria" : aria_fldr,
-                                 "return_dict"  :  op_proxy_dict,
-                                 "multiprocess" : True
-                             }
-                        )
-    op_process.start()
-    
-else:
-    op_dict = optical_properties.ewp_hs(wavelengths=ewp_wvls, 
-                                        composition=comp, 
-                                        distribution=sd,
-                                        legendre_coefficients_flag=leg_coeffs,
-                                        legendre_coefficients_type=leg_coeffs_type,
-                                        radii=radii,
-                                        eta=eta,
-                                        phase_quad_N=phase_quad_N,
-                                        phase_quad_type=phase_quad_type,
-                                        radii_quad_type=radii_quad_type,
-                                        aria=aria_fldr
-                                    )
+scat_lyr_1.set_input_from_dict(scat_lyr_1_inp) # sets input for scattering layer
+scat_lyr_1.calculate_op() # calculates layer optical properties, may run in parallel
 
 ########################################################################################
 # prepare atmospheric layer structure
@@ -143,7 +88,7 @@ init_lev = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 
             ]
 
 # add upper and lower particle layer boundaries, delete any levels "within" the layer
-levels, ilyr, inv_ilyr = utilities.add_lyr(old_lev = init_lev, u = p_lyr_u, l = p_lyr_l)
+levels, ilyr, inv_ilyr = utilities.add_lyr(old_lev = init_lev, u = scat_lyr_1.alt_upp, l = scat_lyr_1.alt_low)
 
 # write output levels file for RFM
 rfm_out_lvl_fname = "alts.lev"
@@ -197,21 +142,17 @@ model_RFM = forward_model.RFM()
 print(model_RFM.status)
 
 # run rfm
-model_RFM.run_rfm(rfm_fldr)
+#model_RFM.run_rfm(rfm_fldr)
 
-# join output of the optical properties calculation (if multiprocessing)
-if multiprocess == True:
-    op_process.join()
-    op_dict = {}
-    op_dict.update(op_proxy_dict)
+# print current status:
+print(model_RFM.status)
+
+# add output from optical properties calculation (placed here, because if calculations
+# run in parallel processes, here is the place they join the main process.)
+scat_lyr_1.add_op_calc_output()
     
-# regrid op_dict from the ewp_grid to wvls
-print("Interpolating optical properties.")
-op_dict, diff_dict = optical_properties.regrid(op_dict, 
-                                               wvls,
-                                               track_diff=True,
-                                               diff_type="abs")
-print("optical properties interpolated.")
+# interpolate layer optical properties
+scat_lyr_1.regrid(wvls, track_diff=True)
 
 ## add rfm opt output to model_RFM
 model_RFM.add_rfm_opt_output(rfm_fldr, levels)
@@ -235,7 +176,7 @@ if len(cols) != len(wvls):
 
 # set disort_input parameters common to all loop iterations
 # these need to be set first:
-model_DISORT.set_maxmom(op_dict["legendre_coefficient"].shape[1]-1)
+model_DISORT.set_maxmom(scat_lyr_1.legendre_coefficient.shape[1]-1)
 model_DISORT.set_maxcmu(16)
 model_DISORT.set_maxumu(1)
 model_DISORT.set_maxphi(1)
@@ -320,12 +261,12 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
     
     #particle layer optical depths (from particle scattering)
     tau_p = np.zeros( shape=( len(tau_g) ) )
-    tau_p[inv_ilyr] = op_dict["beta_ext"][wvl_idx] * 1e3 * ( p_lyr_u - p_lyr_l )
+    tau_p[inv_ilyr] = scat_lyr_1.beta_ext[wvl_idx] * 1e3 * ( scat_lyr_1.alt_upp - scat_lyr_1.alt_low )
     # factor 1e3 because of unit conversion (beta_ext [m-1], whereas RFM uses [km-1]
     
     #particle layer single scatter albedo
     w_p = np.zeros( shape=( len(tau_g) ) )
-    w_p[inv_ilyr] = op_dict["ssalb"][wvl_idx]
+    w_p[inv_ilyr] = scat_lyr_1.ssalb[wvl_idx]
     
     dtauc_tot = utilities.calc_tot_dtauc(tau_g=tau_g,
                                          tau_R=tau_R,
@@ -378,7 +319,7 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
         truncated from the optical depths profile. No particle scattering at this
          wavelength.""")
     else:
-        pmom_p[:,-(ilyr+1)] = op_dict["legendre_coefficient"][wvl_idx,:]
+        pmom_p[:,-(ilyr+1)] = scat_lyr_1.legendre_coefficient[wvl_idx,:]
         Legendre_precision = 1/pmom_p[:,-(ilyr+1)][0] # Legendre expansion precision
         pmom_p[:,-(ilyr+1)][0] = 1.0 # default the first coefficient to 0
 
@@ -471,7 +412,7 @@ if plot == True:
             
         plt.plot(x,
                  y,
-                 label=f"ash layer: {p_lyr_a_avg - 0.5} - {p_lyr_a_avg + 0.5} km",
+                 label=f"ash layer: {scat_lyr_1.center_alt - scat_lyr_1.thick/2} - {scat_lyr_1.center_alt + scat_lyr_1.thick/2} km",
                  c="tab:blue"
              )
 

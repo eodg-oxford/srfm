@@ -15,7 +15,8 @@ __all__ = [
     "optical_properties",
     "size_distribution",
     "quadrature",
-    "mie_module"
+    "mie_module",
+    "layer"
 ]
 
 """Import oxharp modules."""
@@ -33,4 +34,4 @@ from . import optical_properties
 from . import quadrature
 from . import size_distribution
 from . import mie_module
-
+from . import layer
