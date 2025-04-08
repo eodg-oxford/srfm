@@ -429,3 +429,40 @@ def read_atm_file(filename):  # read bits of internal profile output file prf.as
         contents[sec_lbl] = sec_cont
 
     return contents
+
+def write_atm_file(data, filename, header=None):
+    """Write out a file with atmospheric profile in RFM's .atm file format.
+    Inputs:
+        data - dictionary
+        filename - filename for the output file (path)
+        header - header for the file, optional, each line starts with "!"
+    outputs
+        outputs an .atm format file with name and path specified in filename.
+    """
+    with open(filename, "w") as f:
+        if header is not None:
+            if header.startswith("!"):
+                f.write(header)
+            else:
+                f.write("!")
+                f.write(header)
+        f.write(str(len(data["HGT [km]"]))+"\n")
+        f.write("*HGT [km]\n")
+        for i,ii in enumerate(data["HGT [km]"]):
+            if (i % 5) == 0 and i != 0:
+                f.write(f'\n{data["HGT [km]"][i]:.4e}    ')
+            else:
+                f.write(f'{data["HGT [km]"][i]:.4e}    ')
+        f.write("\n")
+        keys = list(data.keys())
+        keys.remove("HGT [km]")
+        for key in keys:
+            f.write(f"*{key}\n")
+            for i,ii in enumerate(data[key]):
+                if (i % 5) == 0 and i != 0:
+                    f.write(f'\n{data[key][i]:.4e}    ')
+                else:
+                    f.write(f'{data[key][i]:.4e}    ')
+            f.write("\n")
+    f.close()
+    return
