@@ -13,6 +13,7 @@ import warnings
 import psutil
 import time
 from numba import njit
+from bisect import bisect
 
 
 def closest(lst_lon, lon, lst_lat, lat):
@@ -159,7 +160,7 @@ def memory_safe_np_zeros_2d(constraints=None, pct=99, max_sec_dim = None):
     max_array_items = ram.available / isize
     
     # determine shape of array to be declared and declare
-    if constraints == None:
+    if constraints is None:
         prime_factors = find_prime_factors(max_array_ram)
         return np.zeros(
                 (int(max(prime_factors)), int(max_array_items / max(prime_factors))
@@ -255,42 +256,39 @@ def calc_layer_bounds(u,l):
     a = l + t/2
     
     return a, t
-    
-def add_lyr(old_lev,u,l):
+
+def add_lyr(lev, track_lev, new_lyr):
     """Adds a layer to an existing atmoshperic level structure.
     Deletes any levels from the existing structure that would fall within the new layer.
+    Updates a tracking array.
     inputs:
-        old_lev - list with current user-desired layers
-        u, l - new layer upper and lower boundary
+        lev -  current layers
+        track_lev - helper list to track inserted levels, None for all levels except 
+                    those inserted from a scattering layer
+        new_lyr - MieLayer object, which contains upper and lower layer boundary 
+                  altitudes, alt_upp and alt_low
     outputs:
          lev - new atmospheric level structure
-         ilyr - particle layer index, useful when atmosphere specified such that layer 0
-         is at the surface/lowerst altitude (e.g. in RFM)
-         inv_ilyr - particle layer index from an inverted profile, useful when 
-         atmosphere specified such that layer 0 is at the TOA (e.g. in DISORT).
+         track_lev - modified tracker list for level structure
+                   - None for all user specified levels, layer upper and lower boundary
+                     specifiers (f"{MieLayer.name}" for the 
+                     new inserted levels
     """
-    if not isinstance(old_lev, (list, np.ndarray)):
-        raise TypeError("old_lev must be a list or a 1D np.ndarray")
-    if isinstance(old_lev, np.ndarray):
-        if old_lev.ndim != 1:
-            raise ValueError("if old_lev is a np.ndarray, it must be 1D.")
-        elif old_lev.ndim == 1:
-            try:
-                old_lev = old_lev.tolist()
-            except:
-                raise RuntimeError("Could not convert lev to list.")
-    if not isinstance(u, (int,float)):
-        raise TypeError("Parameter 'u' must be int or float.")
-    if not isinstance(l, (int,float)):
-        raise TypeError("Parameter 'l' must be int or float.")
+    
+    to_remove_idcs = [lev.index(i) for i in lev if i <= new_lyr.alt_upp and i >= new_lyr.alt_low]
+    for ii in to_remove_idcs[::-1]:
+        del track_lev[ii]
+        del lev[ii]
+    
+    idx_low = bisect(lev,new_lyr.alt_low)
+    lev.insert(idx_low,new_lyr.alt_low)
+    track_lev.insert(idx_low,new_lyr.name)
+    
+    idx_upp = bisect(lev,new_lyr.alt_upp)
+    lev.insert(idx_upp,new_lyr.alt_upp)
+    track_lev.insert(idx_upp,new_lyr.name)
 
-    to_remove = [i for i in old_lev if i <= u and i >= l]
-    lev = [float(i) for i in old_lev if i not in to_remove]
-    lev = lev + [float(u),float(l)]
-    lev.sort()
-    ilyr = lev.index(l)
-    inv_ilyr = lev[::-1].index(u)
-    return lev, ilyr, inv_ilyr
+    return lev, track_lev
 
 def calc_tot_dtauc(tau_g,tau_R,tau_p):
     """Calculate total optical depth of model layers, delta tau (dtau).
@@ -377,17 +375,17 @@ def number_conc_from_mass_loading(l, rho, thick, r=None, d=None):
     elif isinstance(rho, str) and rho in rho_dict.keys():
         rho = rho_dict[rho]
     
-    if r == None and d == None:
+    if r is None and d is None:
         raise ValueError(f"Both r and d are None. One has to be given.")
-    elif r != None and d != None:
+    elif r is not None and d is not None:
         if d/2 == r:
             pass
         else:
             raise ValueError(f"""Conflicting r and d are given. 
             Providing one is sufficient.""")
-    elif r == None and d != None:
+    elif r is None and d is not None:
         r = d/2
-    elif r != None and d == None:
+    elif r is not None and d is None:
         pass
     
     #factor 1e6 comes from unit conversions
@@ -436,17 +434,17 @@ def mass_loading_from_number_conc(n, thick, rho, r=None, d=None):
     elif isinstance(rho, str) and rho in rho_dict.keys():
         rho = rho_dict[rho]
     
-    if r == None and d == None:
+    if r is None and d is None:
         raise ValueError(f"Both r and d are None. One has to be given.")
-    elif r != None and d != None:
+    elif r is not None and d is not None:
         if d/2 == r:
             pass
         else:
             raise ValueError(f"""Conflicting r and d are given. 
             Providing one is sufficient.""")
-    elif r == None and d != None:
+    elif r is None and d is not None:
         r = d/2
-    elif r != None and d == None:
+    elif r is not None and d is None:
         pass
 
     return 4 / 3 * np.pi * r**3 * thick * rho * n * 1e-6
@@ -526,4 +524,45 @@ def calc_grids(lo, hi, res, units):
         wvls = np.linspace(lo, hi, int((hi-lo)/res+1))[::-1]
         wvnm = (1/wvls)*1e4
     return wvnm, wvls
+
+def track_lev_to_track_lyr(lev):
+    """Converts a levels tracking list to layer tracking list.
+    Contains None for all layers except the tracked layer.
+    Example logic:
+        (L is the layer name in place of the lower and upper layer boundary
+        altitudes)
+        track_lev = [None, None, L, L, None, None]
+        is converted to
+        track_lyr = [None, None, L, None, None]
+    inputs:
+        lev - levels tracking array
+    outputs:
+        lyr - layers tracking array
+    """
+    
+    lyr = []
+    for i in range(1,len(lev)):
+        if lev[i] is not None and lev[i-1] is not None and lev[i] == lev[i-1]:
+            lyr.append(lev[i])
+        else:
+            lyr.append(None)
+    return lyr
+
+def read_ils(filename):
+    """Read instrument line shape file in RFM format (for description of the format,
+    see https://eodg.atm.ox.ac.uk/RFM/sum/ilsfil.html"""
+    
+    f = open(filename,"r")
+    lines = f.readlines()
+    f.close()
+    head = lines[3].split()
+    npts = int(head[0])
+    lo = float(head[1])
+    res = float(head[2])
+    hi = lo + (npts-1)*res
+    if len(head) > 3:
+        wnorange = head[3]
+    x = np.linspace(lo,hi,npts)
+    y = np.array([float(x) for xs in [i.split() for i in lines[4:]] for x in xs])
+    return x, y, lo, hi
     

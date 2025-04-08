@@ -24,9 +24,9 @@ multiprocess = True # if True, parallelizes some calculations,
 ########################################################################################
 # specify spectral calculation grid
 ########################################################################################
-spec_res = 0.1 # model spectral resolution,[spec_units]
-low_spc = 645 # model start wavenumber (lower), [spec_units]
-upp_spc = 2760 # model end wavenumber (upper), [spec_units]
+spec_res = 0.25 # model spectral resolution,[spec_units]
+low_spc = 800 # model start wavenumber (lower), [spec_units]
+upp_spc = 1250 # model end wavenumber (upper), [spec_units]
 spec_units = "cm-1" # accepted values "cm-1", "um", "nm"
 
 RFM_wvnm, wvls = utilities.calc_grids(low_spc,
@@ -41,45 +41,80 @@ rfm_grid_fname = rfm_functions.construct_rfm_grid_file(RFM_wvnm,
 ########################################################################################
 # define an atmospheric scattering layer
 ########################################################################################
-scat_lyr_1 = layer.MieLayer(name="Mie_1")
-scat_lyr_1_inp = {
-    "low_spc" : low_spc, # spectral claculation grid lower limit 
-    "upp_spc" : upp_spc, # spectral calculation grid upper limit
-    "res" : 1, # specral calculation grid resolution
-    "spec_units" : spec_units, # spectral calculation grid units
-    "mass_loading" : 3.23, #column particle loading, [g m-2]
-    "rho" : "glass", # particle density, can be number or one of permitted strings
-    "n" : None, # total particle concentration [cm-3]
-    "r" : 2,  # mean particle radius [um]
-    "s" : 1.5, # spread, for the lognormal distribution
-    "s_a_den" : None, # surf. area density, will be calculated in size dist.
-    "v_den" : None, # volume density, will be calculated in size dist.
-    "dist_type" : "log_normal", # choose size distribution type
-    "comp" : "ash", # define particle type (by composition)
-    "center_alt" : 3.5, # avg particle layer altitude (center of layer altitude), [km]
-    "thick" : 1, # particle layer thickness, [km]
-    "alt_upp" : None, # particle layer upper boundary altitude, [km]
-    "alt_low" : None, # particle layer lower boundary altitude, [km],
-    "radii" : 200, # number of radii in size distribution quadrature
-    "eta" : 1e-6, # value n(r) at which the size distribution upper and lower limits are set
-    "phase_quad_N" : 181, # number of quadrature points for the phase function (no. of angles)
-    "phase_quad_type" : "L", # type of phase function quadrature
-    "radii_quad_type" : "T", # type of radii size distribution quadrature
-    "leg_coeffs" : True, # toggle legendre expansion coefficients for the phase function
-    "leg_coeffs_type" : "normalised", # type of Legendre coeffs, normalised or regular
-    "aria" : aria_fldr, # where ARIA is
-    "multiprocess" : False, # type of Legendre polynomial expansion coefficients     
+scat_lyrs = {} # dictionary of scattering layers, key - layer name, value - Layer() object
+
+scat_lyrs_inputs = { 
+        "Mie_1" : {
+            "name" : "Mie_1", # layer identifier/name
+            "low_spc" : low_spc, # spectral claculation grid lower limit 
+            "upp_spc" : upp_spc, # spectral calculation grid upper limit
+            "res" : 1, # specral calculation grid resolution
+            "spec_units" : spec_units, # spectral calculation grid units
+            "mass_loading" : 3.23, #column particle loading, [g m-2]
+            "rho" : "mineral", # particle density, can be number or one of permitted strings
+            "n" : None, # total particle concentration [cm-3]
+            "r" : 2,  # mean particle radius [um]
+            "s" : 1.5, # spread, for the lognormal distribution
+            "s_a_den" : None, # surf. area density, will be calculated in size dist.
+            "v_den" : None, # volume density, will be calculated in size dist.
+            "dist_type" : "log_normal", # choose size distribution type
+            "comp" : "ash", # define particle type (by composition)
+            "center_alt" : 3.5, # avg particle layer altitude (center of layer altitude), [km]
+            "thick" : 0.1, # particle layer thickness, [km]
+            "alt_upp" : None, # particle layer upper boundary altitude, [km]
+            "alt_low" : None, # particle layer lower boundary altitude, [km],
+            "radii" : 200, # number of radii in size distribution quadrature
+            "eta" : 1e-6, # value n(r) at which the size distribution upper and lower limits are set
+            "phase_quad_N" : 181, # number of quadrature points for the phase function (no. of angles)
+            "phase_quad_type" : "L", # type of phase function quadrature
+            "radii_quad_type" : "T", # type of radii size distribution quadrature
+            "leg_coeffs" : True, # toggle legendre expansion coefficients for the phase function
+            "leg_coeffs_type" : "normalised", # type of Legendre coeffs, normalised or regular
+            "aria" : aria_fldr, # where ARIA is
+            "multiprocess" : True, # type of Legendre polynomial expansion coefficients     
+        },
+#        "Mie_2" : {
+#            "name" : "Mie_2", # layer identifier/name
+#            "low_spc" : low_spc, # spectral claculation grid lower limit 
+#            "upp_spc" : upp_spc, # spectral calculation grid upper limit
+#            "res" : 1, # specral calculation grid resolution
+#            "spec_units" : spec_units, # spectral calculation grid units
+#            "mass_loading" : 2.23, #column particle loading, [g m-2]
+#            "rho" : "glass", # particle density, can be number or one of permitted strings
+#            "n" : None, # total particle concentration [cm-3]
+#            "r" : 2,  # mean particle radius [um]
+#            "s" : 1.5, # spread, for the lognormal distribution
+#            "s_a_den" : None, # surf. area density, will be calculated in size dist.
+#            "v_den" : None, # volume density, will be calculated in size dist.
+#            "dist_type" : "log_normal", # choose size distribution type
+#            "comp" : "ice", # define particle type (by composition)
+#            "center_alt" : 8, # avg particle layer altitude (center of layer altitude), [km]
+#            "thick" : 1, # particle layer thickness, [km]
+#            "alt_upp" : None, # particle layer upper boundary altitude, [km]
+#            "alt_low" : None, # particle layer lower boundary altitude, [km],
+#            "radii" : 181, # number of radii in size distribution quadrature
+#            "eta" : 1e-6, # value n(r) at which the size distribution upper and lower limits are set
+#            "phase_quad_N" : 200, # number of quadrature points for the phase function (no. of angles)
+#            "phase_quad_type" : "L", # type of phase function quadrature
+#            "radii_quad_type" : "T", # type of radii size distribution quadrature
+#            "leg_coeffs" : True, # toggle legendre expansion coefficients for the phase function
+#            "leg_coeffs_type" : "normalised", # type of Legendre coeffs, normalised or regular
+#            "aria" : aria_fldr, # where ARIA is
+#            "multiprocess" : True, # type of Legendre polynomial expansion coefficients     
+#        },
     }
 
-scat_lyr_1.set_input_from_dict(scat_lyr_1_inp) # sets input for scattering layer
-scat_lyr_1.calculate_op() # calculates layer optical properties, may run in parallel
+for lyr in scat_lyrs_inputs.keys():
+    scat_lyrs[lyr] = layer.MieLayer()
+    scat_lyrs[lyr].set_input_from_dict(scat_lyrs_inputs[lyr]) # sets input for scattering layer
+    scat_lyrs[lyr].calculate_op() # calculates layer optical properties, may run in parallel
 
 ########################################################################################
 # prepare atmospheric layer structure
 ########################################################################################
 
-#define some requested output levels
-init_lev = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0,
+# define some requested output levels
+levels = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0,
             14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0,
             27.5, 30.0, 32.5, 35.0, 37.5, 40.0, 42.5, 45.0, 47.5, 50.0, 55.0, 57.5, 60.0, 62.5,
             65.0, 67.5, 70.0, 75.0, 80.0, 82.5, 85.0, 87.5, 90.0, 95.0, 100.0, 101.0, 102.0, 103.0, 104.0,
@@ -87,8 +122,16 @@ init_lev = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 
             115.5, 116.0, 116.5, 117.0, 117.5, 118.0, 118.5, 119.0, 119.5, 120.0
             ]
 
+# define tracker array for atmospheric structure
+track_lev = [None for i in levels]
+
 # add upper and lower particle layer boundaries, delete any levels "within" the layer
-levels, ilyr, inv_ilyr = utilities.add_lyr(old_lev = init_lev, u = scat_lyr_1.alt_upp, l = scat_lyr_1.alt_low)
+for lyr in scat_lyrs.keys():
+    levels, track_lev = utilities.add_lyr(lev=levels, track_lev=track_lev, new_lyr=scat_lyrs[lyr])
+
+# convert the tracking levels array to a tracking layers array
+track_lyr = utilities.track_lev_to_track_lyr(track_lev)
+track_lyr = track_lyr[::-1]
 
 # write output levels file for RFM
 rfm_out_lvl_fname = "alts.lev"
@@ -106,7 +149,7 @@ rfm_inp = {}
 
 # primary sections (mandatory), see the documentation for alternatives
 rfm_inp["HDR"] = f"{str(datetime.date.today())} test run" # RFM header
-rfm_inp["FLG"] = "OPT NAD SFC PRF LEV BBT RAD DBL" # RFM flags
+rfm_inp["FLG"] = "OPT NAD SFC PRF LEV RAD DBL" # RFM flags
 rfm_inp["SPC"] = f"{rfm_grid_fname}" # RFM spectral settings
 rfm_inp["GAS"] = """N2 O2 CO2 O3 H2O CH4 N2O HNO3 CO NO2 N2O5 ClO HOCl ClONO2 NO HNO4 
                     HCN NH3 F11 F12 F14 F22 CCl4 COF2 H2O2 C2H2 C2H6 OCS SO2 SF6""" 
@@ -142,17 +185,19 @@ model_RFM = forward_model.RFM()
 print(model_RFM.status)
 
 # run rfm
-#model_RFM.run_rfm(rfm_fldr)
+model_RFM.run_rfm(rfm_fldr)
 
 # print current status:
 print(model_RFM.status)
 
 # add output from optical properties calculation (placed here, because if calculations
 # run in parallel processes, here is the place they join the main process.)
-scat_lyr_1.add_op_calc_output()
+for lyr in scat_lyrs.keys():
+    scat_lyrs[lyr].add_op_calc_output()
     
-# interpolate layer optical properties
-scat_lyr_1.regrid(wvls, track_diff=True)
+    # interpolate layer optical properties
+    scat_lyrs[lyr].regrid(wvls, track_diff=True)
+    scat_lyrs[lyr].calc_tau()
 
 ## add rfm opt output to model_RFM
 model_RFM.add_rfm_opt_output(rfm_fldr, levels)
@@ -164,7 +209,7 @@ cols = [i for i in model_RFM.rfm_output.columns if i.startswith("dOD")]
 print(model_RFM.status)
         
 ########################################################################################
-# prepare and run DISORT
+# prepare DISORT common variables
 ########################################################################################
 
 # initialize DISORT model class
@@ -176,11 +221,21 @@ if len(cols) != len(wvls):
 
 # set disort_input parameters common to all loop iterations
 # these need to be set first:
-model_DISORT.set_maxmom(scat_lyr_1.legendre_coefficient.shape[1]-1)
-model_DISORT.set_maxcmu(16)
-model_DISORT.set_maxumu(1)
-model_DISORT.set_maxphi(1)
-model_DISORT.set_maxulv(1)
+nmom = 0
+for lyr in scat_lyrs.keys():
+    if (scat_lyrs[lyr].legendre_coefficient.shape[1]-1) > nmom:
+        nmom = scat_lyrs[lyr].legendre_coefficient.shape[1]-1
+
+model_DISORT.set_maxcmu(16)        
+
+model_DISORT.set_maxmom(nmom)
+if nmom < model_DISORT.disort_input["maxcmu"]:
+    model_DISORT.set_maxmom(model_DISORT.disort_input["maxcmu"])
+
+
+model_DISORT.set_maxumu(4)
+model_DISORT.set_maxphi(2)
+model_DISORT.set_maxulv(3)
 
 # now the rest
 model_DISORT.set_usrang(True)
@@ -193,11 +248,11 @@ model_DISORT.set_plank(True)
 model_DISORT.set_lamber(True)
 model_DISORT.set_deltamplus(False)
 model_DISORT.set_do_pseudo_sphere(False)
-model_DISORT.set_utau([0])
+model_DISORT.set_utau([0,0.1,0.2])
 model_DISORT.set_umu0(0.1)
 model_DISORT.set_phi0(0)
-model_DISORT.set_umu([1])
-model_DISORT.set_phi([0])
+model_DISORT.set_umu([-1,-0.1,0.1,1])
+model_DISORT.set_phi([0,1])
 model_DISORT.set_fbeam(0)
 model_DISORT.set_fisot(0)
 model_DISORT.set_albedo(0)
@@ -233,19 +288,22 @@ model_DISORT.set_emust(np.zeros(shape=(model_DISORT.disort_input["maxumu"])))
 model_DISORT.set_accur(0)
 
 
-# initialize disort input arrays for output variables
-model_DISORT.initialize_disort_output_arrays(
-    model_DISORT.disort_input["maxumu"],
-    model_DISORT.disort_input["maxphi"],
-    model_DISORT.disort_input["maxphi"],
-)
+# initialize disort input arrays for output variables from a single run
+model_DISORT.initialize_disort_output_arrays()
+
+########################################################################################
+# prepare SRFM common variables
+########################################################################################
+model_SRFM = forward_model.SRFM()
+model_SRFM.set_wvnm(RFM_wvnm)
+model_SRFM.set_wvls(wvls)
+model_SRFM.initialize_srfm_output_arrays_from_disort(model_DISORT)
 
 # loop over columns, dynamically set disort input variables in each loop
-for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
+for wvl_idx, (wvnm,wvl,col) in enumerate(zip(RFM_wvnm,wvls,cols)):
     model_DISORT.set_header(f"Now starting calculation for {col} cm-1.")
-
-    # get wavenumber from columns name
-    wvnm = RFM_wvnm[wvl_idx]
+    model_DISORT.set_wvnm(wvnm)
+    model_DISORT.set_wvl(wvl)
     
     # get layer optical depths from gas absorption
     tau_g = model_RFM.rfm_output[col].to_numpy()
@@ -261,12 +319,13 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
     
     #particle layer optical depths (from particle scattering)
     tau_p = np.zeros( shape=( len(tau_g) ) )
-    tau_p[inv_ilyr] = scat_lyr_1.beta_ext[wvl_idx] * 1e3 * ( scat_lyr_1.alt_upp - scat_lyr_1.alt_low )
-    # factor 1e3 because of unit conversion (beta_ext [m-1], whereas RFM uses [km-1]
+    for lyr in scat_lyrs.keys():
+        tau_p[track_lyr.index(lyr)] = scat_lyrs[lyr].tau[wvl_idx]
     
     #particle layer single scatter albedo
     w_p = np.zeros( shape=( len(tau_g) ) )
-    w_p[inv_ilyr] = scat_lyr_1.ssalb[wvl_idx]
+    for lyr in scat_lyrs.keys():
+        w_p[track_lyr.index(lyr)] = scat_lyrs[lyr].ssalb[wvl_idx]
     
     dtauc_tot = utilities.calc_tot_dtauc(tau_g=tau_g,
                                          tau_R=tau_R,
@@ -274,7 +333,7 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
                                         )
                                         
     # truncate optical depths
-    threshold_od = 1e-6 # threshold at which to truncate optical depths
+    threshold_od = 1e-8 # threshold at which to truncate optical depths
     idx = next(
         (index for index,value in enumerate(list(dtauc_tot)) if value > threshold_od),
         None)
@@ -283,9 +342,11 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
     tau_R = tau_R[idx:]
     tau_p = tau_p[idx:]
     w_p = w_p[idx:]
+    track_lyr_local = track_lyr[idx:]
     
     # set layer optical depths
     model_DISORT.set_dtauc_manually(dtauc=dtauc_tot)
+    model_DISORT.disort_input['dtauc'][model_DISORT.disort_input['dtauc']<0] = 0
     
     # set maxcly based on current length of tau_g
     model_DISORT.set_maxcly(len(dtauc_tot))
@@ -314,16 +375,17 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
     pmom_p = np.zeros((model_DISORT.disort_input["maxmom"] + 1,
                        model_DISORT.disort_input["maxcly"])
                      )
-    if ilyr > (pmom_p.shape[1]-1):
-        print(f"""Scattering layer optical depth was < {threshold_od} and was
-        truncated from the optical depths profile. No particle scattering at this
-         wavelength.""")
-    else:
-        pmom_p[:,-(ilyr+1)] = scat_lyr_1.legendre_coefficient[wvl_idx,:]
-        Legendre_precision = 1/pmom_p[:,-(ilyr+1)][0] # Legendre expansion precision
-        pmom_p[:,-(ilyr+1)][0] = 1.0 # default the first coefficient to 0
+    for lyr in scat_lyrs.keys():
+        if scat_lyrs[lyr].tau[wvl_idx] < threshold_od:
+            print(f"""Scattering layer optical depth was < {threshold_od} and was
+            truncated from the optical depths profile. No particle scattering at this
+             wavelength.""")
+        else:
+            pmom_p[:len(scat_lyrs[lyr].legendre_coefficient[wvl_idx,:]),track_lyr_local.index(lyr)] = scat_lyrs[lyr].legendre_coefficient[wvl_idx,:]
+            Legendre_precision = 1/pmom_p[0,track_lyr_local.index(lyr)]
+            pmom_p[0,track_lyr_local.index(lyr)] = 1.0
 
-    # calcualte the weighted sum of phase function moments      
+    # calculate the weighted sum of phase function moments      
     model_DISORT.set_pmom(pmom_R=pmom_R,
                           tau_R=tau_R,
                           w_p=w_p,
@@ -337,23 +399,26 @@ for wvl_idx, (wvl,col) in enumerate(zip(wvls,cols)):
     # run disort input tests
     model_DISORT.test_disort_input_format()
     model_DISORT.test_disort_input_integrity()
-
-    # initialize dictionary to store results
-    model_DISORT.disort_out[col] = {}
-    model_DISORT.disort_input['dtauc'][model_DISORT.disort_input['dtauc']<0] = 0
     
-    # run disort itself
-    model_DISORT.store_disort(col, model_DISORT.run_disort(prec=prec), bbt=True)
+    # run disort
+    model_DISORT.run_disort(prec=prec)
+    
+    # store result in SRFM()
+    model_SRFM.store_disort_result(model_DISORT, wvl_idx)
     
     # print current status:
 #    print(model_DISORT.status)
 print("Main DISORT loop finished.")
 
+model_SRFM.convolve_with_iasi(f"{rfm_fldr}/rfm_files/iasi.ils")
+
+model_SRFM.calc_bbt()
+
 ########################################################################################
 # (optional) create plots
 ########################################################################################
 plot = True # create a plot?
-plot_disort = True # plot disort output?
+plot_srfm = True # plot disort output?
 plot_rfm = True # plot rfm output?
 plot_residual = False # plot difference between rfm and diosrt?
 y_type = "bbt" # plot in radiances (W m-2 sr-1 cm) or brightness temperatures [K]
@@ -383,54 +448,43 @@ if plot == True:
             
     # plot RFM
     if plot_rfm == True:
+        filename = f"{rfm_fldr}/rad_001000.asc"
+        data = rfm_functions.read_output(filename)
+        RFM_rad = data["SPC"]*1e-5
+        
         if y_type == "bbt":
-            filename = f"{rfm_fldr}/bbt_001000.asc"
-            data = rfm_functions.read_output(filename)
-            plt.plot(x, data["SPC"], label=f"no scattering",alpha=0.9,c="tab:orange")
+            RFM_bbt = utilities.convert_spectral_radiance_to_bbt(RFM_rad,RFM_wvnm)
+            plt.plot(x, RFM_bbt, label=f"no scattering",alpha=1,c="tab:orange")
         elif y_type == "rad":
-            filename = f"{rfm_fldr}/rad_001000.asc"
-            data = rfm_functions.read_output(filename)
-            plt.plot(x, 
-                     data["SPC"]*1e-5,
-                     label=f"no scattering",
-                     alpha=0.9,
-                     c="tab:orange"
-                 )
+            plt.plot(x, RFM_rad, label=f"no scattering", alpha=0.9, c="tab:orange")
 
-    # plot DISORT
-    if plot_disort == True:        
+    # plot SRFM
+    if plot_srfm == True:        
         if y_type == "bbt": 
-            y = [
-                model_DISORT.disort_out[i]["uu_bbt"][0].item()
-                for i in model_DISORT.disort_out.keys()
-            ]
+            y = model_SRFM.bbt[:,3,0,0]
         elif y_type == "rad":
-            y = [
-                model_DISORT.disort_out[i]["uu"][0].item()
-                for i in model_DISORT.disort_out.keys()
-            ]
+            y = model_SRFM.uu[:,3,0,0]
             
-        plt.plot(x,
-                 y,
-                 label=f"ash layer: {scat_lyr_1.center_alt - scat_lyr_1.thick/2} - {scat_lyr_1.center_alt + scat_lyr_1.thick/2} km",
-                 c="tab:blue"
-             )
+        plt.plot(x, y, label=f"scattering", c="tab:blue")
 
     # plot residual
     if plot_residual == True:
-        if plot_disort != True and plot_rfm != True:    
+        if plot_srfm != True and plot_rfm != True:    
             print(f"Can't plot residual without data.")
         else:
             plt.ion()
             if y_type == "bbt":
-                plt.plot(x, y-(data["SPC"]), label = "residual")
+                plt.plot(x, y-RFM_bbt, label = "residual", c = "tab:green")
             elif y_type == "rad":
-                plt.plot(x, y-(data["SPC"]*1e-5), label = "residual")
+                plt.plot(x, y-RFM_rad, label = "residual", c = "tab:green")
     
     # common
     plt.xlabel(x_lbl)
     plt.ylabel(y_lbl)
 
+#    plt.plot(model_SRFM.wvnm,model_SRFM.bbt_unconvolved[:,3,0,0],label="unconvolved",c="tab:red")  
+#    plt.plot(model_SRFM.wvnm,model_SRFM.bbt[:,3,0,0],label="convolved",c="tab:green")   
+    
     plt.legend()
     plt.show() 
         

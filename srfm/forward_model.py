@@ -14,6 +14,7 @@ import os
 from . import utilities as utils
 from . import units
 import pandas as pd
+from scipy.signal import convolve
 
 try:
     from .DISORT import disort_module_s as dms
@@ -35,10 +36,8 @@ except ImportError:
 
 
 class Fwd_model:
-    def __init__(self, name=None, wno=None, intensity=None, **parameters):
+    def __init__(self, name=None, **parameters):
         self.name = name
-        self.wno = wno
-        self.intensity = intensity
         self.parameters = {}
 
 
@@ -46,13 +45,11 @@ class RFM(Fwd_model):
     def __init__(
         self,
         name="RFM",
-        wno=None,
-        intensity=None,
         rfm_fldr=None,
         status="RFM model object created.",
         **parameters,
     ):
-        super().__init__(name, wno, intensity)
+        super().__init__(name)
         self.rfm_fldr = rfm_fldr
         self.status = status
         for key, val in parameters.items():
@@ -96,7 +93,7 @@ class RFM(Fwd_model):
         return
 
     def get_wnos_from_RFM(self):
-        if self.rfm_output != None:
+        if self.rfm_output is not None:
             try:
                 [
                     float(i[i.rfind("_") + 1 :])
@@ -119,8 +116,6 @@ class DISORT(Fwd_model):
     def __init__(
         self,
         name="DISORT",
-        wno=None,
-        intensity=None,
         disort_fldr=None,
         disort_input={},
         disort_out={},
@@ -129,7 +124,7 @@ class DISORT(Fwd_model):
         status="DISORT object created.",
         **parameters,
     ):
-        super().__init__(name, wno, intensity)
+        super().__init__(name)
         self.disort_fldr = disort_fldr
         self.disort_input = disort_input
         self.disort_out = disort_out
@@ -442,27 +437,41 @@ class DISORT(Fwd_model):
     def set_header(self, header):
         self.disort_input["header"] = header
 
-    def initialize_disort_output_arrays(self, maxumu, maxphi, maxulv):
-        self.disort_input["rfldir"] = np.zeros(shape=(maxulv))
-        self.disort_input["rfldn"] = np.zeros(shape=(maxulv))
-        self.disort_input["flup"] = np.zeros(shape=(maxulv))
-        self.disort_input["dfdt"] = np.zeros(shape=(maxulv))
-        self.disort_input["uavg"] = np.zeros(shape=(maxulv))
-        self.disort_input["uu"] = np.zeros(shape=(maxumu, maxulv, maxphi))
-        self.disort_input["albmed"] = np.zeros(shape=(maxumu))
-        self.disort_input["trnmed"] = np.zeros(shape=(maxumu))
+    def initialize_disort_output_arrays(self):
+        """Initializes output arrays for a single disort run."""
+        self.disort_input["rfldir"] = np.zeros(self.disort_input["maxulv"])
+        self.disort_input["rfldn"] = np.zeros(self.disort_input["maxulv"])
+        self.disort_input["flup"] = np.zeros(self.disort_input["maxulv"])
+        self.disort_input["dfdt"] = np.zeros(self.disort_input["maxulv"])
+        self.disort_input["uavg"] = np.zeros(self.disort_input["maxulv"])
+        self.disort_input["uu"] = np.zeros(
+                                        (
+                                    self.disort_input["maxumu"],
+                                    self.disort_input["maxulv"],
+                                    self.disort_input["maxphi"]
+                                )
+                            )
+        self.disort_input["albmed"] = np.zeros(self.disort_input["maxumu"])
+        self.disort_input["trnmed"] = np.zeros(self.disort_input["maxumu"])
     
     def run_disort(self,prec="double"):
         """Calls function to run disort with required precision."""
         if prec == "double":
-            res = self.run_disort_double()
+            self.run_disort_double()
         elif prec == "single":
-            res = self.run_disort_single()
+            self.run_disort_single()
         else:
             raise ValueError("prec must be 'single' or 'double'.")
-        return res
+        return
     
-
+    def set_wvnm(self,wvnm):
+        """Sets wavenumber of the current run."""
+        self.wvnm = wvnm
+    
+    def set_wvl(self,wvl):
+        """Set wavelength of the current run."""
+        self.wvl = wvl
+    
     def run_disort_single(self):
         """Runs disort, single precision."""
         if self.disort_fmt_passmark == True:
@@ -530,7 +539,6 @@ class DISORT(Fwd_model):
 
         return res
 
-
     def run_disort_double(self):
         """Runs disort, double precision."""
         if self.disort_fmt_passmark == True:
@@ -586,6 +594,34 @@ class DISORT(Fwd_model):
                     albmed=self.disort_input["albmed"],
                     trnmed=self.disort_input["trnmed"],
                 )
+                
+                self.disort_out[self.wvnm] = {}
+                self.disort_out[self.wvnm]["wavenumber (cm-1)"] = self.wvnm
+                self.disort_out[self.wvnm]["wavelength (um)"] = self.wvl
+                self.disort_out[self.wvnm]["rfldir"] = res[0] / (
+                    self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
+                )
+                self.disort_out[self.wvnm]["rfldn"] = res[1] / (
+                    self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
+                )
+                self.disort_out[self.wvnm]["flup"] = res[2] / (
+                    self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
+                )
+                self.disort_out[self.wvnm]["dfdt"] = res[3] / (
+                    self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
+                )
+                self.disort_out[self.wvnm]["uavg"] = res[4] / (
+                    self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
+                )
+                self.disort_out[self.wvnm]["uu"] = res[5] / (
+                    self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
+                )
+                self.disort_out[self.wvnm]["albmed"] = res[6]
+                if len(res) == 8:
+                    self.disort_out[self.wvnm]["trnmed"] = res[7]
+                else:
+                    self.disort_out[self.wvnm]["trnmed"] = 0
+                         
                 self.status = "DISORT run completed."
             else:
                 raise ValueError(
@@ -596,40 +632,15 @@ class DISORT(Fwd_model):
                 "Disort format passmark is not True, run format test first."
             )
 
-        return res
-
-    def store_disort(self, name, res, bbt=True):
-        """Stores disort output in self.disort_out[name]"""
-        self.disort_out[name]["wavenumber (cm-1)"] = float(name[name.rfind("_") + 1 :])
-        self.disort_out[name]["rfldir"] = res[0] / (
-            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-        )
-        self.disort_out[name]["rfldn"] = res[1] / (
-            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-        )
-        self.disort_out[name]["flup"] = res[2] / (
-            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-        )
-        self.disort_out[name]["dfdt"] = res[3] / (
-            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-        )
-        self.disort_out[name]["uavg"] = res[4] / (
-            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-        )
-        self.disort_out[name]["uu"] = res[5] / (
-            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-        )
-        self.disort_out[name]["albmed"] = res[6]
-        if len(res) == 8:
-            self.disort_out[name]["trnmed"] = res[7]
-
-        if bbt == True:
-            self.disort_out[name]["uu_bbt"] = utils.convert_spectral_radiance_to_bbt(
-                self.disort_out[name]["uu"], self.disort_out[name]["wavenumber (cm-1)"]
-            )
-
-        self.status = "DISORT result stored."
         return
+
+    def calc_bbt(self):
+        """Converts radiance to brightness temperature."""
+        for key in self.disort_out.keys():
+            self.disort_out[key]["uu_bbt"] = utils.convert_spectral_radiance_to_bbt(
+                self.disort_out[key]["uu"], self.disort_out[key]["wavenumber (cm-1)"]
+            )
+        
 
     def save_model_pickle(self, filename=None, folder=None):
         if isinstance(filename, (NoneType, str)):
@@ -881,5 +892,150 @@ class DISORT(Fwd_model):
                               )
         return pmom
 
+class SRFM(Fwd_model):
+    """This class represents the final forward model.
+    The class object serves as a container for the outputs from various forward models,
+    be it RFM + DISORT or other.
+    """
+    def __init__(self,name="SRFM",**parameters):
+        super().__init__(name)        
+        for key, val in parameters.items():
+            self.key = val
+            
+    def initialize_srfm_output_arrays_from_disort(self,DISORT):
+        """Initializes srfm output arrays to which disort outputs are appended.
+        Input:
+            self
+            DISORT - srfm.forward_model.DISORT object
+        Outputs:
+            self.rfldir - float64 array, shape(wvnm/wvls,maxulv)
+        """  
+        if hasattr(self, "wvnm") and self.wvnm is not None:
+            dim = len(self.wvnm)
+        elif hasattr(self, "wvls") and self.wvls is not None:
+            dim = len(self.wvls)
+        else:
+            raise RuntimeError("SRFM must have wvnm or wvls grids first.")
+        
+        
+        self.rfldir = np.zeros((dim,DISORT.disort_input["maxulv"]))
+        self.rfldn = np.zeros((dim,DISORT.disort_input["maxulv"]))
+        self.flup = np.zeros((dim,DISORT.disort_input["maxulv"]))
+        self.dfdt = np.zeros((dim,DISORT.disort_input["maxulv"]))
+        self.uavg = np.zeros((dim,DISORT.disort_input["maxulv"]))
+        
+        self.uu = np.zeros((dim,DISORT.disort_input["maxumu"],DISORT.disort_input["maxulv"],DISORT.disort_input["maxphi"]))
+        self.albmed = np.zeros((dim,DISORT.disort_input["maxumu"]))
+        self.trnmed = np.zeros((dim,DISORT.disort_input["maxumu"]))
+        return
+        
+    def set_wvnm(self, wvnm):
+        """Assigns wavenumber grid."""
+        if hasattr(self,"wvls") and self.wvls is not None:
+            assert len(self.wvls) == len(wvnm), """wvls and wvnm do not have equal 
+            number of points."""
+        self.wvnm = wvnm
+        return
+    
+    def set_wvls(self,wvls):
+        """Assigns wavelength grid."""
+        if hasattr(self, "wvnm") and self.wvnm is not None:
+            assert len(wvls) == len(self.wvnm), """wvls and wvnm do not have equal 
+            number of points."""
+        self.wvls = wvls
+        return
+    
+    def store_disort_result(self,DISORT,wvl_idx):
+        """Stores results from a single DISORT run to the SRFM() object."""
+        wvnm = DISORT.wvnm
+        self.rfldir[wvl_idx] = DISORT.disort_out[wvnm]["rfldir"]
+        self.rfldn[wvl_idx] = DISORT.disort_out[wvnm]["rfldn"]
+        self.flup[wvl_idx] = DISORT.disort_out[wvnm]["flup"]
+        self.dfdt[wvl_idx] = DISORT.disort_out[wvnm]["dfdt"]
+        self.uavg[wvl_idx] = DISORT.disort_out[wvnm]["uavg"]        
+        self.uu[wvl_idx] = DISORT.disort_out[wvnm]["uu"]
+        self.albmed[wvl_idx] = DISORT.disort_out[wvnm]["albmed"]
+        self.trnmed[wvl_idx] = DISORT.disort_out[wvnm]["trnmed"]
+    
+    def calc_bbt(self):
+        """Converts radiance to brightness temperature."""
+        # strech wvnm to correct shape to be broadcastable.
+        wvnm = self.wvnm[:,np.newaxis,np.newaxis,np.newaxis] # add new axis to wvnm
+        # to match the number of uu dimensions, 0th dimension (axis 0) are the same
+        
+        assert wvnm.shape[0] == self.uu.shape[0], """wvnm and uu don't have the same
+        shape of the first axis???"""
+        
+        uu_shape = self.uu.shape # tuple
+        
+        for num,i in enumerate(uu_shape[1:]):
+            wvnm = np.repeat(wvnm,i,axis=num+1)
+        
+            
+        self.bbt = utils.convert_spectral_radiance_to_bbt(
+            self.uu, wvnm
+        )
+        if hasattr(self,"uu_unconvolved"):
+            self.bbt_unconvolved = utils.convert_spectral_radiance_to_bbt(
+            self.uu_unconvolved, wvnm
+        )
+    
+    def convolve_with_iasi(self,filename):
+        """Convolve radiance (uu) with iasi instrument line shape.
+        Inputs:
+            self, must contain uu
+            filename - file name of the iasi.ils file (iasi instrument line shape kindly
+            provided by Anu Dudhia, in RFM format.)
+            assumes regular grid
+        """        
+        # save a copy of unconvolved spectrum
+        self.uu_unconvolved = self.uu.copy()
+        
+        # read instrument line shape
+        ils_x, ils_y, ils_lo, ils_hi = utils.read_ils(filename)
+        
+        # check if model grid is regular
+        a = np.diff(self.wvnm, n=2) # calculate 2nd discrete difference
+        a[a < 1e12] = 0 # remove small numbers (arising from computer precision limits)
+        assert np.all(a) == False, """Wavenumber grid is 
+        not regular.""" # check is all values in a are 0 (0 evaluates to False)
+        
+        # determine resolution from model wavenumber grid
+        num = len(self.wvnm)
+        lo = self.wvnm.min()
+        hi = self.wvnm.max()
+        res = np.round((hi-lo)/num,decimals=8) # this is inadvertedly introduces a limit
+        # on the minimum resolution used in the code as 1e-8 cm-1, which should be 
+        # enough though, and also this may not be the numerically most stable way to go
+        
+        # generate new grid for ils
+        new_x = np.linspace(ils_lo,
+                            ils_hi,
+                            int((ils_hi-ils_lo)/res+1)
+                            )
+        
+        # interpolate ils to new grid
+        new_y = np.interp(new_x, ils_x, ils_y)
+        
+        # calculate sum of instrument line shape for normalization later
+        norm = np.sum(new_y)
+       
+        # determine shape of uu from DISORT (basically a set of output spectra a 
+        # different optical dpeths, polar and azimuthal angles
+        uu_shape = self.uu.shape # tuple
+        
+        # determine all combinations of indices of uu
+        combs = []
+        for i in range(uu_shape[1]):
+            for ii in range(uu_shape[2]):
+                for iii in range(uu_shape[3]):
+                    combs.append([i,ii,iii])
+        
+        # convolve spectra in a loop
+        for c in combs:
+            self.uu[:,c[0],c[1],c[2]] = convolve(self.uu_unconvolved[:,c[0],c[1],c[2]],new_y,mode="same")/norm
+
+        return
+        
         
         

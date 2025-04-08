@@ -401,3 +401,31 @@ def construct_rfm_grid_file(wvnm,filename="grid.spc",rfm_fldr="./srfm/RFM"):
     f.close()
     print(f"{path} successfully created.")
     return f"./rfm_files/{filename}"
+
+def read_atm_file(filename):  # read bits of internal profile output file prf.asc
+    """This function reads the RFM .atm file.
+    inputs:
+        - filename (path)
+    """
+
+    f = open(filename, "r")
+    f_lines = f.readlines()
+    f.close()
+
+    contents = {}  # dictionary to store that read values.
+
+    # get section start lines
+    sec_begin_lns = [f_lines.index(x) for x in f_lines if x.startswith("*")]
+    for idx in range(len(sec_begin_lns) - 1):
+        sec_lbl = f_lines[sec_begin_lns[idx]].strip(" \n*")
+        if isinstance(sec_lbl, str) == False:
+            raise TypeError("Section label must be a string.")
+
+        sec_cont = [
+            i.strip() for i in f_lines[sec_begin_lns[idx] + 1 : sec_begin_lns[idx + 1]]
+        ]
+        sec_cont = (" ").join(sec_cont)
+        sec_cont = [float(ii) for ii in sec_cont.split()]
+        contents[sec_lbl] = sec_cont
+
+    return contents

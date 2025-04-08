@@ -34,6 +34,10 @@ class MieLayer(Layer):
         for key, val in parameters.items():
             self.key = val
 
+    def set_name(self,name):
+        """Assign a name to the layer."""
+        self.name = name
+    
     def set_spc_lim(self, lo, hi):
         """Set spectral calculation grid lower and upper limits."""
         self.low_spc = lo
@@ -142,6 +146,7 @@ class MieLayer(Layer):
 
     def set_input_from_dict(self, inp_dict):
         """Set all necessary input_parameters from an input dictionary."""
+        self.name = inp_dict["name"]
         self.low_spc = inp_dict["low_spc"]
         self.upp_spc = inp_dict["upp_spc"]
         self.spec_units = inp_dict["spec_units"]
@@ -173,7 +178,10 @@ class MieLayer(Layer):
         """Checks the input for correct format before running any calculation.
         Tests all input variables."""
         passmark = False
-
+        
+        if not isinstance(self.name, str):
+            raise TypeError("Name must be str.")
+        
         if not isinstance(self.low_spc, (int, float)):
             raise TypeError("Low_spc must be int or float.")
 
@@ -290,15 +298,15 @@ class MieLayer(Layer):
            |    /
          v_den
         """
-        if not (hasattr(self, "r") and self.r != None):
+        if not (hasattr(self, "r") and self.r is not None):
             raise RuntimeError("Mean particle radius (r) must be set.")
-        if not (hasattr(self, "s") and self.s != None):
+        if not (hasattr(self, "s") and self.s is not None):
             raise RuntimeError("Size distribution spread (s) must be set.")
 
         if (
-            (hasattr(self, "n") and self.n != None)
-            or (hasattr(self, "s_a_den") and self.s_a_den != None)
-            or (hasattr(self, "v_den") and self.v_den != None)
+            (hasattr(self, "n") and self.n is not None)
+            or (hasattr(self, "s_a_den") and self.s_a_den is not None)
+            or (hasattr(self, "v_den") and self.v_den is not None)
         ):
 
             self.n_s_v()
@@ -318,7 +326,7 @@ class MieLayer(Layer):
                     """Could not calculate mass_loading, calculation 
                 continues without it."""
                 )
-        elif hasattr(self, "mass_loading") and self.mass_loading != None:
+        elif hasattr(self, "mass_loading") and self.mass_loading is not None:
             self.n = utils.number_conc_from_mass_loading(
                 self.mass_loading, self.rho, self.thick, self.r
             )
@@ -338,21 +346,21 @@ class MieLayer(Layer):
         instead, n will be calculated from particle loading.
         """
 
-        if hasattr(self, "n") and self.n != None:
+        if hasattr(self, "n") and self.n is not None:
             self.s_a_den = (
                 self.n * 4 * np.pi * self.r**2 * np.exp(2 * np.log(self.s) ** 2)
             )
             self.v_den = (
                 self.n * 4 * np.pi * self.r**3 * np.exp(9 * np.log(self.s) ** 2 / 2) / 3
             )
-        elif hasattr(self, "s_a_den") and self.s_a_den != None:
+        elif hasattr(self, "s_a_den") and self.s_a_den is not None:
             self.n = self.s_a_den / (
                 4 * np.pi * self.r**2 * np.exp(2 * np.log(self.s) ** 2)
             )
             self.v_den = (
                 self.n * 4 * np.pi * self.r**3 * np.exp(9 * np.log(self.s) ** 2 / 2) / 3
             )
-        elif hasattr(self, "v_den") and self.v_den != None:
+        elif hasattr(self, "v_den") and self.v_den is not None:
             self.n = (
                 3
                 * self.v_den
@@ -379,10 +387,10 @@ class MieLayer(Layer):
         """
 
         if (hasattr(self, "center_alt") and hasattr(self, "thick")) and (
-            self.center_alt != None and self.thick != None
+            self.center_alt is not None and self.thick is not None
         ):
             if (hasattr(self, "alt_upp") and hasattr(self, "alt_low")) and (
-                self.alt_upp != None and self.alt_low != None
+                self.alt_upp is not None and self.alt_low is not None
             ):
                 assert (self.alt_upp, self.alt_low) == utils.calc_layer_extent(
                     self.center_alt, self.thick
@@ -398,7 +406,7 @@ class MieLayer(Layer):
                 return
 
         elif (hasattr(self, "alt_upp") and hasattr(self, "alt_low")) and (
-            self.alt_upp != None and self.alt_low != None
+            self.alt_upp is not None and self.alt_low is not None
         ):
             self.center_alt, self.thick = utils.calc_layer_bounds(
                 self.alt_upp, self.alt_low
@@ -717,3 +725,12 @@ class MieLayer(Layer):
         )
         plt.tight_layout()
         return fig
+
+    def calc_tau(self):
+        """Calculates optical depth from beta_ext and layer vertical extent.
+        inputs:
+            self.beta_ext - extinction coefficient, units [m-1]
+            self.alt_upp, self.alt_low - layer boundray altitudes, units [km] 
+        """
+        self.tau = self.beta_ext * 1e3 * (self.alt_upp-self.alt_low)
+        return
