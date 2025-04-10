@@ -24,7 +24,7 @@ multiprocess = True # if True, parallelizes some calculations,
 ########################################################################################
 # specify spectral calculation grid
 ########################################################################################
-spec_res = 0.25 # model spectral resolution,[spec_units]
+spec_res = 0.001 # model spectral resolution,[spec_units]
 low_spc = 800 # model start wavenumber (lower), [spec_units]
 upp_spc = 1250 # model end wavenumber (upper), [spec_units]
 spec_units = "cm-1" # accepted values "cm-1", "um", "nm"
@@ -413,6 +413,8 @@ print("Main DISORT loop finished.")
 model_SRFM.convolve_with_iasi(f"{rfm_fldr}/rfm_files/iasi.ils")
 
 model_SRFM.calc_bbt()
+
+model_SRFM.interp(np.linspace(680,1500,int((1500-680)/0.25+1)))
 
 ########################################################################################
 # (optional) create plots

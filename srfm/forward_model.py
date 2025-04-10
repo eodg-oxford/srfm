@@ -956,6 +956,7 @@ class SRFM(Fwd_model):
         self.uu[wvl_idx] = DISORT.disort_out[wvnm]["uu"]
         self.albmed[wvl_idx] = DISORT.disort_out[wvnm]["albmed"]
         self.trnmed[wvl_idx] = DISORT.disort_out[wvnm]["trnmed"]
+        return
     
     def calc_bbt(self):
         """Converts radiance to brightness temperature."""
@@ -975,10 +976,7 @@ class SRFM(Fwd_model):
         self.bbt = utils.convert_spectral_radiance_to_bbt(
             self.uu, wvnm
         )
-        if hasattr(self,"uu_unconvolved"):
-            self.bbt_unconvolved = utils.convert_spectral_radiance_to_bbt(
-            self.uu_unconvolved, wvnm
-        )
+        return
     
     def convolve_with_iasi(self,filename):
         """Convolve radiance (uu) with iasi instrument line shape.
@@ -989,7 +987,7 @@ class SRFM(Fwd_model):
             assumes regular grid
         """        
         # save a copy of unconvolved spectrum
-        self.uu_unconvolved = self.uu.copy()
+        uu_unconvolved = self.uu.copy()
         
         # read instrument line shape
         ils_x, ils_y, ils_lo, ils_hi = utils.read_ils(filename)
@@ -1033,9 +1031,53 @@ class SRFM(Fwd_model):
         
         # convolve spectra in a loop
         for c in combs:
-            self.uu[:,c[0],c[1],c[2]] = convolve(self.uu_unconvolved[:,c[0],c[1],c[2]],new_y,mode="same")/norm
+            self.uu[:,c[0],c[1],c[2]] = convolve(uu_unconvolved[:,c[0],c[1],c[2]],new_y,mode="same")/norm
 
         return
         
+    def interp(self,new_wvnm):
+        """Interpolates radiances (uu) and brightness temperatures to a new grid.
+        inputs:
+            self - must contain uu
+                 - if also contains bbt, bbt is interpolated as well
+            new_wvnm - new wavenumber grid to interpolate to, units [cm-1]
+        outputs:
+            self.uu_interp
+            (conditional) self.bb_interp
+            self.wvnm, self.wvls - new grid
+        """
+        # strech wvnm to correct shape to be broadcastable.
+#        old_wvnm = self.wvnm[:,np.newaxis,np.newaxis,np.newaxis] # add new axis to wvnm
+        # to match the number of uu dimensions, 0th dimension (axis 0) are the same
         
+#        n_wvnm = new_wvnm[:,np.newaxis,np.newaxis,np.newaxis]
+        
+        uu_shape = self.uu.shape # tuple
+        
+        new_uu_shape = list(uu_shape)
+        new_uu_shape[0] = len(new_wvnm)
+        new_uu = np.zeros(tuple(new_uu_shape))
+        
+        # determine all combinations of indices of uu
+        combs = []
+        for i in range(uu_shape[1]):
+            for ii in range(uu_shape[2]):
+                for iii in range(uu_shape[3]):
+                    combs.append([i,ii,iii])
+        
+        # interpolate spectra in a loop
+        for c in combs:
+            new_uu[:,c[0],c[1],c[2]] = np.interp(new_wvnm,self.wvnm,self.uu[:,c[0],c[1],c[2]])
+        
+        self.uu = new_uu
+#        self.uu = np.interp(n_wvnm,old_wvnm,self.uu)
+        
+        # calculate new wavelengths [um]
+        new_wvls = (1/new_wvnm)*1e4
+        
+        # assign grids to class
+        self.wvnm = new_wvnm
+        self.wvls = new_wvls
+        
+        return
         
