@@ -6,6 +6,7 @@ import datetime
 import time
 import warnings
 from multiprocessing import Process, Manager
+from oxford_colours.oxford_colours import clrs as oxclrs
 
 start_time = time.monotonic()
 
@@ -24,9 +25,9 @@ multiprocess = True # if True, parallelizes some calculations,
 ########################################################################################
 # specify spectral calculation grid
 ########################################################################################
-spec_res = 0.001 # model spectral resolution,[spec_units]
-low_spc = 800 # model start wavenumber (lower), [spec_units]
-upp_spc = 1250 # model end wavenumber (upper), [spec_units]
+spec_res = 0.005 # model spectral resolution,[spec_units]
+low_spc = 637 # model start wavenumber (lower), [spec_units]
+upp_spc = 2763 # model end wavenumber (upper), [spec_units]
 spec_units = "cm-1" # accepted values "cm-1", "um", "nm"
 
 RFM_wvnm, wvls = utilities.calc_grids(low_spc,
@@ -127,7 +128,7 @@ track_lev = [None for i in levels]
 
 # add upper and lower particle layer boundaries, delete any levels "within" the layer
 for lyr in scat_lyrs.keys():
-    levels, track_lev = utilities.add_lyr(lev=levels, track_lev=track_lev, new_lyr=scat_lyrs[lyr])
+    levels, track_lev = utilities.add_lyr_from_Layer(lev=levels, track_lev=track_lev, new_lyr=scat_lyrs[lyr])
 
 # convert the tracking levels array to a tracking layers array
 track_lyr = utilities.track_lev_to_track_lyr(track_lev)
@@ -414,7 +415,7 @@ model_SRFM.convolve_with_iasi(f"{rfm_fldr}/rfm_files/iasi.ils")
 
 model_SRFM.calc_bbt()
 
-model_SRFM.interp(np.linspace(680,1500,int((1500-680)/0.25+1)))
+model_SRFM.interp(np.linspace(637,2763,int((2763-637)/0.25+1)))
 
 ########################################################################################
 # (optional) create plots
@@ -456,9 +457,9 @@ if plot == True:
         
         if y_type == "bbt":
             RFM_bbt = utilities.convert_spectral_radiance_to_bbt(RFM_rad,RFM_wvnm)
-            plt.plot(x, RFM_bbt, label=f"no scattering",alpha=1,c="tab:orange")
+            plt.plot(x, RFM_bbt, label=f"no scattering",alpha=1,c=oxclrs["Oxford blue"])
         elif y_type == "rad":
-            plt.plot(x, RFM_rad, label=f"no scattering", alpha=0.9, c="tab:orange")
+            plt.plot(x, RFM_rad, label=f"no scattering", alpha=0.9, c=oxclrs["Oxford blue"])
 
     # plot SRFM
     if plot_srfm == True:        
@@ -467,7 +468,7 @@ if plot == True:
         elif y_type == "rad":
             y = model_SRFM.uu[:,3,0,0]
             
-        plt.plot(x, y, label=f"scattering", c="tab:blue")
+        plt.plot(x, y, label=f"ash layer 3-4 km", c=oxclrs["Oxford pink"])
 
     # plot residual
     if plot_residual == True:
@@ -476,9 +477,9 @@ if plot == True:
         else:
             plt.ion()
             if y_type == "bbt":
-                plt.plot(x, y-RFM_bbt, label = "residual", c = "tab:green")
+                plt.plot(x, y-RFM_bbt, label = "residual", c=oxclrs["Oxford lime green"])
             elif y_type == "rad":
-                plt.plot(x, y-RFM_rad, label = "residual", c = "tab:green")
+                plt.plot(x, y-RFM_rad, label = "residual", c=oxclrs["Oxford lime green"])
     
     # common
     plt.xlabel(x_lbl)

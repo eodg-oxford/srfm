@@ -1,12 +1,13 @@
-"""
-Name: optical_properties
-Parent package: srfm
-Author: Don Grainger
-Contributors: Antonin Knizek
-Date: 24 January 2025
-Purpose: Used to calculate particle optical properties, such as extinction coefficient,
-         scattering coefficient, scattering phase function and Legendre expansion 
-         coefficients for the phase function.
+"""Module for calculation of particle optical properties. 
+
+These are the extinction coefficient, scattering coefficient, scattering phase function
+and Legendre expansion coefficients for the phase function.
+
+- Name: optical_properties
+- Parent package: srfm
+- Author: Don Grainger
+- Contributors: Antonin Knizek
+- Date: 24 January 2025
 """
 
 import numpy as np
@@ -16,22 +17,21 @@ from . import mie_module  # Assuming mie_module is the compiled Fortran module
 from . import utilities as utils
 import multiprocessing
 import warnings
-#import numba
-from numba import njit, jit_module, complex128, prange, jit
+from numba import complex128, jit
 import time
-from itertools import starmap
 import matplotlib.pyplot as plt
 
 @jit(nopython=True, error_model="numpy", parallel=False, fastmath=True)
 def legendre_polynomial_expansion(inp, qv, qw, phase):
-    """
-    Expands a function as a Legendre series. The function is assumed to have been
+    """Expands a function as a Legendre series.
+    
+    The function is assumed to have been
     evaluated at Legendre quadrature points. The evaluation stops when the number
     of terms exceeds the number of quadrature points or when the absolute value of
     the Legendre coefficient is less than 1e-9. Uses the Bonnet's recusion formula
     to generate the Legendre polynomials.
 
-    Parameters:
+    Args:
         inp (int): Number of points at which the phase function is evaluated.
         qv (array-like): Legendre points (points at which the phase function is
                          evaluated, quadrature points).
@@ -39,7 +39,12 @@ def legendre_polynomial_expansion(inp, qv, qw, phase):
         phase (array-like): Input (phase) function.
 
     Returns:
-        tuple: lc (Legendre coefficients), inlc (Number of coefficients used).
+        lc (array): Legendre coefficients.
+        inlc (int): Number of coefficients used.
+    
+    Raises:
+        ValueError: Raised when >10,000 quadrature points requested.
+        
     """
     # Catch insensible inputs
     Imaxnp = 10000  # maximum allowed Legendre points
@@ -86,16 +91,18 @@ def legendre_polynomial_expansion(inp, qv, qw, phase):
 
 @jit(nopython=True, error_model="numpy", parallel=False, fastmath=True)
 def normalised_legendre_polynomial_expansion(inp, qv, qw, phase):
-    """
-    Expands a function as a Legendre series. The function is assumed to have been
+    """Expands a function as a Legendre series.
+    
+    The function is assumed to have been
     evaluated at Legendre quadrature points. The evaluation stops when the number
     of terms exceeds the number of quadrature points or when the absolute value of
     the Legendre coefficient is less than 1e-9. Uses the Bonnet's recusion formula
     to generate the Legendre polynomials. Uses normalised Legendre polynomial
-    coefficients (as in Wiscombe 1977
-    https://doi.org/10.1175/1520-0469(1977)034<1408:TDMRYA>2.0.CO;2)
+    coefficients (as in `Wiscombe 1977`_).
+    
+    .. _Wiscombe 1977: https://doi.org/10.1175/1520-0469(1977)034<1408:TDMRYA>2.0.CO;2
 
-    Parameters:
+    Args:
         inp (int): Number of points at which the phase function is evaluated.
         qv (array-like): Legendre points (points at which the phase function is
                          evaluated, quadrature points).
@@ -103,8 +110,12 @@ def normalised_legendre_polynomial_expansion(inp, qv, qw, phase):
         phase (array-like): Input (phase) function.
 
     Returns:
-        lc - normalised Legendre coefficients
-        inlc - Number of coefficients used
+        lc (array): Legendre coefficients.
+        inlc (int): Number of coefficients used.
+
+    Raises:
+        ValueError: Raised when >10,000 quadrature points requested.
+            
     """
  
     # Catch insensible inputs
@@ -170,30 +181,51 @@ def ewp_hs(
     return_dict = None,
     multiprocess = False
 ):
-    """
-    return the extinction, singlescatter albedo and phase function for a particle
-    size of a given 'distribution' and 'composition'
-    wavelengths - wavelengths in um
-    the phase function is given at the specified angles if given,
-    else at 1 degree resolution
-    if the legendre_coefficients_flag is True angle is ignored and Lobatto quadrature
-    angles are used
-    radii - number of radii of the particles in the distribution
-    eta - cutoff number for the size distribution
-    legendre_coefficients_type - normalised or regular, different functions are called
-    for the expansion
-    phase_quad_N - number of phase function moments (scattering angles), used when
-    legendre expansion requested.
-    phase_quad_type - when legendre expansion requested, this type of quadrature is used
-    valid input are "G" (Gaussian), "R" (Radau), "L" (Lobatto)
-    refractive_index - if compositon is "ri", then refractive indices are required
-    from the user.
-    szd_quad_type - quadrature type for the particle size distribution, currently "T"
-    return_dict - multiprocess.Manager().dict() object to return values in when doing
-    multiprocessing (parallel computations), default None,
-    op_newres - bool, if True, optical properties are being calculated on a different 
-    spectral grid relative to the rest of the code, intent - make the code faster, 
-    because the scattering optical properties vary with wavelength slower than the rest 
+    """Main function to calculate extinction, single scatter albedo and phase function.
+     
+    The calculation is performed for a set of particles of given size distribution and 
+    compositon.
+    
+    Args:
+        wavelengths (array-like): wavelengths in :math:`\\mu`\ m
+        composition (str): any of ash, sulphuric acid, ice or ARIA .ri filename
+        distribution (obj): size distribution object from srfm.size_distribution module
+        refractive_index (array-like): If compositon is "ri", then refractive indices 
+            are required from the user. Default is None.
+        angle (array-like, float, int): Scattering angles, if None, then phase function
+            returned at (0,180) degrees with one degree spacing. Can't be set when
+            Legendre polynomial expansion of the phase function is requested (in the
+            case quadrature angles are computed and used). Default is None.
+        legendre_coefficients_flag (bool): If True, Legendre polynomial expansion of the
+            phase function is performed and expansion coefficients are returned.
+        radii (int, float): Number of radii of the particles in the distribution. 
+            Default is 200.
+        eta (float): Cut-off number for the size distribution. Default is 1e-6.
+        legendre_coefficients_type (str): Specifies the type of requested Legendre
+            polynomial expansion coefficients. Can be *normalised* or *regular*. Default 
+            is *normalised*.
+        phase_quad_N (int): Number of phase function moments (scattering angles), used 
+            when Legendre polynomial expansion requested. Default is 181.
+        phase_quad_type (str): when Legendre polynomial expansion requested, this type
+            of quadrature is used. Can be "G" (Gaussian), "R" (Radau) or "L" (Lobatto).
+            Default is L.
+        radii_quad_type (str): This type of quadrature is used to calculate the size 
+            distribution. Default is "T" (trapezium). Can be any quadrature accepted by
+            `srfm.quadrature` module.
+        aria (str): Location of the ARIA database (path).
+        return_dict (multiprocess.Manager().dict()): (optional) object to return values 
+            in when doing multiprocessing (parallel computations). Default is None.
+        multiprocess (bool): If True, optical properties are calculated as a shell
+        subprocess and the output is different (see Returns below).
+    
+    Returns:
+        native_dict: Dictionary with calculated optical properties. Returned only if
+            multiprocessing == False. Elif multiprocessing == True, returns an updated 
+            return_dict.
+    
+    Raises:
+        ValueError: Raised when multiprocess has an invalid value.
+         
     """
 
     # get size of the wavelengths array (amount of elements)
@@ -296,13 +328,16 @@ def ewp_hs(
 
 def phase_from_legendre(inlc, lc, inp, qv):
     """Recomputes the phase function from Legendre polynomial expansion.
-    Inputs:
-        inlc - number of Legendre coefficients
-        lc - Legendre expansion coefficients
-        inp - number of quadrature value, == number of angles
-        qv - cos(angles)
+    
+    Args:
+        inlc (int): Number of Legendre coefficients.
+        lc (array-like): Legendre expansion coefficients.
+        inp (int): Number of quadrature value, == number of angles.
+        qv (array-like): Cos(angles).
+        
     Returns:
-        phase - recomputed phase function
+        phase (array): Recomputed phase function.
+        
     """
 
     # initialize arrays
@@ -333,14 +368,16 @@ def phase_from_legendre(inlc, lc, inp, qv):
 
 def phase_from_normalised_legendre(inlc, lc, inp, qv):
     """Recomputes the phase function from Legendre polynomial expansion.
-    Inputs:
-        inlc - number of Legendre coefficients
-        lc - normalised Legendre expansion coefficients
-
-        inp - number of quadrature value, == number of angles
-        qv - cos(angles)
+    
+    Args:
+        inlc (int): Number of Legendre coefficients.
+        lc (array-like): Normalised Legendre expansion coefficients.
+        inp (int): Number of quadrature value, == number of angles.
+        qv (array-like): Cos(angles).
+        
     Returns:
-        phase - recomputed phase function
+        phase (array): Recomputed phase function.
+        
     """
 
     # initialize arrays
@@ -371,11 +408,23 @@ def phase_from_normalised_legendre(inlc, lc, inp, qv):
 #@utils.show_runtime
 @jit(nopython=True, error_model="numpy", parallel=False, fastmath=True)
 def mie_ewp(Dx, SCm, Inp, Dqv):
-    """Mie calculation
-    Dx - particle size parameter, type float
-    SCm - particle refractive index, type complex
-    Inp - number of cosines of the input angles, type int
-    Dqv - cosines of the scattering angles, type np.ndarray, dtype float
+    """Mie calculation (python version).
+    
+    Args:
+        Dx (float): Particle size parameter.
+        SCm (complex): Particle refractive index.
+        Inp (int): Number of cosines of the input angles.
+        Dqv (array-like): Cosines of the scattering angles.
+    
+    Returns:
+        Dqxt (float): Extinction coefficient.
+        Dqsc (float): Scattering coefficient.
+        pf (array): Phase function.
+
+    Raises:
+        ValueError: Raised when size parameter greater than 105000 or when 
+            Nmx > Itermax.
+        
     """
     Imaxx = 105000
     Itermax = 106000
@@ -456,8 +505,9 @@ def get_quad(legendre_coefficients_flag=False,
              phase_quad_type="L",
              phase_quad_N=181,
              angle=None):
-    """calculates cosines of the angles to return the phase function at.
-    if Legendre expansion of the phase function is also requested
+    """Calculates cosines of the angles to return the phase function at.
+    
+    If Legendre expansion of the phase function is also requested
     (i.e. if legendre_coefficients_flag == True)
     the user angles are ignored. The quadrature points are calculated
     by the Quadrature module.
@@ -468,7 +518,28 @@ def get_quad(legendre_coefficients_flag=False,
     lastly, elif Legendre expansion is not needed and angles are not given, one angle
     is used.
     If angles are given, calculates the phase function at those angles otherwise use
-    default 0 to 180 in steps of 1 degree (and flip)"""
+    default 0 to 180 in steps of 1 degree (and flip).
+    
+    Args:
+        legendre_coefficients_flag (bool): If True, signifies that Legendre polynomial 
+            expansion is requested. Default is False.
+        angle (array-like, float, int): Scattering angles. If None, then phase function
+            returned at (0,180) degrees with one degree spacing. Can't be set when
+            Legendre polynomial expansion of the phase function is requested (in the 
+            case quadrature angles are computed and used). Default is None.
+        phase_quad_N (int): Number of phase function moments (scattering angles). Used
+            when Legendre polynomial expansion requested. Default is 181.
+        phase_quad_type (str): when Legendre polynomial expansion requested, this type
+            of quadrature is used. Can be "G" (Gaussian), "R" (Radau) or "L" (Lobatto). 
+            Default is L.
+    
+    Returns:
+        cos_angle_value (array-like): Cosines of scattering angle value of the 
+            quadrature.
+        cos_angle_weight (array-like): Weight of the quadrature points.
+        angles (int): Number of scattering angles (quarature points). 
+        
+    """
     if legendre_coefficients_flag:
         cos_angle_value, cos_angle_weight = quad.quadrature101(
             phase_quad_type, phase_quad_N
@@ -505,8 +576,31 @@ def get_radii(distribution,
               eta=1e-6,
               radii_quad_type="T",
               radii=200):
-    """ calculates the lower and upper particle radius from the distribution at points
-    where n(r) = eta*r_mode"""
+    """Calculates the lower and upper particle radii from the distribution.
+    
+    The upper and lower particle radii are calculated at points where 
+    :math:`n(r) = eta r_mode`.
+    where *eta* is the cut-off and *r_mode* is the mode of the distribution.
+    
+    Args:
+        distribution (obj): An instance of `srfm.size_distribution.SizeDistribution`.
+        eta (int, float): Size distribution cut-off value. The size distribution is
+            a function that technically spans the (-inf,+inf) size interval. The eta 
+            value is a value of the size distribution beyond whose corresponding
+            size (radius) the distribution is truncated. Default is 1e-6.
+        radii_quad_type (str): Quadrature type for the radii calculation function.
+            Accetped values are values implemented in the ``srfm.quadrature`` 
+            module. Currently implemented (Apr 2025) are "L" (Lobatto quadrature 
+            rule), "G" (Gauss), "R" (Radau) and "T" (Trapezium). Default is T.
+        radii (int): Number of radii in size distribution. Default is 200.
+    
+    Returns:
+        radius (array-like): size distribution quadrature points
+        radius_weight (array-like): quadrature weights
+        red_wt_sum (float): sum of radiu_weight, used to normalize relevant sums in
+            the code.        
+        
+    """
     
     eta = np.float64(eta)
     
@@ -539,7 +633,29 @@ def get_ri(composition,
            aria=None,
            wave=None,
            wave_size=None):
-    """ load refractive indices (expected in the form (n - ik)
+    """Load refractive indices.
+    
+    Indices expected in the form (n - ik).
+    
+    Args:
+        composition (str): One of accepted values by 
+            ``ARIA_module.get_ri_filepathname()``.
+        refractive_index (array-like): If compositon is "ri", then refractive indices 
+            are required from the user. Default is None.
+        aria (str): Path to ARIA folder.
+        wave (array-like): Wavelength grid. Default is None.
+        wave_size (int): size of wave (equal to len(wave) is wave is list or 1D array 
+            and wave.size if wave is an array).
+        
+    Returns:
+        refractive_index_arr (array-like): Array of refractive indices. dtype *complex*.
+        
+    Raises:
+        RuntimeError: Raised when composition is "ri", but refractive index is not 
+            given.
+        ValueError: Raised when and imaginary part of a refractive index is > 0, because
+            indices are expected in the form (n - ik).
+             
     """
     
     if composition == "ri":
@@ -572,8 +688,21 @@ def loop_mie_over_radii(radii,
                         angles,
                         cos_angle_value
                         ):
-    """A function to calculate the Mie scattering for a given wavelength over a range
-    of radii.
+    """Calculate the Mie scattering for a given wavelength over a range of radii.
+    
+    Args:
+        radii (int): Number of size distribution quadrature radii.
+        sp (array-like): Array of size parameters.
+        ri (array-like): Array of refractive indices.
+        angles (int): Number of scattering angles (quadrature points).
+        cos_angle_value (array-like): Cosines of scattering angles at which to calculate
+            the scattering properties, comes from quadrature.
+    
+    Returns:
+        Q_ext_value (array): Extinction coefficients array, shape (radii,).
+        Q_sca_value (array): Scattering coefficients array, shape (radii,).
+        phase_function_value (array): Phase function array, shape (radii, angles).
+    
     """
     
     # Initialize arrays with the same size as 'radii'
@@ -596,19 +725,31 @@ def loop_mie_over_radii(radii,
 @utils.show_runtime
 def regrid(op_dict,wvls,track_diff=False, diff_type="pct"):
     """Linearly interpolates calculated values from ewp_hs to a new grid.
-    inputs:
-        op_dict - output from ewp_hs
-                - should have keys: "beta_ext"
-                                    "ssalb"
-                                    "phase_function"
-                                    "legendre_coefficient"
-                                    "wavelengths"
-                - if ewp_hs changes in the future, this function needs to change as well
-        wvls - new grid, [um]
-        track_diff - bool, if True, calculates differences arising from interpolation
-    outputs:
-        op_dict - new version of op_dict on a new grid
-        diff_dict - difference between the interpolated and non-interpolated dicts
+    
+    Args:
+        op_dict (dict): output from ``srfm.optical_properties.ewp_hs``. Should have
+            keys: 
+
+            - beta_ext
+            - ssalb
+            - phase_function
+            - legendre_coefficient
+            - wavelengths
+                
+            If ewp_hs changes in the future, this function needs to change as well.
+            
+        wvls (array-like): new grid, [\ :math:`\\mu`\ m]
+        track_diff (bool): If True, calculates differences arising from interpolation
+    
+    Returns:
+        op_dict (dict): New version of op_dict on a new grid.
+        diff_dict (dict): Difference between the interpolated and non-interpolated 
+            dictionaries. Same keys as op_dict.
+    
+    Raises:
+        RuntimeError: Raised when invalid key encountered in op_dict.
+        ValueError: Raised when wavelength grid is not monotonic.
+        
     """
     #check for invalid keys (basically safeguard if ewp_hs changes in the future
     valid_keys = ["beta_ext",
@@ -701,8 +842,51 @@ def loop_mie_over_wavelengths(wavelengths_size,
                               legendre_coefficient
               
     ):
-    """Main computational loop for ewp_hs
+    """Main computational loop for ``srfm.optical_properties.ewp_hs()``.
+    
     Loops over wavelengths and calcualtes optical properties.
+    
+    Args:
+        wavelengths_size (int): Number of wavelengths to loop over.
+        radii (int, float): Number of radii of the particles in the distribution. 
+            Default is 200.
+        size_parameters (array-like): Array of size parameters.
+        refractive_index_arr (array-like): Array of refractive indices. dtype *complex*.
+        angles (int): Number of scattering angles (quarature points).
+        cos_angle_value (array-like): Cosines of scattering angle value of the 
+            quadrature.
+        cos_angle_weight (array-like): Weight of the quadrature points.
+        radius (array-like): size distribution quadrature points
+        radius_weight (array-like): quadrature weights
+        red_wt_sum (float): sum of radiu_weight, used to normalize relevant sums in
+            the code.  
+        legendre_coefficients_flag (bool): If True, Legendre polynomial expansion of the
+            phase function is performed and expansion coefficients are returned.
+        legendre_coefficients_type (str): Specifies the type of requested Legendre
+            polynomial expansion coefficients. Can be *normalised* or *regular*. Default 
+            is *normalised*.
+        beta_ext (array): Empty array to store extinction coefficient in, shape 
+            (wavelengths_size,).    
+        beta_sca (array): Empty array to store extinction coefficient in, shape
+            (wavelengths_size,).
+        phase_function (array): Empty array to store the phase function in, shape
+            (wavelengths_size, angles).
+        legendre_coefficient (array): Empty array to store Legendre coefficients in, 
+            shape (wavelengths_size, _), where the second dimension is big enough to 
+            contain the Legendre coefficients. This needs to be guessed and eventually 
+            adapted by the user, because if the wavelengths_size is too big, then 
+            the total array size can cause overflows in memory. It is possible to use
+            ``srfm.utilities.memory_safe_np_zeros_2d()`` to generate a 2D array 
+            with dimensions adapted to not overflow the available memory, but be advised
+            that this may cause the array to have the second dimension too small, 
+            resulting in truncation of Legendre coefficients and loss of precision.
+            Will not cause problems on high-RAM stations. Mind that in a np.zeros array
+            the default data type is np.float64, which has a size of 8 bytes. The array
+            size is number of elements*8 in bytes.
+    
+    Raises:
+        ValueError: Raised when invalid input into legendre_coeffs_type is detected.
+        
     """
     
     max_lc = 0 # tracks length of legendre expansion in the main computational loop
@@ -775,13 +959,19 @@ def loop_mie_over_wavelengths(wavelengths_size,
     return beta_ext, beta_sca, phase_function, legendre_coefficient, max_lc
 
 def track_regrid_diff(old_dict,new_dict, diff_type="pct"):
-    """Calculates the difference in op_dict (dictionary containing ewp_hs outputs) 
-    before and after interpolation, called by optical_properties.regrid().
-    inputs:
-        old_dict - op_dict before interpolation
-        new_dict - op_dict after interpolation
-        diff_type - "pct" (differences in percent from the old value)
-                  - "abs" - absolute difference
+    """Calculates the difference before and after interpolation.
+    
+    Called by optical_properties.regrid().
+    
+    Args:
+        old_dict (dict): op_dict before interpolation.
+        new_dict (dict): op_dict after interpolation.
+        diff_type (str): Can be "pct" (differences in percent from the old value) or
+            "abs" - absolute difference. Default is "pct".
+    
+    Raises:
+        ValueError: Raised when invalid diff_type encountered.
+        
     """
     diff_dict = {}
     diff_dict["wavelengths"] = new_dict["wavelengths"]
@@ -817,16 +1007,26 @@ def track_regrid_diff(old_dict,new_dict, diff_type="pct"):
     return diff_dict
 
 def calc_op_diff(first_dict,sec_dict, diff_type="pct",plot=True):
-    """
-    Calculates the difference between optical properties coming from different sources,
-    i.e. one that's calculated from ewp_hs at higher resolution and one that's 
-    caluclated at lower resolution and interpolated.
+    """Calculates the difference between optical properties.
+    
+    Used to get differences coming from different sources, i.e. one that's calculated 
+    from ewp_hs at higher resolution and one that's caluclated at lower resolution and
+    interpolated.
     Assumes identical wavelength grids.
     
-    inputs:
-        first_dict, sec_dict - dictionaries with optical properties, op_dicts from ewp_hs
-        diff_type - "pct" (differences in percent from the first dict.)
-                  - "abs" - absolute difference
+    Args:
+        first_dict (dict): dictionary with optical properties, op_dict from ewp_hs
+            or equivalent
+        sec_dict (dict): dictionary with optical properties, op_dict from ewp_hs
+            or equivalent
+        diff_type (str): Can be "pct" (differences in percent from the old value) or
+            "abs" - absolute difference. Default is "pct".
+        plot (bool): If True, makes a plot.
+    
+    Raises:
+        ValueError: Raised when a key is found in one dictionary that is missing from
+            the other one (i.e. the two input dictionaries must have the same keys).
+        ValueError: Raised when incorrect value enountered in diff_type.
     """
     
     expected_keys = [
@@ -861,11 +1061,14 @@ def calc_op_diff(first_dict,sec_dict, diff_type="pct",plot=True):
 
 def plot_diff_dict(diff_dict,**kwargs):
     """Plots diff_dict - difference in calcualted optical properties.
-    inputs:
-        diff_dict - dictionary with differences in optical properties
-        comes e.g. from calc_op_diff or track_regrid_diff
-    outputs:
-        fig object
+    
+    Args:
+        diff_dict (dict): Dictionary with differences in optical properties, comes e.g.
+            from calc_op_diff or track_regrid_diff.
+    
+    Returns:
+        fig (object): Figure object.
+        
     """
     fig = plt.figure(figsize=(11.7,8.3))
 

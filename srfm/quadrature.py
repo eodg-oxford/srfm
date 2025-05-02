@@ -1,10 +1,12 @@
-"""
-Name: quadrature
-Parent package: srfm
-Author: Don Grainger
-Contributors: 
-Date: 24 January 2025
-Purpose: Calculates quadrature points, can do Gaussian, Lobatto and Radau quadratures
+"""Calculates quadrature points.
+
+Can do Gaussian, Lobatto, Radau, and Trapezium quadratures.
+
+- Name: quadrature
+- Parent package: srfm
+- Author: Don Grainger
+- Contributors: Antonin Knizek
+- Date: 24 January 2025 
 """ 
 
 import numpy as np
@@ -12,6 +14,15 @@ from numba import jit_module
 
 # Function to calculate BesselZero
 def bessel_zero(s):
+    """Calculates BesselZero.
+    
+    Args:
+        s (float): ?
+    
+    Returns:
+        bslz (float): ?
+    
+    """
     A1 = -0.60792710185402662866327677925836
     A2 = 6.159589352810601113491669960271217e-2
     A3 = -0.981080301612647885671934857251079
@@ -24,12 +35,27 @@ def bessel_zero(s):
     )
     return bslz
 
-def test_bessel_zero():
+def _test_bessel_zero():
+    """Unit test for bessel zero.
+    """
     assert bessel_zero(3) == 10.173467949597212, "bessel_zero returns incorrect value."
     return
 
 # Function to calculate FirstGuess
 def first_guess(quad_type, n, term):
+    """Function to calculate first guess of the abscissa points.
+    
+    Args:
+        quad_type (str): Quadrature type. Accepted values are "G" (Gaussian), "R" 
+            (Radau), and "L" (Lobatto).
+        n (float): ?
+        term (float): ?
+    
+    Returns:
+        fg (float): First guess of the abscissa points.
+    
+    """
+    
     quad_type = quad_type.upper()
     if quad_type == "G":
         return np.cos(np.pi * (term - 0.25) / (n + 0.5))
@@ -43,7 +69,9 @@ def first_guess(quad_type, n, term):
     else:
         raise ValueError(f"Invalid quadrature type: {quad_type}")
 
-def test_first_guess():
+def _test_first_guess():
+    """Unit test for first guess."""
+    
     assert float(first_guess("G", 181, 50)) == 0.6515842860871356, """Gaussian
         first_guess returns incorrect value."""
     assert float(first_guess("R", 181, 50)) == 0.6497710863213735, """Radau
@@ -54,6 +82,18 @@ def test_first_guess():
     
 # Function to calculate Newton correction
 def newton_g(quad_type, n, x):
+    """Performs Newton correction on the abscissa.
+    
+    Args:
+        quad_type (str): Quadrature type. Accepted values are "G" (Gaussian), "R" 
+            (Radau), and "L" (Lobatto).
+        n (float): ?
+        x (float): ?
+    
+    Returns:
+         
+    """    
+    
     quad_type = quad_type.upper()
     if quad_type == "G":
         pl, pm, pn = legendre(n, x)
@@ -78,7 +118,9 @@ def newton_g(quad_type, n, x):
     else:
         raise ValueError(f"Invalid quadrature type: {quad_type}")
 
-def test_newton_g():
+def _test_newton_g():
+    """Unit test for newton_g."""
+    
     assert newton_g("G", 181, 0.1) == -0.004336062494010145, """Gaussian newton_g
      correction returns incorrect value."""
     assert newton_g("R", 181, 0.1) == 0.0003714827832841103, """Radau newton_g
@@ -88,15 +130,17 @@ def test_newton_g():
 
 # Function to calculate Legendre polynomials
 def legendre(n, x):
-    """Calculate the Legenedre polynomials using Bonnet's recurison formula.
-        Inputs:
-        n - number of points in the quadrature
-        x - specific point in the quadrature
-        
-        Returns:
-        pl == P_(n-2)(x)
-        pm == P_(n-1)(x)
-        pn == P_(n)(x)        
+    """Calculate the Legenedre polynomials using Bonnet's recursion formula.
+    
+    Args:
+        n (int): number of points in the quadrature
+        x (float): specific point in the quadrature
+    
+    Returns:
+        pl (float): Legendre polynomial :math:`P_{n-2}(x)`.
+        pm (float): Legendre polynomial :math:`P_{n-1}(x)`.
+        pn (float): Legendre polynomial :math:`P_{n}(x)`.      
+      
     """
     
     if n == 0:
@@ -113,7 +157,9 @@ def legendre(n, x):
             pn = (2 - coeff) * x * pm - (1 - coeff) * pl
         return pl, pm, pn
 
-def test_legendre():
+def _test_legendre():
+    """Unit test for legendre."""
+    
     assert legendre(181,0.1) == (0.0456111402767717, 
                                  0.0427731037482122, 
                                  -0.03682815582601351
@@ -121,13 +167,18 @@ def test_legendre():
 
 # translated from Don Grainger's IDL by Antonin Knizek
 def quadrature101(quad_type, npts):
-    """Asign n[ts abscissae and weights for integration on the interval [-1,1] for
-    a variety of quadrature types:
-    G: Gauss
-    S: Simpson
-    T: Trapezium
-    R: Radau
-    L: Lobatto
+    """Asign npts abscissae and weights for integration on the interval [-1,1] for
+    a variety of quadrature types.
+    
+    Args:   
+        quad_type (str): Quadrature type. Accepted values are "G" (Gaussian), "R" 
+            (Radau), "L" (Lobatto), "T" (Trapezium), "S" (Simpson).
+        npts (int): Number of abscissa points.
+    
+    Returns:
+        abscissa (array): Calculated abscissa.
+        weight (array): Corresponding weights.
+        
     """
     
     if npts > 20000:
@@ -195,7 +246,9 @@ def quadrature101(quad_type, npts):
 
     return abscissa, weight
 
-def test_quadrature101():
+def _test_quadrature101():
+    """Unit test for quadrature101."""
+    
     assert float(quadrature101("G",181)[0][50]) == -0.6383546791355884, """Gaussian
         abscissa in quadrature101 returns a wrong value."""
 
@@ -216,17 +269,20 @@ def test_quadrature101():
 
         
 def shift_quadrature(abscissa, weight, lower_bound, upper_bound):
-    """
-    Shifts quadrature abscissa and weight from the interval [-1, 1] to [lower_bound, upper_bound].
+    """Shifts quadrature abscissa and weight.
+    
+    Shifts from the interval [-1, 1] to [lower_bound, upper_bound].
 
-    Parameters:
-        abscissa (numpy.ndarray): Quadrature points on the interval [-1, 1].
-        weight (numpy.ndarray): Quadrature weight on the interval [-1, 1].
+    Args:
+        abscissa (array): Quadrature points on the interval [-1, 1].
+        weight (array): Quadrature weight on the interval [-1, 1].
         lower_bound (float): Lower bound of the new interval.
         upper_bound (float): Upper bound of the new interval.
 
     Returns:
-        tuple: (new_abscissa, new_weights)
+        new_abscissa (array): New, shifted abscissa
+        new_weights (array): New, shifted weights.
+        
     """
     new_abscissa = (
         (lower_bound + upper_bound) + (upper_bound - lower_bound) * abscissa
@@ -234,7 +290,9 @@ def shift_quadrature(abscissa, weight, lower_bound, upper_bound):
     new_weight = (upper_bound - lower_bound) * weight / 2
     return new_abscissa, new_weight
 
-def test_shift_quadrature():
+def _test_shift_quadrature():
+    """Unit test for shift_quadrature."""
+    
     assert float(
         shift_quadrature(quadrature101("L",181)[0],
                          quadrature101("L",181)[1],
@@ -253,13 +311,32 @@ def test_shift_quadrature():
 
 
 def quadrature(quad_type, n_pts, lower_bound, upper_bound):
+    """Calls the appropriate quadrature function.
+    
+    First calls a function to calculate the quadrature on a [-1,1] interval, then shifts
+    the calculated quadrature and weigths.
+    
+    Args:
+        quad_type (str): Quadrature type. Accepted values are "G" (Gaussian), "R" 
+            (Radau), "L" (Lobatto), "T" (Trapezium), "S" (Simpson).
+        npts (int): Number of abscissa points.
+        lower_bound (float): Lower bound of the new interval.
+        upper_bound (float): Upper bound of the new interval.
+
+    Returns:
+        abscissa_new (array): New, shifted abscissa
+        weight_new (array): New, shifted weights.
+        
+    """
     abscissa, weight = quadrature101(quad_type, n_pts)
     abscissa_new, weight_new = shift_quadrature(
         abscissa, weight, lower_bound, upper_bound
     )
     return abscissa_new, weight_new
 
-def test_quadrature():
+def _test_quadrature():
+    """Unit test for quadarture."""
+    
     assert float(quadrature("L",181, 0, 180)[0][50]) == 32.28188851298205, """Function
         quadrature returns incorrect abscissa."""
     
@@ -267,13 +344,13 @@ def test_quadrature():
         quadrature returns incorrect weight."""
     
 if __name__ == "__main__":
-    test_bessel_zero()
-    test_first_guess()
-    test_legendre()
-    test_newton_g()
-    test_quadrature101()
-    test_shift_quadrature()
-    test_quadrature()
+    _test_bessel_zero()
+    _test_first_guess()
+    _test_legendre()
+    _test_newton_g()
+    _test_quadrature101()
+    _test_shift_quadrature()
+    _test_quadrature()
     
     print("Module quadrature has passed all unit tests.")
 

@@ -1,10 +1,12 @@
-"""
-Name: ARIA_module
-Parent package: srfm
-Author: Don Grainger
-Contributors: Antonin Knizek
-Date: 24 January 2025
-Purpose: Used to access the ARIA database (https://eodg.atm.ox.ac.uk/ARIA/)
+"""Used to access the ARIA database.
+
+For details see https://eodg.atm.ox.ac.uk/ARIA/.
+
+- Name: ARIA_module
+- Parent package: srfm
+- Author: Don Grainger
+- Contributors: Antonin Knizek
+- Date: 24 January 2025
 """ 
 
 import os
@@ -12,8 +14,15 @@ import numpy as np
 
 def get_ri_filepathname(input_string,aria=None):
     """Maps an input string to a file path.
-    input_string is either an ARIA filename or any of: "ash", "ice", "sulphuric acid"
-    output - absolute file path of the refractive indices file.
+    
+    Args:
+        input_string: either an ARIA filename or any of "ash", "ice", "sulphuric acid"
+        aria: Path to the aria database. Default 
+              "/network/group/aopp/eodg/RGG009_GRAINGER_EODGCOMN/ARIA/"
+    
+    Returns:
+        path: absolute file path of the refractive indices file.
+        
     """
     
     if input_string == "ash":
@@ -66,7 +75,11 @@ class RI:
         self.data = {}
 
     def read(self, filepathname):
-        """Reads and parses an .ri file into the object's attributes."""
+        """Reads and parses an .ri file into the object's attributes.
+        
+        Args:
+            filepathname: Refractive index filepath.
+        """
 
         with open(filepathname, "r") as f:
             t = f.readlines()
@@ -156,6 +169,19 @@ class RI:
                 )
 
     def select(self, wave=None, mode="wavelength", out_of_range="error"):
+        """Selects requested data.
+        
+        Args:
+            wave: User input wave.
+            mode: Output mode. Can be "wavelength" or "wavenumber".
+                out_of_range: Defines how out-of-range values are handled. 
+                Could be:
+                
+                - error: Error is raised.
+                - clip: Data is truncated.
+                - nan: Data is interpolated.
+            
+        """
 
         # Determine which data to use
         if mode == "wavelength":
@@ -227,29 +253,30 @@ class RI:
     def load_refractive_indices(
         self, composition, aria=None, wave=None, mode="wavelength", out_of_range="error"
     ):
-        """
-        Reads the refractive index data for a given ri file, interpolates to the wave values if provided,
-        or returns full-resolution data if wave is None.
+        """Reads the refractive index data for a given ri file.
 
-        Parameters:
-            composition (str): The composition which is
-                an ARIA file name
-                an ARIA file group from the list below (NOT IMPLEMENTED)
-                    "ZASETSKY", keyword temperature needs to be set so the retruned reractive indexx of water is interpolated to that temperature
-                a generic name from the list below
-                   "ash"
-                   "ice"
-                   "sulphuric acid"
-                   "water". (NOT IMPLEMENTED)
-            aria (str): location of the aria database, if None, default assumed location in AOPP is used.
-            wave (list or array, optional): The target wavelengths or wavenumbers to interpolate to. If None, returns data at full resolution.
-            mode (str): 'wavelength' for wave in µm or 'wavenumber' for wave in cm⁻¹.
-            out_of_range (str): Behavior for out-of-range values: 'error', 'clip', or 'nan'.
+            Interpolates to the wave values if provided, or returns full-resolution data if wave is None.
 
-        Returns:
-            tuple: Two or three arrays:
-                   - If wave is None: (x_data, n, k), where x_data is `wavl` or `wavn`.
-                   - If wave is defined: (n, k), the interpolated real and imaginary parts of the refractive index.
+            Args:
+                composition (str):
+                    Any of:
+                        - an ARIA file name
+                        - an ARIA file group from the list below (NOT IMPLEMENTED)
+                        - "ZASETSKY", keyword temperature needs to be set so the retruned reractive indexx of water is interpolated to that temperature
+                        - a generic name from the list below:
+                            - "ash"
+                            - "ice"
+                            - "sulphuric acid"
+                            - "water". (NOT IMPLEMENTED)
+                aria (str): location of the aria database, if None, default assumed location in AOPP is used.
+                wave (list or array, optional): The target wavelengths or wavenumbers to interpolate to. If None, returns data at full resolution.
+                mode (str): 'wavelength' for wave in µm or 'wavenumber' for wave in cm⁻¹.
+                out_of_range (str): Behavior for out-of-range values: 'error', 'clip', or 'nan'.
+
+            Returns:
+                tuple: Two or three arrays:
+                       - If wave is None: (x_data, n, k), where x_data is `wavl` or `wavn`.
+                       - If wave is defined: (n, k), the interpolated real and imaginary parts of the refractive index.
         """
 
         filepathname = get_ri_filepathname(composition,aria)
@@ -265,6 +292,14 @@ class RI:
 
 
 def find_ri_files(ARIA_path):
+    """Finds .ri files in requested path.
+    
+    Args:
+        - ARIA_path: Requested path.
+    
+    Returns:
+        list: Path to .ri files.
+    """
     import os
 
     ri_files = []
@@ -277,19 +312,19 @@ def find_ri_files(ARIA_path):
 
 
 def read_ri_file(filepathname, wave=None, mode="wavelength", out_of_range="error"):
-    """
-    Reads the refractive index data for a given ri file, interpolates to the wave values if provided,
+    """Reads the refractive index data for a given ri file. 
+    
+    Interpolates to the wave values if provided, 
     or returns full-resolution data if wave is None.
 
-    Parameters:
-        an ARIA    file name
-        ARIA_path  path to ARIA data root
+    Args:
+        filepathname: an ARIA filename
         wave (list or array, optional): The target wavelengths or wavenumbers to interpolate to. If None, returns data at full resolution.
         mode (str): 'wavelength' for wave in µm or 'wavenumber' for wave in cm⁻¹.
         out_of_range (str): Behavior for out-of-range values: 'error', 'clip', or 'nan'.
 
     Returns:
-        tuple: Two or three arrays:
+        Two or three arrays:
             - If wave is None: (x_data, n, k), where x_data is `wavl` or `wavn` depending on mode.
             - If wave is defined: (n, k), the interpolated real and imaginary parts of the refractive index.
     """

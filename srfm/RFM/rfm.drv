@@ -1,7 +1,7 @@
 *HDR
-  2025-04-10 test run
+  2025-04-11 test run
 *FLG
-  OPT NAD SFC PRF LEV RAD DBL
+  OPT NAD SFC PRF LEV DBL
 *SPC
   ./rfm_files/grid.spc
 *GAS

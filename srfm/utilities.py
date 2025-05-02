@@ -1,11 +1,13 @@
-"""
-Name: utilities
-Parent package: srfm
-Author: Antonin Knizek
-Contributors: 
-Date: 18 February 2025
-Purpose: Provides functions for srfm that do not fall in any other category, incl.
-decorator functions, memory-safe declarations, some physical formulas, etc.
+"""Provides functions for srfm that do not fall in any other category.
+
+Contains e.g. decorator functions, memory-safe declarations, 
+some physical formulas, etc.
+
+- Name: utilities
+- Parent package: srfm
+- Author: Antonin Knizek
+- Contributors: 
+- Date: 18 February 2025
 """ 
 import numpy as np
 from . import units
@@ -14,71 +16,153 @@ import psutil
 import time
 from numba import njit
 from bisect import bisect
+from functools import wraps
 
 
 def closest(lst_lon, lon, lst_lat, lat):
-    """find index of closest pixel to lon and lat from IASI L1c data"""
+    """Find index of closest pixel to lon and lat from IASI L1c data.
+    
+    Originally written to work with IASI data.
+    IASI data are spectra which are taken at given longitude and latitude. This function
+    takes in longitude and latitude from the user and finds an IASI spectrum closest to 
+    the query.
+    
+    Can be used in general to find a pair of values closest to an existing pair in 
+    two list/2D array.
+    
+    Note that this function exists because the longitude and latitude lists are 
+    attributes of a pixel and tue purpose is to find a closest pixel, i.e. it is not
+    equal to finding a minimum in each of the two lists, but rather is about finding
+    a pixel whose distance is minimum to the required (lon, lat).
+    
+    Args:
+        lst_lon (array-like): List of longitudes.
+        lon (int, float): User-specified longitude.
+        lst_lat (array-like): List of latitudes.
+        lat (int, float): User-specified latitudes.
+    
+    Returns:
+        ii (int): Index of closest pixel. The longitude and latitude value of this pixel
+            are simply lst_lon[ii] and lst_lat[ii], respectively.
+    
+    """
     lonlat = np.column_stack((lst_lon, lst_lat))
     Tree = KDTree(lonlat)
     dd, ii = Tree.query([lon, lat])
+    
     return ii
 
 
 def convert_spectral_radiance_to_bbt(B, v):
     """Converts intensity (spectral radiance) to brightness temperature.
-    B(T,v) (intens, spectral radiance) = [ W m-2 sr-1 cm ] == [ kg s-3 sr-1 cm ]
-    note: the 'cm' comes from the intensity being per cm-1, i.e. 1/cm-1
-    T - temperature, [K]
-    h - Planck constant, 6.62607015e-34 kg m2 s-1
-    c - speed of light
-    kb - boltzmann constant
-    v - wavenumber, [cm-1]
+    
+    Calculated according to:
+    
+    .. math::
+        
+        T_{BB} = \\frac{h  c  \\nu}{k_b  \\ln{(1 + 
+        \\frac{2  h  c^2  \\nu^3}{B(T,\\nu)})}}
 
-    T = h * c / kb * v * 1 / ( ln( 1 + 2 * h * c**2 * v**3 / B(T,v) ) )
-    this expression was derived from:
-    Dudhia 2017 (10.1016/j.jqsrt.2016.06.018), eq. 25 (and equally eq. 23)
+    where:    
+        - :math:`B(T,\\nu)`: Intensity, spectral radiance, units
+          [W m\ :sup:`-2` sr\ :sup:`-1` cm ], equiv. to
+          [ kg s\ :sup:`-3` sr\ :sup:`-1` cm ].
+        - :math:`T_{B}`: Brightness temperature (equiv. blackbody temperature), 
+          units [K].
+        - *h*: Planck constant, 
+          6.62607015 :math:`\\times 10^{-34}` kg m\ :sup:`2` s\ :sup:`-1`.
+        - *c*: speed of light, 2.99792458 :math:`\\times 10^{10}` cm s\ :sup:`-1`.
+        - :math:`k_b`: Boltzmann constant, 1.380649 :math:`\\times 10^{-19}` kg 
+          cm\ :sup:`2` s\ :sup:`-2` K\ :sup:`-1`.
+        - :math:`\\nu`: Wavenumber, units [cm\ :sup:`-1`].
+        
+    This expression was derived from `Dudhia 2017`_, eq. 25 (and equally eq. 23).
+    
+    .. _Dudhia 2017: https://doi.org/10.1016/j.jqsrt.2016.06.018
+    
+    Args:
+        B (int, float): Intensity, spectral radiance, units
+            [ W m\ :sup:`-2` sr\ :sup:`-1` cm ]. Note that the 'cm' comes from the 
+            intensity being per cm\ :sup:`-1`, i.e. :math:`\\frac{1}{cm^{-1}}`.
+        v (int, float): Wavenumber, units [cm\ :sup:`-1`].
+
+    Returns:
+        T (float): Brightness temperature (equivalent black body temperature), 
+            units [K].
+    
     """
     h = 6.62607015e-30  # kg cm2 s-1
     c = 2.99792458e10  # cm s-1
     kb = 1.380649e-19  # kg cm2 s-2 K-1
+    
+    T = h * c / kb * v / (np.log(1 + 2 * h * c**2 * v**3 / B))
 
-    return h * c / kb * v / (np.log(1 + 2 * h * c**2 * v**3 / B))
+    return T
 
 
 def calc_tot_Rayleigh_opt_depth(ps, l):
-    """Calculates total atmospheric Rayleigh optical depth
+    """Calculates total atmospheric Rayleigh optical depth.
+    
+    That is the optical Rayleight optical depth of the whole atmosphere.
     Formula from: (according to Don, put ref here)
-    ps - surface pressure in hPa/mbar
-    l - wavelength in micrometers
+    
+    Args:
+        ps (int, float): Surface pressure in hPa/mbar.
+        l (int, float): Wavelength in micrometers.
+    
+    Returns:
+        tau (float): Total Rayleigh optical depth.
+        
     """
     tau = (ps / 1013.0) / (117.03 * l**4 - 1.316 * l**2)
+    
     return tau
 
 
 def calc_layer_opt_thick_Rayleigh(pl, pu, ps, tau0):
-    """Calculates one layer optical thickness (optical depth) from Rayleigh 
-    scattering.
-    Formula from: (according to Don, put ref here)
-    Layer defined by upper pressure pu and lower pressure pl.
-    ps - surface pressure
-    tau0 - total atmospheric Rayleigh optical depth
-    formula:
-    delta tau_Rayleigh(wavelength,pu,pl) = tau0*(pl-pu)/ps
+    """Calculates one layer optical thickness from Rayleigh scattering.
+    
+    Formula from to Don, put ref here.
+    The calculation formula is
+
+    .. math::
+        
+        \\begin{eqnarray}
+            \\Delta \\tau_R(\\lambda,p_u,p_l) = \\tau_0 \\frac{(p_l-p_u)}{p_s}
+        \\end{eqnarray}
+        
+    where:
+        - :math:`\\Delta \\tau_R(\\lambda,p_u,p_l)` is the layer optical depth as 
+          a function of wavelength and layer upper and lower boundary pressures.
+        - :math:`\\tau_0` is the total atmospheric Rayleight optical depth.
+        - :math:`p_u, p_l` are the layer upper and lower boundary pressures.
+        - :math:`p_s` is the surface pressure.
+        
+    Args:
+        pl (int, float, array-like): Layer bottom boundary pressure.
+        pu (int, float, array-like): Layer upper boundary pressure.
+        ps (int, float): Surface pressure.
+        tau0 (int, float): total atmospheric Rayleigh optical depth.
+    
+    Returns:
+        tau (float): Layer Rayleigh optical depth.
+
     """
     tau = tau0 * (pl - pu) / ps
+    
     return tau
     
 def calc_Rayleigh_opt_depths(ps, pl, pu, l):
     """Calculates optical depths from Rayleigh scattering.
-    Uses formulas:
-    note: once Don provides reference, rename this function.
-    ps - surface pressure
-    pl - layer lower boundary pressure
-    pu - layer upper boundary pressure
-    l - wavenumber, [cm-1]
-    ##
-    tau_r - rayleigh optical depth
-    tau0 - total atmospheric Rayleigh optical depth
+    
+    Args:
+        ps (int, float): Surface pressure.
+        pl (int, float): Layer lower boundary pressure.
+        pu (int, float): Layer upper boundary pressure.
+        l (int, float): Wavenumber, [cm\ :sup:`-1`].
+    
+    Returns:
+        tau_r (float): Rayleigh optical depth.
     """
     # calculate total atmospheric Rayleigh optical depth at this wavenumber
     tau0 = calc_tot_Rayleigh_opt_depth(ps=ps, l=units.inv_cm_to_micron(l))
@@ -91,14 +175,29 @@ def calc_Rayleigh_opt_depths(ps, pl, pu, l):
     return tau_r
 
 def line_break_str(txt, chars, delim, indent=0):
-    r"""This function adds line ends ('\n') at desired places in a string.
+    r"""This function adds line breaks at desired places in a string.
+    
     The original intention of this function is to ensure that no string
     is longer than {chars} characters for the RFM driver table, whose line length
     is limited to 200 characters.
     The function takes in a string txt, and finds the nearest lower occurence of 
     the required delimiter.
-    It then adds {indent} spaces and a line end character, so that if written to 
-    a txt file, the lines do not exceed {chars} characters.  
+    It then adds *indent* spaces and a line end character, so that if written to 
+    a txt file, the lines do not exceed *chars* characters.  
+    
+    Args:
+        txt (str): String to be split
+        chars (int): Number of character allowed per one line.
+        delim (str): Character to split the string at.
+        indent (int): The amount of spaces placed at the beginning of each split section.
+            Default is 0.
+    
+    Returns:
+        fin (str): New string with line breaks inserted in appropriate places.
+    
+    Raises:
+        TypeError: Raised when inputs are incorrect datatypes.
+        
     """
     # check input value format
     if not isinstance(txt, str):
@@ -127,21 +226,48 @@ def line_break_str(txt, chars, delim, indent=0):
     lines.append(txt)
     ind = " "*indent
     
-    return f"{ind}\n".join(lines)
+    fin = f"{ind}\n".join(lines)
+    
+    return fin
 
-def memory_safe_np_zeros_2d(constraints=None, pct=99, max_sec_dim = None):
-    """Initialzes a numpy.zeros 2D array of maximum allowed size so as not to overflow 
+def memory_safe_np_zeros_2d(constraints=None, pct=99, max_sec_dim=10000):
+    """Initialzes a numpy.zeros 2D array os size that does not overflow RAM.
+    
+    Creates a numpy.zeros array of maximum allowed size so as not to overflow 
     system RAM.
-    constraints = list/tuple/1D-np.array with constraints on mimimum required shape
-    pct = maximum allowed percentage of available RAM to be used, defualt 99%
-    max_sec_dim = maximum allowed size of the second dimension
+    Note that by default, a np.zeros array has dtype np.float64. Therefore each 
+    element of the array takes up 8 bytes. The size of the array in the memory is
+    simply the number of elements times the 8 bytes. 
+    
+    Args:
+        constraints (array-like): Constraints on mimimum required shape. Default is 
+            None.
+        pct (int, float): Maximum allowed percentage of available RAM to be used, 
+            Defualt is 99%.
+        max_sec_dim (int) Maximum allowed size of the second dimension. Default is 
+            10,000.
+    
+    Returns:
+        arr (np.ndarray): Numpy.zeros array of appropriate shape.
+    
+    Raises:
+        TypeError: Raised when inputs are incorrect dtype.
+        ValueError: Raised when the number of constraints exceeds two (the amount of 
+            output array dimensions.
+        RuntimeError: Raised when the size of array that would satisfy the required 
+            constraints would exceed the amount of available memory. 
+    
+    Todo:
+        Generalize this function, so that it takes the required number of dimensions as
+        a parameter and can return ND array rather than just 2D array.
+        
     """
     
     # check inputs:
     if not isinstance(pct,(int,float,type(None))):
         raise TypeError("Parameter pct must be int, float or None")
     if not isinstance(constraints, (list, tuple, np.ndarray)):
-        raiseTypeError("Parameter constraints must be list, tuple or np.ndarray")
+        raise TypeError("Parameter constraints must be list, tuple or np.ndarray")
     if len(constraints) > 2:
         raise ValueError("""Number of constraints exceeds the number of required 
                         dimensions.""")
@@ -182,7 +308,8 @@ def memory_safe_np_zeros_2d(constraints=None, pct=99, max_sec_dim = None):
 
     elif len(constraints) == 2:
         if (constraints[0]*constraints[1] > max_array_items):
-            raise ValueError("Requested array too large, not enough memory available.")
+            raise RuntimeError("""Requested array too large, not enough memory
+                available.""")
         else:
             return np.zeros(
                         (constraints[0],constraints[1]),
@@ -191,11 +318,14 @@ def memory_safe_np_zeros_2d(constraints=None, pct=99, max_sec_dim = None):
     
 
 def find_prime_factors(num):
-    """Find prime factors of a number
-    inputs:
-        num - number
-    outputs:
-        factors - list of prime factors
+    """Find prime factors of a number.
+    
+    Args:
+        num (int): Input number.
+    
+    Returns:
+        factors (list): List of prime factors of num.
+        
     """
     factors = []
     factor = 2
@@ -205,17 +335,25 @@ def find_prime_factors(num):
             num = num / factor
         else:
             factor += 1
+    
     return factors
     
 def calc_layer_extent(a,t):
-    """Calculates the upper and lower level of a layer (e.g. aerosol layer)
-    inputs:
-        a - altitude of the center of the layer
-        t - layer thickness
-    outputs:
-        u - upper boundary altitude
-        l - lower boundary altitude
+    """Calculates the upper and lower boundary of a layer (e.g. aerosol layer).
+    
     Input and output units match.
+    
+    Args:
+        a (int, float): Altitude of the center of the layer.
+        t (int, float): Layer thickness.
+        
+    Return:
+        u (int, float): Upper boundary altitude.
+        l (int, float): Lower boundary altitude.
+    
+    Raises:
+        TypeError: Raised if inputs are incorrect dtype.
+    
     """
     
     if not isinstance(a, (int, float)):
@@ -226,8 +364,8 @@ def calc_layer_extent(a,t):
         warnings.warn("""Negative altitude doesn't make sense on rocky planets, 
         are you sure?""")
     
-    u = a + (t / 2)
-    l = a - (t / 2)
+    u = round(a + (t / 2), 3)
+    l = round(a - (t / 2), 3)
     
     if l < 0:
         warnings.warn("""Layer is so thick that lower boundary is negative. This doesn't
@@ -237,12 +375,18 @@ def calc_layer_extent(a,t):
 
 def calc_layer_bounds(u,l):
     """Calculate atmospheric layer center altitude and vertical extent.
-    inputs:
-        u - layer upper boundary altitude
-        l  - layer lower boundary altitude
-    outputs:
-        a - layer center altitude
-        t - layer vertical extent (thickness)
+    
+    Args:
+        u (int, float): Upper boundary altitude.
+        l (int, float): Lower boundary altitude.
+    
+    Returns:
+        a (int, float): Altitude of the center of the layer.
+        t (int, float): Layer thickness.
+
+    Raises:
+        TypeError: Raised if inputs are incorrect dtype.
+        ValueError: Raised when input lower boundary is greated than the upper boundary.
     
     """
     if not isinstance(u, (int,float)):
@@ -252,27 +396,31 @@ def calc_layer_bounds(u,l):
     if u <= l:
         raise ValueError("""Layer upper boundary altitude must
                           be > than lower boundary altitude.""")
-    t = u - l
-    a = l + t/2
+    t = round(u - l, 3)
+    a = round(l + t/2, 3)
     
     return a, t
 
-def add_lyr(lev, track_lev, new_lyr):
+def add_lyr_from_Layer(lev, track_lev, new_lyr):
     """Adds a layer to an existing atmoshperic level structure.
+    
+    Used to add layer properties from the *srfm.layer.Layer()* object
     Deletes any levels from the existing structure that would fall within the new layer.
     Updates a tracking array.
-    inputs:
-        lev -  current layers
-        track_lev - helper list to track inserted levels, None for all levels except 
-                    those inserted from a scattering layer
-        new_lyr - MieLayer object, which contains upper and lower layer boundary 
-                  altitudes, alt_upp and alt_low
-    outputs:
-         lev - new atmospheric level structure
-         track_lev - modified tracker list for level structure
-                   - None for all user specified levels, layer upper and lower boundary
-                     specifiers (f"{MieLayer.name}" for the 
-                     new inserted levels
+    
+    Args:
+        lev (list): List of current layers.
+        track_lev (list): Helper list to track inserted levels, None for all levels
+            except those inserted from a scattering layer.
+        new_lyr (obj): ``srfm.Layer.MieLayer`` object, which contains upper and lower
+            layer boundary altitudes, alt_upp and alt_low.
+            
+    Returns:
+         lev (list): New atmospheric level structure.
+         track_lev (list): Modified tracker list for level structure. None for all user
+            specified levels, layer upper and lower boundary specifiers 
+            (``MieLayer.name``) for the new inserted levels.
+            
     """
     
     to_remove_idcs = [lev.index(i) for i in lev if i <= new_lyr.alt_upp and i >= new_lyr.alt_low]
@@ -291,12 +439,28 @@ def add_lyr(lev, track_lev, new_lyr):
     return lev, track_lev
 
 def calc_tot_dtauc(tau_g,tau_R,tau_p):
-    """Calculate total optical depth of model layers, delta tau (dtau).
-    dtau = tau_g + tau_R + tau_p
-    dtau = layer optical depth
-    tau_g = layer optical depth from gas absorption
-    tau_R = layer optical depth from Rayleigh scattering
-    tau_p = layer optical depth from particle scattering
+    """Calculate total optical depth of model layers.
+    
+    Formula is:
+    
+    .. math::
+    
+        \\Delta \\tau = \\tau_g + \\tau_R + \\tau_p
+    
+    where:
+        - :math:`\\Delta \\tau`: Layer optical depth.
+        - :math:`\\tau_g`: Layer optical depth from gas absorption.
+        - :math:`\\tau_R`: Layer optical depth from Rayleigh scattering.
+        - :math:`\\tau_p`: Layer optical depth from particle scattering.
+    
+    Args:
+        tau_g (int, float, array-like): Layer optical depth from gas absorption.
+        tau_R (int, float, array-like): Layer optical depth from Rayleigh scattering.
+        tau_p (int, float, array-like): Layer optical depth from particle scattering.
+    
+    Returns:
+        dtau (float, array-like): Layer optical depths.
+         
     """
     def check_convert_dtype(obj):
         """Inner function that checks the input data types and tries to
@@ -311,51 +475,68 @@ def calc_tot_dtauc(tau_g,tau_R,tau_p):
         elif isinstance(obj, (int,float)):
             pass
         else:
-            raise TypeError(f'inputs must be np.ndarrays, pd.Series, lists, ints or floats.')
+            raise TypeError("""Inputs must be np.ndarrays, pd.Series, lists, ints 
+                or floats.""")
         
         return obj
     
     tau_g = check_convert_dtype(tau_g)
     tau_R = check_convert_dtype(tau_R)
     tau_p = check_convert_dtype(tau_p)
-
-    return tau_g + tau_R + tau_p
+    
+    dtau = tau_g + tau_R + tau_p
+    
+    return dtau
     
 def show_runtime(func):
-    """Wrapper function to time other functions."""
+    """Decorator function to time other functions."""
+    @wraps(func)
     def wrapper(*args,**kwargs):
         t_start = time.perf_counter()
         result = func(*args,**kwargs)
         t_end = time.perf_counter()
         elapsed = (t_end - t_start)
         print(f"Time taken to execute {func.__name__}: {elapsed:.6f} seconds.")
+        
         return result
+    
     return wrapper
     
 def number_conc_from_mass_loading(l, rho, thick, r=None, d=None):
     """Calculates particle number concentration from particle column loading.
-    Inputs:
-        l - particle column loading, [g m-2]
-        rho - particle density, [kg m-3]
-            - uniform density assumed
-            - can be either a value in [kg m-3] or one of the following strings:
-                "pumice" - 950 kg m-3
-                "glass" - 2400 kg m-3
-                "mineral" - 3000 kg m-3
-                "rock" - 2900 kg m-3
-            - note that the densities are average densities from https://volcanoes.usgs.
-            gov/volcanic_ash/density_hardness.html#:~:text=Volcanic%20Ash,-Ash%20Particl
-            e%20Size&text=For%20example%2C%20700%2D1200%20kilograms,material%20if%20depo
-            sited%20on%20water.
-            who in their turn take their data from Shipley and Sarna-Wojcicki, 1982
+    
+    Either *r* or *d* has to be given.
+    
+    Args:
+        l (int, float): Particle column mass loading, units [g m\ :sup:`-2`].
+        rho (int, float, str): Particle density, units [kg m\ :sup:`-3`]. Uniform density 
+            is assumed. Can be either a value in [kg m\ :sup:`-3`] or one of the
+            following strings:
+            
+                - "pumice" - 950 kg m\ :sup:`-3`
+                - "glass" - 2400 kg m\ :sup:`-3`
+                - "mineral" - 3000 kg m\ :sup:`-3`
+                - "rock" - 2900 kg m\ :sup:`-3`
+                
+            Note that the densities are average densities from the `USGS VAI`_ 
+            who in their turn take their data from "Shipley and Sarna_Wojcicki 1982" 
             (and don't give details on this reference at all).
-            using the strings should serve only an illustrative purpose and should not
+            
+            .. _USGS VAI: https://volcanoes.usgs.gov/volcanic_ash/density_hardness.html
+            
+            Using the strings should serve only an illustrative purpose and should not
             be relied on as the data in a given eruption may vary!
-        thick - particle layer thickness, [km]
-        r - particle radius, [um], either r or d has to be given
-        d - particle diameter, [um], either r or d has to be given
-    Outputs:
-        n - particle number concentration, [particles cm-3]
+        thick (int, float): Particle layer thickness, units [km].
+        r (int, float): Particle radius, units [\ :math:`\\mu`\ m]. Default is None.
+        d (int, float): Particle diameter, units [\ :math:`\\mu`\ m], Default is None.
+        
+    Returns:
+        n (float): Particle number concentration, units [particles cm\ :sup:`-3`].
+    
+    Raises:
+        TypeError: Raised if inputs are incorrect format.
+        ValueError: Raised if neither r or d are given.
+        ValueError: Raised if both r and d are given, but d != 2*r.
     """
     
     rho_dict = {"pumice" : 950,
@@ -389,32 +570,46 @@ def number_conc_from_mass_loading(l, rho, thick, r=None, d=None):
         pass
     
     #factor 1e6 comes from unit conversions
-    return 3 / 4 * l / (rho * thick * np.pi * r**3) * 1e6
+    n = 3 / 4 * l / (rho * thick * np.pi * r**3) * 1e6
+   
+    return n
 
 def mass_loading_from_number_conc(n, thick, rho, r=None, d=None):
     """Calculate particle mass loading from number concentration.
-     Inputs:
-        n - particle number concentration, [particles cm-3]
-        rho - particle density, [kg m-3]
-            - uniform density assumed
-            - can be either a value in [kg m-3] or one of the following strings:
-                "pumice" - 950 kg m-3
-                "glass" - 2400 kg m-3
-                "mineral" - 3000 kg m-3
-                "rock" - 2900 kg m-3
-            - note that the densities are average densities from https://volcanoes.usgs.
-            gov/volcanic_ash/density_hardness.html#:~:text=Volcanic%20Ash,-Ash%20Particl
-            e%20Size&text=For%20example%2C%20700%2D1200%20kilograms,material%20if%20depo
-            sited%20on%20water.
-            who in their turn take their data from Shipley and Sarna-Wojcicki, 1982
+    
+    Either *r* or *d* has to be given.
+     
+    Args:
+        n (float): Particle number concentration, units [particles cm\ :sup:`-3`].
+        rho (int, float, str): Particle density, units [kg m\ :sup:`-3`]. Uniform density 
+            is assumed. Can be either a value in [kg m\ :sup:`-3`] or one of the
+            following strings:
+            
+                - "pumice" - 950 kg m\ :sup:`-3`
+                - "glass" - 2400 kg m\ :sup:`-3`
+                - "mineral" - 3000 kg m\ :sup:`-3`
+                - "rock" - 2900 kg m\ :sup:`-3`
+                
+            Note that the densities are average densities from the `USGS VAI`_ 
+            who in their turn take their data from "Shipley and Sarna_Wojcicki 1982" 
             (and don't give details on this reference at all).
-            using the strings should serve only an illustrative purpose and should not
+            
+            .. _USGS VAI: https://volcanoes.usgs.gov/volcanic_ash/density_hardness.html
+            
+            Using the strings should serve only an illustrative purpose and should not
             be relied on as the data in a given eruption may vary!
-        thick - particle layer thickness, [km]
-        r - particle radius, [um], either r or d has to be given
-        d - particle diameter, [um], either r or d has to be given
-    Outputs:
-        l - particle column loading, [g m-2]
+        thick (int, float): Particle layer thickness, units [km].
+        r (int, float): Particle radius, units [\ :math:`\\mu`\ m]. Default is None.
+        d (int, float): Particle diameter, units [\ :math:`\\mu`\ m], Default is None.
+    
+    Returns:
+        l (int, float): Particle column mass loading, units [g m\ :sup:`-2`].
+    
+    Raises:
+        TypeError: Raised if inputs are incorrect format.
+        ValueError: Raised if neither r or d are given.
+        ValueError: Raised if both r and d are given, but d != 2*r.
+        
     """
     
     rho_dict = {"pumice" : 950,
@@ -446,17 +641,23 @@ def mass_loading_from_number_conc(n, thick, rho, r=None, d=None):
         r = d/2
     elif r is not None and d is None:
         pass
-
-    return 4 / 3 * np.pi * r**3 * thick * rho * n * 1e-6
+    
+    l = 4 / 3 * np.pi * r**3 * thick * rho * n * 1e-6
+    
+    return l
 
 #@njit
 def monotonic(x):
-    """Check is list/1D array is monotonic and increasing or decreasing.
-    input - x, input array/list, must be 1D
-    returns values:
-        0 - not monotonic
-        1 - strictly increasing
-        2 - strictly decreasing
+    """Check if list/1D array is monotonic and increasing or decreasing.
+    
+    Args:
+        x (array-like): input array/list, if array, then must be 1D.
+        
+    Returns:
+        val (int): Int value which signifies the result. Can be:
+            - 0 - Input not monotonic.
+            - 1 - Input strictly increasing.
+            - 2 - Input strictly decreasing.
     
     """
     if isinstance(x,list):
@@ -472,17 +673,29 @@ def monotonic(x):
         return 0
     
 def calc_grids(lo, hi, res, units):
-    """Calculates spectral grids from a given lower and upper limit and resolution
-    in given units.
-    inputs:
-        lo - lower limit
-        hi - upper limit
-        res - resolution
-        units - units of input parameters, can be "cm-1", "nm", "um"
-    outputs:
-        wvnm - wavenumber grid, [cm-1]
-        wvls - wavelength grid, [um]
+    """Calculates spectral grids.
+    
+    Grids are calculated from a given lower and upper limit and resolution in given
+    units.
     The output grids are regular in the input units.
+    
+    Args:
+        lo (int, float): Grid lower limit.
+        hi (int, float): Grid upper limit.
+        res (int, float): Grid resolution.
+        units (str): Units of input parameters, can be "cm\ :sup:`-1`", "nm", or
+            "\ :math:`\\mu`\ m".
+            
+    Returns:
+        wvnm (array): Wavenumber grid, units [cm\ :sup:`-1`].
+        wvls (array): Wavelength grid, units [\ :math:`\\mu`\ m].
+    
+    Raises:
+        TypeError: Raised if inputs are incorrect dtypes.
+        ValueError: Raised if units is an unknown value.
+        ValueError: Raised if lo and hi exceed prescribed limits. The limits are set
+            to match the limits of RFM.
+            
     """    
     # perform checks
     if not isinstance(lo, (int, float)):
@@ -527,17 +740,27 @@ def calc_grids(lo, hi, res, units):
 
 def track_lev_to_track_lyr(lev):
     """Converts a levels tracking list to layer tracking list.
-    Contains None for all layers except the tracked layer.
+    
+    In the levels tracking list, each element represents an atmospheric level and 
+    evaluates to *None* for all levels except the tracked level.
+    The tracking list for layer follows the same logic.
+    
     Example logic:
-        (L is the layer name in place of the lower and upper layer boundary
-        altitudes)
-        track_lev = [None, None, L, L, None, None]
-        is converted to
-        track_lyr = [None, None, L, None, None]
-    inputs:
-        lev - levels tracking array
-    outputs:
-        lyr - layers tracking array
+    (*L* is the layer name in place of the lower and upper layer boundary
+    altitudes.)
+    
+    track_lev = [*None*, *None*, *L*, *L*, *None*, *None*]
+    
+    is converted to
+    
+    track_lyr = [*None*, *None*, *L*, *None*, *None*]
+    
+    Args:
+        lev (list): Levels tracking list.
+    
+    Returns:
+        lyr (list): Layers tracking array.
+        
     """
     
     lyr = []
@@ -549,8 +772,22 @@ def track_lev_to_track_lyr(lev):
     return lyr
 
 def read_ils(filename):
-    """Read instrument line shape file in RFM format (for description of the format,
-    see https://eodg.atm.ox.ac.uk/RFM/sum/ilsfil.html"""
+    """Read instrument line shape file in RFM format.
+    
+    For description of the format, see `here`_.
+    
+    .. _here: https://eodg.atm.ox.ac.uk/RFM/sum/ilsfil.html
+    
+    Args:
+        filename (str): Filename of the instrument line shape file in RFM format.
+    
+    Returns:
+        x (array): Wavenumber/wavelength values.
+        y (array): Intensity (line shape).
+        lo (int): Lower wavenumber/wavelength (where the line shape starts).
+        hi (int): Upper wavenumber/wavelength (where the line shape ends).
+        
+    """
     
     f = open(filename,"r")
     lines = f.readlines()

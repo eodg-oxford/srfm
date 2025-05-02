@@ -4,109 +4,115 @@ import numpy as np
 class Read_Iasi_L1c:
     """Read IASI L1C nat file
 
-    VERSION
-      15JAN24 AD Fix some bugs associated with renaming.
-      31OCT23 AD Renamed from Iasi_L1c to Read_Iasi_L1c
-                 Prefix private method names with '_'.
-      18DEC20 AD Original version
+    VERSION:
+      - 15JAN24 AD: Fix some bugs associated with renaming.
+      - 31OCT23 AD: 
+        Renamed from Iasi_L1c to Read_Iasi_L1c.
+        Prefix private method names with '_'.
+      - 18DEC20 AD: Original version
+      - 15APR25 AK: Updated documentation (formatting).
 
-    USAGE
+    USAGE:
       By default this will read the entire IASI L1C file contents, c.90000 spectra.
       However various options are available for the user to subset the data.
       By default spectra are radiances in units of nW/(cm2.sr.cm-1) but calling
       with the option bright=True returns spectra as brightness temperatures.
 
-      Typically call as
+      Typically call as:
+      
         l1c = Read_Iasi_L1c(filename, [options] )
-        if l1c.fail:                      # check for errors
+        # check for errors
+        if l1c.fail:                      
           print(l1c.errmsg)
           stop
 
       An alternative method is just to extract the location data and use the
-      get_spec method to extract individual spectra
+      get_spec method to extract individual spectra:
+      
         l1c = Read_Iasi_L1c(filename, loc_only=True, [other options] )
         if l1c.fail ...etc
         for iloc in range(l1c.nloc)
           rad = l1c.get_spec(iloc,[options])
        (options for get_spec method are wnolim, bright)
 
-    OPTIONS
-      avhrr  = T/F, default=False
-               True = include AVHRR cluster analysis data.
-      bright = T/F, default=False
-               True for brightness temp spectra, False for radiance spectra
-      chkqal = (T/F,T/F,T/F), default=(True,True,True)
-               True = Exclude data with bad quality flag for each band,
-               False = include
-               (bands are 645-1210, 1210-2000, 2000-2760 cm-1).
-      cldlim = (cldmin, cldmax), default=None
-                min,max cloud cover percentages for inclusion, (0,0)=only cloud-free
-      latlim = (latmin, latmax), default=None
-                min,max latitudes (range -90:90) for inclusion
-      lndlim = (lndmin, lndmax), default=None
-                min,max land (cf.ocean) percentages for inclusion, (0,0)=only ocean
-      loc_only = T/F, default=False
-                 Set True if only location data (without spectra) are required
-      lonlim = (lonmin, lonmax), default=None
-                min,max longitudes (range -180:180) for inclusion, default=None
-                lonmin,lonmax are actually east,west boundaries so, for example,
-                (-170,170) would include everything apart from the 20deg lon band
-                around +/-180 deg, whereas (170,-170) would only include this
-                20deg band.
-                The same actually applies to all other limits, but is probably
-                only useful for longitude
-      mph_only = T/F, default=False
-                 Set True if just the Main Product Header data is required
-                 (as self.mph)
-      szalim = (szamin,szamax), default=None
-                min,max solar zenith angle (0,90=daytime, 90-180=nighttime).
-      wnolim = (wnomin, wnomax), default=(645,2760)
-                min,max wavenumber [cm-1] limits for extracted spectra.
-      zenlim = (zenmin,zenmax), default=None
-                min,max satellite zenith angle (0=sat overhead). Default=None.
+    OPTIONS:
+      avhrr (bool): True = include AVHRR cluster analysis data. Default is False.
+      bright (bool): True for brightness temp spectra, False for radiance spectra.
+        Default is False.
+               
+      chkqal (list of bool): Default is [True,True,True].
+        If True, exclude data with bad quality flag for each band.
+        (bands are 645-1210, 1210-2000, 2000-2760 cm-1).
+      cldlim (tuple): (cldmin, cldmax), Default is None.
+        min,max cloud cover percentages for inclusion, (0,0)=only cloud-free
+      latlim (tuple): (latmin, latmax). Default is None.
+        min,max latitudes (range -90:90) for inclusion.
+      lndlim (tuple): (lndmin, lndmax), Default is None.
+        min,max land (cf.ocean) percentages for inclusion, (0,0)=only ocean.
+      loc_only (bool); Default is False.
+        Set True if only location data (without spectra) are required
+      lonlim (tuple): (lonmin, lonmax), Default is None.
+        min,max longitudes (range -180:180) for inclusion.
+        lonmin,lonmax are actually east,west boundaries so, for example,
+        (-170,170) would include everything apart from the 20deg lon band
+        around +/-180 deg, whereas (170,-170) would only include this
+        20deg band.
+        The same actually applies to all other limits, but is probably
+        only useful for longitude.
+      mph_only (bool): Default is False.
+        Set True if just the Main Product Header data is required (as self.mph).
+      szalim (tuple): (szamin,szamax), Default is None.
+        min,max solar zenith angle (0,90=daytime, 90-180=nighttime).
+      wnolim (tuple): (wnomin, wnomax), Default is (645,2760).
+        min,max wavenumber [cm-1] limits for extracted spectra.
+      zenlim (tuple): (zenmin,zenmax), Default is None.
+        min,max satellite zenith angle (0=sat overhead).
 
-    METHODS
-      The following methods are 'private' and called on initialisation
-        __init__     : Open file and read location data
-        _btspec       : Convert radiance to brightness temperature
-        _outside      : Determine if parameter outside selected limits
-        _read_ipr     : Read Internal Pointer Records
-        _read_loc     : Read pixel location data
-        _read_mdr     : Check Measurement Data Records and get offsets
-        _read_mph     : Read Main Product Header
-        _read_sca     : Read radiance spectra scale factors
-        _read_spec    : Read in spectra at selected locations
-      The following methods are 'public' - intended for the user.
-        get_spec     : Extract individual spectrum
-        write_stats  : Print statistics on good/bad data
+    LIST OF METHODS:
 
-    DATA
-      errtxt    str  : Text message describing error if fail=True          general
-      fail      boo  : True=fatal error reading data, False=data read OK.  general
-      file      str  : Name of input L1C .nat file                        __init__
-      mph      {str} : Main Product Header                                _read_mph
-      nloc      int  : No. of pixel locations selected                    _read_loc
-      scale    [flt] : Spectral scale factors, size NWNO                  _read_sca
-      stats    {int} : Statistics on good/bad pixels and MDRs             _read_loc
-      mdruse   [boo] : True = usable MDR, size TOTAL_MDR                  _read_mdr
-      wno      [flt] : Wavenumber axis for spectra                        _read_spec
+      The following methods are 'private' and called on initialisation:
+        - __init__     : Open file and read location data
+        - _btspec       : Convert radiance to brightness temperature
+        - _outside      : Determine if parameter outside selected limits
+        - _read_ipr     : Read Internal Pointer Records
+        - _read_loc     : Read pixel location data
+        - _read_mdr     : Check Measurement Data Records and get offsets
+        - _read_mph     : Read Main Product Header
+        - _read_sca     : Read radiance spectra scale factors
+        - _read_spec    : Read in spectra at selected locations
+      
+      The following methods are 'public' - intended for the user:
+        - get_spec     : Extract individual spectrum
+        - write_stats  : Print statistics on good/bad data
+
+    DATA:
+      - errtxt    (str)  : Text message describing error if fail=True          general
+      - fail      (bool)  : True=fatal error reading data, False=data read OK.  general
+      - file      (str)  : Name of input L1C .nat file                        __init__
+      - mph      (dict of str) : Main Product Header                                _read_mph
+      - nloc      (int)  : No. of pixel locations selected                    _read_loc
+      - scale    (list of float) : Spectral scale factors, size NWNO                  _read_sca
+      - stats    (dict of int) : Statistics on good/bad pixels and MDRs             _read_loc
+      - mdruse   (list of bool) : True = usable MDR, size TOTAL_MDR                  _read_mdr
+      - wno      (list of float) : Wavenumber axis for spectra                        _read_spec
+      
       A set of lists each of size nloc:                                   _read_loc
-        day    [int] : Day# (1=1Jan2000)
-        msc    [int] : Milliseconds into day
-        daylin [int] : Day# at start of scan-line
-        msclin [int] : Milliseconds at start of scan-line
-        lin    [int] : Scan line/MDR within file (1:c.760)
-        stp    [i2]  : Mirror  Step# across scan (1:30)
-        pix    [i1]  : Pixel# with FOV (1:4)
-        iof    [ui4] : Byte offset of associated spectrum
-        qal    [3i1] : Quality flags for or each band (0=OK,1=bad)
-        lat    [flt] : Latitude (-90:90)
-        lon    [flt] : Longitude (-180:180)
-        sza    [flt] : Solar Zenith Angle (0:180)
-        zen    [flt] : Satellite Zenith Angle (0:90)
-        cld    [flt] : % cloud fraction (0:100)
-        lnd    [flt] : % land fraction (0:100)
-        spec   [nwno*flt] : spectrum                                      read_spec
+        - day    [int] : Day# (1=1Jan2000)
+        - msc    [int] : Milliseconds into day
+        - daylin [int] : Day# at start of scan-line
+        - msclin [int] : Milliseconds at start of scan-line
+        - lin    [int] : Scan line/MDR within file (1:c.760)
+        - stp    [i2]  : Mirror  Step# across scan (1:30)
+        - pix    [i1]  : Pixel# with FOV (1:4)
+        - iof    [ui4] : Byte offset of associated spectrum
+        - qal    [3i1] : Quality flags for or each band (0=OK,1=bad)
+        - lat    [flt] : Latitude (-90:90)
+        - lon    [flt] : Longitude (-180:180)
+        - sza    [flt] : Solar Zenith Angle (0:180)
+        - zen    [flt] : Satellite Zenith Angle (0:90)
+        - cld    [flt] : % cloud fraction (0:100)
+        - lnd    [flt] : % land fraction (0:100)
+        - spec   [nwno*flt] : spectrum                                      read_spec
     """
 
     # Define constants required throughout Class
@@ -231,26 +237,27 @@ class Read_Iasi_L1c:
         loc_only=False,
         bright=False,
     ):
-        """Open file and read data
+        """Open file and read data.
 
-        ARGUMENTS
-          iasifile str : name of .nat file to be read
-          chkqal  (boo): True=use band quality flags to screen
-          latlim  (flt): min,max latitude (-90,90) for inclusion
-          lonlim  (flt): min,max longitude (-180, 180) for inclusion
-          szalim  (flt): min,max solar zenith angle (0,180) for inclusion
-          zenlim  (flt): min,max satellite zenith angle (0,90) for inclusion
-          cldlim  (flt): min,max %cloud cover (0:100) for inclusion
-          lndlim  (flt): min,max %land cover (0:100) for inclusion
-          avhrr    boo : True=include AVHRR cluster analysis in loc structure
-          mph_only boo : True=just extract MPH from file
-          loc_only boo : True=just extract location data, no spectra
-          bright   boo : True=convert radiance spectra to brightness temperature
+        Opens file, performs a variety of checks, and read data
+        On exit, check self.fail - set True for any error conditions, when
+        self.errmsg contains text describing the error.
 
-        DESCRIPTION
-          Opens file, performs a variety of checks, and read data
-          On exit, check self.fail - set True for any error conditions, when
-          self.errmsg contains text describing the error.
+        Args:
+          iasifile (str): Name of .nat file to be read.
+          chkqal (list of bool): If True, use band quality flags to screen. Default is
+            [True, True, True].
+          latlim (array-like): min,max latitude (-90,90) for inclusion. Default is None.
+          lonlim (array-like): min,max longitude (-180, 180) for inclusion. Default is None.
+          szalim (array-like): min,max solar zenith angle (0,180) for inclusion. Default is None.
+          zenlim (array-like): min,max satellite zenith angle (0,90) for inclusion. Default is None.
+          cldlim (array-like): min,max %cloud cover (0:100) for inclusion. Default is None.
+          lndlim (array-like): min,max %land cover (0:100) for inclusion. Default is None.
+          wnolim (array-like): (wnomin, wnomax), Default is (645,2760).
+          avhrr (bool): True=include AVHRR cluster analysis in loc structure. Default is None.
+          mph_only (bool): True=just extract MPH from file. Default is None.
+          loc_only (bool): True=just extract location data, no spectra. Default is None.
+          bright (bool): True=convert radiance spectra to brightness temperature. Default is None.
 
         """
 
@@ -799,21 +806,25 @@ class Read_Iasi_L1c:
                 self.spec[iloc] = rad
 
     def get_spec(self, iloc, wnolim=(645, 2760), bright=False):
-        """Read in spectra at selected locations
+        """Read in spectra at selected locations.
 
-        ARGUMENTS
-          iloc    int  : Index of pixel for spectrum
-          wnolim (flt) : Min,Max wavenumber limits [cm-1] for extracted spectra
-          bbt     boo  : True=return spec as brightness temps, False=radiances
+        The byte offsets of spectra within the file are saved in the self.iof list
+        so this method can simply move to the correct location.
+        Assumes self.file contains name of required file which is reopened.
+        Otherwise works as read_spec method.
 
-        RETURNS
-          [flt] : spectrum
+        Args:
+          iloc (int): Index of pixel for spectrum
+          wnolim (tuple): (Min,Max) wavenumber limits [cm-1] for extracted spectra.
+            Default is (645.2760)
+          bbt (bool): If True, return spec as brightness temps, if False, return
+            radiances. Default is False.
 
-        DESCRIPTION
-          The byte offsets of spectra within the file are saved in the self.iof list
-          so this method can simply move to the correct location.
-            Assumes self.file contains name of required file which is reopened.
-          Otherwise works as read_spec method.
+        Returns:
+          rad (array_like): radiances or brightness temperatures
+          wno (array_like): wavenumbers
+          
+          
 
         """
         # identify start,end points - would be 0,8460 for full range
@@ -842,7 +853,7 @@ class Read_Iasi_L1c:
                 return rad, wno
 
     def write_stats(self):
-        """Write summary statistics to terminal"""
+        """Write summary statistics to terminal."""
 
         print(
             "{:6}".format(self.stats["tot_mdr"])

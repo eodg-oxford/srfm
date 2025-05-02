@@ -1,11 +1,10 @@
-"""
-Name: rfm_functions
-Parent package: srfm
-Author: Antonin Knizek
-Contributors: 
-Date: 18 February 2025
-Purpose: Provides functions that enable the user to work with RFM (which itself is
-in Fortran 90+) from a python interface.
+"""Provides functions that enable the user to work with RFM.
+
+- Name: rfm_functions
+- Parent package: srfm
+- Author: Antonin Knizek
+- Contributors: 
+- Date: 18 February 2025
 """ 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -17,7 +16,17 @@ from . import utilities as utils
 import warnings
 
 
-def read_output(filename):  # read output file from RFM into a dictionary
+def read_output(filename):  
+    """Read output file from RFM into a dictionary.
+    
+    Args:
+        filename (str): rfm output file filename.
+    
+    Returns:
+        contents (dict): Dictionary containing RFM outputs. Contains the key "info", 
+            which is a dictionary with the description of other parameters.
+    
+    """
     f = open(filename, "r")
     f_lines = f.readlines()
     f.close()
@@ -73,7 +82,17 @@ def read_output(filename):  # read output file from RFM into a dictionary
 
 
 def read_output_prf(filename):  # read bits of internal profile output file prf.asc
-    """This function reads the RFM output profile prf.asc."""
+    """This function reads the RFM output profile prf.asc.
+    
+    Args:
+        filename (str): path, including filename, of the RFM prf.asc output file (and
+            equivalents if that ever changes from the current RFM default).
+    
+    Returns:
+        contents (dict): Dictionary that stores the read values. Keys are section
+            headers from the prf.asc file.
+    
+    """
     print("Attempting to read prf.asc file.")
     f = open(filename, "r")
     f_lines = f.readlines()
@@ -101,12 +120,33 @@ def read_output_prf(filename):  # read bits of internal profile output file prf.
 
 @utils.show_runtime
 def get_rfm_optical_depths(fldr,levels):
-    """
+    """Calculates layer optical depths from RFM output.
+    
     This function is designed to calculate optical depths for layers in
     the atmosphere from RFM with the LEV and OPT flags set on.
     The basic idea is to load optical depth spectra and subtract the adjacent ones
     to get layer optical depth.
-    Returns a pandas dataframe.
+    
+    Args:
+        fldr (str): Path to RFM folder.
+        levels (list): levels to derive the layers from. The RFM can be output at more 
+            levels than necessary (which happens when internal RFM levels don't match
+            the required output levels, i.e. most of the time).
+    
+    Returns:
+        df (Pandas.core.frame.Dataframe): Pandas dataframe with the calculated layer optical depths
+            and atmospheric structure.
+    
+    Raises:
+        ValueError: Raised when the pressure profile read from prf.asc and the number of 
+            files don't match. This is often invoked when some input parameters are
+            changed, but RFM is not rerun.
+        ValueError: Raised when wavenumber grids for adjacent levels don't match.
+        ValueError: Raised when delta_OD (layer optical depth) and int_OD (integrated
+            optical depth) don't match.
+        ValueError: Raised when the length of the wavenumber grid and delta_OD array
+            don't match.
+            
     """
 
     # load relevant rfm output files, sort by modification time (i.e. altitude)
@@ -126,8 +166,9 @@ def get_rfm_optical_depths(fldr,levels):
     
     if len(fls) != len(prf["PRE [mb]"]):
         raise ValueError(
-            "length of pressure profile and the number of"
-            + " corresponding optical depth files don't match."
+            """length of pressure profile and the number of corresponding 
+            optical depth files don't match. Have you perhaps changed some input 
+            parameters of your model and not ran RFM?"""
         )
 
     delta_OD = []  # layers' optical depths
@@ -250,6 +291,15 @@ def get_rfm_optical_depths(fldr,levels):
     return df
 
 def compile_rfm(fldr):
+    """Compiles RFM.
+    
+    Args:
+        fldr (str): Path to RFM folder (absolute or relative).
+    
+    Raises:
+        OSError: Raised when directory is invalid.
+    
+    """
     cwd = os.getcwd()
     try:
         os.chdir(f"{fldr}/source")
@@ -265,6 +315,17 @@ def compile_rfm(fldr):
     return print("Successfully compiled rfm.")
     
 def construct_rfm_driver_table(inp, fldr, force=True,**kwargs):
+    """Constructs RFM driver table.
+    
+    The table is a text file saved to *fldr*.
+    
+    Args:
+        inp (dict): Dictionary containing RFM driver table inputs.
+        fldr (str): Path to RFM-containing folder.
+        force (bool): If True, overwrites the current driver table. If False, save a 
+            copy of the old table first.
+
+    """
     
     #check inputs
     if not isinstance(inp, dict):
@@ -327,17 +388,25 @@ def construct_rfm_driver_table(inp, fldr, force=True,**kwargs):
         
 def construct_rfm_output_levels_file(levels,fldr,fname="alts.lev",force=True):
     """Construct the levels file for RFM - specifies output levels.
+    
     Mind that the LEV flag for RFM must be enabled, or else this file will be ignored.
     Mind that the filename must be passed to RFM in the LEV section of the RFM driver
     table.
-    inputs:
-        levels - list/1d array of required output levels
-               - doesn't have to be sorted
-        fldr - RFM folder
-        fname - required output filename, default "alts.lev"
-        force - if True, overwrite current levels file, else saves a copy first 
-    outputs:
-        RFM levels file placed in the srfm/RFM/RFM_files folder
+    A text file is created and saved with the required *fname* in *fldr*.
+    
+    Args:
+        levels (array-like): Required output levels. Doesn't have to be sorted.
+        fldr (str): RFM folder
+        fname (str): Required output filename, Default is "alts.lev".
+        force (bool): If True, overwrite current levels file, else saves a copy first.
+    
+    Raises:
+        TypeError: Raised when *levels* has incorrect type.
+        ValueError: Raised when *levels* is an array, but has more than one dimension.
+        TypeError: Raised when *fname* is not a string.
+        FileNotFoundError: Raised if *fldr* does not exist.
+        ValueError: Raised when *force* is not bool.
+        
     """
     
     if not isinstance(levels, (list, np.ndarray)):
@@ -374,15 +443,20 @@ def construct_rfm_output_levels_file(levels,fldr,fname="alts.lev",force=True):
     return
 
 def construct_rfm_grid_file(wvnm,filename="grid.spc",rfm_fldr="./srfm/RFM"):
-    """
-    Creates a grid.spc file for rfm. RFM is run in the "irregular grid mode" where the
-    SPC section in the driver table contains the filename of this file.
-    inputs:
-        wvnm - a list of wavenumbers, the calculation grid
-        filename - optional, the output filename, default "grid.spc"
-        rfm_fldr - RFM folder, default "./srfm/RFM"
-    outputs:
-        calculation grid file for RFM
+    """Creates a grid.spc file for rfm.
+    
+    The file is saved in *rfm_fldr* with the required filename.
+    
+    RFM is run in the "irregular grid mode" where the SPC section in the driver table
+    contains the filename of this file.
+    
+    Args:
+        wvnm (array-like): Wavenumbers, the calculation grid.
+        filename (str): The output filename. Default is "grid.spc".
+        rfm_fldr (str): Path to RFM folder. Default is "./srfm/RFM".
+    
+    Raises:
+        TypeError: Raised when any of the input values have incorrect dtype.
     """
     
     if not isinstance(wvnm, (np.ndarray, list, pd.core.series.Series)):
@@ -404,8 +478,17 @@ def construct_rfm_grid_file(wvnm,filename="grid.spc",rfm_fldr="./srfm/RFM"):
 
 def read_atm_file(filename):  # read bits of internal profile output file prf.asc
     """This function reads the RFM .atm file.
-    inputs:
-        - filename (path)
+    
+    Args:
+        filename: Path to RFM-format .atm filename.
+    
+    Returns:
+        contents (dir): Dictionary with the file contents.
+    
+    Raises:
+        TypeError: Raised when a section label is not a string. Indicates that the file 
+            was not corectly read.
+            
     """
 
     f = open(filename, "r")
@@ -432,12 +515,15 @@ def read_atm_file(filename):  # read bits of internal profile output file prf.as
 
 def write_atm_file(data, filename, header=None):
     """Write out a file with atmospheric profile in RFM's .atm file format.
-    Inputs:
-        data - dictionary
-        filename - filename for the output file (path)
-        header - header for the file, optional, each line starts with "!"
-    outputs
-        outputs an .atm format file with name and path specified in filename.
+    
+    Saves an .atm file in the with the specified name.
+    
+    Args:
+        data (dictionary): Data to be written to the file.
+        filename (str): Filename for the output file (has to be a path).
+        header (str): Header for the file, optional, each line starts with "!". Default
+            is None.
+
     """
     with open(filename, "w") as f:
         if header is not None:

@@ -1,11 +1,10 @@
-"""
-Name: forward_model
-Parent package: srfm
-Author: Antonin Knizek
-Contributors: 
-Date: 18 February 2025
-Purpose: Defines the base model class for the forward model and specific model 
-subclasses, currently RFM and DISORT, along with their methods.
+"""Defines the base model class for the forward model and specific model subclasses.
+
+- Name: forward_model
+- Parent package: srfm
+- Author: Antonin Knizek
+- Contributors: 
+- Date: 18 February 2025
 """ 
 import numpy as np
 from . import disort_functions as disf
@@ -36,12 +35,23 @@ except ImportError:
 
 
 class Fwd_model:
+    """Base class for containing forward models.
+    
+    Specific forward models are defined as subclasses of this superclass.
+    
+    """ 
+    
     def __init__(self, name=None, **parameters):
         self.name = name
         self.parameters = {}
 
 
 class RFM(Fwd_model):
+    """Class that contains the RFM forward model.
+    
+    Is subclass of Fwd_model.
+    """
+    
     def __init__(
         self,
         name="RFM",
@@ -57,11 +67,18 @@ class RFM(Fwd_model):
     
     @utils.show_runtime
     def run_rfm(self, fldr, wipe=True):
-        """Attempts to run rfm from python. Can also be run manually.
-        inputs are;
-        fldr: the RFM folder (relative or absolute path)
-        wipe: if True, removes rfm results from the previous run, default=True"""
+        """Runs RFM from python.
         
+        Args:
+            fldr (str): Path to the RFM folder (relative or absolute path).
+            wipe (bool): If True, removes rfm results from the previous run.
+                Default is True.
+        
+        Returns:
+            Runs RFM, write its outputs to the fldr folder, updates object status. 
+        
+        """
+            
         cwd = os.getcwd()
         try:
             os.chdir(f"{fldr}")
@@ -88,11 +105,27 @@ class RFM(Fwd_model):
         return
 
     def add_rfm_opt_output(self, fldr, levels):
+        """Load RFM output from files to the object as method.
+        
+        Args:
+            fldr (str): Path to RFM folder.
+            levels (array-like): Specifies levels at which to load output.
+        
+        Returns:
+            Loads RFM results to the object, updates status.
+        
+        """
         self.rfm_output = rf.get_rfm_optical_depths(fldr=fldr, levels=levels)
         self.status = "RFM run completed and result loaded."
         return
 
     def get_wnos_from_RFM(self):
+        """Determine wavenumbers from RFM output.
+        
+        Raises:
+            ValueError: Raised when rfm output is empty.
+        
+        """
         if self.rfm_output is not None:
             try:
                 [
@@ -108,11 +141,22 @@ class RFM(Fwd_model):
     
     def load_output_prf(self,fldr):
         """"Loads the output profile (default prf.asc) file from RFM.
-        fldr - path to RFM"""
+        
+        Args:
+            fldr (str): Path to RFM.
+        
+        Returns:
+            Assings output_prf.
+            
+        """
         self.output_prf = rf.read_output_prf(f"{fldr}/prf.asc")
         return
 
 class DISORT(Fwd_model):
+    """Class that contains the DISORT forward model.
+    
+    Is subclass of Fwd_model.
+    """
     def __init__(
         self,
         name="DISORT",
@@ -135,10 +179,22 @@ class DISORT(Fwd_model):
             self.key = val
 
     def add_disort_input(self, d):
-        """add disort input parameters as a dictionary."""
+        """Add disort input parameters as a dictionary.
+        
+        Args:
+            d (dict): Dictionary with DISORT input parameters.
+        
+        """
         self.disort_in = d
 
     def add_disort_empty_input(self):
+        """Adds a dictionary with default and zero values as DISORT input.
+        
+        The dictionary contains zeros where possible and minimum or basic values in
+        other instances (such as maxcly, which is 1 for one computational layer - the 
+        simplest possible case), etc.
+        """
+        
         self.disort_input = {
             "maxcly": 1,
             "maxmom": 2,
@@ -192,7 +248,7 @@ class DISORT(Fwd_model):
         }
 
     def test_disort_input_format(self):
-        """test disort input for correct formatting."""
+        """Test disort input for correct formatting."""
         if self.disort_input != {}:
             self.disort_fmt_passmark = disf.test_disort_input_format(
                 maxcly=self.disort_input["maxcly"],
@@ -249,6 +305,8 @@ class DISORT(Fwd_model):
             raise ValueError("DISORT.disort_input is not defined.")
 
     def test_disort_input_integrity(self):
+        """Tests if DISORT input satisfies basic logical integrity and code constraints.
+        """
         if self.disort_fmt_passmark == True:
             self.disort_integrity_passmark = disf.test_disort_input_integrity(
                 maxmom=self.disort_input["maxmom"],
@@ -276,11 +334,23 @@ class DISORT(Fwd_model):
             )
 
     def set_maxcly(self, maxcly):
+        """Assigns the value of maxcly.
+        
+        Args:
+            maxcly (int): Number of computational layers.
+        
+        """
         self.disort_input["maxcly"] = maxcly
 
     def set_maxcly_from_rfm(self, rfm):
-        """sets maxcly from rfm
-        rfm is a class RFM object and has attribute rfm_output"""
+        """Sets maxcly from RFM.
+        
+        Args:
+            rfm (obj): Class RFM object and has attribute rfm_output.
+        
+        Raises:
+            AttributeError: Raised when rfm does not have rfm_output attribute.
+        """
         try:
             self.disort_input["maxcly"] = len(rfm.rfm_output["layer no."])
         except AttributeError:
@@ -289,64 +359,182 @@ class DISORT(Fwd_model):
             )
 
     def set_maxmom(self, maxmom):
+        """Assigns the value of maxmom.
+        
+        Args:
+            maxmom (int): Number of phase function moments.
+        
+        """
         self.disort_input["maxmom"] = maxmom
 
     def set_maxcmu(self, maxcmu):
+        """Assigns the value of maxcmu.
+        
+        Args:
+            maxcmu (int): Number of computational streams.
+        
+        """
         self.disort_input["maxcmu"] = maxcmu
 
     def set_maxumu(self, maxumu):
+        """Assigns the value of maxumu.
+        
+        Args:
+            maxumu (int): Number of output polar angles.
+        
+        """
         self.disort_input["maxumu"] = maxumu
 
     def set_maxphi(self, maxphi):
+        """Assigns the value of maxphi.
+        
+        Args:
+            maxphi (int): Number of output azimuthal angles.
+        
+        """
         self.disort_input["maxphi"] = maxphi
 
     def set_maxulv(self, maxulv):
+        """Assigns the value of maxulv.
+        
+        Args:
+            maxulv (int): Number of output optical depths.
+        
+        """
         self.disort_input["maxulv"] = maxulv
 
     def set_usrang(self, usrang):
+        """Assigns the value of usrang.
+        
+        Args:
+            usrang (bool): If True, output at user-defined polar angles requested.
+        
+        """
         self.disort_input["usrang"] = usrang
 
     def set_usrtau(self, usrtau):
+        """Assigns the value of usrtau.
+        
+        Args:
+            usrtau (bool): If True, output at user-defined optical depths requested.
+        
+        """
         self.disort_input["usrtau"] = usrtau
 
     def set_ibcnd(self, ibcnd):
+        """Assigns the value of ibcnd.
+        
+        Args:
+            ibcnd (int): Specifices a combination of boundary conditions. For full 
+                documentation see DISORT documentation.
+        
+        """
         self.disort_input["ibcnd"] = ibcnd
 
     def set_onlyfl(self, onlyfl):
+        """Assigns the value of onlyfl.
+        
+        Args:
+            onlyfl (bool): If True, only fluxes output, elif False, full output.
+        
+        """
         self.disort_input["onlyfl"] = onlyfl
 
     def set_prnt(self, prnt):
+        """Assigns the value of prnt.
+        
+        Args:
+            prnt (array-like): Array of shape (5,) bool values, controls printing to terminal 
+                from DISORT.
+        
+        """
         self.disort_input["prnt"] = prnt
 
     def set_plank(self, planck):
+        """Assigns the value of plank.
+        
+        Args:
+            planck (bool): Thermal radiation in DISORT. True - on, False - off.
+        
+        """
         self.disort_input["plank"] = planck
 
     def set_lamber(self, lamber):
+        """Assigns the value of lamber.
+        
+        Args:
+            lamber (bool): Bottom boundary in DISORT treated as Lambertian or not.
+        
+        """
         self.disort_input["lamber"] = lamber
 
     def set_deltamplus(self, deltamplus):
+        """Assigns the value of deltamplus.
+        
+        Args:
+            deltamplus: If True, use delta-M-plus approximation to calculate strongly 
+                forward-peaked phase functions. If False, use delta-M method.
+        
+        """
         self.disort_input["deltamplus"] = deltamplus
 
     def set_do_pseudo_sphere(self, d_p_s):
+        """Assigns the value of do_pseudo_sphere.
+        
+        Args:
+            d_p_s (bool): Do a spheric correction on the calculation.
+        
+        """
         self.disort_input["do_pseudo_sphere"] = d_p_s
 
     def set_dtauc_manually(self, dtauc):
+        """Assigns the value of dtauc.
+        
+        Args:
+            dtauc (array-like): Atmospheric optical depth structure (layers' optical 
+                depth).
+        
+        """
         self.disort_input["dtauc"] = dtauc
 
     def set_ssalb_manually(self, ssalb):
+        """Assigns the value of ssalb.
+        
+        Args:
+            ssalb (array-like): Layers' single scatter albedo.
+        
+        """
         self.disort_input["ssalb"] = ssalb
 
     def set_pmom_manually(self, pmom):
+        """Assigns the value of pmom.
+        
+        Args:
+            pmom (array-like): Scattering phase function Legendre polynomial expansion 
+                coefficients (normalised coefficients expected).
+        
+        """
         self.disort_input["pmom"] = pmom
 
     def set_temper(self, temper):
+        """Assigns the value of temper.
+        
+        Args:
+            temper (array-like): Atmospheric tempeature structure, defined in terms of 
+                levels.
+        
+        """
         self.disort_input["temper"] = temper
 
     def set_temper_from_rfm(self, rfm):
         """Sets layer temperature for disort from the RFM output.
+        
         Takes upper temperatures from rfm_output for every layer.
         Adds the lowest layer lower temperature (adjacent to surface) as the last one.
-        rfm is a class RFM object and has attribute rfm_output
+        
+        Args:
+            rfm (obj): Class RFM object which has attribute rfm_output.
+        
         """
         try:
             self.disort_input["temper"] = rfm.rfm_output["T_upper (K)"].tolist()
@@ -355,57 +543,149 @@ class DISORT(Fwd_model):
             )
         except AttributeError:
             print(
-                "Class RFM does not have attribute rfm_output. Make sure to set-up class RFM properly first."
+                """Class RFM does not have attribute rfm_output. Make sure to set-up 
+                class RFM properly first."""
             )
         return
 
     def set_wvnm_range(self, lo, hi):
+        """Assigns the value of wvnmlo and wvnmhi.
+        
+        Args:
+            lo (int, float): Lower wavenumber for Planck function calculation.
+            hi (int, float): Upper wavenumber for Planck function calculation.
+        
+        """
         self.disort_input["wvnmlo"] = lo
         self.disort_input["wvnmhi"] = hi
 
     def set_utau(self, utau):
+        """Assigns the value of utau.
+        
+        Args:
+             utau (array-like): User requested output optical depths.
+        
+        """
         self.disort_input["utau"] = utau
 
     def set_umu0(self, umu0):
+        """Assigns the value of umu0.
+        
+        Args:
+            umu0 (int, float): Incoming direct beam polar angle.
+        
+        """
         self.disort_input["umu0"] = umu0
 
     def set_phi0(self, phi0):
+        """Assigns the value of phi0.
+        
+        Args:
+            phi0 (int,float): Incoming direct beam azimuthal angle.
+        
+        """
         self.disort_input["phi0"] = phi0
 
     def set_umu(self, umu):
+        """Assigns the value of umu.
+        
+        Args:
+            umu (array-like): User requested output polar angles.
+        
+        """
         self.disort_input["umu"] = umu
 
     def set_phi(self, phi):
+        """Assigns the value of phi.
+        
+        Args:
+            phi (array-like): User requested output azimuthal angles.
+        
+        """
         self.disort_input["phi"] = phi
 
     def set_fbeam(self, fbeam):
+        """Assigns the value of fbeam.
+        
+        Args:
+            fbeam (int, float): Incoming direct beam intensity.
+        
+        """
         self.disort_input["fbeam"] = fbeam
 
     def set_fisot(self, fisot):
+        """Assigns the value of fisot.
+        
+        Args:
+            fisot (int, float): Incoming diffuse radiation intensity.
+        
+        """
         self.disort_input["fisot"] = fisot
 
     def set_albedo(self, albedo):
+        """Assigns the value of albedo.
+        
+        Args:
+            albedo (int, float): Surface albedo.
+        
+        """
         self.disort_input["albedo"] = albedo
 
     def set_btemp(self, btemp):
+        """Assigns the value of btemp.
+        
+        Args:
+            btemp (int, float): Bottom boundary temperature.
+        
+        """
         self.disort_input["btemp"] = btemp
 
     def set_ttemp(self, ttemp):
+        """Assigns the value of ttemp.
+        
+        Args:
+            ttemp (int, float): Top boundary temperature.
+        
+        """
         self.disort_input["ttemp"] = ttemp
 
     def set_temis(self, temis):
+        """Assigns the value of temis.
+        
+        Args:
+            temis (int, float): Top boundary emmisivity.
+        
+        """
         self.disort_input["temis"] = temis
 
     def set_earth_radius(self, earth_radius):
+        """Assigns the value of earth_radius.
+        
+        Args:
+            earth_radius (int, float): Earth radius, [km].
+        
+        """
         self.disort_input["earth_radius"] = earth_radius
 
     def set_h_lyr(self, h_lyr):
+        """Assigns the value of h_lyr.
+        
+        Args:
+            h_lyr (array-like): layer vertical extent.
+        
+        """
         self.disort_input["h_lyr"] = h_lyr
 
-    def set_h_lyr_from_rfm(self):
-        """Sets h_lyr for disort from the RFM output.
-        rfm is a class RFM object and has attribute rfm_output
+    def set_h_lyr_from_rfm(self, rfm):
+        """Assigns the value of h_lyr from the RFM output.
+        
+        Args:
+            rfm (obj): Class RFM object which has attribute rfm_output.
+        
+        Raises:
+            AttributeError: Raised when RFM object does not have rfm_output attribute.
         """
+
         try:
             self.disort_input["h_lyr"] = rfm.rfm_output["h_upper (km)"].tolist()
             self.disort_input["h_lyr"].append(
@@ -417,28 +697,72 @@ class DISORT(Fwd_model):
             )
 
     def set_rhoq(self, rhoq):
+        """Assigns the value of rhoq.
+        
+        Args:
+            rhoq (array-like): Something to do with BDREF in DISORT?.
+        
+        """
         self.disort_input["rhoq"] = rhoq
 
     def set_rhou(self, rhou):
+        """Assigns the value of rhou.
+        
+        Args:
+            rhou (array-like): Something to do with BDREF in DISORT?
+            
+        """
+        
         self.disort_input["rhou"] = rhou
 
     def set_rho_accurate(self, rho_accurate):
+        """Assigns the value of rho_accurate.
+        
+        Args:
+            rhou (array-like): Something to do with BDREF in DISORT?
+            
+        """
         self.disort_input["rho_accurate"] = rho_accurate
 
     def set_bemst(self, bemst):
+        """Assigns the value of bemst.
+        
+        Args:
+            bemst (array-like): Something to do with BDREF in DISORT?
+            
+        """
         self.disort_input["bemst"] = bemst
 
     def set_emust(self, emust):
+        """Assigns the value of emust.
+        
+        Args:
+            emust (array-like): Something to do with BDREF in DISORT?
+            
+        """
         self.disort_input["emust"] = emust
 
     def set_accur(self, accur):
+        """Assigns the value of accur.
+        
+        Args:
+            accur (int, float): Convergence criterion for azimuthal (Fourier cosine) 
+                series. 
+            
+        """
         self.disort_input["accur"] = accur
 
     def set_header(self, header):
+        """Assigns the value of header.
+        
+        Args:
+            header (str): Header for terminal output printing.
+        
+        """
         self.disort_input["header"] = header
 
     def initialize_disort_output_arrays(self):
-        """Initializes output arrays for a single disort run."""
+        """Initializes empty output arrays for a single disort run."""
         self.disort_input["rfldir"] = np.zeros(self.disort_input["maxulv"])
         self.disort_input["rfldn"] = np.zeros(self.disort_input["maxulv"])
         self.disort_input["flup"] = np.zeros(self.disort_input["maxulv"])
@@ -465,11 +789,21 @@ class DISORT(Fwd_model):
         return
     
     def set_wvnm(self,wvnm):
-        """Sets wavenumber of the current run."""
+        """Sets wavenumber of the current run.
+        
+        Args:
+            wvnm (int, float): wavenumber [cm-1].
+        
+        """
         self.wvnm = wvnm
     
     def set_wvl(self,wvl):
-        """Set wavelength of the current run."""
+        """Sets wavelength of the current run.
+        
+        Args:
+            wvl (int, float): wavelength [cm-1].
+        
+        """
         self.wvl = wvl
     
     def run_disort_single(self):
@@ -643,6 +977,15 @@ class DISORT(Fwd_model):
         
 
     def save_model_pickle(self, filename=None, folder=None):
+        """Saves the model with to a file with pickle.
+        
+        Args:
+            filename (str): Name of file to be saved. If None, then default name 
+                "model.pkl" is used. Default is None.
+            folder (str): Location for the file to be saved to. If None, then save in 
+                the current folder. Default is None. 
+            
+        """
         if isinstance(filename, (NoneType, str)):
             if filename == None:
                 fl = "model"
@@ -665,12 +1008,16 @@ class DISORT(Fwd_model):
         return
 
     def set_dtauc(self, tau_g,tau_R,tau_p):
-        """Calculate and add optical depth of model layers, delta tau (dtau).
-        dtau = tau_g + tau_R + tau_p
-        dtau = layer optical depth
-        tau_g = layer optical depth from gas absorption
-        tau_R = layer optical depth from Rayleigh scattering
-        tau_p = layer optical depth from particle scattering
+        """Calculate optical depth of model layers, delta tau (dtau).
+        
+        Calculation according to the formula :math:`dtau = tau_g + tau_R + tau_p`
+        Value is assigned to the object.
+        
+        Args:
+            tau_g (array-like): layer optical depth from gas absorption
+            tau_R (array-like): layer optical depth from Rayleigh scattering
+            tau_p (array-like): layer optical depth from particle scattering
+        
         """
         def check_convert_dtype(obj):
             """Inner function that checks the input data types and tries to
@@ -698,17 +1045,32 @@ class DISORT(Fwd_model):
         
         
     def set_ssalb(self, tau_g,tau_R,tau_p,w_p):
-        """Calculates and adds the single scatter albedo of the model layers
-        according to:
-        w = (w_g*tau_g + w_R*tau_R + w_p*tau_p) / (tau_g + tau_R + tau_p)
+        """Calculates and adds the single scatter albedo of the model layers.
+        
+        The calculation formula is
+        
+        .. math::
+
+            \\begin{eqnarray}
+                w = \\frac{w_g*\\tau_g + w_R*\\tau_R + w_p*\\tau_p}
+                {\\tau_g + \\tau_R + \\tau_p}
+            \\end{eqnarray}
+        
         where:
-        w - layer single scatter albedo
-        w_g - layer single scatter albedo from gas absorption, == 0
-        w_R - layer Rayleigh scattering single scatter albedo, == 1
-        w_p - layer particle scattering single scatter albedo
-        tau_g - layer gas absorption optical depth
-        tau_R - layer Rayleigh scattering optical depth
-        tau_p - layer particle scattering optical depth
+            - w: layer single scatter albedo
+            - w_g: layer single scatter albedo from gas absorption, == 0
+            - w_R: layer Rayleigh scattering single scatter albedo, == 1
+            - w_p: layer particle scattering single scatter albedo
+            - tau_g: layer gas absorption optical depth
+            - tau_R: layer Rayleigh scattering optical depth
+            - tau_p: layer particle scattering optical depth
+        
+        Args:
+            tau_g (array-like): layer optical depth from gas absorption
+            tau_R (array-like): layer optical depth from Rayleigh scattering
+            tau_p (array-like): layer optical depth from particle scattering
+            w_p (array_like): layer particle scattering single scatter albedo
+            
         """
         
         def check_convert_dtype(obj):
@@ -742,29 +1104,48 @@ class DISORT(Fwd_model):
         
     def set_pmom(self, pmom_R, tau_R, w_p, tau_p, pmom_p):
         """Calculate phase function coefficients according to Don (from ORAC).
-        Formula:
-            xi = (w_g*tau_g*xi,g + w_R*tau_R*xi,r + w_p*tau_p*xi,p) 
-                 / (w_g*tau_g + w_r*tau_R + w_p*tau_p)
-            where xi - Legendre polynomial coefficient 
-                  w_g = 0 - gas single scatter albedo
-                  xi,g = 0, gas phase function moment
-                  w_R = 1, Rayleigh scattering single scatter albedo
-            which makes the formula:
-            xi = (tau_R*xi,r + w_p*tau_p*xi,p) 
-                 / (tau_R + w_p*tau_p)
-        The function works on arrays, so xi is replaced by array pmom:
-         
-        pmom_R - array of phase function moments for Rayleigh scattering
-               - 2D array, where 'columns' are the atmospheric layers
-                                 'rows' are the Legendre polynomial 
-                                        coefficients x1,R to xn,R
-               - has shape (model_DISORT.disort_input["maxmom"] + 1,
-                            model_DISORT.disort_input["maxcly"])
-        pmom_p - array of phase function coefficients for particle scattering
-               - same shape and meaning as pmom_R       
-        w_p - particle scattering single scatter albedo for each layer, list/1D array
-        tau_p - particle scattering optical depth for each layer, list/1D array
-        tau_R - Rayleigh optical depths
+        
+        The calculation formula is
+        
+        .. math::
+        
+            \\begin{eqnarray}
+                x_i = \\frac{w_g*\\tau_g*x_{i,g} + w_R*\\tau_R*x_{i,r} + 
+                w_p*\\tau_p*x_{i,p}}{w_g*\\tau_g + w_r*\\tau_R + w_p*\\tau_p}
+            \\end{eqnarray}
+
+        where:
+            - :math:`x_i`: Legendre polynomial coefficient 
+            - :math:`w_g`: = 0 - gas single scatter albedo
+            - :math:`x_{i,g}`: = 0, gas phase function moment
+            - :math:`w_R`: = 1, Rayleigh scattering single scatter albedo
+       
+        which makes the formula 
+        
+        .. math::
+        
+            \\begin{eqnarray}
+                x_i = \\frac{tau_R*x_{i,r} + w_p*\\tau_p*x_{i,p}}{tau_R + w_p*\\tau_p}
+            \\end{eqnarray}
+        
+        The function works on arrays, so :math:`x_i` is replaced by array pmom.
+        
+        Args:
+            pmom_R (array-like): aAray of phase function moments for Rayleigh 
+                scattering. 2D array, where *columns* are the atmospheric layers
+                *rows* are the Legendre polynomial coefficients :math:`x_{1,R}` to 
+                :math:`x_{n,R}`. Has shape (model_DISORT.disort_input["maxmom"] + 1,
+                model_DISORT.disort_input["maxcly"]).
+            pmom_p (array-like): Array of phase function coefficients for particle
+                scattering. Same shape and meaning as pmom_R.     
+            w_p (array-like): Particle scattering single scatter albedo for each layer.
+            tau_p (array-like): Particle scattering optical depth for each layer.
+            tau_R (array-like): Rayleigh optical depths.
+        
+        Raises:
+            ValueError: When inputs are incorrectly shaped.
+            TypeError: When inputs are not np.ndarrays.
+        
         """
         def test_array(obj):
             if isinstance(obj, np.ndarray):
@@ -788,18 +1169,24 @@ class DISORT(Fwd_model):
         return
         
     def calc_pmom(self, iphas, prec="double", gg=0):
-        """Calls function to calculate phase function moments from disort using 
-        the getmom fucntion.
-        iphas - phase function option
-                1 : Isotropic
-                2 : Rayleigh
-                3 : Henyey-Greenstein with asymmetry factor GG
-                4 : Haze L as specified by Garcia/Siewert
-                5 : Cloud C.1 as specified by Garcia/Siewert
-                6 : Aerosol as specified by Kokhanovsky 
-                7 : Cloud as specified by Kokhanovsky
-        gg - assymetry factor for Heyney-Greenstein case
-        prec - required precision mode, accepted values "single" or "double" (default)
+        """Calculates phase function moments from disort using the getmom function.
+        
+        Args:
+            iphas (int): phase function option. Can be:
+                - 1: Isotropic
+                - 2: Rayleigh
+                - 3: Henyey-Greenstein with asymmetry factor GG
+                - 4: Haze L as specified by Garcia/Siewert
+                - 5: Cloud C.1 as specified by Garcia/Siewert
+                - 6: Aerosol as specified by Kokhanovsky 
+                - 7: Cloud as specified by Kokhanovsky
+            gg (int,float): Assymetry factor for Heyney-Greenstein case. Default is 0.
+            prec (str): Required precision mode, accepted values "single" or "double".
+                Default is double.
+        
+        Raises:
+            ValueError: When invalid precision values is used.
+            
         """
         
         if prec == "single":
@@ -811,24 +1198,29 @@ class DISORT(Fwd_model):
         return pmom
     
     def calc_pmom_single(self, iphas, gg=0):
-        """Calculates phase function moments from disort using the getmom
-        function.
+        """Calculates phase function moments from disort using the getmom function.
+        
         This is a class method because it contains a loop which is inconvenient
         in the main code (getmom calcualtes phase function moments 
         for a 1D array/list, not a 2D array.
-        pmom - empty pmom array of disort-required shape
-        iphas - phase function option
-                1 : Isotropic
-                2 : Rayleigh
-                3 : Henyey-Greenstein with asymmetry factor GG
-                4 : Haze L as specified by Garcia/Siewert
-                5 : Cloud C.1 as specified by Garcia/Siewert
-                6 : Aerosol as specified by Kokhanovsky 
-                7 : Cloud as specified by Kokhanovsky
-        gg - assymetry factor for Heyney-Greenstein case
-        nmom - index of the highest Legendre coefficient needed, 
-             - set automatically
-        single precision
+        This function uses the single precision version of DISORT.
+        
+        Args:
+            iphas (int): phase function option. Can be:
+                - 1: Isotropic
+                - 2: Rayleigh
+                - 3: Henyey-Greenstein with asymmetry factor GG
+                - 4: Haze L as specified by Garcia/Siewert
+                - 5: Cloud C.1 as specified by Garcia/Siewert
+                - 6: Aerosol as specified by Kokhanovsky 
+                - 7: Cloud as specified by Kokhanovsky
+            gg (int,float): Assymetry factor for Heyney-Greenstein case. Default is 0.
+            prec (str): Required precision mode, accepted values "single" or "double".
+                Default is double.
+        
+        Returns:
+            pmom (array-like): Legendre coefficients of the phase function (moments).
+            
         """
         # check input and raise warning if necessary
         if iphas == 3 and gg == 0:
@@ -852,24 +1244,29 @@ class DISORT(Fwd_model):
         return pmom
 
     def calc_pmom_double(self, iphas, gg=0):
-        """Calculates phase function moments from disort using the getmom
-        function.
+        """Calculates phase function moments from disort using the getmom function.
+        
         This is a class method because it contains a loop which is inconvenient
         in the main code (getmom calcualtes phase function moments 
         for a 1D array/list, not a 2D array.
-        pmom - empty pmom array of disort-required shape
-        iphas - phase function option
-                1 : Isotropic
-                2 : Rayleigh
-                3 : Henyey-Greenstein with asymmetry factor GG
-                4 : Haze L as specified by Garcia/Siewert
-                5 : Cloud C.1 as specified by Garcia/Siewert
-                6 : Aerosol as specified by Kokhanovsky 
-                7 : Cloud as specified by Kokhanovsky
-        gg - assymetry factor for Heyney-Greenstein case
-        nmom - index of the highest Legendre coefficient needed, 
-             - set automatically
-        double precision
+        This function uses the double precision version of DISORT.
+        
+        Args:
+            iphas (int): phase function option. Can be:
+                - 1: Isotropic
+                - 2: Rayleigh
+                - 3: Henyey-Greenstein with asymmetry factor GG
+                - 4: Haze L as specified by Garcia/Siewert
+                - 5: Cloud C.1 as specified by Garcia/Siewert
+                - 6: Aerosol as specified by Kokhanovsky 
+                - 7: Cloud as specified by Kokhanovsky
+            gg (int,float): Assymetry factor for Heyney-Greenstein case. Default is 0.
+            prec (str): Required precision mode, accepted values "single" or "double".
+                Default is double.
+        
+        Returns:
+            pmom (array-like): Legendre coefficients of the phase function (moments).
+            
         """
         # check input and raise warning if necessary
         if iphas == 3 and gg == 0:
@@ -894,21 +1291,26 @@ class DISORT(Fwd_model):
 
 class SRFM(Fwd_model):
     """This class represents the final forward model.
+    
     The class object serves as a container for the outputs from various forward models,
     be it RFM + DISORT or other.
+    
     """
     def __init__(self,name="SRFM",**parameters):
         super().__init__(name)        
         for key, val in parameters.items():
             self.key = val
             
-    def initialize_srfm_output_arrays_from_disort(self,DISORT):
+    def initialize_srfm_output_arrays_from_disort(self, DISORT):
         """Initializes srfm output arrays to which disort outputs are appended.
-        Input:
-            self
-            DISORT - srfm.forward_model.DISORT object
-        Outputs:
-            self.rfldir - float64 array, shape(wvnm/wvls,maxulv)
+        
+        Args:
+            DISORT (obj): instance of srfm.forward_model.DISORT
+        
+        Raises:
+            RuntimeError: Raised when the SRFM object doesn't have wavenumber or 
+                wavelengths grid first.
+
         """  
         if hasattr(self, "wvnm") and self.wvnm is not None:
             dim = len(self.wvnm)
@@ -930,7 +1332,12 @@ class SRFM(Fwd_model):
         return
         
     def set_wvnm(self, wvnm):
-        """Assigns wavenumber grid."""
+        """Assigns wavenumber grid to SRFM.
+        
+        Args:
+            wvnm (array-like): Wavenumber grid.
+        
+        """
         if hasattr(self,"wvls") and self.wvls is not None:
             assert len(self.wvls) == len(wvnm), """wvls and wvnm do not have equal 
             number of points."""
@@ -938,15 +1345,35 @@ class SRFM(Fwd_model):
         return
     
     def set_wvls(self,wvls):
-        """Assigns wavelength grid."""
+        """Assigns wavelength grid to SRFM.
+        
+        Args:
+            wvls (array-like): Wavelength grid.
+        
+        """
         if hasattr(self, "wvnm") and self.wvnm is not None:
             assert len(wvls) == len(self.wvnm), """wvls and wvnm do not have equal 
             number of points."""
         self.wvls = wvls
         return
     
-    def store_disort_result(self,DISORT,wvl_idx):
-        """Stores results from a single DISORT run to the SRFM() object."""
+    def store_disort_result(self, DISORT, wvl_idx):
+        """Stores results from a single DISORT run into the SRFM object.
+        
+        DISORT returns results for a given wavenumber/wavelength. If the overarching 
+        idea is to calculate a spectrum, which is it, DISORT is run in a lopp. This 
+        function takes results from a single DISORT run and inserts them in SRFM arrays
+        in appropriate places (at appropriate indices).
+        
+        Args:
+            DISORT (obj): instance of srfm.forward_model.DISORT
+            wvl_idx (int): Values are inserted into SRFM arrays at this index. The idea
+                is that the DISORT calculation is performed at a certain wavenunmber.
+                SRFM has initialized arrays of size matching the overall wavenumber grid
+                and results from each DISORT run are inserted into the arrays at the 
+                index corresponding to the respective wavenumber.
+        
+        """
         wvnm = DISORT.wvnm
         self.rfldir[wvl_idx] = DISORT.disort_out[wvnm]["rfldir"]
         self.rfldn[wvl_idx] = DISORT.disort_out[wvnm]["rfldn"]
@@ -959,7 +1386,13 @@ class SRFM(Fwd_model):
         return
     
     def calc_bbt(self):
-        """Converts radiance to brightness temperature."""
+        """Converts radiance to brightness temperature.
+        
+        Expects SRFM to have wavenumber/wavelength grid and radiances (uu) as 
+        attributes. Calculates brightness temperature array which matches the radiance
+        array in shape.
+        
+        """
         # strech wvnm to correct shape to be broadcastable.
         wvnm = self.wvnm[:,np.newaxis,np.newaxis,np.newaxis] # add new axis to wvnm
         # to match the number of uu dimensions, 0th dimension (axis 0) are the same
@@ -978,13 +1411,21 @@ class SRFM(Fwd_model):
         )
         return
     
-    def convolve_with_iasi(self,filename):
-        """Convolve radiance (uu) with iasi instrument line shape.
-        Inputs:
-            self, must contain uu
-            filename - file name of the iasi.ils file (iasi instrument line shape kindly
-            provided by Anu Dudhia, in RFM format.)
-            assumes regular grid
+    def convolve_with_iasi(self, filename):
+        """Convolve radiance (uu) with IASI instrument line shape.
+        
+        The SRFM object must contain radiances (uu) and a wavenumber grid.
+        Assumes regular grid.
+        Note that the convolved spectrum suffers from boundary effects (scipy 
+        interpolate does zero padding of the data at the boundaries). Best avoided by
+        calculating your original spectra at a wider interval and then interpolating/
+        truncating. For interpolation (best used to get spectra at your simulated 
+        satellite grid) see the interp() function of this module.
+        
+        Args:
+            filename (str): filename of the iasi.ils file (IASI instrument line shape
+                kindly provided by Anu Dudhia, in RFM format.)
+                
         """        
         # save a copy of unconvolved spectrum
         uu_unconvolved = self.uu.copy()
@@ -1035,22 +1476,23 @@ class SRFM(Fwd_model):
 
         return
         
-    def interp(self,new_wvnm):
+    def interp(self, new_wvnm):
         """Interpolates radiances (uu) and brightness temperatures to a new grid.
-        inputs:
-            self - must contain uu
-                 - if also contains bbt, bbt is interpolated as well
-            new_wvnm - new wavenumber grid to interpolate to, units [cm-1]
-        outputs:
-            self.uu_interp
-            (conditional) self.bb_interp
-            self.wvnm, self.wvls - new grid
-        """
-        # strech wvnm to correct shape to be broadcastable.
-#        old_wvnm = self.wvnm[:,np.newaxis,np.newaxis,np.newaxis] # add new axis to wvnm
-        # to match the number of uu dimensions, 0th dimension (axis 0) are the same
         
-#        n_wvnm = new_wvnm[:,np.newaxis,np.newaxis,np.newaxis]
+        Original intended use is to interpolate the calculated and already convolved 
+        spectra (i.e. at a lower effective resolution) to a satellite lower resolution
+        grid.
+        
+        The SRFM object must contain radiances (uu). If besides radiances also contains
+        brightness temperatures (bbt), then these are interpolated as well.
+        
+        Output is returned as updated attributes - new wavenumber and wavelength grids
+        as well as new radiances and brightness temperatures (if originally present).
+        
+        Args:
+            new_wvnm: new wavenumber grid to interpolate to, units [cm-1]
+        
+        """
         
         uu_shape = self.uu.shape # tuple
         
@@ -1070,7 +1512,6 @@ class SRFM(Fwd_model):
             new_uu[:,c[0],c[1],c[2]] = np.interp(new_wvnm,self.wvnm,self.uu[:,c[0],c[1],c[2]])
         
         self.uu = new_uu
-#        self.uu = np.interp(n_wvnm,old_wvnm,self.uu)
         
         # calculate new wavelengths [um]
         new_wvls = (1/new_wvnm)*1e4
