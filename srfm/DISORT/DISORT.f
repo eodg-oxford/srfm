@@ -554,7 +554,11 @@ c         WRITE( *,'(//,1X,100(''*''),/,A,/,1X,100(''*''))' )
 c     &    ' DISORT: '//HEADER
 c      ENDIF
       
-      IF( .NOT.PASS1 .AND. LEN( HEADER ).NE.0 ) THEN
+c      IF( .NOT.PASS1 .AND. LEN( HEADER ).NE.0 ) THEN
+c         WRITE( *,* ) HEADER
+c      ENDIF
+      
+      IF (.NOT.PASS1 .AND. HEADER(1:9).NE."NO HEADER") THEN
          WRITE( *,* ) HEADER
       ENDIF
 

@@ -178,7 +178,8 @@ def test_disort_input_format(
         bemst (array-like): BDREF-related.
         emust (array-like): BDREF-related.
         accur (int, float): Convergence criterion for azimuthal (Fourier cosine) series. 
-        header (str): Header for terminal output printing.
+        header (str): Header for terminal output printing. Max length 127 characters.
+            The string "NO HEADER" will supress the printing completely.
         rfldir (array-like): Empty output array for downward direct flux.
         rfldn (array-like): Empty output array for downward diffuse flux.
         flup (array-like): Empty output array for upward diffuse flux.

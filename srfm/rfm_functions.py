@@ -550,5 +550,6 @@ def write_atm_file(data, filename, header=None):
                 else:
                     f.write(f'{data[key][i]:.4e}    ')
             f.write("\n")
+        f.write("*END")
     f.close()
     return

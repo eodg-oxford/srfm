@@ -502,7 +502,7 @@ def show_runtime(func):
     
     return wrapper
     
-def number_conc_from_mass_loading(l, rho, thick, r=None, d=None):
+def number_conc_from_mass_loading(l, rho, thick, s, dist_type, r=None, d=None):
     """Calculates particle number concentration from particle column loading.
     
     Either *r* or *d* has to be given.
@@ -518,15 +518,25 @@ def number_conc_from_mass_loading(l, rho, thick, r=None, d=None):
                 - "mineral" - 3000 kg m\ :sup:`-3`
                 - "rock" - 2900 kg m\ :sup:`-3`
                 
-            Note that the densities are average densities from the `USGS VAI`_ 
-            who in their turn take their data from "Shipley and Sarna_Wojcicki 1982" 
-            (and don't give details on this reference at all).
+            Note that the densities are average densities from the `USGS VAI`_. 
             
             .. _USGS VAI: https://volcanoes.usgs.gov/volcanic_ash/density_hardness.html
+            
+            They in turn cite `Shipley and Sarna_Wojcicki (1982)`_.
+            
+            .._Shipley and Sarna_Wojcicki (1982): https://pubs.usgs.gov/mf/1983/1435/report.pdf
+            
+            The same information is also repeated in `Wilson et al. (2012)`_.
+            
+            .._Wilson et al. (2012): http://dx.doi.org/10.1016/j.pce.2011.06.006
             
             Using the strings should serve only an illustrative purpose and should not
             be relied on as the data in a given eruption may vary!
         thick (int, float): Particle layer thickness, units [km].
+        s (int, float): Lognormal distribution spread. Default is None.
+        dist_type (str): Size distribution type. If None, then a monodisperse distribution 
+            is implied and parameter s is not used. Other permitted value is "lognormal".
+            Default is None.
         r (int, float): Particle radius, units [\ :math:`\\mu`\ m]. Default is None.
         d (int, float): Particle diameter, units [\ :math:`\\mu`\ m], Default is None.
         
@@ -537,6 +547,11 @@ def number_conc_from_mass_loading(l, rho, thick, r=None, d=None):
         TypeError: Raised if inputs are incorrect format.
         ValueError: Raised if neither r or d are given.
         ValueError: Raised if both r and d are given, but d != 2*r.
+        ValueError: Raise if distribution type isn't recognized or implemented.
+    
+    Todo:
+        Add other size distributions as an option.
+    
     """
     
     rho_dict = {"pumice" : 950,
@@ -556,6 +571,12 @@ def number_conc_from_mass_loading(l, rho, thick, r=None, d=None):
     elif isinstance(rho, str) and rho in rho_dict.keys():
         rho = rho_dict[rho]
     
+    if dist_type is not None and not isinstance(dist_type, str):
+        raise TypeError("dist_type must be None or str.")
+    
+    if s is not None and not isinstance(s, (int, float)):
+        raise TypeError("s must be None, int or float.")
+    
     if r is None and d is None:
         raise ValueError(f"Both r and d are None. One has to be given.")
     elif r is not None and d is not None:
@@ -570,17 +591,26 @@ def number_conc_from_mass_loading(l, rho, thick, r=None, d=None):
         pass
     
     #factor 1e6 comes from unit conversions
-    n = 3 / 4 * l / (rho * thick * np.pi * r**3) * 1e6
+    if dist_type == None:
+        n = 3 / 4 * l / (rho * thick * np.pi * r**3) * 1e6
+    elif dist_type == "log_normal":
+        n = 3 / 4 * l / (rho * thick * np.pi * r**3 * np.exp(9 / 2 * (np.log(s))**2 ) ) * 1e6    
+    elif dist_type == "normal":
+        raise ValueError("Normal distribution hasn't been implemented yet. Sorry. :(")
+    else:
+        raise ValueError("Unrecognized or unsupported distribution type.")
+    
+    
    
     return n
 
-def mass_loading_from_number_conc(n, thick, rho, r=None, d=None):
+def mass_loading_from_number_conc(n, thick, rho, s, dist_type, r=None, d=None):
     """Calculate particle mass loading from number concentration.
     
     Either *r* or *d* has to be given.
      
     Args:
-        n (float): Particle number concentration, units [particles cm\ :sup:`-3`].
+        n (int, float): Particle number concentration, units [particles cm\ :sup:`-3`].
         rho (int, float, str): Particle density, units [kg m\ :sup:`-3`]. Uniform density 
             is assumed. Can be either a value in [kg m\ :sup:`-3`] or one of the
             following strings:
@@ -599,6 +629,10 @@ def mass_loading_from_number_conc(n, thick, rho, r=None, d=None):
             Using the strings should serve only an illustrative purpose and should not
             be relied on as the data in a given eruption may vary!
         thick (int, float): Particle layer thickness, units [km].
+        s (int, float): Lognormal distribution spread. Default is None.
+        dist_type (str): Size distribution type. If None, then a monodisperse distribution 
+            is implied and parameter s is not used. Other permitted value is "lognormal".
+            Default is None.
         r (int, float): Particle radius, units [\ :math:`\\mu`\ m]. Default is None.
         d (int, float): Particle diameter, units [\ :math:`\\mu`\ m], Default is None.
     
@@ -609,7 +643,11 @@ def mass_loading_from_number_conc(n, thick, rho, r=None, d=None):
         TypeError: Raised if inputs are incorrect format.
         ValueError: Raised if neither r or d are given.
         ValueError: Raised if both r and d are given, but d != 2*r.
-        
+        ValueError: Raise if distribution type isn't recognized or implemented.
+    
+    Todo:
+        Add other size distributions as an option.
+            
     """
     
     rho_dict = {"pumice" : 950,
@@ -618,7 +656,7 @@ def mass_loading_from_number_conc(n, thick, rho, r=None, d=None):
                 "rock" : 2900
             }
     
-    for i in [l, thick]:
+    for i in [n, thick]:
         if not isinstance(i,(float, int)):
             raise TypeError(f"l and thick must be ints or floats.")
     
@@ -628,6 +666,12 @@ def mass_loading_from_number_conc(n, thick, rho, r=None, d=None):
         raise ValueError(f"If rho is a string, it must be one of {rho_dict.keys()}.")
     elif isinstance(rho, str) and rho in rho_dict.keys():
         rho = rho_dict[rho]
+
+    if dist_type is not None and not isinstance(dist_type, str):
+        raise TypeError("dist_type must be None or str.")
+    
+    if s is not None and not isinstance(s, (int, float)):
+        raise TypeError("s must be None, int or float.")
     
     if r is None and d is None:
         raise ValueError(f"Both r and d are None. One has to be given.")
@@ -642,8 +686,15 @@ def mass_loading_from_number_conc(n, thick, rho, r=None, d=None):
     elif r is not None and d is None:
         pass
     
-    l = 4 / 3 * np.pi * r**3 * thick * rho * n * 1e-6
-    
+    if dist_type == None:
+        l = 4 / 3 * np.pi * r**3 * thick * rho * n * 1e-6
+    elif dist_type == "log_normal":
+        l = 4 / 3 * np.pi * r**3 * np.exp(9 / 2 * (np.log(s))**2 ) * thick * rho * n * 1e-6
+    elif dist_type == "normal":
+        raise ValueError("Normal distribution hasn't been implemented yet. Sorry. :(")
+    else:
+        raise ValueError("Unrecognized or unsupported distribution type.")
+        
     return l
 
 #@njit

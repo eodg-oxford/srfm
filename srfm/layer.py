@@ -573,7 +573,7 @@ class MieLayer(Layer):
 
             try:
                 self.mass_loading = utils.mass_loading_from_number_conc(
-                    self.n, self.thick, self.rho, self.r
+                    self.n, self.thick, self.rho, self.s, self.dist_type, self.r
                 )
             except AttributeError:
                 warnings.warn(
@@ -582,13 +582,13 @@ class MieLayer(Layer):
                 continues without it."""
                 )
             except:
-                warning.warn(
+                warnings.warn(
                     """Could not calculate mass_loading, calculation 
                 continues without it."""
                 )
         elif hasattr(self, "mass_loading") and self.mass_loading is not None:
             self.n = utils.number_conc_from_mass_loading(
-                self.mass_loading, self.rho, self.thick, self.r
+                self.mass_loading, self.rho, self.thick, self.s, self.dist_type, self.r
             )
             self.n_s_v()
 

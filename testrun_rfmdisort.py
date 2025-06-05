@@ -152,8 +152,7 @@ rfm_inp = {}
 rfm_inp["HDR"] = f"{str(datetime.date.today())} test run" # RFM header
 rfm_inp["FLG"] = "OPT NAD SFC PRF LEV RAD DBL" # RFM flags
 rfm_inp["SPC"] = f"{rfm_grid_fname}" # RFM spectral settings
-rfm_inp["GAS"] = """N2 O2 CO2 O3 H2O CH4 N2O HNO3 CO NO2 N2O5 ClO HOCl ClONO2 NO HNO4 
-                    HCN NH3 F11 F12 F14 F22 CCl4 COF2 H2O2 C2H2 C2H6 OCS SO2 SF6""" 
+rfm_inp["GAS"] = """N2 O2 CO2 O3 H2O CH4 N2O HNO3 CO NO2 N2O5 ClO HOCl ClONO2 NO HNO4 HCN NH3 F11 F12 F14 F22 CCl4 COF2 H2O2 C2H2 C2H6 OCS SO2 SF6""" 
                     # RFM chemical species
 rfm_inp["ATM"] = "./rfm_files/hgt_std.atm ./rfm_files/day.atm" # RFM vertical grids
 rfm_inp["SEC"] = "1.0" # RFM geometry

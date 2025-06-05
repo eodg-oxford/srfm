@@ -1,4 +1,4 @@
-import oxharp
+#import oxharp
 import numpy as np
 import matplotlib.pyplot as plt
 import warnings
@@ -7,6 +7,7 @@ import matplotlib.ticker as mticker
 import matplotlib as mpl
 import math
 from scipy.spatial import KDTree
+from srfm import *
 
 '''Define IASI .nat file name and parameters to be read from it.'''
 fl = '/network/aopp/apres/IASI-C/2022/01/IASI_xxx_1C_M03_20220119223255Z_20220120001455Z_N_O_20220120001322Z.nat'
@@ -55,7 +56,7 @@ min_sym = "'"
 sec_sym = '"'
 
 '''Read the IASI .nat file.'''
-l1c = Read_Iasi_L1c(fl,
+l1c = readers.read_iasi_l1c.Read_Iasi_L1c(fl,
                     avhrr=avhrr,
                     bright=bright,
                     chkqal=chkqal,
@@ -74,14 +75,14 @@ if l1c.fail:
     stop
 
 '''Find the closest measurement to your specified location.'''
-iloc = closest(l1c.lon,desired_lon,l1c.lat,desired_lat)
+iloc = utilities.closest(l1c.lon,desired_lon,l1c.lat,desired_lat)
 
 lon = float(l1c.lon[iloc])
 lat = float(l1c.lat[iloc])
 
 '''Convert decimal degree to DMS and prepare strings to print out.'''
-lon_DMS = oxharp.units.decimal_degree_to_DMS(lon)
-lat_DMS = oxharp.units.decimal_degree_to_DMS(lat)
+lon_DMS = units.decimal_degree_to_DMS(lon)
+lat_DMS = units.decimal_degree_to_DMS(lat)
 
 print_lon_DMS = f'{lon_DMS[0]}{deg_sym}{lon_DMS[1]}{min_sym}{lon_DMS[2]}{sec_sym}' + str(['W' if lon_DMS[0]<0 else 'E'][0])
 print_lat_DMS = f'{lat_DMS[0]}{deg_sym}{lat_DMS[1]}{min_sym}{lat_DMS[2]}{sec_sym}' + str(['N' if lat_DMS[0]>0 else 'S'][0])

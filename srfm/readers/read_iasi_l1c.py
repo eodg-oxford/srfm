@@ -40,6 +40,7 @@ class Read_Iasi_L1c:
       bright (bool): True for brightness temp spectra, False for radiance spectra.
         Default is False.
                
+      azilim (tuple): (azimin, azimax), Default is None.
       chkqal (list of bool): Default is [True,True,True].
         If True, exclude data with bad quality flag for each band.
         (bands are 645-1210, 1210-2000, 2000-2760 cm-1).
@@ -61,6 +62,7 @@ class Read_Iasi_L1c:
         only useful for longitude.
       mph_only (bool): Default is False.
         Set True if just the Main Product Header data is required (as self.mph).
+      saalim (tuple): (saamin, saamax), Default is None.
       szalim (tuple): (szamin,szamax), Default is None.
         min,max solar zenith angle (0,90=daytime, 90-180=nighttime).
       wnolim (tuple): (wnomin, wnomax), Default is (645,2760).
@@ -110,6 +112,8 @@ class Read_Iasi_L1c:
         - lon    [flt] : Longitude (-180:180)
         - sza    [flt] : Solar Zenith Angle (0:180)
         - zen    [flt] : Satellite Zenith Angle (0:90)
+        - saa    [flt] : Solar Azimuth Angle (0:360)
+        - azo    [flt] : Satellite Azimuth Angle (0:360)
         - cld    [flt] : % cloud fraction (0:100)
         - lnd    [flt] : % land fraction (0:100)
         - spec   [nwno*flt] : spectrum                                      read_spec
@@ -229,6 +233,8 @@ class Read_Iasi_L1c:
         lonlim=None,
         szalim=None,
         zenlim=None,
+        saalim=None,
+        azilim=None,
         cldlim=None,
         lndlim=None,
         wnolim=(645, 2760),
@@ -251,6 +257,8 @@ class Read_Iasi_L1c:
           lonlim (array-like): min,max longitude (-180, 180) for inclusion. Default is None.
           szalim (array-like): min,max solar zenith angle (0,180) for inclusion. Default is None.
           zenlim (array-like): min,max satellite zenith angle (0,90) for inclusion. Default is None.
+          saalim (array-like): min,max solar azimuth angle (0,360) for inclusion. Default is None.
+          azilim (array-like): min,max satellite azimuth angle (0,360) for inclusion. Default is None.
           cldlim (array-like): min,max %cloud cover (0:100) for inclusion. Default is None.
           lndlim (array-like): min,max %land cover (0:100) for inclusion. Default is None.
           wnolim (array-like): (wnomin, wnomax), Default is (645,2760).
@@ -304,6 +312,8 @@ class Read_Iasi_L1c:
                 lonlim,
                 szalim,
                 zenlim,
+                saalim,
+                azilim,
                 cldlim,
                 lndlim,
             )
@@ -556,6 +566,8 @@ class Read_Iasi_L1c:
         lonlim,
         szalim,
         zenlim,
+        saalim,
+        azilim,
         cldlim,
         lndlim,
     ):
@@ -571,6 +583,8 @@ class Read_Iasi_L1c:
           lonlim  (flt): min/max longitude
           szalim  (flt): min/max solar zenith angle
           zenlim  (flt): min/max satellite zenith angle
+          saalim  (flt): min/max solar azimuth angle
+          azilim  (flt): min/max satellite azimuth angle
           cldlim  (flt): min/max cloud percentage
           lndlim  (flt): min/max land percentage
 
@@ -598,6 +612,8 @@ class Read_Iasi_L1c:
         lon = np.zeros(nloc, "f")  # Longitude [deg E]
         sza = np.zeros(nloc, "f")  # Solar Zenith Angle [deg] at sfc (<90=day)
         zen = np.zeros(nloc, "f")  # Zenith angle [deg] at surface (0=nadir)
+        saa = np.zeros(nloc, "f")  # Solar Azimuth Angle [deg] at sfc
+        azi = np.zeros(nloc, "f")  # Azimuth angle [deg] at surface
         cld = np.zeros(nloc, "f")  # Cloud fraction [%]
         lnd = np.zeros(nloc, "f")  # Land fraction [%]
         if avhrr:
@@ -641,6 +657,8 @@ class Read_Iasi_L1c:
                         lon[iloc] = mdr_a["GGeoSondLoc"][istp, ipix, 0] * 1.0e-6
                         sza[iloc] = mdr_a["GGeoSondAnglesSun"][istp, ipix, 0] * 1.0e-6
                         zen[iloc] = mdr_a["GGeoSondAnglesMETOP"][istp, ipix, 0] * 1.0e-6
+                        saa[iloc] = mdr_a["GGeoSondAnglesSun"][istp, ipix, 1] * 1.0e-6
+                        azi[iloc] = mdr_a["GGeoSondAnglesMETOP"][istp, ipix, 1] * 1.0e-6
                         cld[iloc] = mdr_b["GEUMAvhrr1BCldFrac"][istp, ipix]
                         lnd[iloc] = mdr_b["GEUMAvhrr1BLandFrac"][istp, ipix]
                         # Bad location set to -2147483648, converted to lat=-2147.48 deg
@@ -652,6 +670,8 @@ class Read_Iasi_L1c:
                             or self._outside(lon[iloc], lonlim)
                             or self._outside(sza[iloc], szalim)
                             or self._outside(zen[iloc], zenlim)
+                            or self._outside(saa[iloc], saalim)
+                            or self._outside(azi[iloc], azilim)
                             or self._outside(cld[iloc], cldlim)
                             or self._outside(lnd[iloc], lndlim)
                         ):
@@ -699,6 +719,8 @@ class Read_Iasi_L1c:
         self.lon = lon[0:iloc]
         self.sza = sza[0:iloc]
         self.zen = zen[0:iloc]
+        self.saa = saa[0:iloc]
+        self.azi = azi[0:iloc]
         self.cld = cld[0:iloc]
         self.lnd = lnd[0:iloc]
         self.stats = {

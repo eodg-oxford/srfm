@@ -14,6 +14,7 @@ from . import utilities as utils
 from . import units
 import pandas as pd
 from scipy.signal import convolve
+import scipy.constants
 
 try:
     from .DISORT import disort_module_s as dms
@@ -150,6 +151,107 @@ class RFM(Fwd_model):
             
         """
         self.output_prf = rf.read_output_prf(f"{fldr}/prf.asc")
+        return
+    
+    def calc_col_dens_and_mass(self, species, M=None):
+        """Determines total column density of a species in the atmosphere.
+        
+        Integrates the species mixing ratio throughout the atmosphere to obtain total 
+        column density in units [molecules m\ :math:`^{-2}` \].
+        If molar masses are provided, also calculates column masses in units
+        [g mol\ :math:`^{-1}` \].
+        
+        Function logic:
+            1. checks if object has output_prf loaded.
+            2. If not, tries to load it from a default directory.
+            3. If 1 and 2 fail, error is raised.
+            4. Checks if species are present as key in output_prf (and if not, then
+                tries to add ppmv and check again). 
+            5. Integrates the profile for a given species (if they exist), returns dict
+            6. If molar masses are provided, also calculates column masses.
+                   
+        Args:
+            species (list of str): list of species. The code first checks if the species
+                are present in the profile. Mind that the rfm profile uses ppmv. 
+                If a key is not found, e.g. *CO*, and attempt will be made to transform
+                it to *CO [ppmv]*.
+            M (list of floats): list of species' molar masses. If None, column masses 
+                are not calculated. Default is None. Assumed units 
+                [g mol\ :math:`^{-1}` \].
+        
+        Returns:
+            col_den (dict): Dictionary containing species and its column density, units 
+                [molecules m\ :math:`^{-2}` \].
+        
+        Raises:
+            ValueError: Raised when requested species not found.
+            
+        """
+        # load output_prf (profile to calculate column density from
+        if hasattr(self, "output_prf"):
+            pass
+        else:
+            try:
+                self.output_prf = rf.read_output_prf(f"./srfm/RFM//prf.asc")
+            except FileNotFoundError:
+                try:
+                    self.output_prf = rf.read_atm_file(f"./srfm/RFM/rfm_files/day.atm")
+                except:
+                    print("""prf not loaded and not found in default directory.
+                        Load profile first through model_RFM.load_output_prf().""")
+        
+        # if species is str, transform into list
+        if isinstance(species, str):
+            species = [species]
+        
+        # check if species in keys
+        for i_s, s in enumerate(species):
+            key_matches = []
+            for key in self.output_prf.keys():
+                if key.startswith(s) or key.startswith(s.lower()):
+                    key_matches.append(key)
+            if len(key_matches) == 0:
+                raise ValueError(f"""Requested specie {s} not in atmospheric
+                    profile.""")
+            elif len(key_matches) > 1:
+                raise ValueError(f"""Requested species {s} ambiguous. Found the 
+                    following possible matches: {key_matches}. Please specify you 
+                    specie better.""")
+            elif len(key_matches) == 1:
+                species[i_s] = key_matches[0] # replace specie with matched key
+
+        # transfom output_prf lists into arrays (for vectorization)
+        for key in self.output_prf.keys():
+            self.output_prf[key] = np.array(self.output_prf[key])
+
+        # lyr bounds is an array with layer boundaries. The RFM profile is specified in levels and at each level, atmospheric compositino is given.
+        # to integrate the amount of gas in the atmosphere we construct atmospheric layers whose bounds in the middle of two adjacent levels 
+
+        # get layer bounds
+        lyr_bounds = [(self.output_prf["HGT [km]"][i-1] + self.output_prf["HGT [km]"][i-1])/2 for i,_ in enumerate(self.output_prf["HGT [km]"][1:])]
+        lyr_bounds.insert(0,self.output_prf["HGT [km]"][0])
+        lyr_bounds.insert(-1,self.output_prf["HGT [km]"][-1])
+
+        lyr_bounds = np.array(lyr_bounds)
+
+        lyr_thick = np.diff(lyr_bounds) * 1e3 # layer thicknesses in m
+
+        # calculate the total amount of species in the atmosphere
+        # layer are assumed homogeneous
+        # N_tot = p/(kb*T) atmoshperic number density
+        N_tot = self.output_prf["PRE [mb]"] * 1e2 / (self.output_prf["TEM [K]"] * scipy.constants.k) # molecules m-3
+        
+        self.col_den = {} # dictionary to store results in
+        for s in species:
+            N_species = N_tot * self.output_prf[s] * 1e-6 # molecules m-3 of species in the layer
+            col_den_tot = np.sum(N_species * lyr_thick) # molecules m-2 in the atmosphere
+            self.col_den[s] = col_den_tot.item()
+        
+        if M is not None:
+            self.col_mass = {}
+            for s in species:
+                self.col_mass[s] = self.col_den[s] / scipy.costants.N_A * M[species.index(s)]
+        
         return
 
 class DISORT(Fwd_model):
@@ -756,7 +858,10 @@ class DISORT(Fwd_model):
         """Assigns the value of header.
         
         Args:
-            header (str): Header for terminal output printing.
+            header (str): Header for terminal output printing. The string "NO HEADER"
+                will cause nothing to be printed out. Warning: If the input is an empty
+                string (""), a blank line will be printed. The string must have 
+                len < 127.
         
         """
         self.disort_input["header"] = header
