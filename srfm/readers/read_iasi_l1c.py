@@ -11,6 +11,8 @@ class Read_Iasi_L1c:
         Prefix private method names with '_'.
       - 18DEC20 AD: Original version
       - 15APR25 AK: Updated documentation (formatting).
+      - 01JUN25 AK: Added saa and azi as parameters to be extracted/read.
+      - 11JUN25 AK: Changed self.spec dtype to np.ndarray (previously list).
 
     USAGE:
       By default this will read the entire IASI L1C file contents, c.90000 spectra.
@@ -826,6 +828,8 @@ class Read_Iasi_L1c:
                 self.spec[iloc] = self._btspec(w, rad)
             else:
                 self.spec[iloc] = rad
+        if len(self.spec) > 0:
+            self.spec = np.vstack(self.spec)
 
     def get_spec(self, iloc, wnolim=(645, 2760), bright=False):
         """Read in spectra at selected locations.

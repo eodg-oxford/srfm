@@ -250,7 +250,7 @@ class RFM(Fwd_model):
         if M is not None:
             self.col_mass = {}
             for s in species:
-                self.col_mass[s] = self.col_den[s] / scipy.costants.N_A * M[species.index(s)]
+                self.col_mass[s] = self.col_den[s] / scipy.constants.N_A * M[species.index(s)]
         
         return
 
