@@ -597,7 +597,7 @@ def get_radii(distribution,
     Returns:
         radius (array-like): size distribution quadrature points
         radius_weight (array-like): quadrature weights
-        red_wt_sum (float): sum of radiu_weight, used to normalize relevant sums in
+        red_wt_sum (float): sum of radius_weight, used to normalize relevant sums in
             the code.        
         
     """
@@ -927,7 +927,7 @@ def loop_mie_over_wavelengths(wavelengths_size,
         # Weighted sums for phase function
         for k in range(angles):
             phase_function[i, k] = (
-                np.sum(radius_weight * phase_function_value[:, k]) / rad_wt_sum
+                np.sum(radius_weight * phase_function_value[:, k]) / rad_wt_sum 
             )
        
         # If requested expand phase functions as Legendre coefficients

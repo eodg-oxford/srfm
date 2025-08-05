@@ -524,11 +524,11 @@ def number_conc_from_mass_loading(l, rho, thick, s, dist_type, r=None, d=None):
             
             They in turn cite `Shipley and Sarna_Wojcicki (1982)`_.
             
-            .._Shipley and Sarna_Wojcicki (1982): https://pubs.usgs.gov/mf/1983/1435/report.pdf
+            .. _Shipley and Sarna_Wojcicki (1982): https://pubs.usgs.gov/mf/1983/1435/report.pdf
             
             The same information is also repeated in `Wilson et al. (2012)`_.
             
-            .._Wilson et al. (2012): http://dx.doi.org/10.1016/j.pce.2011.06.006
+            .. _Wilson et al. (2012): http://dx.doi.org/10.1016/j.pce.2011.06.006
             
             Using the strings should serve only an illustrative purpose and should not
             be relied on as the data in a given eruption may vary!
@@ -620,11 +620,17 @@ def mass_loading_from_number_conc(n, thick, rho, s, dist_type, r=None, d=None):
                 - "mineral" - 3000 kg m\ :sup:`-3`
                 - "rock" - 2900 kg m\ :sup:`-3`
                 
-            Note that the densities are average densities from the `USGS VAI`_ 
-            who in their turn take their data from "Shipley and Sarna_Wojcicki 1982" 
-            (and don't give details on this reference at all).
+            Note that the densities are average densities from the `USGS VAI`_. 
             
             .. _USGS VAI: https://volcanoes.usgs.gov/volcanic_ash/density_hardness.html
+            
+            They in turn cite `Shipley and Sarna_Wojcicki (1982)`_.
+            
+            .. _Shipley and Sarna_Wojcicki (1982): https://pubs.usgs.gov/mf/1983/1435/report.pdf
+            
+            The same information is also repeated in `Wilson et al. (2012)`_.
+            
+            .. _Wilson et al. (2012): http://dx.doi.org/10.1016/j.pce.2011.06.006
             
             Using the strings should serve only an illustrative purpose and should not
             be relied on as the data in a given eruption may vary!
@@ -853,4 +859,46 @@ def read_ils(filename):
     x = np.linspace(lo,hi,npts)
     y = np.array([float(x) for xs in [i.split() for i in lines[4:]] for x in xs])
     return x, y, lo, hi
+
+def scale_solar_spectrum(spc, yday):
+    """Scales solar spectrum to the correct year day number.
+    
+    Input solar spectrum is assumed for to be for 1 AU Sun-Earth distance. Since the 
+    Sun-Earth distance changes throughout the year, the spectrum needs to be scaled 
+    accordingly.
+    Calculation formula from Don Grainger. 
+    
+    Calculation formula:
+    
+    .. math::
+    
+        F(d) = \\left\\{1 - 0.0167086 \\cos\\left[\\frac{2\pi(d - 4)}
+               {365.256363}\\right]\\right\\}^{-2} F_0
+   
+    where:
+        - :math:`F(d)`: scaled flux
+        - :math:`d`: year day number
+        - :math:`F_0`: flux at 1 AU
+    
+    
+    Args:
+        spc (array): Solar spectrum, assumed valid for 1 AU Sun-Earth distance.
+        yday (int, float): Year day number, Jan 1 is day 1.
+    
+    Returns:
+        sc_spc (array): Input spectrum scaled to the input year day number.
+    
+    Raises:
+        ValueError: Raised when 0 < yday < 366 is not True.
+    
+    """
+    if yday < 0 or yday > 366:
+        raise ValueError("Yday must satisfy 0 < yday < 366.")
+    
+    sc_spc = (1 - 0.0167086 * np.cos( (2*np.pi*(yday - 4) ) / 365.256363 ) )**-2 * spc
+    
+    return sc_spc
+    
+    
+     
     

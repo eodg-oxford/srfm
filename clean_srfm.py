@@ -46,6 +46,7 @@ for file in all_fnames:
     elif file.endswith("rfm.log"):
         os.remove(file)
     elif file.endswith("build.log"):
+        os.remove(file)
     else:
         pass
 

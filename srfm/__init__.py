@@ -16,7 +16,8 @@ __all__ = [
     "size_distribution",
     "quadrature",
     "mie_module",
-    "layer"
+    "layer",
+    "orography"
 ]
 
 """Import oxharp modules."""
@@ -35,3 +36,4 @@ from . import quadrature
 from . import size_distribution
 from . import mie_module
 from . import layer
+from . import orography
