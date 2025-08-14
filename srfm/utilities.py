@@ -899,6 +899,86 @@ def scale_solar_spectrum(spc, yday):
     
     return sc_spc
     
+def get_altitude_prf(p,T,z0=0,M=28.97,g=9.81):
+    """Calculates atmospheric altitude profile given pressure and temperature profiles.
+    
+    Manually integrates/sums the hydrostatic equation (using ideal gas law) to 
+    calculate atmospheric altitude profile given pressure and temperature profiles.
+    
+    Calculation derived from a combination of:
+    
+    ..math::
+    
+        p = z \\rho g
+    
+    and 
+    
+    ..math::
+    
+        p V = \\frac{m R T}{M}
+    
+    where:
+        - :math:`p`: atmospheric pressure (Pa)
+        - :math:`z`: altitude (m)
+        - :math:`\\rho`: air density
+        - :math:`g`: gravity (:math:`m s^{-2}`)
+        - :math:`M`: air molar mass (:math:`g mol^{-1}`)
+        - :math:`R`: universal gas constant, :math:`8.314 J K mol^{-1}`
+        - :math:`V`: gas volume
+        - :math:`T`: tempeature (K)
+        - :math:`m`: mass (g)
+    
+    The final calculation formula is then:
+    
+    ..math::
+    
+        z_{i+1} = - \\frac{\\ln(\\frac{p_{i+1}}{i}) R \\frac{T_i + T_{i+1}}{2}}{M g} + z_i
+    
+    Args:
+        p (list): Atmospheric pressure profile, units [Pa]. 
+            Expected sorted from lower to higher altitudes.
+        T (list): Atmospheric temperature profile, units [K].
+            Expected sorted from lower to higher altitudes.
+        z0 (float): Surface altitude. Units [m]. Default is 0.
+        M (float): Air molar mass. Units [:math:`g mol^{-1}`]. Default 
+            is :math:`28.97 g mol^{-1}`. Note that air molar mass is considered
+            independent of altitude (is constant). THis formula therefore fails above 
+            the homopause.
+        g (float): Gravity. Units :math:`m s^{-2}`. Default is :math:`9.81 m s^{-2}`.
+            Note that gravity is independent of altitude in this calculation.
+    
+    Returns:
+        alt (list): Atmospheric altitude profile. Units [km].     
+    
+    """
+        
+    R = 8.314 # universal gas constant
+    
+    if isinstance(p, np.ndarray):
+        print("""Supplied pressure profile is an array. Conversion to list will be 
+        attempted.""")
+        p = list(p)
+    
+    if isinstance(T, np.ndarray):
+        print("""Supplied pressure profile is an array. Conversion to list will be 
+        attempted.""")
+        T = list(T)
+    
+    if len(p) != len(T):
+        raise ValueError("Pressure and temperature are not of the same length.")
+    
+    if not all(x > y for x, y in zip(p, p[1:])):
+        warnings.warn("""Pressure not strictly decreasing with altitude. Is this 
+            intentional?""")
+    
+    # set first altitude
+    alt = [z0]
+    
+    for i in range(len(p)-1):
+        alt.append( (- ( np.log(p[i+1]/p[i]) * R * ( (T[i] + T[i+1]) / 2) ) / (M*g) ) + alt[i] )
+    
+    return alt
+    
     
      
     

@@ -302,7 +302,7 @@ class Iasi_L2:
         self._set_cols  ( mdr, idxfov )        # extract column data
         self._set_sfc ( mdr, mdr_sfz, idxfov ) # extract surface data 
         self._set_cloud ( mdr, idxfov )        # extract cloud data
- 
+
         if not forli: continue
 
         # Continue reading Forli/Brescia parts of MDR - variable sizes
@@ -587,8 +587,8 @@ class Iasi_L2:
       [boo]  : List of 120 flags, True=fov within lon.limits
 
     """
-    imin = round ( lonlim[0]*1e6 ) # scale to match MDR units 
-    imax = round ( lonlim[1]*1e6 ) 
+    imin = round ( lonlim[0]*1e4 ) # scale to match MDR units 
+    imax = round ( lonlim[1]*1e4 ) 
     ilon = np.array ( mdr['earth_location'][:,1] )
     if imin < imax:      # conventional lon. coverage
       return ( ilon >= imin ) & ( ilon <= imax )

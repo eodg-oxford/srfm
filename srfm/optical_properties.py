@@ -921,14 +921,12 @@ def loop_mie_over_wavelengths(wavelengths_size,
         # calculate weighted sums of some variables:
         
         # Weighted sums for extinction and scattering
-        beta_ext[i] = np.sum(radius_weight * np.pi * radius**2 * Q_ext_value) * 1e-6        
-        beta_sca[i] = np.sum(radius_weight * np.pi * radius**2 * Q_sca_value) * 1e-6
+        beta_ext[i] = np.pi * np.sum(radius_weight * radius**2 * Q_ext_value) * 1e-6        
+        beta_sca[i] = np.pi * np.sum(radius_weight * radius**2 * Q_sca_value) * 1e-6
         
         # Weighted sums for phase function
         for k in range(angles):
-            phase_function[i, k] = (
-                np.sum(radius_weight * phase_function_value[:, k]) / rad_wt_sum 
-            )
+            phase_function[i, k] = np.pi * np.sum(radius_weight * radius**2 * Q_sca_value * phase_function_value[:, k]) / rad_wt_sum
        
         # If requested expand phase functions as Legendre coefficients
         if legendre_coefficients_flag:

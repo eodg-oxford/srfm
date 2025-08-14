@@ -44,4 +44,4 @@ clean:
 	@rm -f DISORT/code.f DISORT_dbl/code.f *.so *.pyf
 	@rm -rf build __pycache__
 	@rm -f $(LOGFILE)
-	@echo "Clean complete." | tee -a $(LOGFILE)
+	@echo "Clean complete."

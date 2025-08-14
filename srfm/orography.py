@@ -15,6 +15,7 @@ from cartopy import crs as ccrs, feature as cfeature
 from scipy.interpolate import RegularGridInterpolator
 from cartopy.mpl.ticker import (LatitudeFormatter, LongitudeFormatter,
                                 LatitudeLocator,LongitudeLocator)
+import matplotlib.style as mplstyle
 
 
 """
@@ -60,6 +61,7 @@ def plot_Earth():
     ax.set_xlabel('Longitude')
     ax.set_ylabel('Lattitude')
     
+    mplstyle.use("fast")
     plt.show()
     return
 
@@ -68,9 +70,13 @@ def get_elevation(coords):
     
     Args:
         coords (array-like): Lat, lon pairs at which to evaluate elevation. 
-                             2D array expected. First column ([:,0]) is latitudes, 
+                             2D array expected.
+                             For single point, 1D array or list [lat,lon] are accepted 
+                             and converted to 2D array.
+                             First column ([:,0]) is latitudes, 
                              second column ([:,1]) is longitudes.
-                             Lat must be within (-90,90). Lon must be within (-180,180)
+                             Lat must be within (-89.516,,89.866). 
+                             Lon must be within (-180,179.473).
                              
     Returns:
         ele (array-like): Elevation array. Shape coords.shape[0]. Units [m].
@@ -79,20 +85,20 @@ def get_elevation(coords):
     
     """
     
+    if isinstance(coords, list) and len(coords) == 2:
+        coords = np.array(coords)    
+    
+    if isinstance(coords, np.ndarray) and coords.ndim == 1:
+        coords = np.expand_dims(coords, axis = 0)
+    
     interp = RegularGridInterpolator((data.variables["lat"][:],
                                       data.variables["lon"][:]
                                      ),
                                      data.variables["orog"][:]
                                     )
+    coords2 = coords.copy()
+    coords2[:,1] = np.where(coords2[:,1] < 0, coords2[:,1]+360, coords2[:,1])
     
-    # if coords is list, attempt to convert to array 
-    if isinstance(coords, list):
-        coords = np.array(coords)
-    
-    if coords.ndim == 1:
-        coords = np.expand_dims(coords,axis=0)
-    
-    coords[:,1] = coords[:,1]
-    ele = interp(coords)
+    ele = interp(coords2)
     return ele
     
