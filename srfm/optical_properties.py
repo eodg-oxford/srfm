@@ -926,7 +926,7 @@ def loop_mie_over_wavelengths(wavelengths_size,
         
         # Weighted sums for phase function
         for k in range(angles):
-            phase_function[i, k] = np.pi * np.sum(radius_weight * radius**2 * Q_sca_value * phase_function_value[:, k]) / rad_wt_sum
+            phase_function[i, k] = np.pi * np.sum(radius_weight * radius**2 * Q_sca_value * phase_function_value[:, k]) / (beta_sca[i]*1e6)
        
         # If requested expand phase functions as Legendre coefficients
         if legendre_coefficients_flag:
