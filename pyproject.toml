@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "SRFM"
+version = "0.0.1"
+authors = [
+  { name="Antonin Knizek", email="antonin.knizek@physics.ox.ac.uk" },
+]
+description = "The Scattering Reference Forward Model"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+dependencies = [
+    "numpy",
+    "pandas",
+    "scipy",
+    "netCDF4",
+    "matplotlib",
+    "cartopy",
+    "numba",
+    "psutil",
+]
+
+[project.urls]
+Homepage = "https://github.com/eodg-code/srfm"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/srfm"]
+include = ["src/srfm/data/*"]

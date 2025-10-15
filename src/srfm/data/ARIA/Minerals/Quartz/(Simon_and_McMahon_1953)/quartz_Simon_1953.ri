@@ -1,0 +1,53 @@
+#SUBSTANCE=Quartz
+#DESCRIPTION=Refractive index of quartz in the 700 to 1400 cm<sup>−1</sup> wave number interval
+#REFERENCE=Šimon, I. and McMahon, H.O., 1953. Study of the structure of quartz, cristobalite, and vitreous silica by reflection in infrared. The Journal of Chemical Physics, 21(1), pp.23-30.
+#DOI=10.1063/1.1698615
+#COMMENT=Data from R. Kitamura, L. Pilon, and M. Jonasz, 2007.
+##Optical Constants of Fused Quartz From Extreme Ultraviolet to Far Infrared at Near Room Temperatures.
+##Applied Optics, Vol. 46, No. 33, pp. 8118-8133.
+#FORMAT=WAVN N
+702.564 	1.545 
+720.513 	1.545 
+737.179 	1.597 
+752.564 	1.649 
+765.385 	1.701 
+787.179 	1.753 
+807.692 	1.714 
+823.077 	1.610 
+839.744 	1.545 
+861.538 	1.545 
+887.179 	1.623 
+908.974 	1.714 
+929.487 	1.818 
+947.436 	1.935 
+964.103 	2.078 
+979.487 	2.234 
+993.590 	2.416 
+1005.130 	2.610 
+1019.230 	2.818 
+1028.210 	3.000 
+1041.030 	3.195 
+1052.560 	3.364 
+1067.950 	3.377 
+1074.360 	3.195 
+1079.490 	2.987 
+1083.330 	2.766 
+1088.460 	2.519 
+1092.310 	2.260 
+1097.440 	1.987 
+1102.560 	1.649 
+1106.410 	1.247 
+1110.260 	0.935 
+1117.950 	0.688 
+1128.210 	0.506 
+1144.870 	0.442 
+1164.100 	0.519 
+1182.050 	0.558 
+1206.410 	0.494 
+1230.770 	0.390 
+1256.410 	0.429 
+1279.490 	0.558 
+1302.560 	0.727 
+1321.790 	0.896 
+1348.720 	0.987 
+1382.050 	1.000 

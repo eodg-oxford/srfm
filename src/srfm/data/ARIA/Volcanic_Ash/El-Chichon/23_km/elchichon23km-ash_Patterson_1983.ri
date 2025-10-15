@@ -1,0 +1,28 @@
+#DISTRIBUTEDBY=Aerosol Refractive Index Archive (www.atm.ox.ac.uk/project/RI/)
+#DESCRIPTION=Ash El Chich&oacute;n, sample at 23km,
+## 45 % feldspar,
+## 30 % volcanic glass 
+## 20 % colored minerals (primarily botite, hornblende and some apatite)
+## 5 % opaque particles (probably mangetite).
+#SUBSTANCE=El Chich&oacute;n Ash
+#SAMPLEFORM=Solid
+#TEMPERATURE=
+#CONCENTRATION=
+#DOI=10.1029/gl010i004p00317
+#REFERENCE=Edward M. Patterson, C.O. Pollard, Optical properties of the ash
+## from El Chich&oacute;n volcano, Geophysical Research Letters, 10, 4,
+## 317-320, April 1983.
+#CONTACT=
+#COMMENT=Digitised from publication graph, absolute accuracy is unknown.
+#FORMAT=WAVL K
+      0.30072466    0.0033064201
+      0.32173857    0.0024557400
+      0.35209794    0.0016701600
+      0.40036497    0.0012140300
+      0.45072463    0.0012151300
+      0.50209795    0.0011383800
+      0.55107913    0.0011520700
+      0.60143887    0.0011156000
+      0.63453205    0.0012058800
+      0.65177308    0.0012331600
+      0.70143887    0.0012207601

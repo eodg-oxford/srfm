@@ -1,0 +1,73 @@
+#DISTRIBUTEDBY=Aerosol Refractive Index Archive (www.atm.ox.ac.uk/project/RI/)
+#DESCRIPTION=Meteoric dust
+#SUBSTANCE=Meteoric dust
+#SAMPLEFORM=
+#TEMPERATURE=
+#CONCENTRATION=
+#REFERENCE=Shettle, E. P. and Volz, F. E. (1976) Optical constants for meteoric dust aerosol models, in Atmospheric Aerosols: Their Optical Properties and Effects, a Topical Meeting on Atmospheric Aerosols sponsored by the Optical Society of America and NASA Langley Research Center, Williamsburg, VA, 13-15 Dec. 1976. NASA Conference Publication CP 2004.
+#CONTACT=
+#SOURCE=HITRAN
+#COMMENT=Data also reproduced in: Shettle, E. P. and Fenn, R. W. (1979) Models for the Aerosols of the Lower Atmosphere and the Effects of Humidity Variations on Their Optical Properties, AFGL-TR-79-0214, 20 Sept 1979, ADA085951.
+#COMMENT=Data also reproduced in: Fenn, R. W., Clough, S. A., Gallery, W. O., Good, R. E., Kneizys, F. X., Mill, J. D., Rothman, L. S. and Shettle, E.P. (1985) Optical and infrared properties of the atmosphere, Chapter 18 in Handbook of Geophysics and the Space Environment, Edited by A.S. Jursa, Air Force Geophysics Laboratory, Hanscom AFB, MA. 
+#FORMAT=WAVL N K
+0.200 1.515 1.23e-5  
+0.250 1.515 2.41e-5  
+0.300 1.515 4.18e-5  
+0.337 1.514 5.94e-5  
+0.400 1.514 9.95e-5  
+0.488 1.513 1.81e-4  
+0.515 1.513 2.13e-4  
+0.550 1.513 2.61e-4  
+0.633 1.512 3.99e-4  
+0.694 1.511 5.30e-4  
+0.860 1.509 0.00102  
+1.060 1.506 0.00195  
+1.300 1.501 0.00372  
+1.536 1.495 0.00634  
+1.800 1.488 0.0106   
+2.000 1.482 0.0151   
+2.250 1.474 0.0224   
+2.500 1.467 0.0318   
+2.700 1.462 0.0410   
+3.000 1.456 0.0573   
+3.200 1.454 0.0694   
+3.392 1.454 0.0815   
+3.500 1.455 0.0882   
+3.750 1.459 0.103    
+4.000 1.466 0.116    
+4.500 1.485 0.131    
+5.000 1.500 0.135    
+5.500 1.508 0.132    
+6.000 1.507 0.126    
+6.200 1.504 0.124    
+6.500 1.497 0.121    
+7.200 1.469 0.119    
+7.900 1.422 0.130    
+8.200 1.395 0.142    
+8.500 1.363 0.162    
+8.700 1.339 0.182    
+9.000 1.302 0.228    
+9.200 1.281 0.273    
+9.500 1.272 0.360    
+9.800 1.310 0.450    
+10.000 1.355 0.488    
+10.591 1.419 0.547    
+11.000 1.509 0.691    
+11.500 1.847 0.634    
+12.500 1.796 0.252    
+13.000 1.711 0.219    
+14.000 1.641 0.217    
+14.800 1.541 0.198    
+15.000 1.510 0.206    
+16.400 1.478 0.467    
+17.200 1.441 0.400    
+18.000 1.354 0.557    
+18.500 1.389 0.705    
+20.000 1.803 0.765    
+21.300 1.797 0.556    
+22.500 1.661 0.592    
+25.000 1.983 0.861    
+27.900 2.023 0.666    
+30.000 2.149 0.665    
+35.000 2.146 0.380    
+40.000 1.979 0.359    

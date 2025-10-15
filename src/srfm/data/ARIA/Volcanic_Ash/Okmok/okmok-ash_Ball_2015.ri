@@ -1,0 +1,8 @@
+#SUBSTANCE=Okmok ash
+#DESCRIPTION=Ash from Okmok volcanic eruption, July 2008
+#REFERENCE=Ball, J. G. C., B. E. Reed, R. G. Grainger, D. M. Peters, T. A. Mather, and D. M. Pyle (2015), Measurements of the complex refractive index of volcanic ash at 450, 546.7, and 650 nm. J. Geophys. Res. Atmos., 120, 7747–7757.
+#DOI=10.1002/2015JD023521
+#FORMAT= WAVL N DN K DK
+0.4500	1.594	0.01	0.00126	0.00016
+0.5467	1.582	0.01	0.00145	0.00023
+0.6500	1.579	0.01	0.00130	0.00017

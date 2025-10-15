@@ -1,0 +1,46 @@
+#SUBSTANCE=Amorphous SiO<sub>2</sub>
+#DESCRIPTION=Refractive index of amorphous SiO<sub>2</sub>
+#REFERENCE=V. Zolotarev, "The optical constants of amorphous SiO2 and GeO2 in the valence band region," Opt. Spectrosc. 29, 34-37 (1970).
+#COMMENT=Data from R. Kitamura, L. Pilon, and M. Jonasz, 2007.
+##Optical Constants of Fused Quartz From Extreme Ultraviolet to Far Infrared at Near Room Temperatures.
+##Applied Optics, Vol. 46, No. 33, pp. 8118-8133.
+#FORMAT=WAVN N K
+900	1.76 	0.160 
+930	1.82 	0.170 
+960	2.02 	0.180 
+990	2.30 	0.220 
+1000	2.40 	0.300 
+1010	2.56 	0.420 
+1020	2.68 	0.550 
+1030	2.77 	0.800 
+1040	2.85 	1.120 
+1050	2.88 	1.420 
+1060	2.88 	1.700 
+1070	2.68 	2.050 
+1080	2.48 	2.350 
+1090	1.80 	2.600 
+1100	1.25 	2.580 
+1110	0.70 	2.400 
+1120	0.38 	1.780 
+1130	0.32 	1.500 
+1140	0.35 	1.300 
+1150	0.39 	1.150 
+1160	0.43 	1.050 
+1170	0.44 	0.940 
+1180	0.45 	0.820 
+1190	0.45 	0.780 
+1200	0.43 	0.720 
+1210	0.40 	0.650 
+1220	0.38 	0.550 
+1230	0.37 	0.450 
+1240	0.40 	0.350 
+1250	0.50 	0.250 
+1260	0.59 	0.150 
+1270	0.67 	0.100 
+1280	0.74 	0.080 
+1290	0.80 	0.068 
+1300	0.84 	0.055 
+1310	0.88 	0.041 
+1340	0.94 	0.022 
+1370	1.00 	0.016 
+1400	1.04 	0.014 

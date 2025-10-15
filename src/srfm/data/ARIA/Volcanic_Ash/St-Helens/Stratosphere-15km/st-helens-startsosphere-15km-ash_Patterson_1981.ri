@@ -1,0 +1,19 @@
+#DISTRIBUTEDBY=Aerosol Refractive Index Archive (www.atm.ox.ac.uk/project/RI/)
+#DESCRIPTION=Sample collected from stratosphere 15km away on 20 May 1980.
+#SUBSTANCE=Mt. St. Helens ash 18 May 1980 eruption
+#SAMPLEFORM=Solid
+#TEMPERATURE=
+#CONCENTRATION=
+#DOI=10.1126/science.211.4484.836
+#REFERENCE= E. Patterson, measurement of the imaginary refractive index
+##between 300 and 700nm of Mount St. Helens ash, Science, 211, 1981
+#CONTACT=
+#COMMENT=Digitised from publication graph, absolute accuracy is unknown.
+#FORMAT=WAVL K
+      0.30085175    0.0071030902
+      0.31999970    0.0047843000
+      0.34967812    0.0035800100
+      0.40172131    0.0020904799
+      0.50318598    0.0019890000
+      0.60080436    0.0015927000
+      0.70116208    0.0012024400

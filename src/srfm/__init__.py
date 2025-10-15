@@ -1,4 +1,4 @@
-version = "0.0"
+version = "0.0.1"
 print(f"Welcome to srfm v.{version}")
 
 __all__ = [

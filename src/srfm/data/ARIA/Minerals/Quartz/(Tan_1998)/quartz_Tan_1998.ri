@@ -1,0 +1,46 @@
+#SUBSTANCE=Silica Glass
+#DESCRIPTION=Refractive index of silica glass in the infrared wavelength range
+#REFERENCE=C.Z. Tan, Determination of refractive index of silica glass for infrared wavelengths by IR spectroscopy, In Journal of Non-Crystalline Solids, Volume 223, Issues 1–2, 1998, Pages 158-163, ISSN 0022-3093, https://doi.org/10.1016/S0022-3093(97)00438-9.
+#DOI=10.1016/S0022-3093(97)00438-9
+#COMMENT=Data from R. Kitamura, L. Pilon, and M. Jonasz, 2007.
+##Optical Constants of Fused Quartz From Extreme Ultraviolet to Far Infrared at Near Room Temperatures.
+##Applied Optics, Vol. 46, No. 33, pp. 8118-8133.
+#FORMAT=WAVL N
+3.0 	1.41925 
+3.1 	1.41682 
+3.2 	1.41427 
+3.3 	1.41161 
+3.4 	1.40881 
+3.5 	1.40589 
+3.6 	1.40282 
+3.7 	1.39961 
+3.8 	1.39625 
+3.9 	1.39272 
+4.0 	1.38903 
+4.1 	1.38516 
+4.2 	1.38110 
+4.3 	1.37684 
+4.4 	1.37238 
+4.5 	1.36770 
+4.6 	1.36278 
+4.7 	1.35761 
+4.8 	1.35218 
+4.9 	1.34647 
+5.0 	1.34046 
+5.1 	1.33412 
+5.2 	1.32745 
+5.3 	1.32041 
+5.4 	1.31297 
+5.5 	1.30510 
+5.6 	1.29678 
+5.7 	1.28795 
+5.8 	1.27859 
+5.9 	1.26864 
+6.0 	1.25805 
+6.1 	1.24675 
+6.2 	1.23469 
+6.3 	1.22178 
+6.4 	1.20793 
+6.5 	1.19305 
+6.6 	1.17700 
+6.7 	1.15965 

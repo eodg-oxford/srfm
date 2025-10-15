@@ -11,14 +11,14 @@ For details see https://eodg.atm.ox.ac.uk/ARIA/.
 
 import os
 import numpy as np
+from importlib.resources import files, as_file
 
-def get_ri_filepathname(input_string,aria=None):
+
+def get_ri_filepathname(input_string):
     """Maps an input string to a file path.
     
     Args:
         input_string: either an ARIA filename or any of "ash", "ice", "sulphuric acid"
-        aria: Path to the aria database. Default 
-              "/network/group/aopp/eodg/RGG009_GRAINGER_EODGCOMN/ARIA/"
     
     Returns:
         path: absolute file path of the refractive indices file.
@@ -33,14 +33,13 @@ def get_ri_filepathname(input_string,aria=None):
     
     if input_string == "sulphuric acid":
         input_string = "H2SO4_75_Palmer_1975.ri"
+    
+    with as_file(files("srfm.data") / "ARIA" ) as path:
        
-    if aria == None:
-        aria = "/network/group/aopp/eodg/RGG009_GRAINGER_EODGCOMN/ARIA/"
-
     # Recursively search for the file within the ARIA directory tree
-    for root, dirs, files in os.walk(aria):
-        if input_string in files:
-            return os.path.join(root, input_string)  # Return the absolute file path
+        for root, dirs, fls in os.walk(path):
+            if input_string in fls:
+                return os.path.join(root, input_string)  # Return the absolute file path
 
     return f"Error: File '{input_string}' not found in ARIA directory tree." 
 

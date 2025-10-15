@@ -1,0 +1,22 @@
+#DISTRIBUTEDBY=Aerosol Refractive Index Archive (www.atm.ox.ac.uk/project/RI/)
+#DESCRIPTION=Ground sample collected in Cheney Washington.
+#SUBSTANCE=Mt. St. Helens ash May 18 1980 eruption
+#SAMPLEFORM=Solid
+#TEMPERATURE=
+#CONCENTRATION=
+#DOI=10.1126/science.211.4484.836
+#REFERENCE= E. Patterson, measurement of the imaginary refractive index
+##between 300 and 700nm of Mount St. Helens ash, Science, 211, 1981
+#CONTACT=
+#COMMENT=Digitised from publication graph, absolute accuracy is unknown.
+#FORMAT=WAVL K
+      0.30244225    0.0073462198
+      0.30911220    0.0057806401
+      0.31168906    0.0053818701
+      0.33094226    0.0043618400
+      0.35077896    0.0035055401
+      0.40182883    0.0025260199
+      0.48924677    0.0020742400
+      0.50574418    0.0020142901
+      0.58268837    0.0018450500
+      0.69697584    0.0016276400

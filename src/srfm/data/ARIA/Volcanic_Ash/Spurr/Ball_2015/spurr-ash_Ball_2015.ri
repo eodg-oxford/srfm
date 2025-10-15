@@ -1,0 +1,8 @@
+#SUBSTANCE=Spurr ash
+#DESCRIPTION=Ash from Spurr volcanic eruption, August 1992
+#REFERENCE=Ball, J. G. C., B. E. Reed, R. G. Grainger, D. M. Peters, T. A. Mather, and D. M. Pyle (2015), Measurements of the complex refractive index of volcanic ash at 450, 546.7, and 650 nm. J. Geophys. Res. Atmos., 120, 7747–7757.
+#DOI=10.1002/2015JD023521
+#FORMAT= WAVL N DN K DK
+0.4500	1.570	0.01	0.000939	0.00010
+0.5467	1.563	0.01	0.00105	0.000083
+0.6500	1.555	0.01	0.00125	0.00010

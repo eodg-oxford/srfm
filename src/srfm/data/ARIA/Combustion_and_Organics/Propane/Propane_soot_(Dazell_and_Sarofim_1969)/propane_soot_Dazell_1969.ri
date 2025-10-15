@@ -1,0 +1,20 @@
+#DESCRIPTION = Refractive indices of propane soot for the wavelength regions 0.4-0.8 microns and 2.5-10.0 microns
+#SUBSTANCE = Propane soot
+#TEMPERATURE = Room temperature
+#SAMPLEFORM = Pellet
+#DOI=10.1115/1.3580063
+#REFERENCE = Dalzell, W.H. and Sarofim, A.F., 1969. Optical constants of soot and their application to heat-flux calculations. Journal of Heat Transfer, 91(1), pp.100-104.
+#FORMAT = WAVL N K
+0.4358	1.57	0.46
+0.4500	1.56	0.50
+0.5500	1.57	0.53
+0.6500	1.56	0.52
+0.8065	1.57	0.49
+2.5	2.04	1.15
+3.0	2.21	1.23
+4.0	2.38	1.44
+5.0	2.07	1.72
+6.0	2.62	1.67
+7.0	3.05	1.91
+8.5	3.26	2.10
+10.0	3.48	2.46

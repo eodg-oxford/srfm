@@ -1,0 +1,74 @@
+#DISTRIBUTEDBY=Aerosol Refractive Index Archive (www.atm.ox.ac.uk/project/RI/)
+#DESCRIPTION=Rainout dust aerosol (mixture of soil particles, fly ashes and pollen) collected in Germany
+#SUBSTANCE=Dust
+#SAMPLEFORM=Aerosol
+#TEMPERATURE=
+#CONCENTRATION=
+#DOI=10.1029/jc077i006p01017
+#REFERENCE=Volz, F. E. (1972) Infrared refractive index of atmospheric aerosol substance, Appl. Opt., 11:755-759. Volz, F. E. (1972) Infrared absorption by atmospheric aerosol substance, J. Geophys. Res., 77:1017-1031.
+#CONTACT=
+#SOURCE=HITRAN
+#COMMENT=Data also reproduced in: Shettle, E. P. and Fenn, R. W. (1979) Models for the Aerosols of the Lower Atmosphere and the Effects of Humidity Variations on Their Optical Properties, AFGL-TR-79-0214, 20 Sept 1979, ADA085951.
+#COMMENT=Data also reproduced in: G. A. d'Almeida, P. Koepke and E. P. Shettle, Atmospheric Aerosols. Global Climatology and Radiative Characteristics (Deepak, Hampton, Va., 1991).
+#FORMAT=WAVL N K
+0.2000 1.530 7.00E-02
+0.2500 1.530 3.00E-02
+0.3000 1.530 8.00E-03
+0.3370 1.530 8.00E-03
+0.4000 1.530 8.00E-03
+0.4880 1.530 8.00E-03
+0.5140 1.530 8.00E-03
+0.5500 1.530 8.00E-03
+0.6330 1.530 8.00E-03
+0.6940 1.530 8.00E-03
+0.8600 1.520 8.00E-03
+1.0600 1.520 8.00E-03
+1.3000 1.460 8.00E-03
+1.5360 1.400 8.00E-03
+1.8000 1.330 8.00E-03
+2.0000 1.260 8.00E-03
+2.2500 1.220 9.00E-03
+2.5000 1.180 9.00E-03
+2.7000 1.180 1.30E-02
+3.0000 1.160 1.20E-02
+3.2000 1.220 1.00E-02
+3.3920 1.260 1.30E-02
+3.5000 1.280 1.10E-02
+3.7500 1.270 1.10E-02
+4.0000 1.260 1.20E-02
+4.5000 1.260 1.40E-02
+5.0000 1.250 1.60E-02
+5.5000 1.220 2.10E-02
+6.0000 1.150 3.70E-02
+6.2000 1.140 3.90E-02
+6.5000 1.130 4.20E-02
+7.2000 1.400 5.50E-02
+7.9000 1.150 4.00E-02
+8.2000 1.130 7.40E-02
+8.5000 1.300 9.00E-02
+8.7000 1.400 1.00E-01
+9.0000 1.700 1.40E-01
+9.2000 1.720 1.50E-01
+9.5000 1.730 1.62E-01
+9.8000 1.740 1.62E-01
+10.0000 1.750 1.62E-01
+10.5910 1.620 1.20E-01
+11.0000 1.620 1.05E-01
+11.5000 1.590 1.00E-01
+12.5000 1.510 9.00E-02
+13.0000 1.470 1.00E-01
+14.0000 1.520 8.50E-02
+14.8000 1.570 1.00E-01
+15.0000 1.570 1.00E-01
+16.4000 1.600 1.00E-01
+17.2000 1.630 1.00E-01
+18.0000 1.640 1.15E-01
+18.5000 1.640 1.20E-01
+20.0000 1.680 2.20E-01
+21.3000 1.770 2.80E-01
+22.5000 1.900 2.80E-01
+25.0000 1.970 2.48E-01
+27.9000 1.890 3.20E-01
+30.0000 1.800 4.20E-01
+35.0000 1.900 5.00E-01
+40.0000 2.100 6.00E-01

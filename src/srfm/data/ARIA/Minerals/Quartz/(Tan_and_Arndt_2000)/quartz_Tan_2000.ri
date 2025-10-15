@@ -1,0 +1,42 @@
+#SUBSTANCE=Glassy SiO<sub>2</sub>
+#DESCRIPTION=Refractive index of glassy SiO<sub>2</sub> in the infrared (IR) wavelength region 
+#REFERENCE=C.Z. Tan, J. Arndt, Temperature dependence of refractive index of glassy SiO2 in the infrared wavelength range, In Journal of Physics and Chemistry of Solids, Volume 61, Issue 8, 2000, Pages 1315-1320, ISSN 0022-3697, https://doi.org/10.1016/S0022-3697(99)00411-4.
+#DOI=10.1016/S0022-3697(99)00411-4
+#COMMENT=Data from R. Kitamura, L. Pilon, and M. Jonasz, 2007.
+##Optical Constants of Fused Quartz From Extreme Ultraviolet to Far Infrared at Near Room Temperatures.
+##Applied Optics, Vol. 46, No. 33, pp. 8118-8133.
+#FORMAT=WAVL N
+1.44 	1.44548 
+1.54 	1.44416 
+1.64 	1.44290 
+1.74 	1.44163 
+1.84 	1.44032 
+1.94 	1.43895 
+2.04 	1.43750 
+2.14 	1.43597 
+2.24 	1.43434 
+2.34 	1.43263 
+2.44 	1.43081 
+2.54 	1.42890 
+2.64 	1.42688 
+2.74 	1.42474 
+2.84 	1.42250 
+2.94 	1.42014 
+3.04 	1.41766 
+3.14 	1.41505 
+3.24 	1.41231 
+3.34 	1.40943 
+3.44 	1.40641 
+3.54 	1.40324 
+3.64 	1.39991 
+3.74 	1.39643 
+3.84 	1.39276 
+3.94 	1.38892 
+4.04 	1.38489 
+4.14 	1.38066 
+4.24 	1.37622 
+4.34 	1.37156 
+4.44 	1.36665 
+4.54 	1.36150 
+4.64 	1.35608 
+4.77 	1.34861 

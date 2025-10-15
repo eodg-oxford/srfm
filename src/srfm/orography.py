@@ -16,20 +16,33 @@ from scipy.interpolate import RegularGridInterpolator
 from cartopy.mpl.ticker import (LatitudeFormatter, LongitudeFormatter,
                                 LatitudeLocator,LongitudeLocator)
 import matplotlib.style as mplstyle
-
+from importlib.resources import files, as_file
 
 """
 This is the default file containing orographical data.
 To use a different file, change here.
 Mind that the code was written to work with this file only.
 """
-data = netCDF4.Dataset("/home/k/knizek/Documents/srfm_main/srfm/data/orography.nc")
+
+def load_orography():
+    """Loads orography.nc file.
+    
+    The file is part of SRFM.
+    
+    """
+    with as_file(files("srfm.data") / "orography.nc" ) as path:
+        ds = netCDF4.Dataset(path,"r")
+    return ds
+    
+
+#data = netCDF4.Dataset("/home/k/knizek/Documents/srfm_main/srfm/data/orography.nc", "r")
 
 def plot_Earth():
     """Plots the Earth's orography on a map.
     
     """
-
+    data = load_orography()
+    
     x, y = np.meshgrid(data.variables["lon"][:], data.variables["lat"][:])
 
     plt.figure(figsize=(11,8.5))
@@ -80,10 +93,10 @@ def get_elevation(coords):
                              
     Returns:
         ele (array-like): Elevation array. Shape coords.shape[0]. Units [m].
-        
-        
-    
+            
     """
+    
+    data = load_orography()
     
     if isinstance(coords, list) and len(coords) == 2:
         coords = np.array(coords)    

@@ -1,0 +1,25 @@
+#DISTRIBUTEDBY=Aerosol Refractive Index Archive (www.atm.ox.ac.uk/project/RI/)
+#DESCRIPTION=Ground sample collected in Bozeman Montana.
+#SUBSTANCE=Mt. St. Helens ash May 18 1980 eruption
+#SAMPLEFORM=Solid
+#TEMPERATURE=
+#CONCENTRATION=
+#DOI=10.1126/science.211.4484.836
+#REFERENCE= E. Patterson, measurement of the imaginary refractive index
+##between 300 and 700nm of Mount St. Helens ash, Science, 211, 1981
+#CONTACT=
+#COMMENT=Digitised from publication graph, absolute accuracy is unknown.
+#FORMAT=WAVL K
+      0.30151476    0.0090653701
+      0.31146227    0.0090660201
+      0.32551247    0.0077930498
+      0.34893305    0.0060816202
+      0.39959552    0.0051851301
+      0.45068644    0.0047686002
+      0.48685895    0.0045159701
+      0.51892643    0.0043492201
+      0.54850273    0.0042239800
+      0.59586635    0.0040513398
+      0.63822744    0.0039349901
+      0.66545425    0.0038864000
+      0.70023746    0.0038064399

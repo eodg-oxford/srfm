@@ -1,0 +1,32 @@
+#SUBSTANCE=Fused Quartz
+#DESCRIPTION=Index of refraction of fused quartz glass from 0.34669 to 3.5078 microns
+#REFERENCE= William S. Rodney and Robert J. Spindler, "Index of Refraction of Fused Quartz Glass for Ultraviolet, Visible, and Infrared Wavelengths*†," J. Opt. Soc. Am. 44, 677-679 (1954) 
+#DOI=10.1364/JOSA.44.000677
+#COMMENT=Data from R. Kitamura, L. Pilon, and M. Jonasz, 2007.
+##Optical Constants of Fused Quartz From Extreme Ultraviolet to Far Infrared at Near Room Temperatures.
+##Applied Optics, Vol. 46, No. 33, pp. 8118-8133.
+#FORMAT=WAVL N
+0.34669 	1.47716 
+0.36117 	1.47481 
+0.36502 	1.47423 
+0.40466 	1.46929 
+0.43584 	1.46636 
+0.54607 	1.45972 
+0.57801 	1.45845 
+0.64385 	1.45634 
+1.01398 	1.44988 
+1.12866 	1.44851 
+1.36728 	1.44580 
+1.39506 	1.44548 
+1.52952 	1.44392 
+1.69320 	1.44191 
+1.81307 	1.44036 
+1.97009 	1.43818 
+2.24929 	1.43388 
+2.32542 	1.43260 
+3.24320 	1.41283 
+3.26660 	1.41220 
+3.30330 	1.41121 
+3.32930 	1.41049 
+3.41880 	1.40796 
+3.50780 	1.40534 

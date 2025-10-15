@@ -1,0 +1,36 @@
+#DISTRIBUTEDBY=Aerosol Refractive Index Archive (www.atm.ox.ac.uk/project/RI/)
+#DESCRIPTION=Ash from Volcan De Fuego, it is not clear where this data
+## has come from, the paper (Pollack 1973) has no mention of it.
+## At shortwavelength it looks like a scattering curve rather than absorption.
+#SUBSTANCE=Volcan De Fuego ash
+#SAMPLEFORM=Solid
+#TEMPERATURE=
+#CONCENTRATION=
+#DOI=10.1126/science.211.4484.836
+#REFERENCE= E. Patterson, measurement of the imaginary refractive index
+##between 300 and 700nm of Mount St. Helens ash, Science, 211, 1981
+#CONTACT=
+#COMMENT=Digitised from publication graph, absolute accuracy is unknown.
+#FORMAT=WAVL K
+      0.29745996     0.085288197
+      0.31993795     0.067971900
+      0.33712479     0.057939801
+      0.34910966     0.052381702
+      0.36325198     0.047357101
+      0.38488092     0.041226201
+      0.39398524     0.038708199
+      0.41580938     0.034704100
+      0.44334714     0.030985201
+      0.46100797     0.028972300
+      0.47934796     0.026750499
+      0.48737380     0.025866801
+      0.49769744     0.025012700
+      0.51272374     0.023784300
+      0.54175077     0.021505499
+      0.57470620     0.019363699
+      0.59014505     0.018412599
+      0.61823692     0.017436400
+      0.64013189     0.016580900
+      0.65857392     0.016169799
+      0.66906144     0.015901200
+      0.69887009     0.015249500

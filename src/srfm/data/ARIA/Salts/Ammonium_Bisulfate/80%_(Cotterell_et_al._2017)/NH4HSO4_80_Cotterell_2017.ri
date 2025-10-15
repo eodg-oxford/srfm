@@ -1,0 +1,56 @@
+#SUBSTANCE=Ammonium Bisulfate NH<sub>4</sub>HSO<sub>4</sub>
+#DESCRIPTION=Refractive index of ammonium bisulfate NH<sub>4</sub>HSO<sub>4</sub> at 80% relative humidity
+#REFERENCE=Cotterell, M.I., Willoughby, R.E., Bzdek, B.R., Orr-Ewing, A.J. and Reid, J.P., A Complete Parameterization of the Relative Humidity and Wavelength Dependence of the Refractive Index of Hygroscopic Inorganic Aerosol Particles.
+#DOI=10.5194/acp-17-9837-2017
+#FORMAT=WAVL N
+0.4	1.41071
+0.405	1.40953
+0.41	1.40839
+0.415	1.40728
+0.42	1.40622
+0.425	1.40519
+0.43	1.4042
+0.435	1.40325
+0.44	1.40232
+0.445	1.40143
+0.45	1.40057
+0.455	1.39973
+0.46	1.39893
+0.465	1.39814
+0.47	1.39739
+0.475	1.39665
+0.48	1.39594
+0.485	1.39525
+0.49	1.39459
+0.495	1.39394
+0.5	1.39331
+0.505	1.3927
+0.51	1.39211
+0.515	1.39153
+0.52	1.39098
+0.525	1.39043
+0.53	1.38991
+0.535	1.38939
+0.54	1.3889
+0.545	1.38841
+0.55	1.38794
+0.555	1.38748
+0.56	1.38704
+0.565	1.3866
+0.57	1.38618
+0.575	1.38577
+0.58	1.38536
+0.585	1.38497
+0.59	1.38459
+0.595	1.38422
+0.6	1.38386
+0.605	1.3835
+0.61	1.38316
+0.615	1.38282
+0.62	1.38249
+0.625	1.38217
+0.63	1.38186
+0.635	1.38155
+0.64	1.38125
+0.645	1.38096
+0.65	1.38068

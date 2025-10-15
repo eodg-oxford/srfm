@@ -1,0 +1,8 @@
+#SUBSTANCE=Grímsvötn ash
+#DESCRIPTION=Ash from Grímsvötn volcanic eruption, sample taken on 25 May 2011
+#REFERENCE=Ball, J. G. C., B. E. Reed, R. G. Grainger, D. M. Peters, T. A. Mather, and D. M. Pyle (2015), Measurements of the complex refractive index of volcanic ash at 450, 546.7, and 650 nm. J. Geophys. Res. Atmos., 120, 7747–7757.
+#DOI=10.1002/2015JD023521
+#FORMAT= WAVL N DN K DK
+0.4500	1.629	0.01	0.00155	0.00027
+0.5467	1.608	0.01	0.00142	0.00018
+0.6500	1.597	0.01	0.00129	0.00017

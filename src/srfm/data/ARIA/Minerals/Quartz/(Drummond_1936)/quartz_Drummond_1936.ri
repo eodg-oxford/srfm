@@ -1,0 +1,41 @@
+#SUBSTANCE=Quartz
+#DESCRIPTION=Imaginary refractive index of quartz
+#REFERENCE=D. G. Drummond, "The infra-red absorption spectra of quartz and fused silica from 1 to 7.5 μ II--experimental results," Proc. R. Soc. London Ser. A 153, 328-339 (1936). 
+#DOI=10.1098/rspa.1936.0005
+#COMMENT=Data from R. Kitamura, L. Pilon, and M. Jonasz, 2007.
+##Optical Constants of Fused Quartz From Extreme Ultraviolet to Far Infrared at Near Room Temperatures.
+##Applied Optics, Vol. 46, No. 33, pp. 8118-8133.
+#FORMAT=WAVL K
+3.636 	2.25E-05
+3.704 	3.39E-05
+3.774 	3.93E-05
+3.846 	4.96E-05
+3.922 	5.18E-05
+4.000 	5.79E-05
+4.082 	7.99E-05
+4.167 	1.07E-04
+4.255 	1.32E-04
+4.348 	2.13E-04
+4.396 	2.65E-04
+4.444 	2.84E-04
+4.494 	2.84E-04
+4.545 	2.56E-04
+4.651 	2.62E-04
+4.762 	4.85E-04
+4.878 	1.82E-03
+5.000 	3.98E-03
+5.063 	5.12E-03
+5.128 	5.18E-03
+5.263 	5.49E-03
+5.333 	5.69E-03
+5.405 	5.72E-03
+5.556 	5.63E-03
+5.882 	5.94E-03
+6.061 	6.32E-03
+6.154 	6.46E-03
+6.250 	6.52E-03
+6.452 	6.57E-03
+6.667 	7.16E-03
+6.897 	8.51E-03
+7.143 	1.06E-02
+7.407 	1.48E-02

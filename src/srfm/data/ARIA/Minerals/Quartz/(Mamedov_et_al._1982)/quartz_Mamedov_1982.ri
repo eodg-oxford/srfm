@@ -1,0 +1,48 @@
+#SUBSTANCE=Quartz glass
+#DESCRIPTION=Refractive index of quartz glass in the IR range
+#REFERENCE=R. K. Mamedov, G. M. Mansurov, and N. I. Dubovikov, "Optical constants of quartz glass in the IR range," Opt. Mekh. Prom. 4, 56 (1982) [Sov. J. Opt. Technol. 49, 256 (1982)]. 
+#COMMENT=Data from R. Kitamura, L. Pilon, and M. Jonasz, 2007.
+##Optical Constants of Fused Quartz From Extreme Ultraviolet to Far Infrared at Near Room Temperatures.
+##Applied Optics, Vol. 46, No. 33, pp. 8118-8133.
+#FORMAT=WAVN N K
+900	1.84	0.02
+910	1.89	0.02
+920	1.94	0.02
+930	1.99	0.02
+940	2.04	0.02
+950	2.1	0.03
+960	2.17	0.04
+970	2.26	0.09
+980	2.36	0.09
+990	2.45	0.13
+1000	2.56	0.23
+1010	2.66	0.29
+1020	2.82	0.4
+1030	3.01	0.54
+1040	3.19	0.82
+1050	3.25	1.19
+1060	3.24	1.59
+1070	2.99	2.05
+1080	2.64	2.43
+1090	2.07	2.71
+1100	1.5	2.77
+1110	0.83	2.61
+1120	0.47	2.26
+1130	0.32	1.9
+1140	0.31	1.6
+1150	0.36	1.4
+1160	0.39	1.26
+1170	0.4	1.15
+1180	0.39	1.05
+1190	0.39	0.95
+1200	0.38	0.86
+1210	0.39	0.78
+1220	0.36	0.7
+1230	0.33	0.6
+1240	0.32	0.48
+1250	0.32	0.34
+1260	0.38	0.17
+1270	0.51	0.08
+1280	0.62	0.06
+1290	0.69	0.04
+1300	0.76	0.02

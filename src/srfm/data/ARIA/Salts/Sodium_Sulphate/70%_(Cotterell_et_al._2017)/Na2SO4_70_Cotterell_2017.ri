@@ -1,0 +1,56 @@
+#SUBSTANCE=Sodium Sulfate (Na<sub>2</sub>SO<sub>4</sub>)
+#DESCRIPTION=Refractive index of sodium sulfate (Na<sub>2</sub>SO<sub>4</sub>) at 70% relative humidity
+#REFERENCE=Cotterell, M.I., Willoughby, R.E., Bzdek, B.R., Orr-Ewing, A.J. and Reid, J.P., A Complete Parameterization of the Relative Humidity and Wavelength Dependence of the Refractive Index of Hygroscopic Inorganic Aerosol Particles.
+#DOI=10.5194/acp-17-9837-2017
+#FORMAT=WAVL N
+0.4	1.4571
+0.405	1.45473
+0.41	1.45244
+0.415	1.45023
+0.42	1.4481
+0.425	1.44605
+0.43	1.44406
+0.435	1.44215
+0.44	1.4403
+0.445	1.43851
+0.45	1.43678
+0.455	1.43511
+0.46	1.43349
+0.465	1.43193
+0.47	1.43041
+0.475	1.42894
+0.48	1.42752
+0.485	1.42614
+0.49	1.4248
+0.495	1.4235
+0.5	1.42225
+0.505	1.42103
+0.51	1.41984
+0.515	1.41869
+0.52	1.41757
+0.525	1.41649
+0.53	1.41543
+0.535	1.4144
+0.54	1.41341
+0.545	1.41244
+0.55	1.41149
+0.555	1.41057
+0.56	1.40968
+0.565	1.40881
+0.57	1.40796
+0.575	1.40714
+0.58	1.40633
+0.585	1.40555
+0.59	1.40478
+0.595	1.40404
+0.6	1.40331
+0.605	1.40261
+0.61	1.40191
+0.615	1.40124
+0.62	1.40058
+0.625	1.39994
+0.63	1.39931
+0.635	1.3987
+0.64	1.3981
+0.645	1.39752
+0.65	1.39695

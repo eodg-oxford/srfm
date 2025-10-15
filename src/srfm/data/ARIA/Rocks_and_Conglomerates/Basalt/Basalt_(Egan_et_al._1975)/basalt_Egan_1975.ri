@@ -1,0 +1,26 @@
+#DISTRIBUTEDBY=Aerosol Refractive Index Archive (www.atm.ox.ac.uk/project/RI/)
+#DESCRIPTION=Refractive index of basalt a common extrusive volcanic rock.
+#SUBSTANCE=basalt
+#SAMPLEFORM=Solid
+#TEMPERATURE=
+#CONCENTRATION=
+#DOI=10.1016/0019-1035(75)90029-9
+#REFERENCE= Walter G. Egan, Theodore Hilgeman, Kevin Pang, 'Ultraviolet 
+##Complex Refractive index of Martian Dusts: Laboratory Measurements of 
+##Terrestrial Analogs, ICARUS, 25, 344-355, 1975
+#CONTACT=
+#COMMENT=
+#FORMAT=WAVL N K
+0.400 1.621 22.3E-4
+0.370 1.627 21.3E-4
+0.355 1.634 24.0E-4
+0.325 1.637 25.8E-4
+0.300 1.644 27.0E-4
+0.280 1.646 31.1E-4
+0.260 1.644 26.9E-4
+0.233 1.643 32.5E-4
+0.220 1.649 27.5E-4
+0.210 1.652 28.4E-4
+0.200 1.658 32.0E-4
+0.190 1.655 26.5E-4
+0.185 1.662 22.5E-4

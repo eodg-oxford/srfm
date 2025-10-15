@@ -1,0 +1,26 @@
+#DISTRIBUTEDBY=Aerosol Refractive Index Archive (www.atm.ox.ac.uk/project/RI/)
+#DESCRIPTION=Refractive index limonite an iron ore (FeO(OH).nH_2O). 
+#SUBSTANCE=limonite
+#SAMPLEFORM=Solid
+#TEMPERATURE=
+#CONCENTRATION=
+#DOI=10.1016/0019-1035(75)90029-9
+#REFERENCE= Walter G. Egan, Theodore Hilgeman, Kevin Pang, 'Ultraviolet 
+##Complex Refractive index of Martian Dusts: Laboratory Measurements of 
+##Terrestrial Analogs, ICARUS, 25, 344-355, 1975
+#CONTACT=
+#COMMENT=These values are absolute order of magnitude only in k.
+#FORMAT=WAVL N K
+0.400 2.528 Nan
+0.370 2.410 Nan
+0.355 2.330 124E-4
+0.325 2.281 100E-4
+0.300 2.282 95E-4
+0.280 2.223 93E-4
+0.260 2.150 70E-4
+0.233 2.078 66E-4
+0.220 2.089 61E-4
+0.210 2.063 55E-4
+0.200 2.077 49E-4
+0.190 2.070 52E-4
+0.185 1.961 44E-4

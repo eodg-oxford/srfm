@@ -1,0 +1,19 @@
+#SUBSTANCE=Propane Soot
+#DESCRIPTION=Refractive indices of flame soot 8 mm above the burner surface for premixed propane-oxygen flame with a fuel equivalence ratio &straightphi; = 1.8.
+#TEMPERATURE=1250 K
+#REFERENCE=Chang, H., and T. T. Charalampopoulos. "Determination of the Wavelength Dependence of Refractive Indices of Flame Soot." Proceedings of the Royal Society of London A: Mathematical, Physical and Engineering Sciences 430.1880 (1990): 577-591.
+#DOI=10.1098/rspa.1990.0107
+#FORMAT=WAVL N K
+0.20	0.82	0.40
+0.26	0.97	0.81
+0.40	1.60	0.66
+0.54	1.73	0.58
+0.71	1.76	0.56
+1.00	1.82	0.54
+2.16	1.95	0.80
+3.89	2.18	1.11
+6.24	2.39	1.45
+10.9	2.84	2.02
+16.8	3.35	2.53
+21.1	3.64	2.83
+28.4	4.09	3.27

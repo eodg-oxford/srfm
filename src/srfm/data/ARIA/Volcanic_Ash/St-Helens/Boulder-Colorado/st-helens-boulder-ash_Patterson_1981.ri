@@ -1,0 +1,22 @@
+#DISTRIBUTEDBY=Aerosol Refractive Index Archive (www.atm.ox.ac.uk/project/RI/)
+#DESCRIPTION=Ground sample collected in Boulder Colorado.
+#SUBSTANCE=Mt. St. Helens ash May 18 1980 eruption
+#SAMPLEFORM=Solid
+#TEMPERATURE=
+#CONCENTRATION=
+#DOI=10.1126/science.211.4484.836
+#REFERENCE= E. Patterson, measurement of the imaginary refractive index
+##between 300 and 700nm of Mount St. Helens ash, Science, 211, 1981
+#CONTACT=
+#COMMENT=Digitised from publication graph, absolute accuracy is unknown.
+#FORMAT=WAVL K
+      0.31922762    0.0077599902
+      0.33948936    0.0058800001
+      0.35269924    0.0048871199
+      0.40217827    0.0046874001
+      0.43445557    0.0045909402
+      0.46904549    0.0045344699
+      0.51587632    0.0044415500
+      0.52250692    0.0044231201
+      0.55777647    0.0042599398
+      0.59699169    0.0041899998

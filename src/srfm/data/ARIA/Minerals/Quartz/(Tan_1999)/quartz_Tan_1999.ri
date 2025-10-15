@@ -1,0 +1,64 @@
+#SUBSTANCE=Silica Glass
+#DESCRIPTION=Refractive indices of silica glass from 7.186 to 9.059 μm.
+#REFERENCE=C.Z. Tan, Optical interference and refractive index of silica glass in the infrared absorption region, In Journal of Non-Crystalline Solids, Volume 249, Issue 1, 1999, Pages 51-54, ISSN 0022-3093, https://doi.org/10.1016/S0022-3093(99)00244-6.
+#DOI=10.1016/S0022-3093(99)00244-6
+#COMMENT=Data from R. Kitamura, L. Pilon, and M. Jonasz, 2007.
+##Optical Constants of Fused Quartz From Extreme Ultraviolet to Far Infrared at Near Room Temperatures.
+##Applied Optics, Vol. 46, No. 33, pp. 8118-8133.
+#FORMAT=WAVL N
+7.184 	0.646 
+7.207 	0.638 
+7.217 	0.631 
+7.240 	0.623 
+7.254 	0.614 
+7.272 	0.606 
+7.291 	0.600 
+7.304 	0.593 
+7.328 	0.583 
+7.346 	0.576 
+7.365 	0.568 
+7.383 	0.563 
+7.406 	0.551 
+7.434 	0.546 
+7.462 	0.538 
+7.490 	0.530 
+7.513 	0.523 
+7.545 	0.515 
+7.578 	0.508 
+7.615 	0.500 
+7.652 	0.492 
+7.712 	0.489 
+7.777 	0.481 
+7.953 	0.479 
+8.116 	0.502 
+8.190 	0.517 
+8.245 	0.532 
+8.301 	0.545 
+8.338 	0.556 
+8.385 	0.571 
+8.422 	0.585 
+8.454 	0.600 
+8.491 	0.613 
+8.538 	0.624 
+8.561 	0.640 
+8.584 	0.653 
+8.617 	0.664 
+8.654 	0.683 
+8.677 	0.692 
+8.696 	0.704 
+8.719 	0.719 
+8.747 	0.732 
+8.775 	0.744 
+8.798 	0.759 
+8.812 	0.770 
+8.844 	0.783 
+8.868 	0.798 
+8.886 	0.812 
+8.914 	0.823 
+8.942 	0.840 
+8.956 	0.851 
+8.974 	0.866 
+8.993 	0.878 
+9.016 	0.893 
+9.044 	0.908 
+9.063 	0.923 

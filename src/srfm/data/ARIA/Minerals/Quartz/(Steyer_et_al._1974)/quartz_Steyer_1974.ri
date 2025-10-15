@@ -1,0 +1,59 @@
+#DISTRIBUTEDBY=Aerosol Refractive Index Archive (www.atm.ox.ac.uk/project/RI/)
+#DESCRIPTION=Non-orentated refractive index of quartz a mineral powder.
+#SUBSTANCE=Amorphous quartz powder
+#SAMPLEFORM=Powder
+#TEMPERATURE=
+#CONCENTRATION=
+#DOI=10.1364/ao.13.001586
+#REFERENCE=T. R. Steyer, Kenrick L. Day, Donald R. Huffman, Infrared Absorption
+## by Small Amorphous Quartz Spheres
+#CONTACT=
+#COMMENT=Dispersed in KBr
+#FORMAT=WAVN N K
+1400 1.04  0.0126
+1370 1.00  0.0159
+1340 0.960 0.0193
+1300 0.840 0.0565
+1280 0.738 0.0725
+1250 0.483 0.186
+1220 0.383 0.557
+1200 0.438 0.736
+1170 0.447 0.954
+1140 0.381 1.38
+1110 0.671 2.35
+1091 1.73  2.56
+1070 2.59  2.06
+1050 2.95  1.37
+1015 2.74  0.237
+1000 2.42  0.145
+960  2.03  0.088
+940  1.90  0.050
+920  1.81  0.023
+901  1.77  0.023
+885  1.71  0.025
+870  1.69  0.029
+862  1.68  0.060
+840  1.64  0.200
+820  1.64  0.284
+800  1.77  0.344
+775  1.84  0.170
+752  1.72  0.080
+741  1.70  0.065
+714  1.66  0.045
+690  1.60  0.033
+667  1.54  0.032
+645  1.52  0.032
+625  1.46  0.035
+606  1.44  0.047
+588  1.41  0.050
+571  1.35  0.060
+552  1.23  0.085
+529  1.05  0.200
+500  0.674 0.751
+481  0.716 1.71
+465  1.71  2.31
+455  2.51  2.10
+450  2.74  1.83
+433  2.86  0.941
+415  2.65  0.400
+400  2.53  0.200
