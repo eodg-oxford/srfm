@@ -177,7 +177,6 @@ def ewp_hs(
     phase_quad_N=181,
     phase_quad_type="L",
     radii_quad_type="T",
-    aria=None,
     return_dict = None,
     multiprocess = False
 ):
@@ -212,7 +211,6 @@ def ewp_hs(
         radii_quad_type (str): This type of quadrature is used to calculate the size 
             distribution. Default is "T" (trapezium). Can be any quadrature accepted by
             `srfm.quadrature` module.
-        aria (str): Location of the ARIA database (path).
         return_dict (multiprocess.Manager().dict()): (optional) object to return values 
             in when doing multiprocessing (parallel computations). Default is None.
         multiprocess (bool): If True, optical properties are calculated as a shell
@@ -248,7 +246,6 @@ def ewp_hs(
     # load refractive indices
     refractive_index_arr = get_ri(composition=composition,
                                   refractive_index=refractive_index,
-                                  aria=aria,
                                   wave=wavelengths,
                                   wave_size=wavelengths_size
                                   )
@@ -630,7 +627,6 @@ def get_radii(distribution,
     
 def get_ri(composition,
            refractive_index=None,
-           aria=None,
            wave=None,
            wave_size=None):
     """Load refractive indices.
@@ -642,7 +638,6 @@ def get_ri(composition,
             ``ARIA_module.get_ri_filepathname()``.
         refractive_index (array-like): If compositon is "ri", then refractive indices 
             are required from the user. Default is None.
-        aria (str): Path to ARIA folder.
         wave (array-like): Wavelength grid. Default is None.
         wave_size (int): size of wave (equal to len(wave) is wave is list or 1D array 
             and wave.size if wave is an array).
@@ -667,7 +662,7 @@ def get_ri(composition,
     else:
         ri_object = ARIA.RI()
         ri_n, ri_k = ri_object.load_refractive_indices(
-            composition, aria=aria, wave=wave, mode="wavelength"
+            composition, wave=wave, mode="wavelength"
         )
         ri_k = -ri_k
 

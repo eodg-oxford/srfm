@@ -277,15 +277,6 @@ class MieLayer(Layer):
 
         """
         self.leg_coeff_type = leg_coeffs_type
-    
-    def set_aria(self,aria):
-        """Sets path to ARIA folder.
-        
-        Args:
-            aria (str): Path to ARIA folder.
-        
-        """
-        self.aria = aria
 
     def set_multiproccess(self, multiprocess):
         """Toggle multiprocessing.
@@ -329,7 +320,6 @@ class MieLayer(Layer):
                     - radii_quad_type
                     - leg_coeffs
                     - leg_coeffs_type
-                    - aria
                     - multiprocess
             
                 For explanation of each of those parameters please refer to the 
@@ -361,7 +351,6 @@ class MieLayer(Layer):
         self.radii_quad_type = inp_dict["radii_quad_type"]
         self.leg_coeffs = inp_dict["leg_coeffs"]
         self.leg_coeffs_type = inp_dict["leg_coeffs_type"]
-        self.aria = inp_dict["aria"]
         self.multiprocess = inp_dict["multiprocess"]
 
     def test_complete_input_format(self):
@@ -744,7 +733,6 @@ class MieLayer(Layer):
                 eta=self.eta,
                 phase_quad_N=self.phase_quad_N,
                 phase_quad_type=self.phase_quad_type,
-                aria=self.aria,
                 return_dict=None,
                 multiprocess=False,
             )
@@ -766,7 +754,6 @@ class MieLayer(Layer):
                     "phase_quad_N": self.phase_quad_N,
                     "phase_quad_type": self.phase_quad_type,
                     "radii_quad_type": self.radii_quad_type,
-                    "aria": self.aria,
                     "return_dict": self.op_dictproxy,
                     "multiprocess": True,
                 },

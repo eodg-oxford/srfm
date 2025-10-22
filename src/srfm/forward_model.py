@@ -79,7 +79,7 @@ class RFM(Fwd_model):
             Runs RFM, write its outputs to the fldr folder, updates object status. 
         
         """
-            
+        
         cwd = os.getcwd()
         try:
             os.chdir(f"{fldr}")

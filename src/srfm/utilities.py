@@ -17,6 +17,7 @@ import time
 from numba import njit
 from bisect import bisect
 from functools import wraps
+from importlib.resources import files, as_file
 
 
 def closest(lst_lon, lon, lst_lat, lat):
@@ -978,7 +979,17 @@ def get_altitude_prf(p,T,z0=0,M=28.97,g=9.81):
         alt.append( (- ( np.log(p[i+1]/p[i]) * R * ( (T[i] + T[i+1]) / 2) ) / (M*g) ) + alt[i] )
     
     return alt
+
+def load_solar_spectrum_Gueymard20018():
+    """Loads and converts solar spectrum from Gueymard 2018.
     
+    """
+    with as_file(files("srfm.data") / "Gueymard2018.sssi" ) as path:
+        solar_spc_fl = np.loadtxt(path,skiprows=3)
+        solar_spc = solar_spc_fl[:,1] * 10 # conversion from mW cm-2 um-1 to W m-2 um-1
+        solar_spc = solar_spc / 1e4 * (solar_spc_fl[:,0]**2) # conversion from W m-2 um-1 to W m-2 cm-1, wavenumbers are decreasing
+        solar_spc_wvnm = 1/(solar_spc_fl[:,0]*1e-4) # wavenumbers are decreasing
+    return solar_spc, solar_spc_wvnm
     
      
     

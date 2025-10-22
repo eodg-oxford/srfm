@@ -396,7 +396,7 @@ def construct_rfm_output_levels_file(levels,fldr,fname="alts.lev",force=True):
     
     Args:
         levels (array-like): Required output levels. Doesn't have to be sorted.
-        fldr (str): RFM folder
+        fldr (str): output folder path
         fname (str): Required output filename, Default is "alts.lev".
         force (bool): If True, overwrite current levels file, else saves a copy first.
     
@@ -422,11 +422,11 @@ def construct_rfm_output_levels_file(levels,fldr,fname="alts.lev",force=True):
     # open the file in its final directory
     if force == True:    
         print(f"Overwriting the current {fname} file.")
-        f = open(f"{fldr}/rfm_files/{fname}", "w")
+        f = open(f"{fldr}/{fname}", "w")
     elif force == False:
         print(f"The current {fname} will be moved to old_{fname}.")
-        os.rename(f"{fldr}/rfm_files/{fname}", f"{fldr}/rfm_files/old_{fname}")
-        f = open(f"{fldr}/rfm_files/{fname}", "w")
+        os.rename(f"{fldr}/{fname}", f"{fldr}/old_{fname}")
+        f = open(f"{fldr}/{fname}", "w")
     else:
         raise ValueError("'force' accepts only True or False. Default is True.")
 

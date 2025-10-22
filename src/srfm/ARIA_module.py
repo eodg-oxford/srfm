@@ -250,7 +250,7 @@ class RI:
         return interpolated_n, interpolated_k
 
     def load_refractive_indices(
-        self, composition, aria=None, wave=None, mode="wavelength", out_of_range="error"
+        self, composition, wave=None, mode="wavelength", out_of_range="error"
     ):
         """Reads the refractive index data for a given ri file.
 
@@ -267,7 +267,6 @@ class RI:
                             - "ice"
                             - "sulphuric acid"
                             - "water". (NOT IMPLEMENTED)
-                aria (str): location of the aria database, if None, default assumed location in AOPP is used.
                 wave (list or array, optional): The target wavelengths or wavenumbers to interpolate to. If None, returns data at full resolution.
                 mode (str): 'wavelength' for wave in µm or 'wavenumber' for wave in cm⁻¹.
                 out_of_range (str): Behavior for out-of-range values: 'error', 'clip', or 'nan'.
@@ -278,7 +277,7 @@ class RI:
                        - If wave is defined: (n, k), the interpolated real and imaginary parts of the refractive index.
         """
 
-        filepathname = get_ri_filepathname(composition,aria)
+        filepathname = get_ri_filepathname(composition)
 
         self.read(filepathname)
 

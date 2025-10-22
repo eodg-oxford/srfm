@@ -17,10 +17,11 @@ __all__ = [
     "quadrature",
     "mie_module",
     "layer",
-    "orography"
+    "orography",
+    "iasi_main",
 ]
 
-"""Import oxharp modules."""
+"""Import srfm modules."""
 from . import units
 from . import readers
 from . import plotting
@@ -37,3 +38,4 @@ from . import size_distribution
 from . import mie_module
 from . import layer
 from . import orography
+from . import iasi_main
