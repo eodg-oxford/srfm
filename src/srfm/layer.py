@@ -4,7 +4,7 @@ Used to contain scattering information for a single layer.
 - Name: layer
 - Parent package: srfm
 - Author: Antonin Knizek
-- Contributors: 
+- Contributors:
 - Date: 26 Mar 2025
 """
 
@@ -28,9 +28,9 @@ class Layer:
 
 class MieLayer(Layer):
     """Class that contains Mie scattering parameters, calculations and outputs.
-    
+
     Is subclass of Layer.
-    
+
     """
 
     def __init__(self, name=None, **parameters):
@@ -38,240 +38,240 @@ class MieLayer(Layer):
         for key, val in parameters.items():
             self.key = val
 
-    def set_name(self,name):
+    def set_name(self, name):
         """Assign a name to the layer.
-        
+
         Args:
             name (str): Layer name.
-        
+
         """
         self.name = name
-    
+
     def set_spc_lim(self, lo, hi):
         """Set spectral calculation grid lower and upper limits.
-        
+
         Lo is the lower value and hi is the upper value, whatever the units. Units are
-        then specified in set_spec_units, so this remains consistent with both 
-        wavenumbers and wavelengths. 
-        
+        then specified in set_spec_units, so this remains consistent with both
+        wavenumbers and wavelengths.
+
         Args:
             lo (int, float): Lower wavenumber or wavelength.
             hi (int, float): Upper wavenumber or wavelength.
-        
+
         """
         self.low_spc = lo
         self.upp_spc = hi
 
     def set_spec_units(self, units):
         """Set spectral calculation grid units.
-        
+
         Args:
             units (str): Units. should be one of [\ :math:`\\mu`\ m, cm\ :sup:`-1`, nm].
                 This is not enforced but currently the rest of this package is unable to
                 handle any other options.
-        
+
         """
         self.spec_units = units
 
     def set_res(self, res):
         """Set spectral calculation grid resolution.
-        
+
         Args:
             res (int, float): Resolution of the spectral grid. Should be same units as
                 values in set_spc_lim. This is not enforced, but is the only logically
                 consistent option.
-        
+
         """
         self.res = res
 
     def set_mass_loading(self, load):
         """Set particle mass loading.
-        
+
         Args:
             load (int, float): Particle mass loading, units [g m\ :sup:`-2`].
-            
+
         """
         self.mass_loading = load
 
     def set_n(self, n):
         """Set particle number concentration.
-        
-        Args: 
+
+        Args:
             n (int, float): Particle number concentration, units [cm\ :sup:`-1`].
-                
+
         """
         self.n = n
 
     def set_r(self, r):
         """Set mean particle radius.
-        
+
         Args:
             r (int, float): Mean particle radius, units [\ :math:`\\mu`\ m]
-        
+
         """
         self.r = r
 
     def set_s(self, s):
         """Set particle size distribution spread.
-        
+
         Args:
             s (int, float): Particle size distribution spread.
-        
+
         """
         self.s = s
 
     def set_rho(self, rho):
         """Set particle mean density.
-        
+
         Args:
             rho (str, int, float): Particle mean density units [kg m\ :sup:`-3`\ ] or one
-                of strings accepted by 
+                of strings accepted by
                 ``srfm.utilities.number_conc_from_mass_loading()``.
-        
+
         """
         self.rho = rho
 
     def set_s_a_den(self, s_a_den):
         """Set surface area density of the particles.
-        
+
         Args:
-            s_a_den (int, float): Surface area density of the particles, units 
+            s_a_den (int, float): Surface area density of the particles, units
                 [\ :math:`\\mu`\ m\ :sup:`2` cm\ :sup:`-3`\ ].
-                
+
         """
         self.s_a_den = s_a_den
 
     def set_v_den(self, v_den):
         """Set volume density of particles.
-        
+
         Args:
-            v_den (int, float): Particle volume density, units 
+            v_den (int, float): Particle volume density, units
                 [\ :math:`\\mu`\ m\ :sup:`3` cm\ :sup:`-3`\ ].
-        
+
         """
         self.v_den = v_den
 
     def set_dist_type(self, dist_type):
         """Set particle size distribution type.
-        
+
         Args:
-            dist_type (str): Particle size distribution type. Accepted values are 
+            dist_type (str): Particle size distribution type. Accepted values are
                 *lognormal* and *normal*.
-        
+
         """
         self.dist_type = dist_type
 
     def set_comp(self, comp):
         """Set particle composition type.
-        
+
         Args:
             comp (str): One of accepted values by ``ARIA_module.get_ri_filepathname()``.
-        
+
         """
         self.comp = comp
 
     def set_center_alt(self, center_alt):
         """Set average (center) particle layer altitude.
-        
+
         Args:
             center_alt (int, float): Center particle layer altitude, units [km].
-        
+
         """
         self.center_alt = center_alt
 
     def set_thick(self, thick):
         """Set layer thickness (vertical extent).
-        
+
         Args:
             thick (int, float): Layer thickness (vertical extent), units [km].
-        
+
         """
         self.thick = thick
 
     def set_alt_lim(self, alt_low, alt_upp):
         """Set lower and upper layer boundary (altitudes).
-        
+
         Args:
             alt_low (int, float): Layer lower boundary altitude, units [km].
             alt_upp (int, float): Layer upper boundary altitude, units [km].
-        
+
         """
         self.alt_upp = alt_upp
         self.alt_low = alt_low
 
     def set_radii(self, radii=200):
         """Set number of radii for size disitribution calculation.
-        
+
         Args:
             radii (int): Number of radii in size distribution. Default is 200.
-        
+
         """
         self.radii = radii
 
     def set_eta(self, eta=1e-6):
-        """Set size distribution cut-off (eta value). 
-        
+        """Set size distribution cut-off (eta value).
+
         Args:
             eta (int, float): Size distribution cut-off value. The size distribution is
-                a function that technically spans the (-inf,+inf) size interval. The eta 
+                a function that technically spans the (-inf,+inf) size interval. The eta
                 value is a value of the size distribution beyond whose corresponding
                 size (radius) the distribution is truncated. Default is 1e-6.
-        
+
         """
         self.eta = eta
 
     def set_phase_quad_N(self, phase_quad_N=181):
         """Set number of points for the scattering quadrature.
-        
+
         The number of quadrature points is the number of scattering angles
-        
+
         Args:
             phase_quad_N (int): Number of quadrature points. Default is 181.
-        
+
         """
         self.phase_quad_N = phase_quad_N
 
     def set_phase_quad_type(self, phase_quad_type="L"):
         """Set quadrature type that will be used to calculate the phase fucntion.
-        
+
         Args:
-            phase_quad_type (str): Quadrature type for the phase function. Accetped 
-                values are values implemented in the ``srfm.quadrature`` module. 
+            phase_quad_type (str): Quadrature type for the phase function. Accetped
+                values are values implemented in the ``srfm.quadrature`` module.
                 Currently implemented (Apr 2025) are "L" (Lobatto quadrature rule),
                 "G" (Gauss), "R" (Radau) and "T" (Trapezium). Default is L.
-        
+
         """
         self.phase_quad_type = phase_quad_type
 
     def set_radii_quad_type(self, radii_quad_type="T"):
         """Set quadrature type for the calculation of the size distribution.
-        
+
         Args:
             radii_quad_type (str): Quadrature type for the radii calculation function.
-                Accetped values are values implemented in the ``srfm.quadrature`` 
-                module. Currently implemented (Apr 2025) are "L" (Lobatto quadrature 
+                Accetped values are values implemented in the ``srfm.quadrature``
+                module. Currently implemented (Apr 2025) are "L" (Lobatto quadrature
                 rule), "G" (Gauss), "R" (Radau) and "T" (Trapezium). Default is T.
-            
-        
+
+
         """
         self.radii_quad_type = radii_quad_type
 
     def set_leg_coeffs(self, leg_coeffs=True):
         """Toggle expansion of the phase fucntion into Legendre polynomials.
-        
+
         Args:
             leg_coeffs (bool): If True, Legendre polynomial expansion of the phase
-                function is calculated by ``srfm.optical_properties.ewp_hs()``. Default is 
+                function is calculated by ``srfm.optical_properties.ewp_hs()``. Default is
                 True.
-        
+
         """
         self.leg_coeffs = leg_coeffs
 
     def set_leg_coeffs_type(self, leg_coeffs_type="normalised"):
         """Set type of requested Legendre polynomial expansion coefficients.
-        
+
         Args:
-            leg_coeffs_type (str): Requested type of Legendre polynomial expansion 
+            leg_coeffs_type (str): Requested type of Legendre polynomial expansion
                 coefficients. Accepted values are *regular* and *normalised*. Default
                 is normalised.
 
@@ -280,21 +280,21 @@ class MieLayer(Layer):
 
     def set_multiproccess(self, multiprocess):
         """Toggle multiprocessing.
-        
+
         Args:
-            multiprocess (bool): if True, then ``srfm.optical_properties.ewp_hs()`` is 
+            multiprocess (bool): if True, then ``srfm.optical_properties.ewp_hs()`` is
                 calculated in a separate subprocess. The output type of ewp_hs changes!!
-        
+
         """
         self.multiprocess = multiprocess
 
     def set_input_from_dict(self, inp_dict):
         """Set all necessary input_parameters from an input dictionary.
-        
+
         Args:
-            inp_dict (dict): Input dictonary with layer properties. Must contain 
+            inp_dict (dict): Input dictonary with layer properties. Must contain
                 all necessary keys (cannot be incomplete). Required keys are:
-                
+
                     - name
                     - low_spc
                     - upp_spc
@@ -321,10 +321,10 @@ class MieLayer(Layer):
                     - leg_coeffs
                     - leg_coeffs_type
                     - multiprocess
-            
-                For explanation of each of those parameters please refer to the 
+
+                For explanation of each of those parameters please refer to the
                 respective function which set them explicitly (set_{parameter name}).
-        
+
         """
         self.name = inp_dict["name"]
         self.low_spc = inp_dict["low_spc"]
@@ -355,22 +355,22 @@ class MieLayer(Layer):
 
     def test_complete_input_format(self):
         """Checks the input for correct format before running any calculation.
-        
+
         Tests all input variables. Creates a boolean value called passmark, which is
         initially False and if the test is passed, is changed to True and returned.
-        
+
         Returns:
             passmark (bool): If True, input has passed the format test.
-        
+
         Raises:
             TypeError: Raised when test fails for each parameter separately.
-        
+
         """
         passmark = False
-        
+
         if not isinstance(self.name, str):
             raise TypeError("Name must be str.")
-        
+
         if not isinstance(self.low_spc, (int, float)):
             raise TypeError("Low_spc must be int or float.")
 
@@ -452,58 +452,62 @@ class MieLayer(Layer):
 
     def test_input_values(self):
         """This function tests input values of the MieLayer class.
-        
+
         The tests written in this function are added as bugs are encountered. The test
         is far from exhaustive and the user is encouraged to sanity check their values
         independently. Creates a boolean value called passmark, which is
         initially False and if the test is passed, is changed to True and returned.
-        
+
         Returns:
             passmark (bool): If True, input has passed the format test.
-        
+
         Raises:
             TypeError: Raised when test fails for each parameter separately.
-        
+
         """
-        
+
         passmark = False
-        
+
         if self.low_spc < 0:
             raise ValueError("Attribute low_spc must be non-negative.")
-        
+
         if self.upp_spc < 0:
             raise ValueError("Attribute upp_spc must be non-negative.")
-        
+
         if hasattr(self, "mass_loading") and self.mass_loading < 0:
             raise ValueError("Attribute mass_loading must be non-negative.")
-        
+
         if self.r < 0:
             raise ValueError("Particle mean radius (r) must be non-negative.")
-        
+
         if self.s < 1:
             raise ValueError("Distribution spread must be <= 1.")
-        
+
         if self.radii < 1:
             raise ValueError("Number of requested radii must be at least 1.")
-        
+
         if self.phase_quad_N < 1:
-            raise ValueError("""Number of scattering angles (phase function quadrature 
-            points must be at least 1.""")
-        
+            raise ValueError(
+                """Number of scattering angles (phase function quadrature 
+            points must be at least 1."""
+            )
+
         if self.thick < 0.002:
-            raise ValueError("""Thickness must be >= 0.002. This is because due to 
+            raise ValueError(
+                """Thickness must be >= 0.002. This is because due to 
             various roundings in the code, RFM may insert two levels of equal altitude
-            and then fail.""") 
-                
+            and then fail."""
+            )
+
         passmark = True
-        
+
         return passmark
 
     def calculate_op(self):
         """Used to calculate the optical properties for the MieLayer class.
-        
+
         The function calls specialized functions to perform the actual calculations.
-        
+
         The structure is the following:
             1. Checks the inputs consistency and format and calculates what is missing.
             2. Checks the inputs format (this is a little logically inconsistent
@@ -512,10 +516,10 @@ class MieLayer(Layer):
             3. Calculate size distribution.
             4. Calculate spectral calculation grid.
             5. Calculate the optical properties, which are returned as class attributes.
-        
+
         Raises:
             RuntimeError: Raised when input fails the format or input tests.
-        
+
         """
 
         # calcualtes layer vertical extent related properties
@@ -537,15 +541,15 @@ class MieLayer(Layer):
 
     def nsv_or_ml(self):
         """Check input for size distribution.
-        
+
         Checks if either number concentration (n), surface area density (s_a_den) or
         volume density (v_den) are set or is mass loading (mass_loading) is set.
-        The logic that s_a_den, v_den and n can be calculated from each other. 
+        The logic that s_a_den, v_den and n can be calculated from each other.
         mass_loading can be calculated from n and vice versa.
-         
+
         Raises:
             RuntimeError: Raised if r and s are not set or if all values are missing.
-            
+
         """
         if not (hasattr(self, "r") and self.r is not None):
             raise RuntimeError("Mean particle radius (r) must be set.")
@@ -589,13 +593,13 @@ class MieLayer(Layer):
 
     def n_s_v(self):
         """Checks inputs for n, s or v.
-        
+
         Checks if particle either particle number concentration (n), surface area
         density (s_a_den) or v_den are set and calculates the missing of the three.
         Requires meand particle radius (r) and distribution spread (s) to be set.
         If none of the three are set, but particle mass loading (mass_loading) is set
         instead, n will be calculated from particle loading.
-        
+
         Raises:
             RuntimeError: Raised when calculation fails due to insensible values.
         """
@@ -633,13 +637,13 @@ class MieLayer(Layer):
 
     def calc_layer_extent(self):
         """This function attempts to calculate the layer vertical extent.
-        
+
         If layer center altitude and vertical extent are given, the lower and upper
         boundary altitudes are calculated.
         Else if lower and upper boundaries are given, the center altitude and
         vertical extent are calculated.
         All variables are in units [km].
-        
+
         Raises:
             RuntimeError: Raised when inputs are insufficient.
         """
@@ -693,9 +697,9 @@ class MieLayer(Layer):
 
     def calc_grids(self):
         """Calculates spectral grids for the calculation of optical properties.
-        
+
         Calculates both wavelengths and wavenumbers.
-        
+
         """
         self.wvnm, self.wvls = utils.calc_grids(
             lo=self.low_spc, hi=self.upp_spc, res=self.res, units=self.spec_units
@@ -704,14 +708,14 @@ class MieLayer(Layer):
 
     def calc_optical_properties(self):
         """Calculate optical layer properties.
-        
+
         Calls ``srfm.optical_properties_ewp_hs()`` to calculate extinction coefficient,
-        single scatter albedo, phase function and (optional) Legendre polynomial 
+        single scatter albedo, phase function and (optional) Legendre polynomial
         coefficients.
-        
+
         Raises:
             ValueError: Raised when multiprocess isn't specified as attribute.
-        
+
         """
 
         if not hasattr(self, "refractive_index"):
@@ -766,13 +770,13 @@ class MieLayer(Layer):
 
     def add_op_calc_output(self):
         """Assigns results from optical properties calculation as class attributes.
-        
+
         Takes results from optical properties calcualtion stored in a dictionary and
         assignes them as class attributes. This is a separate function so that when
         multiprocess is True, this step (adding results to class can be done after
         threads join in the main script in one command.
         This function deletes the original dictionary.
-        
+
         """
 
         if hasattr(self, "op_process"):
@@ -797,12 +801,12 @@ class MieLayer(Layer):
     @utils.show_runtime
     def regrid(self, wvls, track_diff=False, diff_type="pct"):
         """Linearly interpolates calculated values from ewp_hs to a new grid.
-        
-        Instance must have  "beta_ext", "ssalb", "phase_function", and 
+
+        Instance must have  "beta_ext", "ssalb", "phase_function", and
         "legendre_coefficient".
-        
+
         Args:
-            
+
             wvls (aray-like): new grid, units [\ :math:`\\mu`\ m]
             track_diff (bool): If True, calculates differences arising from
                 interpolation.
@@ -812,10 +816,10 @@ class MieLayer(Layer):
             optional ("legendre_coefficient")
             difference between old and new attributes: "_diff" version of the new
               attributes
-          
+
         Raises:
             ValueError: Raised when any wavelength array is not monotonic.
-              
+
         """
         # check if legendre coefficients are present:
         lc_flag = hasattr(self, "legendre_coefficient")
@@ -847,7 +851,7 @@ class MieLayer(Layer):
             if lc_flag == True:
                 self.legendre_coefficient = np.flipud(self.legendre_coefficient)
 
-        # interpolate 
+        # interpolate
         self.beta_ext = np.interp(wvls, self.wvls, self.beta_ext)
         self.ssalb = np.interp(wvls, self.wvls, self.ssalb)
         self.phase_function = np.array(
@@ -859,9 +863,7 @@ class MieLayer(Layer):
         if lc_flag == True:
             self.legendre_coefficient = np.array(
                 [
-                    np.interp(
-                        wvls, self.wvls, self.legendre_coefficient[:, i]
-                    )
+                    np.interp(wvls, self.wvls, self.legendre_coefficient[:, i])
                     for i in range(self.legendre_coefficient.shape[1])
                 ]
             ).T
@@ -880,19 +882,18 @@ class MieLayer(Layer):
 
         return
 
-
     def track_regrid_diff(self, diff_type="pct"):
         """Calculates the difference before and after interpolation.
-         
+
         Called by optical_properties.regrid().
-        
+
         Args:
-            diff_type (str): "pct" (differences in percent from the old value) or 
+            diff_type (str): "pct" (differences in percent from the old value) or
                 "abs" (absolute difference)
-        
+
         Raises:
             ValueError: Raised when diff_type is invalid.
-            
+
         """
         # check if legendre coefficients present
         lc_flag = hasattr(self, "legendre_coefficient")
@@ -924,23 +925,44 @@ class MieLayer(Layer):
             else:
                 temp_dict[key] = np.asarray(temp_dict[key])
 
-
         self.beta_ext_diff = np.abs(temp_dict["beta_ext"] - self.beta_ext)
         self.ssalb_diff = np.abs(temp_dict["ssalb"] - self.ssalb)
-        self.phase_function_diff = np.abs(temp_dict["phase_function"] - self.phase_function)
+        self.phase_function_diff = np.abs(
+            temp_dict["phase_function"] - self.phase_function
+        )
         if lc_flag == True:
-            self.legendre_coefficient_diff = np.abs(temp_dict["legendre_coefficient"] - self.legendre_coefficient)
-        
+            self.legendre_coefficient_diff = np.abs(
+                temp_dict["legendre_coefficient"] - self.legendre_coefficient
+            )
+
         if diff_type == "abs":
             return
-        
+
         elif diff_type == "pct":
-            self.beta_ext_diff = np.nan_to_num(np.divide(self.beta_ext_diff,temp_dict["beta_ext"])) * 100
-            self.ssalb_diff = np.nan_to_num(np.divide(self.ssalb_diff,temp_dict["ssalb"])) * 100
-            self.phase_function_diff = np.nan_to_num(np.divide(self.phase_function_diff,temp_dict["phase_function"])) * 100
+            self.beta_ext_diff = (
+                np.nan_to_num(np.divide(self.beta_ext_diff, temp_dict["beta_ext"]))
+                * 100
+            )
+            self.ssalb_diff = (
+                np.nan_to_num(np.divide(self.ssalb_diff, temp_dict["ssalb"])) * 100
+            )
+            self.phase_function_diff = (
+                np.nan_to_num(
+                    np.divide(self.phase_function_diff, temp_dict["phase_function"])
+                )
+                * 100
+            )
             if lc_flag == True:
-                self.legendre_coefficient_diff = np.nan_to_num(np.divide(self.legendre_coefficient_diff,temp_dict["legendre_coefficient"])) * 100
-            return        
+                self.legendre_coefficient_diff = (
+                    np.nan_to_num(
+                        np.divide(
+                            self.legendre_coefficient_diff,
+                            temp_dict["legendre_coefficient"],
+                        )
+                    )
+                    * 100
+                )
+            return
         else:
             raise ValueError("diff_type must be pct or abs.")
 
@@ -948,11 +970,11 @@ class MieLayer(Layer):
 
     def plot_diff(self, **kwargs):
         """Plots difference in calcualted optical properties.
-        
+
         Instance must have differences in optical properties calculated and stored
-        as _diff attributes. For further information see 
-        ``srfm.layer.track_regrid_diff()``. 
-        
+        as _diff attributes. For further information see
+        ``srfm.layer.track_regrid_diff()``.
+
         Returns:
             fig (obj): fig object
         """
@@ -1009,26 +1031,27 @@ class MieLayer(Layer):
 
     def calc_tau(self):
         """Calculates optical depth from beta_ext and layer vertical extent.
-        
-        Both beta_ext and layer boundary altitudes must be specified in the object 
+
+        Both beta_ext and layer boundary altitudes must be specified in the object
         instance.
         """
-        self.tau = self.beta_ext * 1e3 * (self.alt_upp-self.alt_low)
+        self.tau = self.beta_ext * 1e3 * (self.alt_upp - self.alt_low)
         return
+
 
 class GreyBodyCloud(Layer):
     """Class that represents a grey body cloud.
-    
+
     Is subclass of Layer.
     The rationale for this class is to emulate the simplest possible case where a cloud
     is represented as a greybody emitter. No scattering is involved.
-    
+
     Unless changed, emissivity is 1 by default.
-    
+
     Todo:
         The emissivity is a stub, the attribute isn't implemented anywhere. For the time
         being then, the GreBodyCloud is effectively a black body emitter.
-    
+
     """
 
     def __init__(self, name=None, emis=1, **parameters):
@@ -1037,108 +1060,108 @@ class GreyBodyCloud(Layer):
             self.key = val
         self.emis = emis
 
-    def set_name(self,name):
+    def set_name(self, name):
         """Assign a name to the layer.
-        
+
         Args:
             name (str): Layer name.
-        
+
         """
         self.name = name
-    
+
     def set_spc_lim(self, lo, hi):
         """Set spectral grid lower and upper limits.
-        
+
         Lo is the lower value and hi is the upper value, whatever the units. Units are
-        then specified in set_spec_units, so this remains consistent with both 
+        then specified in set_spec_units, so this remains consistent with both
         wavenumbers and wavelengths.
-        
+
         Args:
             lo (int, float): Lower wavenumber or wavelength.
             hi (int, float): Upper wavenumber or wavelength.
-        
+
         """
         self.low_spc = lo
         self.upp_spc = hi
 
     def set_spec_units(self, units):
         """Set spectral calculation grid units.
-        
+
         Args:
             units (str): Units. should be one of [\ :math:`\\mu`\ m, cm\ :sup:`-1`, nm].
                 This is not enforced but currently the rest of this package is unable to
                 handle any other options.
-        
+
         """
         self.spec_units = units
 
     def set_res(self, res):
         """Set spectral calculation grid resolution.
-        
+
         Args:
             res (int, float): Resolution of the spectral grid. Should be same units as
                 values in set_spc_lim. This is not enforced, but is the only logically
                 consistent option.
-        
+
         """
         self.res = res
 
     def set_center_alt(self, center_alt):
         """Set average (center) particle layer altitude.
-        
+
         Args:
             center_alt (int, float): Center particle layer altitude, units [km].
-        
+
         """
         self.center_alt = center_alt
 
     def set_thick(self, thick):
         """Set layer thickness (vertical extent).
-        
+
         Args:
             thick (int, float): Layer thickness (vertical extent), units [km].
-        
+
         """
         self.thick = thick
 
     def set_alt_lim(self, alt_low, alt_upp):
         """Set lower and upper layer boundary (altitudes).
-        
+
         Args:
             alt_low (int, float): Layer lower boundary altitude, units [km].
             alt_upp (int, float): Layer upper boundary altitude, units [km].
-        
+
         """
         self.alt_upp = alt_upp
         self.alt_low = alt_low
-    
+
     def set_emis(self, e):
         """Set emissivity of the clouds.
-        
+
         Args:
             e (int, float): Grey body emissivity.
-        
+
         """
         self.emis = e
-    
+
     def set_tau(self, tau):
         """Set input layer optical depth.
-        
+
         Args:
             tau (int, float): Layer optical depth. The optical depth is uniform across
                 all wavelengths (since this is class represents a grey body cloud).
-        
+
         """
-        
+
         self.inp_tau = tau
 
     def set_input_from_dict(self, inp_dict):
         """Set all necessary input_parameters from an input dictionary.
-        
+
         Args:
-            inp_dict (dict): Input dictonary with layer properties. Must contain 
+            inp_dict (dict): Input dictonary with layer properties. Must contain
                 all necessary keys (cannot be incomplete). Required keys are:
-                
+
                     - name
                     - low_spc
                     - upp_spc
@@ -1150,10 +1173,10 @@ class GreyBodyCloud(Layer):
                     - alt_low
                     - emis
                     - inp_tau
-            
-                For explanation of each of those parameters please refer to the 
+
+                For explanation of each of those parameters please refer to the
                 respective function which set them explicitly (set_{parameter name}).
-        
+
         """
         self.name = inp_dict["name"]
         self.low_spc = inp_dict["low_spc"]
@@ -1169,22 +1192,22 @@ class GreyBodyCloud(Layer):
 
     def test_complete_input_format(self):
         """Checks the input for correct format before running any calculation.
-        
+
         Tests all input variables. Creates a boolean value called passmark, which is
         initially False and if the test is passed, is changed to True and returned.
-        
+
         Returns:
             passmark (bool): If True, input has passed the format test.
-        
+
         Raises:
             TypeError: Raised when test fails for each parameter separately.
-        
+
         """
         passmark = False
-        
+
         if not isinstance(self.name, str):
             raise TypeError("Name must be str.")
-        
+
         if not isinstance(self.low_spc, (int, float)):
             raise TypeError("Low_spc must be int or float.")
 
@@ -1208,11 +1231,11 @@ class GreyBodyCloud(Layer):
 
         if not isinstance(self.alt_low, (int, float)):
             raise TypeError("Alt_low must be int or float.")
-        
+
         if not isinstance(self.emis, (int, float)):
             raise TypeError("Emis must be int or float.")
-        
-        if not isinstance(self.inp_tau, (int,float)):
+
+        if not isinstance(self.inp_tau, (int, float)):
             raise TypeError("Inp_tau must be int or float.")
 
         passmark = True
@@ -1221,46 +1244,47 @@ class GreyBodyCloud(Layer):
 
     def test_input_values(self):
         """This function tests input values of the GreyBodyCloud class.
-        
+
         The tests written in this function are added as bugs are encountered. The test
         is far from exhaustive and the user is encouraged to sanity check their values
         independently. Creates a boolean value called passmark, which is
         initially False and if the test is passed, is changed to True and returned.
-        
+
         Returns:
             passmark (bool): If True, input has passed the format test.
-        
+
         Raises:
             TypeError: Raised when test fails for each parameter separately.
-        
+
         """
-        
+
         passmark = False
-        
+
         if self.low_spc < 0:
             raise ValueError("Attribute low_spc must be non-negative.")
-        
+
         if self.upp_spc < 0:
             raise ValueError("Attribute upp_spc must be non-negative.")
-        
+
         if self.emis < 0 or self.emis > 1:
             raise ValueError("Emissivity must be between 0 and 1.")
-        
+
         if self.thick < 0.002:
-            raise ValueError("""Thickness must be >= 0.002. This is because due to 
+            raise ValueError(
+                """Thickness must be >= 0.002. This is because due to 
             various roundings in the code, RFM may insert two levels of equal altitude
-            and then fail.""") 
-        
-                
+            and then fail."""
+            )
+
         passmark = True
-        
+
         return passmark
 
     def calculate_op(self):
         """Used to calculate the optical properties for the GreyBodyCloud class.
-        
+
         The function calls specialized functions to perform the actual calculations.
-        
+
         The structure is the following:
             1. Checks the inputs consistency and format and calculates what is missing.
             2. If emissivity not set, defaults to 1.
@@ -1269,15 +1293,15 @@ class GreyBodyCloud(Layer):
                properties are calculated).
             4. Calculate spectral grid.
             5. Calculate the optical properties, which are returned as class attributes.
-        
+
         Raises:
             RuntimeError: Raised when input fails the format or input tests.
-        
+
         """
 
         # calcualtes layer vertical extent related properties
         self.calc_layer_extent()
-        
+
         if self.test_complete_input_format():
             pass
         else:
@@ -1293,13 +1317,13 @@ class GreyBodyCloud(Layer):
 
     def calc_layer_extent(self):
         """This function attempts to calculate the layer vertical extent.
-        
+
         If layer center altitude and vertical extent are given, the lower and upper
         boundary altitudes are calculated.
         Else if lower and upper boundaries are given, the center altitude and
         vertical extent are calculated.
         All variables are in units [km].
-        
+
         Raises:
             RuntimeError: Raised when inputs are insufficient.
         """
@@ -1339,12 +1363,11 @@ class GreyBodyCloud(Layer):
             )
         return
 
-
     def calc_grids(self):
         """Calculates spectral grids for the calculation of optical properties.
-        
+
         Calculates both wavelengths and wavenumbers.
-        
+
         """
         self.wvnm, self.wvls = utils.calc_grids(
             lo=self.low_spc, hi=self.upp_spc, res=self.res, units=self.spec_units
@@ -1353,35 +1376,35 @@ class GreyBodyCloud(Layer):
 
     def calc_optical_properties(self):
         """Calculated optical properties.
-        
-        In this case all it does is take inp_tau and stretches it over the spectral 
+
+        In this case all it does is take inp_tau and stretches it over the spectral
         grid. The fact that this is a separate function is because the implementation
         mirrors implementation scheme in other *srfm.layer.Layer()* objects.
-        
+
         """
-        
-        self.tau = [self.inp_tau]*len(self.wvnm)
+
+        self.tau = [self.inp_tau] * len(self.wvnm)
         return
 
     @utils.show_runtime
     def regrid(self, wvls, track_diff=False, diff_type="pct"):
         """Linearly interpolates calculated values from ewp_hs to a new grid.
-        
+
         Instance must have the "tau" attribute.
-        
+
         Args:
-            
+
             wvls (aray-like): new grid, units [\ :math:`\\mu`\ m]
             track_diff (bool): If True, calculates differences arising from
                 interpolation.
         Returns:
             old attribute tau now as "tau_old"
             new attribute "tau"
-            difference between old and new attribute "tau_diff" 
-          
+            difference between old and new attribute "tau_diff"
+
         Raises:
             ValueError: Raised when any wavelength array is not monotonic.
-              
+
         """
 
         # preserve original results
@@ -1403,7 +1426,7 @@ class GreyBodyCloud(Layer):
             self.wvls = np.flip(self.wvls)
             self.tau = np.flip(self.tau)
 
-        # interpolate 
+        # interpolate
         self.tau = np.interp(wvls, self.wvls, self.tau)
         self.wvls = wvls
 
@@ -1416,19 +1439,18 @@ class GreyBodyCloud(Layer):
 
         return
 
-
     def track_regrid_diff(self, diff_type="pct"):
         """Calculates the difference before and after interpolation.
-         
+
         Called by optical_properties.regrid().
-        
+
         Args:
-            diff_type (str): "pct" (differences in percent from the old value) or 
+            diff_type (str): "pct" (differences in percent from the old value) or
                 "abs" (absolute difference)
-        
+
         Raises:
             ValueError: Raised when diff_type is invalid.
-            
+
         """
 
         diff_dict = {}
@@ -1441,7 +1463,7 @@ class GreyBodyCloud(Layer):
         for i in self.wvls:
             x = np.argmin(np.abs(self.wvls_old - np.full(self.wvls_old.size, i)))
             temp_dict["tau"].append(self.tau_old[x])
-            
+
         for key in temp_dict.keys():
             if key == "wavelengths":
                 pass
@@ -1449,13 +1471,15 @@ class GreyBodyCloud(Layer):
                 temp_dict[key] = np.asarray(temp_dict[key])
 
         self.tau_diff = np.abs(temp_dict["tau"] - self.tau)
-        
+
         if diff_type == "abs":
             return
-        
+
         elif diff_type == "pct":
-            self.tau_diff = np.nan_to_num(np.divide(self.tau_diff,temp_dict["tau"])) * 100
-            return        
+            self.tau_diff = (
+                np.nan_to_num(np.divide(self.tau_diff, temp_dict["tau"])) * 100
+            )
+            return
         else:
             raise ValueError("diff_type must be pct or abs.")
 
@@ -1463,11 +1487,11 @@ class GreyBodyCloud(Layer):
 
     def plot_diff(self, **kwargs):
         """Plots difference in calcualted optical properties.
-        
+
         Instance must have differences in optical properties calculated and stored
-        as _diff attributes. For further information see 
-        ``srfm.layer.track_regrid_diff()``. 
-        
+        as _diff attributes. For further information see
+        ``srfm.layer.track_regrid_diff()``.
+
         Returns:
             fig (obj): fig object
         """
@@ -1485,4 +1509,3 @@ class GreyBodyCloud(Layer):
         )
         plt.tight_layout()
         return fig
-

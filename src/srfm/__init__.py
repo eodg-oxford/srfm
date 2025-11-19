@@ -19,7 +19,7 @@ __all__ = [
     "orography",
     "iasi_main",
     "rfm_helper",
-    "RFM"
+    "RFM",
 ]
 
 """Import srfm modules."""

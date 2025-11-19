@@ -1,11 +1,12 @@
 """Provides functions that enable the user to work with DISORT from a python interface.
-    
+
 - Name: disort_functions
 - Parent package: srfm
 - Author: Antonin Knizek
 - Contributors:
 - Date: 18 February 2025
-""" 
+"""
+
 import numpy as np
 import warnings
 from . import utilities as utils
@@ -13,16 +14,16 @@ from . import utilities as utils
 
 def update_maxcmu(maxcmu):
     """Checks and (optional) updates the value of maxcmu for DISORT.
-    
+
     Maxcmu must be and even number. If it is not, this function adds 1 to it so that it
     will be.
-    
+
     Args:
         maxcmu (int): Number of computational streams in DISORT.
-    
+
     Returns:
         maxcmu (int): Updated value of maxcmu.
-        
+
     """
     if (maxcmu % 2) != 0:
         maxcmu = maxcmu + 1
@@ -32,22 +33,22 @@ def update_maxcmu(maxcmu):
 
 def update_maxulv(maxulv, usrtau, maxcly):
     """Check and updates the value of maxulv for DISORT.
-    
-    If usrtau flag for user output optical depths in DISORT is False, results are 
-    returned at the boundary of each computational layer and therefore maxulv must be 
+
+    If usrtau flag for user output optical depths in DISORT is False, results are
+    returned at the boundary of each computational layer and therefore maxulv must be
     maxcly + 1.
-    This function checks the usrtau flag and if usrtau == False, sets maxulv to 
+    This function checks the usrtau flag and if usrtau == False, sets maxulv to
     (maxcly+1).
-    
+
     Args:
         maxulv (int): Number of user optical depths.
         usrtau (bool): Flag for optical depths, if True, return values at user optical depths,
             if False, return at boudnary of each computational layer.
         maxcly (int): Number of DISORT computational layers.
-    
+
     Returns:
         maxulv (int): Updated version of maxulv.
-        
+
     """
     if usrtau == False:
         maxulv = maxcly + 1
@@ -57,23 +58,24 @@ def update_maxulv(maxulv, usrtau, maxcly):
 
 def update_maxumu(maxumu, usrang, maxcmu):
     """Updates the value of maxumu.
-    
+
     If user angles are not requested, maxumu is set to equal maxcmu.
-    
+
     Args:
         maxumu (int): Number of user-requested output polar angles.
         usrang (bool): Are user angles requested or not?
         maxcmu (int): Number of computational streams.
-    
+
     Returns:
         maxumu (int): Updated version of maxumu.
-        
+
     """
 
     if usrang == False:
         maxumu = maxcmu
         print(f"maxumu has been updated to {maxumu}")
     return maxumu
+
 
 def test_disort_input_format(
     maxcly,
@@ -127,10 +129,10 @@ def test_disort_input_format(
     trnmed,
 ):
     """Tests DISORT input parameters for format consistency.
-    
-    Defines a passmark variable, which is False, then carries out the tests and if the 
+
+    Defines a passmark variable, which is False, then carries out the tests and if the
     input passes the test, the passmark is changed to True and returned.
-    
+
     Args:
         maxcly (int): Number of computational layers.
         maxmom (int): Number of phase function moments.
@@ -139,23 +141,23 @@ def test_disort_input_format(
         maxphi (int): Number of output azimuthal angles.
         maxulv (int): Number of output optical depths.
         usrang (bool): User angles flag, if True, outputs at user output polar angles,
-            if False, outputs returned at computational polar angles. 
+            if False, outputs returned at computational polar angles.
         usrtau (bool): User optical depths flag. If True, outputs at user-defined optical
-            depths, if False, outputs returned at boundaries of each computational layer. 
+            depths, if False, outputs returned at boundaries of each computational layer.
         ibcnd (int): Requested outputs flag. See DISORT documentation for full explanation.
         onlyfl (bool): If True, return only fluxes.
-        prnt (array): Array of shape (5,) bool values, controls printing to terminal 
-            from DISORT. 
+        prnt (array): Array of shape (5,) bool values, controls printing to terminal
+            from DISORT.
         plank (bool): Thermal radiation in DISORT. True - on, False - off.
         lamber (bool): Bottom boundary in DISORT treated as Lambertian or not.
-        deltamplus: If True, use delta-M-plus approximation to calculate strongly 
-            forward-peaked phase functions. If False, use delta-M method.  
+        deltamplus: If True, use delta-M-plus approximation to calculate strongly
+            forward-peaked phase functions. If False, use delta-M method.
         do_pseudo_sphere (bool): Do a spheric correction on the calculation.
         dtauc (array-like): Atmospheric optical depth structure (Layers' optical depth).
         ssalb (array-like): Layers' single scatter albedo.
-        pmom (array-like): Scattering phase function Legendre polynomial expansion 
+        pmom (array-like): Scattering phase function Legendre polynomial expansion
             coefficients (normalised coefficients expected).
-        temper (array-like): Atmospheric tempeature structure, defined in terms of 
+        temper (array-like): Atmospheric tempeature structure, defined in terms of
             levels.
         wvnmlo (int, float): Lower wavenumber for Planck function calculation.
         wvnmhi (int, float): Upper wavenumber for Planck function calculation.
@@ -177,7 +179,7 @@ def test_disort_input_format(
         rho_accurate (array-like): BDREF-related.
         bemst (array-like): BDREF-related.
         emust (array-like): BDREF-related.
-        accur (int, float): Convergence criterion for azimuthal (Fourier cosine) series. 
+        accur (int, float): Convergence criterion for azimuthal (Fourier cosine) series.
         header (str): Header for terminal output printing. Max length 127 characters.
             The string "NO HEADER" will supress the printing completely.
         rfldir (array-like): Empty output array for downward direct flux.
@@ -188,12 +190,12 @@ def test_disort_input_format(
         uu (array-like): Empty output array for intensity.
         albmed (array-like): Empty output array for albedo.
         trnmed (array-like): Empty output array for transmissivity.
-    
+
     Returns:
         passmark (bool): True if all inputs passed the test, False otherwise.
-    
+
     """
-    
+
     passmark = False
     # test maxcly
     if not isinstance(maxcly, int):
@@ -356,9 +358,7 @@ def test_disort_input_format(
 
     if isinstance(utau, np.ndarray):
         if utau.shape != (maxulv,):
-            raise ValueError(
-                "if utau is a np.ndarray, it must have shape == (maxulv,)"
-            )
+            raise ValueError("if utau is a np.ndarray, it must have shape == (maxulv,)")
         for i in utau:
             if type(i.item()) != int and type(i.item()) != float:
                 raise ValueError(
@@ -807,14 +807,13 @@ def test_disort_input_integrity(
     ttemp,
     temis,
 ):
-
     """Performs sanity checks for DISORT inputs.
-    
-    Defines a passmark variable, which is False, then carries out the tests and if the 
+
+    Defines a passmark variable, which is False, then carries out the tests and if the
     input passes the test, the passmark is changed to True and returned.
     Parameters are not tested for format but for actual value and constraints that value
     must satisfy as defined in DISORT docs.
-    
+
     Args:
         maxmom (int): Number of phase function moments.
         maxcmu (int): Number of computational streams.
@@ -824,7 +823,7 @@ def test_disort_input_integrity(
             explanation.
         dtauc (array-like): Atmospheric optical depth structure (Layers' optical depth).
         ssalb (array-like): Layers' single scatter albedo.
-        temper (array-like): Atmospheric tempeature structure, defined in terms of 
+        temper (array-like): Atmospheric tempeature structure, defined in terms of
             levels.
         wvnmlo (int, float): Lower wavenumber for Planck function calculation.
         wvnmhi (int, float): Upper wavenumber for Planck function calculation.
@@ -836,7 +835,7 @@ def test_disort_input_integrity(
         btemp (int, float): Bottom boundary temperature.
         ttemp (int, float): Top boundary temperature.
         temis (int, float): Top boundary emmisivity.
-    
+
     Returns:
         passmark (bool): True if all inputs passed the test, False otherwise.
 
@@ -912,12 +911,18 @@ def test_disort_input_integrity(
     if isinstance(umu, list):
         for i in umu:
             if i == -umu0:
-                warnings.warn("Asking for output at incident beam angle, risk of 0/0, consider changing umu or umu0.",UserWarning)
+                warnings.warn(
+                    "Asking for output at incident beam angle, risk of 0/0, consider changing umu or umu0.",
+                    UserWarning,
+                )
 
     elif isinstance(umu, np.ndarray):
         for i in umu:
             if i.item() == -umu0:
-                warnings.warn("Asking for output at incident beam angle, risk of 0/0, consider changing umu or umu0.",UserWarning)
+                warnings.warn(
+                    "Asking for output at incident beam angle, risk of 0/0, consider changing umu or umu0.",
+                    UserWarning,
+                )
 
     # test phi0
     if phi0 < 0 or phi0 > 360:
@@ -962,9 +967,10 @@ def test_disort_input_integrity(
     passmark = True
     return passmark
 
+
 def get_pmom_from_disort(self, pmom, iphas, gg, nmom, lyrs=None):
     """Calculate phase function moments from disort.
-    
+
     Args:
         pmom (array-like): pmom array, can be all zeros.
         iphas (int): DISORT getmom parameter, phase function option, 1-7.
@@ -974,16 +980,16 @@ def get_pmom_from_disort(self, pmom, iphas, gg, nmom, lyrs=None):
             should equal maxmom (number of phase function moments).
         lyrs (array-like): Layers to perform calculation for
             if None, calculate for all layers.
-        
+
     Returns:
-        pmom (array-like): Returns array with shape pmom.shape with Legendre 
+        pmom (array-like): Returns array with shape pmom.shape with Legendre
             polynomial coefficients for the selected phase function.
-    
+
     Raises:
-        TypeError: Raised when values in lyrs can't be converted to ints or when layers 
+        TypeError: Raised when values in lyrs can't be converted to ints or when layers
             are not list, tuple or set.
-        ValueError: Raised when invalid layer number in layers is encountered.        
-    
+        ValueError: Raised when invalid layer number in layers is encountered.
+
     """
     if lyrs == None:
         lyrs = list(range(pmom.shape[1]))

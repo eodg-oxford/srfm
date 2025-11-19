@@ -142,7 +142,9 @@ def _run_rfm_impl(
 
     mode = output_mode.lower()
     if mode not in {"files", "capture"}:
-        raise ValueError(f"Unsupported output_mode '{output_mode}'. Expected 'files' or 'capture'.")
+        raise ValueError(
+            f"Unsupported output_mode '{output_mode}'. Expected 'files' or 'capture'."
+        )
     capture_requested = mode == "capture"
     if driver_lines is not None and driver_path is not None:
         raise ValueError("driver_lines and driver_path cannot be used together.")
@@ -153,7 +155,9 @@ def _run_rfm_impl(
         if not driver_path_obj.exists():
             raise FileNotFoundError(f"Driver table not found: {driver_path_obj}")
         if driver_path_obj.is_dir():
-            raise IsADirectoryError(f"Driver table path must reference a file: {driver_path_obj}")
+            raise IsADirectoryError(
+                f"Driver table path must reference a file: {driver_path_obj}"
+            )
         driver_path_obj = driver_path_obj.resolve()
 
     if directory is not None:
@@ -179,7 +183,9 @@ def _run_rfm_impl(
         driver_copy_path = root / "rfm.drv"
         if driver_copy_path.exists():
             original_driver_bytes = driver_copy_path.read_bytes()
-        driver_copy_path.write_text("\n".join(buffer_driver_lines) + "\n", encoding="utf-8")
+        driver_copy_path.write_text(
+            "\n".join(buffer_driver_lines) + "\n", encoding="utf-8"
+        )
         driver_copy_created = True
     elif driver_path_obj is not None:
         buffer_driver_lines = _load_driver_lines(driver_path_obj)
@@ -221,7 +227,9 @@ def _run_rfm_impl(
                 root / "rfm_original",
                 root.parent / "rfm_original",
             ]
-            executable: Path | None = next((candidate for candidate in exe_candidates if candidate.exists()), None)
+            executable: Path | None = next(
+                (candidate for candidate in exe_candidates if candidate.exists()), None
+            )
             if executable is None:
                 raise FileNotFoundError(
                     f"rfm_original executable not found near working directory {root}"
@@ -283,7 +291,9 @@ def _run_rfm_impl(
         else:
             payload = {}
 
-    return RunResult(status=status, removed_files=removed, output=payload, output_df=payload_df)
+    return RunResult(
+        status=status, removed_files=removed, output=payload, output_df=payload_df
+    )
 
 
 def run_rfm(
@@ -365,7 +375,9 @@ def run_rfm(
                 f"stdout:\n{completed.stdout}\n\nstderr:\n{completed.stderr}"
             )
         if not result_path.exists():
-            raise RuntimeError("RFM worker subprocess did not produce a result payload.")
+            raise RuntimeError(
+                "RFM worker subprocess did not produce a result payload."
+            )
 
         with result_path.open("rb") as handle:
             status, data = pickle.load(handle)
@@ -425,10 +437,12 @@ def get_captured_optical_depths(
     if status != 0:
         raise RuntimeError(f"RFM optical-depth capture failed with status {status}.")
 
-    status, altitudes, pressures, temperatures, wavenumbers, cumulative = rfm_py.rfm_get_optical_grid(
-        int(n_levels),
-        int(n_points),
-        ispc=spectrum_index,
+    status, altitudes, pressures, temperatures, wavenumbers, cumulative = (
+        rfm_py.rfm_get_optical_grid(
+            int(n_levels),
+            int(n_points),
+            ispc=spectrum_index,
+        )
     )
     if status != 0:
         raise RuntimeError(f"RFM optical-depth capture failed with status {status}.")
@@ -461,7 +475,9 @@ def get_captured_optical_depths(
         raise ValueError(f"Requested levels not present in captured profile: {missing}")
 
     if len(selected_indices) < 2:
-        raise ValueError("Insufficient matching levels to compute layer optical depths.")
+        raise ValueError(
+            "Insufficient matching levels to compute layer optical depths."
+        )
 
     selected_alt = altitudes[selected_indices]
     selected_pre = pressures[selected_indices]
@@ -843,9 +859,7 @@ def get_rfm_input_catalog() -> dict[str, Any]:
 
     mandatory = tuple(info.key for info in DRIVER_SECTIONS if info.mandatory)
     optional = tuple(info.key for info in DRIVER_SECTIONS if not info.mandatory)
-    alias_map = {
-        alias: info.key for info in DRIVER_SECTIONS for alias in info.aliases
-    }
+    alias_map = {alias: info.key for info in DRIVER_SECTIONS for alias in info.aliases}
     return {
         "sections": DRIVER_SECTIONS,
         "mandatory_sections": mandatory,
@@ -1096,7 +1110,10 @@ def rfm_main(
         for entry in directory.iterdir():
             if entry.is_file():
                 metadata = entry.stat()
-                snapshot[entry.name] = (int(metadata.st_size), int(metadata.st_mtime_ns))
+                snapshot[entry.name] = (
+                    int(metadata.st_size),
+                    int(metadata.st_mtime_ns),
+                )
         return snapshot
 
     def _read_file_payload(path: Path) -> str | bytes:
@@ -1120,7 +1137,9 @@ def rfm_main(
     if not run_directory.exists():
         raise FileNotFoundError(f"Output directory does not exist: {run_directory}")
     if not run_directory.is_dir():
-        raise NotADirectoryError(f"Output directory is not a directory: {run_directory}")
+        raise NotADirectoryError(
+            f"Output directory is not a directory: {run_directory}"
+        )
 
     def _collect_file_payload(
         before_snapshot: dict[str, tuple[int, int]] | None,
@@ -1133,7 +1152,11 @@ def rfm_main(
         for name, meta in after_snapshot.items():
             if name in ignore_names:
                 continue
-            if before_snapshot is None or name not in before_snapshot or before_snapshot[name] != meta:
+            if (
+                before_snapshot is None
+                or name not in before_snapshot
+                or before_snapshot[name] != meta
+            ):
                 path = run_directory / name
                 payload[name] = _read_file_payload(path)
                 if delete_after:
@@ -1170,7 +1193,9 @@ def rfm_main(
     file_payload_required = capture_requested and output_flags_present
 
     if optical_capture_active and len(levels_list) < 2:
-        raise ValueError("At least two levels are required when OPT and LEV flags are enabled.")
+        raise ValueError(
+            "At least two levels are required when OPT and LEV flags are enabled."
+        )
 
     uses_tab = "TAB" in flag_list
     if levels_list:
@@ -1183,7 +1208,9 @@ def rfm_main(
     if uses_tab and base_kwargs.get("tab_dimensions") is None:
         raise ValueError("TAB flag requires 'tab_dimensions' within driver_inputs.")
     if not uses_tab and base_kwargs.get("tangent") is None:
-        raise ValueError("driver_inputs must include 'tangent' unless TAB mode is used.")
+        raise ValueError(
+            "driver_inputs must include 'tangent' unless TAB mode is used."
+        )
 
     file_snapshot_before: dict[str, tuple[int, int]] | None = None
     if capture_requested:
@@ -1274,7 +1301,9 @@ def rfm_main(
         print(f"RFM run status: {run_result.status}")
 
     if optical_capture_active:
-        status, n_levels, n_points = rfm_py.rfm_get_optical_grid_size(ispc=optical_spectrum_index)
+        status, n_levels, n_points = rfm_py.rfm_get_optical_grid_size(
+            ispc=optical_spectrum_index
+        )
         if verbose:
             print(
                 f"Captured grid dimensions (status={status}): "
@@ -1285,7 +1314,9 @@ def rfm_main(
         if df is None and isinstance(run_result.output, pd.DataFrame):
             df = run_result.output
         if df is None:
-            raise RuntimeError("Expected optical-depth dataframe when OPT and LEV are enabled.")
+            raise RuntimeError(
+                "Expected optical-depth dataframe when OPT and LEV are enabled."
+            )
         run_result.output_df = df
         if verbose:
             dod_columns = [col for col in df.columns if col.startswith("dOD_")]
@@ -1324,7 +1355,9 @@ def rfm_main(
             delete_after=True,
         )
         if verbose:
-            print("capture_files_content disabled; outputs removed from disk without capture.")
+            print(
+                "capture_files_content disabled; outputs removed from disk without capture."
+            )
         run_result.output = None
     else:
         if verbose:
@@ -1332,8 +1365,6 @@ def rfm_main(
         run_result.output = None
 
     return run_result
-
-
 
 
 def _compose_driver_sections(
@@ -1432,14 +1463,24 @@ def _compose_driver_sections(
 
     append_section("*HDR", _normalize_section_data(header), required=True)
     append_section("*FLG", [" ".join(flags)], required=True)
-    append_section("*SPC", ensure_non_empty("*SPC", _normalize_section_data(spectral)), True)
-    append_section("*GAS", ensure_non_empty("*GAS", _normalize_section_data(gases)), True)
-    append_section("*ATM", ensure_non_empty("*ATM", _normalize_section_data(atmosphere)), True)
+    append_section(
+        "*SPC", ensure_non_empty("*SPC", _normalize_section_data(spectral)), True
+    )
+    append_section(
+        "*GAS", ensure_non_empty("*GAS", _normalize_section_data(gases)), True
+    )
+    append_section(
+        "*ATM", ensure_non_empty("*ATM", _normalize_section_data(atmosphere)), True
+    )
 
     if uses_tab:
-        append_section("*DIM", ensure_non_empty("*DIM", _normalize_section_data(tab_dimensions)))
+        append_section(
+            "*DIM", ensure_non_empty("*DIM", _normalize_section_data(tab_dimensions))
+        )
     else:
-        append_section("*TAN", ensure_non_empty("*TAN", _normalize_section_data(tangent)), True)
+        append_section(
+            "*TAN", ensure_non_empty("*TAN", _normalize_section_data(tangent)), True
+        )
 
     optional_map = {
         "*CIA": cia,

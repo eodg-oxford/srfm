@@ -6,14 +6,15 @@
 - Contributors: Antonin Knizek
 - Date: 3 January 2025
 
-Units: 
+Units:
     - Particle size is expressed in :math:`\\mu`\ m.
     - The distribution (n) is in number per :math:`\\mu`\ m per cm\ :sup:`3`.
 Integrated values are:
     - Number density is in number per cm\ :sup:`3`.
-    - Surface area density is in :math:`\\mu`\ m\ :sup:`2` cm\ :sup:`-3`. 
+    - Surface area density is in :math:`\\mu`\ m\ :sup:`2` cm\ :sup:`-3`.
     - Volume density is in :math:`\\mu`\ m\ :sup:`3` cm\ :sup:`-3`.
 """
+
 from abc import ABC, abstractmethod
 import numpy as np
 
@@ -63,25 +64,25 @@ class GaussianDistribution(SizeDistribution):
 # Log-Normal Distribution Subclass
 class LogNormalDistribution(SizeDistribution):
     """Creates a log-normal distribution.
-    
-    Note although the distribution is usually defined by n, r & s, the code allows 
+
+    Note although the distribution is usually defined by n, r & s, the code allows
     the distribution to be set via the surface area density and volume density.
-    
+
     Args:
         n (int, float): Concentration total particles per cm\ :sup:`3`. Default is None.
         r (int, float): Median radius, units [\ :math:`\\mu`\ m]. Default is None.
         s (int, float): Geometric standard deviation (spread). Default is None.
-        surface_area_density (int, float): Surface area density of the particles, units 
+        surface_area_density (int, float): Surface area density of the particles, units
             [\ :math:`\\mu`\ m\ :sup:`2` cm\ :sup:`-3`\ ]. Default is None.
-        v_den (int, float): Particle volume density, units 
+        v_den (int, float): Particle volume density, units
                 [\ :math:`\\mu`\ m\ :sup:`3` cm\ :sup:`-3`\ ]. Default is None.
-    
+
     Raises:
         ValueError: Raised when any of the input parameters is < 0.
-        ValueError: Raised if an invalid combination of parameters is used. Valid 
-            combinations are r, s and one of n, surface_area_density and 
+        ValueError: Raised if an invalid combination of parameters is used. Valid
+            combinations are r, s and one of n, surface_area_density and
             volume_density.
-    
+
     """
 
     def __init__(
@@ -151,21 +152,21 @@ class LogNormalDistribution(SizeDistribution):
 
     def mean(self):
         """Calculates mean of the distribution."""
-        return self.r * np.exp(0.5 * self.lns ** 2)
+        return self.r * np.exp(0.5 * self.lns**2)
 
     def value(self, radii):
         """Evaluates the size distribution at given radii.
-        
+
         Args:
-            radii (int, float, aray-like): Particle radius/radii at which the 
+            radii (int, float, aray-like): Particle radius/radii at which the
                 distribution is evaluated.
-        
+
         Returns:
-            val (float, array-like): Value of the size distribution at given 
+            val (float, array-like): Value of the size distribution at given
                 radius/radii.
-            
+
         """
-        
+
         val = (
             self.n
             * self.oostp
@@ -173,22 +174,23 @@ class LogNormalDistribution(SizeDistribution):
             * np.exp(self.mootnls * (np.log(radii) - self.lnr) ** 2)
             / radii
         )
-        
+
         return val
+
 
 #  Selector
 def create_distribution(dist_type, **kwargs):
     """Selector function for the size distribution.
-    
+
     Takes in distribution type and creates an instance of the appropriate class.
-    
+
     Args:
-        dist_type (str): Distribution type, currently accepted values are *log_normal* 
-            and *gaussian*. 
-    
+        dist_type (str): Distribution type, currently accepted values are *log_normal*
+            and *gaussian*.
+
     Raises:
         ValueError: Raised when unknown dist_type is used.
-    
+
     """
     if dist_type == "log_normal":
         return LogNormalDistribution(**kwargs)
@@ -197,22 +199,19 @@ def create_distribution(dist_type, **kwargs):
     else:
         raise ValueError(f"Unknown distribution type: {dist_type}")
 
+
 if __name__ == "__main__":
     # log-normal distribution unit test
-    sd = create_distribution("log_normal",
-                             n = 1,
-                             r = np.exp(1),
-                             s = np.exp(1)
-                         )
-    assert float(sd.value(1)) == 0.24197072451914337, """Log_normal distribution returns
+    sd = create_distribution("log_normal", n=1, r=np.exp(1), s=np.exp(1))
+    assert (
+        float(sd.value(1)) == 0.24197072451914337
+    ), """Log_normal distribution returns
         incorrect value. For n = 1, r = e, s = e, eval. at 1 should be 
         0.24197072451914337."""
-    
-    sd = create_distribution("log_normal",
-                             n = 1,
-                             r = np.exp(2),
-                             s = np.exp(3)
-                         )
-    assert float(sd.value(0.5)) == 0.17775476480655455, """Log_normal distribution returns
+
+    sd = create_distribution("log_normal", n=1, r=np.exp(2), s=np.exp(3))
+    assert (
+        float(sd.value(0.5)) == 0.17775476480655455
+    ), """Log_normal distribution returns
         incorrect value. For n = 1, r = exp(2), s = exp(3), eval. at 0.5 should be 
         0.17775476480655455."""
