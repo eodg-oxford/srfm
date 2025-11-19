@@ -1,4 +1,6 @@
 MODULE LEVCHK_SUB
+  USE KIND_DAT
+  REAL(R4), SAVE :: LEVPRV_STATE = 0.0_R4
 CONTAINS
 SUBROUTINE LEVCHK ( LEVSTR, FAIL, ERRMSG )
 !
@@ -33,13 +35,15 @@ SUBROUTINE LEVCHK ( LEVSTR, FAIL, ERRMSG )
     INTEGER(I4)    :: IATM             ! Index of atm level corresp to LEVTST
     INTEGER(I4)    :: IATPRV = 0       ! Index of previous atm. profile level
     INTEGER(I4)    :: IOS              ! Saved value of IOSTAT for error message
-    REAL(R4), SAVE :: LEVPRV           ! Previous altitude level
     REAL(R4)       :: LEVTST           ! Altitude value to be tested
     TYPE(LEVTYP), ALLOCATABLE :: LEVSAV(:) ! Saved version of LEV during realloc
 !
 ! EXECUTABLE CODE -------------------------------------------------------------
 !
-  IF ( NLEV .EQ. 0 ) LEVPRV = HGTSFC - 1.0
+  IF ( NLEV .EQ. 0 ) THEN
+    LEVPRV_STATE = HGTSFC - 1.0
+    IATPRV = 0
+  END IF
 !
   READ ( LEVSTR, *, IOSTAT=IOS ) LEVTST 
   FAIL = .TRUE.
@@ -55,7 +59,7 @@ SUBROUTINE LEVCHK ( LEVSTR, FAIL, ERRMSG )
     ERRMSG = 'F-LEVCHK: Output level is above top of atmosphere'
   ELSE IF ( LEVTST .LT. HGTSFC ) THEN
     ERRMSG = 'F-LEVCHK: Output level is below base of atmosphere'
-  ELSE IF ( LEVTST .LT. LEVPRV ) THEN
+  ELSE IF ( LEVTST .LT. LEVPRV_STATE ) THEN
     ERRMSG = 'F-LEVCHK: List of output levels not increasing monotonically'
   ELSE
     FAIL = .FALSE.
@@ -74,7 +78,12 @@ SUBROUTINE LEVCHK ( LEVSTR, FAIL, ERRMSG )
   LEV(NLEV)%HGT = LEVTST
 !
   IATPRV = IATM
-  LEVPRV = LEVTST
+  LEVPRV_STATE = LEVTST
 !
 END SUBROUTINE LEVCHK
+
+SUBROUTINE LEVCHK_RESET()
+  LEVPRV_STATE = 0.0_R4
+END SUBROUTINE LEVCHK_RESET
+
 END MODULE LEVCHK_SUB

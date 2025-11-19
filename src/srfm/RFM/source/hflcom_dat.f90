@@ -9,8 +9,9 @@ MODULE HFLCOM_DAT
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION
-!   HITRAN line file general data
-!   Initially loaded by HITOPN, updated by various routines.
+!   HITRAN line file general data.
+!   Initially loaded by HITOPN, updated by various routines, and released via
+!   HFLCOM_RESET to close any open LUNs when re-running within one process.
 !
 ! VARIABLE KINDS
     USE KIND_DAT
@@ -21,6 +22,7 @@ MODULE HFLCOM_DAT
 !
   IMPLICIT NONE
   SAVE
+  PUBLIC :: HFLCOM_RESET
 !
 ! GLOBAL CONSTANTS
     INTEGER(I4), PARAMETER :: MAXIDM = 98 ! Max HITRAN index of reqd molecules
@@ -40,4 +42,22 @@ MODULE HFLCOM_DAT
     INTEGER(I4)  :: IFLIDM(MAXIDM)      ! Index of file used for each molec
     TYPE(HFLTYP), ALLOCATABLE :: HFL(:) ! Structure for each HITRAN file
 !
+CONTAINS
+
+  SUBROUTINE HFLCOM_RESET()
+    INTEGER(I4) :: I
+    LOGICAL :: IS_OPEN
+
+    IF ( ALLOCATED ( HFL ) ) THEN
+      DO I = 1, SIZE ( HFL )
+        INQUIRE ( UNIT=HFL(I)%LUN, OPENED=IS_OPEN )
+        IF ( IS_OPEN ) CLOSE ( UNIT=HFL(I)%LUN )
+      END DO
+      DEALLOCATE ( HFL )
+    END IF
+    NHFL   = 0
+    WNOMAX = 0.0_R8
+    IFLIDM = 0
+  END SUBROUTINE HFLCOM_RESET
+
 END MODULE HFLCOM_DAT

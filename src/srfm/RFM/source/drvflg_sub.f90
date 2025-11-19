@@ -1,4 +1,14 @@
 MODULE DRVFLG_SUB
+  USE KIND_DAT
+  IMPLICIT NONE
+  PRIVATE
+
+  INTEGER(I4), PARAMETER :: MAXFLG = 30 ! Max no.different flags
+  INTEGER(I4) :: FLAG_COUNT = 0
+  CHARACTER(3) :: FLAG_HISTORY(MAXFLG) = ''
+
+  PUBLIC :: DRVFLG
+  PUBLIC :: DRVFLG_RESET
 CONTAINS
 SUBROUTINE DRVFLG ( LUNDRV, FAIL, ERRMSG )
 !
@@ -9,12 +19,11 @@ SUBROUTINE DRVFLG ( LUNDRV, FAIL, ERRMSG )
 !   20DEC17 AD F90 conversion of inpflg.for. Checked.
 !
 ! DESCRIPTION
-!   Read RFM driver table *FLG section
-!   Called once by RFMDRV.
+!   Read RFM driver table *FLG section.
+!   Called once by RFMDRV. DRVFLG_RESET clears persistent bookkeeping so
+!   repeated runs within the same session start with no active flags.
 !
 ! VARIABLE KINDS
-    USE KIND_DAT
-!
 ! GLOBAL DATA
     USE FLGCOM_DAT ! Option flags
 !
@@ -31,14 +40,10 @@ SUBROUTINE DRVFLG ( LUNDRV, FAIL, ERRMSG )
     CHARACTER(80), INTENT(OUT) :: ERRMSG ! Error message if FAIL is TRUE
 !
 ! LOCAL CONSTANTS
-    INTEGER(I4), PARAMETER :: MAXFLG = 30 ! Max no.different flags
-! 
 ! LOCAL VARIABLES
     INTEGER(I4)   :: LENGTH   ! Length of character field read from driver table
-    INTEGER(I4)   :: NFLG = 0 ! Counter for different flags read
     CHARACTER(40) :: FIELD    ! Field read from driver table
     CHARACTER(3)  :: FLG      ! Flag read from driver table (upper case)
-    CHARACTER(3)  :: FLGLST(MAXFLG) = '' ! List of flags
 !
 ! EXECUTABLE CODE -------------------------------------------------------------
 !
@@ -59,14 +64,14 @@ SUBROUTINE DRVFLG ( LUNDRV, FAIL, ERRMSG )
     END IF
 !
     FLG = UPCASE ( FIELD(1:3) )
-    IF ( ANY ( FLGLST .EQ. FLG ) ) THEN
+    IF ( ANY ( FLAG_HISTORY .EQ. FLG ) ) THEN
       FAIL = .TRUE.
       ERRMSG = 'F-DRVFLG: *FLG section contains repeated flag: '//FLG
       RETURN
     END IF
-    NFLG = NFLG + 1
-    IF ( NFLG .GT. MAXFLG ) STOP 'F-DRVFLG: Logical error'
-    FLGLST(NFLG) = FLG
+    FLAG_COUNT = FLAG_COUNT + 1
+    IF ( FLAG_COUNT .GT. MAXFLG ) STOP 'F-DRVFLG: Logical error'
+    FLAG_HISTORY(FLAG_COUNT) = FLG
     CALL WRTLOG ( ' '//FLG, .TRUE. ) 
 !
     SELECT CASE ( FLG )
@@ -339,4 +344,12 @@ SUBROUTINE DRVFLG ( LUNDRV, FAIL, ERRMSG )
   END IF
 !
 END SUBROUTINE DRVFLG
+
+SUBROUTINE DRVFLG_RESET()
+    USE FLGCOM_DAT, ONLY: FLGCOM_RESET
+    FLAG_COUNT   = 0
+    FLAG_HISTORY = ''
+    CALL FLGCOM_RESET()
+END SUBROUTINE DRVFLG_RESET
+
 END MODULE DRVFLG_SUB

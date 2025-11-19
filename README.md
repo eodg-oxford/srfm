@@ -1,3 +1,6 @@
+# TODO
+This README is outdated and need updating (22 Oct 2025, AK).
+
 # SRFM
 Welcome to SRFM, a package designed to manage satelitte data and perform retrievals.
 
@@ -62,57 +65,17 @@ RFM also needs to be compiled.
 This can be done manually or from python after the required inputs are set (recommended).
 There is a class method that does that from python and is shown in the example code (srfm.forward\_model.RFM.compile\_rfm()).
 
-## Particle scattering optical properties
-**Should this section really be included in th README?**
-
-1. Scattering code uses
-
-- optical_properties.py
-- ARIA_module.py
-- size_distribution.py
-- quadrature.py
-- mie_ewp.f90
-
-2. The routines you want to use primarily in size\_distribution.py to create a size distribution and optical\_properties.py to get the extinction, 
-single scatter albedo and Legendre coefficients.  The other modules support these calculations.
-
-The calls are
-sd = szd.create_distribution("log_normal", n=x, r=r, s=s)
-or
-sd = szd.create_distribution("log_normal", surface_area_density=x, r=r, s=s)
-or
-sd = szd.create_distribution("log_normal", volume_density=x, r=r, s=s)
-
-where
-n                     the total concentration in 1/cm^3
-r                     median radius in um
-s                     spread is typically 1.5 and should be \ge 1 
-surface_area_density  surface area of the particles in um^2/cm^3
-volume_density        volume of the particles in um^3/cm^3
-
-NOTE: The concentration is set directly using n or indirectly using surface_area_density or volume_density.
-
-3. Once the size distribution object is formed the optical properties can be found through a call to 
-
-e, w, p, l = op.ewp_hs(wavelength, composition, sd, legendre_coefficients_flag=True)
-
-where
-wavelength           in um (must be an array)
-composition          is one of these strings 'ice' 'ash' 'sulphuric acid'
-sd                   size distribution
-p                    phase function 
-legendre_coefficients_flag True to get Legendre coefficeints
-
-The outputs are
-e is the extinction in 1/m
-w is the single scatter albedo
-p is the phase functions
-l are the Legendre coefficients
-
 # Developer instructions
 The full documentation and instructions can be found on the links below:
 
 Full documentation (working version) can be found here: https://www.overleaf.com/6287434921cxhkjptrnpvm#4c7cfa
 
 And some underlying science here: https://www.overleaf.com/8669653368vnvvvhdgsyvs#04edb8
+
+## Developer notes
+the RFM is now compiled as a python module. This is done through the Makefile. 
+To succeed, the compiler needs the ".f2py_f2cmap" file in src/srfm/RFM. Do not delete that!!!
+That file ensures that correct types are enforced during the compilation.
+For example, it forces things such as real(kind=r8)/double precision to emit C doubles during the f2py run.
+If the file is deleted, the C emits single precision values and underallocates arrays, leading to malloc() errors.
 

@@ -21,6 +21,8 @@ SUBROUTINE RFMPRF ( FAIL, ERRMSG )
     USE NTECOM_DAT ! Non-LTE data
     USE GRACOM_DAT, ONLY: NPSI, NOMGRA   ! No. horiz prof locs, index of psi=0
     USE RFMLUN_DAT, ONLY: LUNTMP ! LUN for temporarily open files
+    USE PYOUT_DAT, ONLY: CAPTURE_ENABLED
+    USE PYOUT_SUB, ONLY: PYOUT_STORE_PROFILE
 !
 ! SUBROUTINES
     USE MAKNAM_SUB ! Construct filename for RFM output files
@@ -43,11 +45,16 @@ SUBROUTINE RFMPRF ( FAIL, ERRMSG )
     INTEGER(I4)   :: IVMR   ! Counter for VMR profiles
     CHARACTER(7)  :: STASTR = 'UNKNOWN' ! Status for OPEN statements
     CHARACTER(LENNAM) :: FILNAM ! Name of file actually opened (incl. RUNID)
+    LOGICAL :: DO_OUTPUT
 !
 ! EXECUTABLE CODE -------------------------------------------------------------
 ! 
   FAIL = .FALSE.
+  IOS  = 0
   IF ( .NOT. PRFFLG ) RETURN   ! Only output if PRF flag enabled
+!
+  DO_OUTPUT = .NOT. CAPTURE_ENABLED
+  IF ( CAPTURE_ENABLED ) CALL PYOUT_STORE_PROFILE()
 !
   IF ( NEWFLG ) STASTR = 'NEW'
 !
@@ -60,6 +67,7 @@ SUBROUTINE RFMPRF ( FAIL, ERRMSG )
     ELSE                     ! No angle required
       CALL MAKNAM ( PRFNAM, FILNAM ) 
     END IF
+    IF ( .NOT. DO_OUTPUT ) CYCLE
     CALL WRTLOG ( 'I-RFMPRF: Opening output file: ' // FILNAM )
 !
     OPEN ( UNIT=LUNTMP, FILE=FILNAM, STATUS=STASTR, ACTION='WRITE', &
@@ -113,4 +121,3 @@ SUBROUTINE RFMPRF ( FAIL, ERRMSG )
 !
 END SUBROUTINE RFMPRF
 END MODULE RFMPRF_SUB
-

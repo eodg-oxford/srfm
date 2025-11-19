@@ -5,14 +5,16 @@ MODULE PTHCOM_DAT
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION
-!   Path segment data
-!   Initialised in RFMPTH
+!   Path segment data.
+!   Initialised in RFMPTH and cleared by PTHCOM_RESET so cached allocations do
+!   not leak between repeated runs.
 !
 ! VARIABLE KINDS
     USE KIND_DAT 
 !
-  IMPLICIT NONE
-  SAVE
+ IMPLICIT NONE
+ SAVE
+  PUBLIC :: PTHCOM_RESET
 !
   TYPE :: PTHTYP
     LOGICAL     :: NTE ! T=non-LTE molecule, F=LTE
@@ -36,4 +38,12 @@ MODULE PTHCOM_DAT
     LOGICAL     :: USEDIR = .FALSE. ! T=use IDR to distinguish paths
     INTEGER(I4) :: NPTH             ! No. of paths used
 !
+CONTAINS
+
+  SUBROUTINE PTHCOM_RESET()
+    IF ( ALLOCATED ( PTH ) ) DEALLOCATE ( PTH )
+    USEDIR = .FALSE.
+    NPTH   = 0
+  END SUBROUTINE PTHCOM_RESET
+
 END MODULE PTHCOM_DAT

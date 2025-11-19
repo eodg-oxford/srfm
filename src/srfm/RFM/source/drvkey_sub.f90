@@ -1,4 +1,23 @@
 MODULE DRVKEY_SUB
+!
+! Persistent bookkeeping for driver section keys.
+!
+  USE KIND_DAT
+!
+  IMPLICIT NONE
+  PRIVATE
+!
+  INTEGER(I4),  PARAMETER :: MAXKEY = 30 ! >Max no different *KEY values
+  INTEGER(I4),  PARAMETER :: NREQ   = 6  ! No. of reqd *KEY values
+  CHARACTER(4), PARAMETER :: REQLST(NREQ) = &
+      (/ '*HDR', '*FLG', '*SPC', '*GAS', '*ATM', '*TAN' /)
+!
+  INTEGER(I4) :: KEY_COUNT = 0
+  CHARACTER(4) :: KEY_HISTORY(MAXKEY) = ''
+!
+  PUBLIC :: DRVKEY
+  PUBLIC :: DRVKEY_RESET
+!
 CONTAINS
 SUBROUTINE DRVKEY ( LUNDRV, KEY, FAIL, ERRMSG ) 
 !
@@ -8,8 +27,9 @@ SUBROUTINE DRVKEY ( LUNDRV, KEY, FAIL, ERRMSG )
 !   19DEC17 AD F90 version. Checked.
 !
 ! DESCRIPTION
-!   Check section key from driver table
-!   Called by RFMDRV for each driver table section
+!   Check section key from driver table.
+!   Called by RFMDRV for each driver table section.
+!   DRVKEY_RESET clears the cached sequence so the validator can be reused.
 !   First 6 keys are mandatory and checked for correct sequence, others are
 !   checked against flags. KEY set to key value (eg '*HDR') if useful, or
 !   to 'skip' if section not required. 
@@ -17,8 +37,6 @@ SUBROUTINE DRVKEY ( LUNDRV, KEY, FAIL, ERRMSG )
 !   required keys.
 !
 ! VARIABLE KINDS
-    USE KIND_DAT
-!
 ! GLOBAL DATA
     USE FLGCOM_DAT ! Option flags
     USE LENREC_DAT ! Max length of input text record
@@ -37,46 +55,40 @@ SUBROUTINE DRVKEY ( LUNDRV, KEY, FAIL, ERRMSG )
     CHARACTER(80), INTENT(OUT) :: ERRMSG ! Error message written if FAIL is TRUE
 !
 ! LOCAL CONSTANTS
-    INTEGER(I4),  PARAMETER :: MAXKEY = 30 ! >Max no different *KEY values
-    INTEGER(I4),  PARAMETER :: NREQ = 6   ! No. of reqd *KEY values 
-    CHARACTER(4), PARAMETER :: REQLST(NREQ) = &
-      (/ '*HDR', '*FLG', '*SPC', '*GAS', '*ATM', '*TAN' /)
-!
 ! LOCAL VARIABLES
     LOGICAL           :: USEKEY   ! T=Use this section, F=ignore
     INTEGER(I4)       :: IOS      ! Saved value of IOSTAT
-    INTEGER(I4)       :: NKEY = 0 ! No. of keys read so far
     CHARACTER(LENREC) :: RECORD   ! Text record read from driver file
-    CHARACTER(4)      :: KEYLST(MAXKEY) = '' ! List of KEYs read so far
 !
 ! EXECUTABLE CODE -------------------------------------------------------------
 !
   IF ( LUNDRV .EQ. -1 ) THEN   ! just check all expected sections found
     FAIL = .TRUE.
-    IF ( FINFLG .AND. .NOT. ANY ( KEYLST .EQ. '*FIN' ) ) THEN
+    IF ( FINFLG .AND. .NOT. ANY ( KEY_HISTORY .EQ. '*FIN' ) ) THEN
       ERRMSG = 'F-DRVKEY: FIN flag requires *FIN section in driver file'
-    ELSE IF ( FOVFLG .AND. .NOT. ANY ( KEYLST .EQ. '*FOV' ) ) THEN
+    ELSE IF ( FOVFLG .AND. .NOT. ANY ( KEY_HISTORY .EQ. '*FOV' ) ) THEN
       ERRMSG = 'F-DRVKEY: FOV flag requires *FOV section in driver file'
-    ELSE IF ( GRDFLG .AND. .NOT. ANY ( KEYLST .EQ. '*GRD' .OR. &
-                                       KEYLST .EQ. '*LUT' ) ) THEN
+    ELSE IF ( GRDFLG .AND. .NOT. ANY ( KEY_HISTORY .EQ. '*GRD' .OR. &
+                                       KEY_HISTORY .EQ. '*LUT' ) ) THEN
       ERRMSG = 'F-DRVKEY: FOV flag requires *FOV section in driver file'
-    ELSE IF ( ILSFLG .AND. .NOT. ANY ( KEYLST .EQ. '*ILS' ) ) THEN
+    ELSE IF ( ILSFLG .AND. .NOT. ANY ( KEY_HISTORY .EQ. '*ILS' ) ) THEN
       ERRMSG = 'F-DRVKEY: ILS flag requires *ILS section in driver file'
-    ELSE IF ( JACFLG .AND. .NOT. ANY ( KEYLST .EQ. '*JAC' ) ) THEN
+    ELSE IF ( JACFLG .AND. .NOT. ANY ( KEY_HISTORY .EQ. '*JAC' ) ) THEN
       ERRMSG = 'F-DRVKEY: JAC flag requires *JAC section in driver file'
-    ELSE IF ( LEVFLG .AND. .NOT. ANY ( KEYLST .EQ. '*LEV' ) ) THEN
+    ELSE IF ( LEVFLG .AND. .NOT. ANY ( KEY_HISTORY .EQ. '*LEV' ) ) THEN
       ERRMSG = 'F-DRVKEY: LEV flag requires *LEV section in driver file'
-    ELSE IF ( LUTFLG .AND. .NOT. ANY ( KEYLST .EQ. '*LUT' ) ) THEN
+    ELSE IF ( LUTFLG .AND. .NOT. ANY ( KEY_HISTORY .EQ. '*LUT' ) ) THEN
       ERRMSG = 'F-DRVKEY: LUT flag requires *LUT section in driver file'
-    ELSE IF ( OBSFLG .AND. .NOT. ANY ( KEYLST .EQ. '*OBS' ) ) THEN
+    ELSE IF ( OBSFLG .AND. .NOT. ANY ( KEY_HISTORY .EQ. '*OBS' ) ) THEN
       ERRMSG = 'F-DRVKEY: OBS flag requires *OBS section in driver file'
-    ELSE IF ( REJFLG .AND. .NOT. ANY ( KEYLST .EQ. '*REJ' ) ) THEN
+    ELSE IF ( REJFLG .AND. .NOT. ANY ( KEY_HISTORY .EQ. '*REJ' ) ) THEN
       ERRMSG = 'F-DRVKEY: REJ flag requires *REJ section in driver file'
-    ELSE IF ( SHPFLG .AND. .NOT. ANY ( KEYLST .EQ. '*SHP' ) ) THEN
+    ELSE IF ( SHPFLG .AND. .NOT. ANY ( KEY_HISTORY .EQ. '*SHP' ) ) THEN
       ERRMSG = 'F-DRVKEY: SHP flag requires *SHP section in driver file'
     ELSE
       FAIL = .FALSE.
     END IF
+    CALL DRVKEY_RESET()
     RETURN
   END IF    
 !
@@ -88,11 +100,11 @@ SUBROUTINE DRVKEY ( LUNDRV, KEY, FAIL, ERRMSG )
     RETURN
   END IF
 !
-  NKEY = NKEY + 1
+  KEY_COUNT = KEY_COUNT + 1
   KEY = UPCASE ( RECORD(1:4) )
 !
 ! Convert valid alternatives to *TAN key
-  IF ( NKEY .EQ. 6 ) THEN 
+  IF ( KEY_COUNT .EQ. 6 ) THEN 
     IF ( TABFLG ) THEN
       IF ( KEY .EQ. '*DIM' ) KEY = '*TAN'          ! temporarily
     ELSE IF ( HOMFLG ) THEN
@@ -122,26 +134,26 @@ SUBROUTINE DRVKEY ( LUNDRV, KEY, FAIL, ERRMSG )
     END IF
   END IF   
 !
-  IF ( NKEY .LE. NREQ ) THEN         ! mandatory sections
-    IF ( KEY .NE. REQLST(NKEY) ) THEN
+  IF ( KEY_COUNT .LE. NREQ ) THEN         ! mandatory sections
+    IF ( KEY .NE. REQLST(KEY_COUNT) ) THEN
       FAIL = .TRUE.
-      ERRMSG = 'F-DRVKEY: Expected ' // REQLST(NKEY) // &
+      ERRMSG = 'F-DRVKEY: Expected ' // REQLST(KEY_COUNT) // &
                ' but found ' // KEY // ' section in driver file.'
       RETURN
     END IF
   END IF      
 !
 ! If creating .tab output files, use *DIM for section header
-  IF ( NKEY .EQ. 6 .AND. TABFLG ) KEY = '*DIM'
+  IF ( KEY_COUNT .EQ. 6 .AND. TABFLG ) KEY = '*DIM'
 !
 ! Check for repeated key
-  IF ( ANY ( KEYLST .EQ. KEY ) ) THEN
+  IF ( ANY ( KEY_HISTORY .EQ. KEY ) ) THEN
     FAIL = .TRUE.
     ERRMSG = 'F-DRVKEY: Duplicated section header: '//KEY
     RETURN
   END IF
-  IF ( NKEY .GT. MAXKEY ) STOP 'F-DRVKEY: logical error'
-  KEYLST(NKEY) = KEY 
+  IF ( KEY_COUNT .GT. MAXKEY ) STOP 'F-DRVKEY: logical error'
+  KEY_HISTORY(KEY_COUNT) = KEY 
 !
 ! Set KEY to 'skip' for any sections which are not required
   SELECT CASE ( KEY ) 
@@ -178,5 +190,10 @@ SUBROUTINE DRVKEY ( LUNDRV, KEY, FAIL, ERRMSG )
   FAIL = .FALSE.
 !
 END SUBROUTINE DRVKEY
-END MODULE DRVKEY_SUB
 
+SUBROUTINE DRVKEY_RESET()
+  KEY_COUNT   = 0
+  KEY_HISTORY = ''
+END SUBROUTINE DRVKEY_RESET
+
+END MODULE DRVKEY_SUB

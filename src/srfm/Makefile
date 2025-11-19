@@ -1,4 +1,4 @@
-#This Makefile compiles mie_module and DISORT, which can then be imported as modules within
+#This Makefile compiles mie_module and DISORT and rfm_py, which can then be imported as modules within
 # srfm. Always run this before working with srfm
 
 # for performance compile
@@ -9,9 +9,9 @@ FFLAGS = -O3 -g -Wall
 
 LOGFILE = build.log
 
-all: mie disort_single disort_double
+all: mie disort_single disort_double rfm_py
 
-.PHONY: all mie disort_single disort_double clean
+.PHONY: all mie disort_single disort_double clean rfm_py
 
 mie:
 	@echo "Building mie_module..." | tee -a $(LOGFILE)
@@ -39,9 +39,14 @@ disort_double:
 	cat DISOTESTAUX.f DISORT.f BDREF.f DISOBRDF.f ERRPACK.f LINPACK_D.f LAPACK.f RDI1MACH.f > code.f; \
 	f2py -c code.f -m disort_module_d --backend meson --f90flags='$(FFLAGS)' >> ../$(LOGFILE) 2>&1
 
+rfm_py:
+	@echo "Building rfm_py..." | tee -a $(LOGFILE)
+	@set -e; cd RFM; \
+	python3 -m numpy.f2py -c -m rfm_py rfm_wrapper.pyf $$(find source -maxdepth 1 -name '*.f90' ! -name 'rfm.f90' ! -name 'combined.f90') >> ../$(LOGFILE) 2>&1
+
 clean:
 	@echo "Cleaning build artifacts..." | tee -a $(LOGFILE)
-	@rm -f DISORT/code.f DISORT_dbl/code.f *.so *.pyf
+	@rm -f DISORT/code.f DISORT_dbl/code.f RFM/source/combined.f90 *.so
 	@rm -rf build __pycache__
 	@rm -f $(LOGFILE)
 	@echo "Clean complete."

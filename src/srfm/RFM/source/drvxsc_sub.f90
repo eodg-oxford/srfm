@@ -33,10 +33,12 @@ SUBROUTINE DRVXSC ( LUNDRV, FAIL, ERRMSG )
 ! LOCAL VARIABLES
     INTEGER(I4)       :: LENGTH      ! Length of field read from driver file
     CHARACTER(LENREC) :: NAMXSC      ! Filename read from *XSC section
-    CHARACTER(LENREC) :: NAMDEF = '' ! Default filename template
+    CHARACTER(LENREC) :: NAMDEF      ! Default filename template
 !
 ! EXECUTABLE CODE -------------------------------------------------------------
 !
+  NAMDEF = ''
+
   DO                                  ! Read next field in driver table section
     CALL NXTFLD ( LUNDRV, NAMXSC, LENGTH, FAIL, ERRMSG ) 
     IF ( FAIL ) RETURN
@@ -64,4 +66,3 @@ SUBROUTINE DRVXSC ( LUNDRV, FAIL, ERRMSG )
 !
 END SUBROUTINE DRVXSC
 END MODULE DRVXSC_SUB
-

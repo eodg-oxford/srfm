@@ -8,20 +8,22 @@ MODULE TANCOM_DAT
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION
-!   Tangent path data
+!   Tangent path data.
 !   Output tangent heights are 1:NTAN (1=lowest, NTAN=highest) limb view
 !   also sorted for NAD, ZEN or HOM views.
 !   Extra tangent heights for FOV calculation are in NTAN+1:MTAN
 !   More may be added for Jacobian calculations
+!   Reset via TANCOM_RESET for repeated library invocations.
 !
 ! VARIABLE KINDS
     USE KIND_DAT
 !
   IMPLICIT NONE
   SAVE
+  PUBLIC :: TANCOM_RESET
 !
 ! GLOBAL CONSTANTS
-    INTEGER, PARAMETER :: LENTAN = 7 ! Max length of tan.ht string in filenames
+    INTEGER, PARAMETER :: LENTAN = 6 ! Max length of tan.ht string in filenames
 !
   TYPE :: TANTYP
     LOGICAL     :: CLC ! T = Radiance.calc reqd for Tan.Hgt
@@ -52,5 +54,17 @@ MODULE TANCOM_DAT
     REAL(R4)     :: UNITAN = 1.0  ! Scale factor if units not km
     CHARACTER(2) :: USRUNI = 'km' ! Units for scale factor
 !
-END MODULE TANCOM_DAT
+CONTAINS
 
+  SUBROUTINE TANCOM_RESET()
+    IF ( ALLOCATED ( TAN ) ) DEALLOCATE ( TAN )
+    USRELE = .FALSE.
+    USRGEO = .FALSE.
+    LIMTAN = .FALSE.
+    MTAN   = 0
+    NTAN   = 0
+    UNITAN = 1.0_R4
+    USRUNI = 'km'
+  END SUBROUTINE TANCOM_RESET
+
+END MODULE TANCOM_DAT

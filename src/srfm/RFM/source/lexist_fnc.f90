@@ -12,6 +12,7 @@ LOGICAL FUNCTION LEXIST ( FILNAM )
 !   Just a wrapper around the Fortran INQUIRE statement allowing the
 !   test to be incorporated into a line of code as a logical variable.
 !
+    USE DRVBUF_DAT, ONLY: DRVBUF_ENABLED
   IMPLICIT NONE 
 !
 ! ARGUMENTS
@@ -19,8 +20,12 @@ LOGICAL FUNCTION LEXIST ( FILNAM )
 !
 ! EXECUTABLE CODE --------------------------------------------------------------
 !
-  INQUIRE ( FILE=FILNAM, EXIST=LEXIST ) 
+! When the buffer is active report that rfm.drv exists so downstream checks pass.
+  IF ( DRVBUF_ENABLED .AND. TRIM ( FILNAM ) .EQ. 'rfm.drv' ) THEN
+    LEXIST = .TRUE.
+  ELSE
+    INQUIRE ( FILE=FILNAM, EXIST=LEXIST ) 
+  END IF
 !
 END FUNCTION LEXIST
 END MODULE LEXIST_FNC
-

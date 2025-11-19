@@ -1,0 +1,50 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module rfm_py ! in 
+    interface  ! in :rfm_py
+        subroutine rfm_run(status,run_id_in,driver_lines,enable_capture) ! Optional driver_lines allow in-memory *drv data
+            use kind_dat
+            use flgcom_dat
+            use run_id_dat
+            use spccom_dat
+            use hdrcom_dat, only: vidhdr
+            use rfmlun_dat, only: lunlog
+            use rfmdal_sub
+            use rfmdrv_sub
+            use rfmprf_sub
+            use rfmpth_sub
+            use rfmspc_sub
+            use wrtlog_sub
+            integer(kind=i4) intent(out) :: status
+            character*(*), optional,intent(in) :: run_id_in
+            character*200 ,dimension(:),optional,intent(in) :: driver_lines
+            logical, optional,intent(in) :: enable_capture
+        end subroutine rfm_run
+        subroutine rfm_get_optical_grid_size(status,n_levels,n_points,ispc)
+            use kind_dat
+            use pyout_sub
+            integer(kind=i4) intent(out) :: status
+            integer(kind=i4) intent(out) :: n_levels
+            integer(kind=i4) intent(out) :: n_points
+            integer(kind=i4), optional,intent(in) :: ispc
+        end subroutine rfm_get_optical_grid_size
+        subroutine rfm_get_optical_grid(status,n_levels,n_points,altitudes,pressures,temperatures,wavenumbers,cumulative,ispc)
+            use kind_dat
+            use pyout_sub
+            integer(kind=i4) intent(out) :: status
+            integer(kind=i4) intent(in) :: n_levels
+            integer(kind=i4) intent(in) :: n_points
+            real(kind=r8), intent(out), dimension(n_levels) :: altitudes
+            real(kind=r8), intent(out), dimension(n_levels) :: pressures
+            real(kind=r8), intent(out), dimension(n_levels) :: temperatures
+            real(kind=r8), intent(out), dimension(n_points) :: wavenumbers
+            real(kind=r8), intent(out), dimension(n_levels,n_points) :: cumulative
+            integer(kind=i4), optional,intent(in) :: ispc
+        end subroutine rfm_get_optical_grid
+    end interface 
+end python module rfm_py
+
+! This file was auto-generated with f2py (version:2.3.3).
+! See:
+! https://web.archive.org/web/20140822061353/http://cens.ioc.ee/projects/f2py2e

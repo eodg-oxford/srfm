@@ -19,6 +19,8 @@ SUBROUTINE OPNFIL ( LUNFIL, NAMFIL, FAIL, ERRMSG )
 !
 ! GLOBAL DATA
     USE LENREC_DAT ! Max length of input text record
+    USE DRVBUF_DAT, ONLY: DRVBUF_ENABLED, DRVBUF_COUNT, DRVBUF_LINES, &
+      DRVBUF_CLEAR
 !
 ! SUBROUTINES
     USE LEXIST_FNC ! Check if file exists
@@ -34,30 +36,51 @@ SUBROUTINE OPNFIL ( LUNFIL, NAMFIL, FAIL, ERRMSG )
     CHARACTER(80), INTENT(OUT) :: ERRMSG ! Error message written if FAIL is TRUE
 !
 ! LOCAL VARIABLES
-    LOGICAL           :: ENDSEC ! Set TRUE if end-of-section/file reached 
-    INTEGER(I4)       :: IOS    ! Saved value of IOSTAT for error messages
-    CHARACTER(LENREC) :: RECORD ! Text record read from file
+    LOGICAL           :: ENDSEC     ! Set TRUE if end-of-section/file reached 
+    LOGICAL           :: FROM_BUF   ! T=reading from in-memory driver table
+    INTEGER(I4)       :: IOS        ! Saved value of IOSTAT for error messages
+    INTEGER(I4)       :: IREC       ! Loop counter for driver buffer lines
+    CHARACTER(LENREC) :: RECORD     ! Text record read from file
 !
 ! EXECUTABLE CODE --------------------------------------------------------------
 !
-  CALL WRTLOG ( 'I-OPNFIL: Opening file: '//NAMFIL )
+! If Python provided a buffer, serve it instead of touching the filesystem.
+  FROM_BUF = DRVBUF_ENABLED .AND. TRIM ( NAMFIL ) .EQ. 'rfm.drv'
 !
-  IF ( .NOT. LEXIST ( NAMFIL ) ) THEN
-    FAIL = .TRUE.
-    IF ( LEN ( NAMFIL ) .GT. 65 ) THEN
-      ERRMSG = 'F-OPNFIL: file not found: ' // NAMFIL(1:62) // '...'
-    ELSE
-      ERRMSG = 'F-OPNFIL: file not found: ' // TRIM ( NAMFIL ) 
+  IF ( FROM_BUF ) THEN
+    CALL WRTLOG ( 'I-OPNFIL: Using in-memory driver table' )
+    OPEN ( UNIT=LUNFIL, STATUS='SCRATCH', ACTION='READWRITE', IOSTAT=IOS )
+    IF ( IOS .NE. 0 ) THEN
+      FAIL = .TRUE.
+      WRITE ( ERRMSG, * ) 'F-OPNFIL: Failed to open in-memory driver. IOSTAT=', IOS
+      CALL DRVBUF_CLEAR()
+      RETURN
     END IF
-    RETURN
-  END IF
+    DO IREC = 1, DRVBUF_COUNT
+      WRITE ( LUNFIL, '(A)' ) TRIM ( DRVBUF_LINES(IREC) )
+    END DO
+    REWIND ( LUNFIL )
+    CALL DRVBUF_CLEAR()
+  ELSE
+    CALL WRTLOG ( 'I-OPNFIL: Opening file: '//NAMFIL )
 !
-  OPEN ( UNIT=LUNFIL, FILE=NAMFIL, STATUS='OLD', ACTION='READ', IOSTAT=IOS )
-  IF ( IOS .NE. 0 ) THEN
-    FAIL = .TRUE.
-    WRITE ( ERRMSG, * ) 'F-OPNFIL: Failed to open file. IOSTAT=', IOS
-    RETURN
-  END IF 
+    IF ( .NOT. LEXIST ( NAMFIL ) ) THEN
+      FAIL = .TRUE.
+      IF ( LEN ( NAMFIL ) .GT. 65 ) THEN
+        ERRMSG = 'F-OPNFIL: file not found: ' // NAMFIL(1:62) // '...'
+      ELSE
+        ERRMSG = 'F-OPNFIL: file not found: ' // TRIM ( NAMFIL ) 
+      END IF
+      RETURN
+    END IF
+!
+    OPEN ( UNIT=LUNFIL, FILE=NAMFIL, STATUS='OLD', ACTION='READ', IOSTAT=IOS )
+    IF ( IOS .NE. 0 ) THEN
+      FAIL = .TRUE.
+      WRITE ( ERRMSG, * ) 'F-OPNFIL: Failed to open file. IOSTAT=', IOS
+      RETURN
+    END IF 
+  END IF
 !
 ! Print first record of file to Log file (should be a comment anyway)
   READ ( LUNFIL, '(A)', IOSTAT=IOS ) RECORD

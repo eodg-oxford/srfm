@@ -1,5 +1,4 @@
 version = "0.0.1"
-print(f"Welcome to srfm v.{version}")
 
 __all__ = [
     "units",
@@ -19,6 +18,8 @@ __all__ = [
     "layer",
     "orography",
     "iasi_main",
+    "rfm_helper",
+    "RFM"
 ]
 
 """Import srfm modules."""
@@ -39,3 +40,5 @@ from . import mie_module
 from . import layer
 from . import orography
 from . import iasi_main
+from . import rfm_helper
+from . import RFM

@@ -6,13 +6,16 @@ MODULE RFMLUN_DAT
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION
-!   Logical Unit Numbers of RFM files
+!   Logical Unit Numbers of RFM files.
+!   RFMLUN_RESET closes transient units and rewinds LUNNXT so the shared
+!   library can be re-entered safely.
 !
 ! VARIABLE KINDS
     USE KIND_DAT 
 !
   IMPLICIT NONE
   SAVE
+  PUBLIC :: RFMLUN_RESET
 !
 ! GLOBAL CONSTANTS
     INTEGER(I4), PARAMETER :: LUNLOG = 1  ! LUN for log file
@@ -22,4 +25,14 @@ MODULE RFMLUN_DAT
 ! GLOBAL VARIABLES
     INTEGER(I4) :: LUNNXT = 10 ! Next free lun
 !
+CONTAINS
+
+  SUBROUTINE RFMLUN_RESET()
+    LOGICAL :: IS_OPEN
+
+    INQUIRE ( UNIT=LUNTMP, OPENED=IS_OPEN )
+    IF ( IS_OPEN ) CLOSE ( UNIT=LUNTMP )
+    LUNNXT = 10
+  END SUBROUTINE RFMLUN_RESET
+
 END MODULE RFMLUN_DAT

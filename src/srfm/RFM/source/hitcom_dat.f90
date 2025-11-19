@@ -8,14 +8,16 @@ MODULE HITCOM_DAT
 !   24FEB17 AD F90 version. Checked.
 !
 ! DESCRIPTION
-!   HITRAN line data 
-!   Data Type representing structure of HITRAN record.
+!   HITRAN line data.
+!   Data Type representing structure of HITRAN record. Invoke HITCOM_RESET to
+!   release cached buffers when the model is reused in the same session.
 !
 ! VARIABLE KINDS
     USE KIND_DAT
 !
   IMPLICIT NONE
   SAVE
+  PUBLIC :: HITCOM_RESET
 !
   TYPE :: HITTYP
     INTEGER(I4)  :: IDM ! HITRAN Gas ID
@@ -50,4 +52,39 @@ MODULE HITCOM_DAT
     INTEGER(I4) :: NCYC   ! Current size of CYC array
     INTEGER(I4) :: NLIN   ! No.lines currently stored
 !
+CONTAINS
+
+  SUBROUTINE HITCOM_RESET()
+    HIT%IDM = 0
+    HIT%IDI = 0
+    HIT%IGS = 0
+    HIT%IUS = 0
+    HIT%ILS = 0
+    HIT%IUV = 0
+    HIT%ILV = 0
+    HIT%IST = 0
+    HIT%STR = 0.0_R4
+    HIT%ELS = 0.0_R4
+    HIT%HWA = 0.0_R4
+    HIT%HWS = 0.0_R4
+    HIT%TCA = 0.0_R4
+    HIT%TCS = 0.0_R4
+    HIT%PSA = 0.0_R4
+    HIT%PSS = 0.0_R4
+    HIT%LMA = 0.0_R4
+    HIT%LMS = 0.0_R4
+    HIT%WGT = 0.0_R4
+    HIT%WNO = 0.0_R8
+    HIT%BLQ = ''
+    HIT%ULQ = ''
+
+    IF ( ALLOCATED ( CYC ) ) THEN
+      DEALLOCATE ( CYC )
+    END IF
+
+    ICYC1 = 0
+    NCYC  = 0
+    NLIN  = 0
+  END SUBROUTINE HITCOM_RESET
+
 END MODULE HITCOM_DAT

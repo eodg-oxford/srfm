@@ -7,10 +7,10 @@ MODULE GASCOM_DAT
 !   01JUN17 AD F90 version. Checked.
 !
 ! DESCRIPTION
-!   Molecule and isotope data
-!   Loaded by ADDGAS
-!   GAS%QAL set TRUE by GASQAL
-!   Pointers GAS%ISO, GAS%WGT deallocated by RFMDAL.
+!   Molecule and isotope data.
+!   Loaded by ADDGAS and cleared by GASCOM_RESET to support repeated in-memory
+!   runs. GAS%QAL set TRUE by GASQAL. Pointers GAS%ISO, GAS%WGT are deallocated
+!   by RFMDAL and the reset helper.
 !
 !   MAXMOL should be as least as large as the highest index assigned in 
 !   molidx_sub.f90 plus extra to allow for any user-defined x/s molecules.
@@ -20,6 +20,7 @@ MODULE GASCOM_DAT
 !
   IMPLICIT NONE
   SAVE
+  PUBLIC :: GASCOM_RESET
 !
 ! GLOBAL CONSTANTS
     INTEGER(I4), PARAMETER :: LENGAS = 7    ! Maximum length of molecule name
@@ -53,4 +54,25 @@ MODULE GASCOM_DAT
     INTEGER(I4) :: IGSMOL(MAXMOL) = 0       ! IGAS for HITRAN index (or 0).
     INTEGER(I4) :: NGAS = 0                 ! No.species to be used
 !
+CONTAINS
+
+  SUBROUTINE GASCOM_RESET()
+    INTEGER(I4) :: I
+
+    IF ( ALLOCATED ( GAS ) ) THEN
+      DO I = 1, SIZE ( GAS )
+        IF ( ASSOCIATED ( GAS(I)%ISO ) ) DEALLOCATE ( GAS(I)%ISO )
+        IF ( ASSOCIATED ( GAS(I)%WGT ) ) DEALLOCATE ( GAS(I)%WGT )
+      END DO
+      DEALLOCATE ( GAS )
+    END IF
+
+    SUBH2O = .FALSE.
+    ISOMOL = .FALSE.
+    IAIGAS = 0
+    IAXGAS = 0
+    IGSMOL = 0
+    NGAS   = 0
+  END SUBROUTINE GASCOM_RESET
+
 END MODULE GASCOM_DAT

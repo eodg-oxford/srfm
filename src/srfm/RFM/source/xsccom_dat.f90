@@ -6,17 +6,18 @@ MODULE XSCCOM_DAT
 !   01MAY17 AD F90 version. Checked.
 !
 ! DESCRIPTION
-!   Tabulated Cross-Section data
+!   Tabulated Cross-Section data.
 !   The RFM stores all required .xsc datasets simultaneously, read in during
 !   reading of the *XSC section of the driver table.
-!   Loaded by REAXSC, accessed in SPCXSC.
-!   Pointers deallocated in RFMDAL.
+!   Loaded by REAXSC, accessed in SPCXSC. Pointers are deallocated in RFMDAL
+!   and via XSCCOM_RESET when the library is reused.
 !
 ! VARIABLE KINDS
     USE KIND_DAT
 !
   IMPLICIT NONE
   SAVE
+  PUBLIC :: XSCCOM_RESET
 !
   TYPE :: XSCTYP
     INTEGER(I4)          :: IGS       ! Absorber index for XSC file
@@ -40,5 +41,26 @@ MODULE XSCCOM_DAT
 !
     INTEGER(I4) :: NXSC = 0 ! No. of X/S datasets being used
 !
-END MODULE XSCCOM_DAT
+CONTAINS
 
+  SUBROUTINE XSCCOM_RESET()
+    INTEGER(I4) :: I
+
+    IF ( ALLOCATED ( XSC ) ) THEN
+      DO I = 1, SIZE ( XSC )
+        IF ( ASSOCIATED ( XSC(I)%IOF ) )  DEALLOCATE ( XSC(I)%IOF )
+        IF ( ASSOCIATED ( XSC(I)%ITRI ) ) DEALLOCATE ( XSC(I)%ITRI )
+        IF ( ASSOCIATED ( XSC(I)%NPT ) )  DEALLOCATE ( XSC(I)%NPT )
+        IF ( ASSOCIATED ( XSC(I)%ABS ) )  DEALLOCATE ( XSC(I)%ABS )
+        IF ( ASSOCIATED ( XSC(I)%PRE ) )  DEALLOCATE ( XSC(I)%PRE )
+        IF ( ASSOCIATED ( XSC(I)%TEM ) )  DEALLOCATE ( XSC(I)%TEM )
+        IF ( ASSOCIATED ( XSC(I)%DWN ) )  DEALLOCATE ( XSC(I)%DWN )
+        IF ( ASSOCIATED ( XSC(I)%WN1 ) )  DEALLOCATE ( XSC(I)%WN1 )
+      END DO
+      DEALLOCATE ( XSC )
+    END IF
+
+    NXSC = 0
+  END SUBROUTINE XSCCOM_RESET
+
+END MODULE XSCCOM_DAT

@@ -5,14 +5,16 @@ MODULE SPCCOM_DAT
 !   01MAY17 AD F90 Conversion. Checked.
 !
 ! DESCRIPTION
-!   Spectral range data
-!   NSPC is incremented by SPCLAB
+!   Spectral range data.
+!   NSPC is incremented by SPCLAB and can be cleared via SPCCOM_RESET when the
+!   host application needs to reuse the Fortran library within the same process.
 !
 ! VARIABLE KINDS
     USE KIND_DAT
 !
   IMPLICIT NONE
   SAVE
+  PUBLIC :: SPCCOM_RESET
 !
 ! GLOBAL CONSTANTS
     INTEGER(I4), PARAMETER :: LENSPC = 8 ! Max length of spectral label
@@ -36,4 +38,13 @@ MODULE SPCCOM_DAT
     REAL(R8)    :: WMNSPC   ! Lower Wavenumber reqd for any range
     REAL(R8)    :: WMXSPC   ! Upper Wavenumber reqd for any range
 !
+CONTAINS
+
+  SUBROUTINE SPCCOM_RESET()
+    IF ( ALLOCATED ( SPC ) ) DEALLOCATE ( SPC )
+    NSPC   = 0
+    WMNSPC = 0.0_R8
+    WMXSPC = 0.0_R8
+  END SUBROUTINE SPCCOM_RESET
+
 END MODULE SPCCOM_DAT

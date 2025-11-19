@@ -5,15 +5,16 @@ MODULE ILSCOM_DAT
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION
-!   Instrument Lineshape data
-!   Loaded by ILSFIL
-!   Pointer FNC deallocated in RFMDAL.
+!   Instrument Lineshape data.
+!   Loaded by ILSFIL. Pointers are deallocated by RFMDAL and explicitly by
+!   ILSCOM_RESET to support consecutive runs without reloading the module.
 !
 ! VARIABLE KINDS
     USE KIND_DAT
 !
   IMPLICIT NONE
   SAVE
+  PUBLIC :: ILSCOM_RESET
 !
   TYPE :: ILSTYP
     INTEGER(I4) :: NPT ! No. tabulation pts for each ILS Fn.
@@ -31,5 +32,20 @@ MODULE ILSCOM_DAT
     INTEGER(I4) :: NILS = 0   ! No. ILS functions stored
     INTEGER(I4) :: IDFILS = 0 ! Index of default ILS fn (0=none)
 !
-END MODULE ILSCOM_DAT
+CONTAINS
 
+  SUBROUTINE ILSCOM_RESET()
+    INTEGER(I4) :: I
+
+    IF ( ALLOCATED ( ILS ) ) THEN
+      DO I = 1, SIZE ( ILS )
+        IF ( ASSOCIATED ( ILS(I)%FNC ) ) DEALLOCATE ( ILS(I)%FNC )
+      END DO
+      DEALLOCATE ( ILS )
+    END IF
+
+    NILS   = 0
+    IDFILS = 0
+  END SUBROUTINE ILSCOM_RESET
+
+END MODULE ILSCOM_DAT

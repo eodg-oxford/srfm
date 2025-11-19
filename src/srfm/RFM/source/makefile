@@ -4,7 +4,7 @@
 
 # Edit next 2 lines to change compiler and options
 F90 = gfortran
-FLAGS = -fbounds-check -Wall -O3
+FLAGS = -fbounds-check -Wall
 # if you don't need any flags, just change to: FLAGS = 
 
 # change anything beyond this point and you're on your own!

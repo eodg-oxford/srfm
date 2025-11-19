@@ -24,7 +24,7 @@ SUBROUTINE MAKNAM ( INPNAM, OUTNAM, IGAS, IJAC, ILEV, IPSI, ISPC, ITAN )
     USE GRACOM_DAT, ONLY:PSIGRA ! Psi values [deg] of each 2D atm location
 !
 ! SUBROUTINES
-    USE HGTSTR_FNC ! Convert altitude to C*6 string
+    USE HGTSTR_FNC ! Convert altitude to C*5 string
     USE NAMGAS_FNC ! Return molecule name + (iso) associated with GASCOM index
 !
   IMPLICIT NONE
@@ -43,7 +43,7 @@ SUBROUTINE MAKNAM ( INPNAM, OUTNAM, IGAS, IJAC, ILEV, IPSI, ISPC, ITAN )
     INTEGER(I4)   :: L      ! Location for start of inserted strings
     CHARACTER(6)  :: PSISTR ! Horiz.Angle [deg] * 1000 written as string
     CHARACTER(LENJAC) :: JACSTR ! String containing Jacobian info
-    CHARACTER(11) :: LEVSTR ! String containing Level dir & height info
+    CHARACTER(10) :: LEVSTR ! String containing Level dir & height info
 !
 ! EXECUTABLE CODE -------------------------------------------------------------
 !

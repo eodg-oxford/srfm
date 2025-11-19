@@ -3,8 +3,13 @@
     Note that the SRFM can be run interactively (i.e. used as a package, use the 
     inside of run_srfm() as and example), or with a driver table.
 
-"""
-
+- Name: iasi_main
+- Parent package: srfm
+- Author: Antonin Knizek
+- Contributors: 
+- Date: 7 Nov 2025
+""" 
+from __future__ import annotations
 import scipy 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -21,20 +26,71 @@ from multiprocessing import Process, Manager
 from bisect import bisect
 import pickle
 from importlib.resources import files, as_file
+from pathlib import Path
+import importlib.util
+import uuid
+from .RFM import rfm_py
+from . import rfm_helper
+
+
+class Srfm_iasi_inputs:
+    """Class that collects inputs for the main srfm run.
+    
+    Has various methods to read and combine inputs from different sources.
+    
+    """
+    def __init__(self, **kwargs):
+        """Init function, set one explicit parameter values, which is a dict containing
+        the actual parameters for srfm.
+        
+        """
+        self.values = {}
+        for key, val in kwargs.items():
+            setattr(self, key, val)
+    
+    def read_srfm_drv(self, drv: str | Path) -> None:
+        """Read srfm driver table and load inputs into the values dictionary.
+        
+        Args:
+            drv (str, Path): Path to driver table.
+        
+        Raises:
+            TypeError: Raised when input path format not recognized.
+            FileNotFoundError: Raised when driver table not found.
+        
+        """
+        if isinstance(drv, str):
+            drv = Path(drv).expanduser().resolve() 
+        elif isinstance(drv, Path):
+            pass
+        else:
+            raise TypeError("drv must be str or pathlib.Path.")
+        
+        if not drv.is_file():
+            raise FileNotFoundError(f"Driver path not found: {drv}.")
+        
+        module_name = f"_driver_table_{uuid.uuid4().hex}"
+        spec = importlib.util.spec_from_file_location(module_name, drv)
+        if spec is None or spec.loader is None:
+            raise ImportError(f"Unable to load driver table from {filepath}")
+        
+        module = importlib.util.module_from_spec(spec)
+        loader = spec.loader
+        loader.exec_module(module)
+        
+        self.values = getattr(module, "inputs")
+        return
+        
 
 @utilities.show_runtime
-def run_srfm(x,b):
+def run_srfm(inp):
     """Main function that runs srfm.
     
     Optimized for IASI data.
-    Requires pickle files from 'pre-process_iasi_spectra_w_iasi_l2.py' as inputs.
     
     Args:
-        x (dict): State vector. Contains all variables that are to be retrieved.
-        b (dict): Ancillary information. Contains all parameters that are not subject
-            to retrieval, from scattering through atmospheric profiles to filepaths
-            and plotting flags.
-    
+        inp (obj): Instance of Srfm_iasi_inputs.
+        
     """
     ########################################################################################
     # Assign some variables:
@@ -45,14 +101,14 @@ def run_srfm(x,b):
     ########################################################################################
     # set iasi grid and final grid to interpolate to
     ########################################################################################
-    fin_grid = np.linspace(b["fin_wvnmlo"],b["fin_wvnmhi"],int((b["fin_wvnmhi"]-b["fin_wvnmlo"])/b["fin_res"]+1))
+    fin_grid = np.linspace(inp.values["fin_wvnmlo"],inp.values["fin_wvnmhi"],int((inp.values["fin_wvnmhi"]-inp.values["fin_wvnmlo"])/inp.values["fin_res"]+1))
     iasi_grid = np.linspace(645,2760,int((2760-645)/0.25+1))
 
     ########################################################################################
     # pick an iasi spectral file (processed)
     ########################################################################################    
-    iasi_spc_fldr = b["iasi_spc_fldr"]
-    iasi_fl = b["iasi_fl"] # A for ascending, D for descending
+    iasi_spc_fldr = inp.values["iasi_spc_fldr"]
+    iasi_fl = inp.values["iasi_fl"] # A for ascending, D for descending
     date = datetime.datetime.strptime(iasi_fl[iasi_fl.find("_")+1:iasi_fl.rfind("_")], "%Y%m%d")
     year_day = date.timetuple().tm_yday
 
@@ -64,7 +120,7 @@ def run_srfm(x,b):
     f.close()
 
     # pick pixel (manually check the file first and pick a pixel
-    px = b["px"] # the only pixel with 0% cloud cover on this day in the ascending orbit for hlat ssacc
+    px = inp.values["px"] # the only pixel with 0% cloud cover on this day in the ascending orbit for hlat ssacc
     keystr = iasi_fl[:iasi_fl.find(".")] + f"_px{px}"
 
     iasi_out_spc = iasi_data["spec_bbt"][px,:]
@@ -102,7 +158,7 @@ def run_srfm(x,b):
     h2o = iasi_data["ecmwf_H2O"][px][::-1][slc_idx:]
 
     # read current rfm .atm file used to specify the atmosphere
-    rfm_prf = rfm_functions.read_atm_file(b["atm"])
+    rfm_prf = rfm_functions.read_atm_file(inp.values["driver_inputs"]["atmosphere"][1])
 
     """The existing rfm data is bisected such that the levels which overlap with the
     ecmwf data levels are selected. On this part of the profile, the ecmwf data are used
@@ -143,7 +199,7 @@ def run_srfm(x,b):
     new_ch4 = np.concatenate((new_ch4_lo, np.array(new_ch4_hi)))
     new_h2o = np.concatenate((new_h2o_lo, np.array(new_h2o_hi)))
 
-    if b["plot_profiles"] == True:
+    if inp.values["plot_profiles"] == True:
         # plot old and new profiles and save figure
         fig, axs = plt.subplots(2,4,figsize=(11.7,8.3),sharey=True)
         plt.rcParams.update({'font.size': 14})
@@ -194,7 +250,7 @@ def run_srfm(x,b):
         plt.suptitle(f"Comparison between original rfm and interpolated ecmwf+rfm profiles\n{keystr}")
 
         plt.tight_layout()
-        plt.savefig(f"{b['results_fldr']}/{keystr}_prf.png")
+        plt.savefig(f"{inp.values['results_fldr']}/{keystr}_prf.png")
         plt.close()
 
     ########################################################################################
@@ -236,7 +292,7 @@ def run_srfm(x,b):
     # 9. Assumption 4: The noise is random and taking a mean, or halving it, makes sense.
 
     # open iasi noise equivalent delta temperature file
-    nedt = np.loadtxt(b["nedt"], skiprows=3) # [[wvnm,nedt]]
+    nedt = np.loadtxt(inp.values["nedt"], skiprows=3) # [[wvnm,nedt]]
 
     # interpolate to obs_bbt_wvnm
     obs_bbt_nedt = np.interp(obs_bbt_wvnm, nedt[:,0], nedt[:,1])
@@ -285,14 +341,14 @@ def run_srfm(x,b):
 
     
     # set profiles of species to retrieve
-    if "g_rtv" in x.keys():
-        for key in x["g_rtv"]:
-            rfm_prf[key] = x["g_rtv"][key]
+    if "g_rtv" in inp.values.keys():
+        for key in inp.values["g_rtv"]:
+            rfm_prf[key] = inp.values["g_rtv"][key]
 
     #save output profile
     rfm_functions.write_atm_file(
         data=rfm_prf,
-        filename = f"{b['results_fldr']}/{keystr}.atm",
+        filename = f"{inp.values['results_fldr']}/{keystr}.atm",
         header = f"""!Combination of (ecmwf) and MID-LATITUDE DAY PROFILES FOR MIPAS
         !by Anu Dudhia.\n"""
     )
@@ -300,10 +356,10 @@ def run_srfm(x,b):
     ########################################################################################
     # specify spectral calculation grid
     ########################################################################################
-    spec_res = b["spc_res"] # model spectral resolution,[spec_units]
-    low_spc = b["spc_wvnmlo"] # model start wavenumber (lower), [spec_units]
-    upp_spc = b["spc_wvnmhi"] # model end wavenumber (upper), [spec_units]
-    spec_units = b["spc_units"] # accepted values "cm-1", "um", "nm"
+    spec_res = inp.values["spc_res"] # model spectral resolution,[spec_units]
+    low_spc = inp.values["spc_wvnmlo"] # model start wavenumber (lower), [spec_units]
+    upp_spc = inp.values["spc_wvnmhi"] # model end wavenumber (upper), [spec_units]
+    spec_units = inp.values["spc_units"] # accepted values "cm-1", "um", "nm"
 
     RFM_wvnm, wvls = utilities.calc_grids(low_spc,
                                       upp_spc,
@@ -322,11 +378,11 @@ def run_srfm(x,b):
     # define Layer properties
     scat_lyrs_inputs = {}
     
-    if "scat_lyrs_inputs" in b.keys():
+    if "scat_lyrs_inputs" in inp.values.keys():
 
         # calculate MieLayer optical properties
-        for lyr in b["scat_lyrs_inputs"].keys():
-            scat_lyrs_inputs[lyr] = b["scat_lyrs_inputs"][lyr] | x["scat_lyrs_inputs"][lyr]
+        for lyr in inp.values["scat_lyrs_inputs"].keys():
+            scat_lyrs_inputs[lyr] = inp.values["scat_lyrs_inputs"][lyr] | inp.values["scat_lyrs_inputs"][lyr]
             scat_lyrs[lyr] = layer.MieLayer()
             scat_lyrs[lyr].set_input_from_dict(scat_lyrs_inputs[lyr]) # sets input for scattering layer
             scat_lyrs[lyr].calculate_op() # calculates layer optical properties, may run in parallel
@@ -355,47 +411,19 @@ def run_srfm(x,b):
     track_lyr = utilities.track_lev_to_track_lyr(track_lev)
     track_lyr = track_lyr[::-1]
 
-    # write output levels file for RFM
-    rfm_out_lvl_fname = "alts.lev"
-    rfm_functions.construct_rfm_output_levels_file(levels=levels,
-                                                   fldr=b['results_fldr'],
-                                                   fname=f"{rfm_out_lvl_fname}"
-                                                  )
     ########################################################################################
-    # prepare RFM driver table
+    # prepare and call RFM
     ########################################################################################
+    # RFM global config
+    rfm_config = inp.values["rfm_config"]
 
-    # input values in the format (key:value) section name:value
-    rfm_inp = {}
-
-    # primary sections (mandatory), see the documentation for alternatives
-    rfm_inp["HDR"] = f"{str(datetime.date.today())} test run" # RFM header
-    rfm_inp["FLG"] = "OPT NAD SFC PRF LEV DBL CHI MIX" # RFM flags
-    rfm_inp["SPC"] = f"{rfm_grid_fname}" # RFM spectral settings
-    rfm_inp["GAS"] = """N2 O2 CO2 O3 H2O CH4 N2O HNO3 CO NO2 N2O5 ClO HOCl ClONO2 NO HNO4 HCN NH3 F11 F12 F14 F22 CCl4 COF2 H2O2 C2H2 C2H6 OCS SO2""" 
-                        # RFM chemical species
-    rfm_inp["ATM"] = "./rfm_files/hgt_std.atm " + f"{b['results_fldr']}/{keystr}.atm" # RFM vertical grids
-    rfm_inp["SEC"] = str(iasi_zen_sec) # RFM geometry
-    #rfm_inp["SEC"] = f"1" # RFM geometry
-
-    # secondary sections, contain information required by any of the primary sections
-    rfm_inp["LEV"] = f"{b['results_fldr']}/{rfm_out_lvl_fname}" # RFM required output levels
-    rfm_inp["ILS"] = b["ils"] # IASI instrument profile for convolution
-
-    # optional sections, change defaults or identify spectroscopic data files
-    rfm_inp["XSC"] = b["xsc"] # RFM xsc files
-    rfm_inp["HIT"] = b["hitbin"] # RFM hitran database
-    #rfm_inp["REJ"] = "*   1.0E-5"
-
-    #construct rfm.drv table
-    rfm_functions.construct_rfm_driver_table(inp=rfm_inp,fldr=rfm_fldr)
-
-    ########################################################################################
-    # run RFM
-    ########################################################################################
-
-    # compile rfm
-    rfm_functions.compile_rfm(rfm_fldr)
+    # RFM driver table
+    driver_inputs = inp.values["driver_inputs"]
+    driver_inputs["tangent"] = (str(iasi_zen_sec),)
+    driver_inputs["lev"] = tuple(str(val) for val in levels)
+    driver_inputs["atmosphere"] = list(driver_inputs["atmosphere"])
+    driver_inputs["atmosphere"][1] = f"{inp.values['results_fldr']}/{keystr}.atm"
+    driver_inputs["atmosphere"] = tuple(driver_inputs["atmosphere"])
 
     # initialize RFM model class
     model_RFM = forward_model.RFM()
@@ -404,13 +432,32 @@ def run_srfm(x,b):
     print(model_RFM.status)
 
     # run rfm
-    model_RFM.run_rfm(rfm_fldr)
+    rfm_run_result = rfm_helper.rfm_main(
+        configuration=rfm_config,
+        driver_inputs=driver_inputs,
+        levels=levels,
+        rfm_out_fldr=inp.values["results_fldr"],
+        )
+    # Store the full RunResult for debugging/metadata while keeping the legacy dataframe API.
+    model_RFM.rfm_run_result = rfm_run_result
+    if rfm_run_result.output_df is None:
+        raise RuntimeError("RFM capture did not return an optical-depth dataframe.")
+    model_RFM.rfm_output = rfm_run_result.output_df.copy()
 
     # print current status:
     print(model_RFM.status)
 
-    # add output from optical properties calculation (placed here, because if calculations
-    # run in parallel processes, here is the place they join the main process.)
+    # rebuild the spectral grid directly from the captured columns
+    cols = [i for i in model_RFM.rfm_output.columns if i.startswith("dOD_")]
+    if not cols:
+        raise RuntimeError("RFM output does not include any differential optical-depth columns.")
+    try:
+        RFM_wvnm = np.array([float(col.split("_", 1)[1]) for col in cols], dtype=float)
+    except ValueError as exc:
+        raise RuntimeError("Failed to parse wavenumbers from RFM output columns.") from exc
+    wvls = (1.0 / RFM_wvnm) * 1e4
+
+    # add output from optical properties calculation, TODO MOVE UP?
     for lyr in scat_lyrs.keys():
         scat_lyrs[lyr].add_op_calc_output()
         
@@ -418,32 +465,6 @@ def run_srfm(x,b):
         scat_lyrs[lyr].regrid(wvls, track_diff=False)
         scat_lyrs[lyr].calc_tau()
 
-    ## add rfm opt output to model_RFM
-    model_RFM.add_rfm_opt_output(rfm_fldr, levels)
-
-    # determine cols (wavelength channels) to loop over
-    cols = [i for i in model_RFM.rfm_output.columns if i.startswith("dOD")]
-
-    # print current status:
-    print(model_RFM.status)
-
-    ########################################################################################
-    # prepare solar spectrum
-    ########################################################################################
-
-    # load solar spectrum from file
-    solar_spc, solar_spc_wvnm = utilities.load_solar_spectrum_Gueymard20018()
-    solar_spc = np.interp(RFM_wvnm, solar_spc_wvnm[::-1], solar_spc[::-1]) # interpolate to RFM_wvnm (the calculation grid)
-
-    # scale with year day (different Sun-Earth distance throughout the year
-    # the original specturm is for 1 AU
-    solar_spc = utilities.scale_solar_spectrum(solar_spc,year_day)
-
-    # get incoming solar beam polar angle for DISORT
-    solar_zen_deg = iasi_data["sza"][px] # solar zenith angle [degrees]
-    solar_zen_rad = np.deg2rad(solar_zen_deg) # solar zenith angle [rad]
-    solar_zen_cos = np.cos(solar_zen_rad).item() # cosine of the solar zenith angle, UMU0
-       
     ########################################################################################
     # prepare DISORT common variables
     ########################################################################################
@@ -453,48 +474,47 @@ def run_srfm(x,b):
 
     # check if number of columns and wavelengths match
     if len(cols) != len(wvls):
-        raise ValueError("Number of RFM and scattering wavelengths don't match.")
+        raise ValueError(
+            f"Number of RFM and scattering wavelengths don't match "
+            f"({len(cols)} spectral columns vs {len(wvls)} scattering wavelengths)."
+        )
 
     # set disort_input parameters common to all loop iterations
     # these need to be set first:
-    nmom = b["nmom"]
+    nmom = inp.values["nmom"]
     for lyr in scat_lyrs.keys():
         if (scat_lyrs[lyr].legendre_coefficient.shape[1]-1) > nmom:
             nmom = scat_lyrs[lyr].legendre_coefficient.shape[1]-1
 
-    model_DISORT.set_maxcmu(b["maxcmu"])        
+    model_DISORT.set_maxcmu(inp.values["maxcmu"])        
 
     model_DISORT.set_maxmom(nmom)
     if nmom < model_DISORT.disort_input["maxcmu"]:
         model_DISORT.set_maxmom(model_DISORT.disort_input["maxcmu"])
 
 
-    model_DISORT.set_maxumu(b["maxumu"])
-    model_DISORT.set_maxphi(b["maxphi"])
-    model_DISORT.set_maxulv(b["maxulv"])
+    model_DISORT.set_maxumu(inp.values["maxumu"])
+    model_DISORT.set_maxphi(inp.values["maxphi"])
+    model_DISORT.set_maxulv(inp.values["maxulv"])
 
     # now the rest
-    model_DISORT.set_usrang(b["usrang"])
-    model_DISORT.set_usrtau(b["usrtau"])
-    model_DISORT.set_ibcnd(b["ibcnd"])
-    model_DISORT.set_onlyfl(b["onlyfl"])
+    model_DISORT.set_usrang(inp.values["usrang"])
+    model_DISORT.set_usrtau(inp.values["usrtau"])
+    model_DISORT.set_ibcnd(inp.values["ibcnd"])
+    model_DISORT.set_onlyfl(inp.values["onlyfl"])
     #model_DISORT.set_prnt([True, True, True, False, False])
-    model_DISORT.set_prnt(b["prnt"])
-    model_DISORT.set_plank(b["planck"])
-    model_DISORT.set_lamber(b["lamber"])
-    model_DISORT.set_deltamplus(b["deltamplus"])
-    model_DISORT.set_do_pseudo_sphere(b["do_pseudo_sphere"])
-    model_DISORT.set_utau(b["utau"])
-    model_DISORT.set_umu0(solar_zen_cos)
-    model_DISORT.set_phi0(iasi_data["saa"][px])
-    model_DISORT.set_umu([iasi_zen_cos])
-    model_DISORT.set_phi([iasi_data["azi"][px]])
+    model_DISORT.set_prnt(inp.values["prnt"])
+    model_DISORT.set_plank(inp.values["planck"])
+    model_DISORT.set_lamber(inp.values["lamber"])
+    model_DISORT.set_deltamplus(inp.values["deltamplus"])
+    model_DISORT.set_do_pseudo_sphere(inp.values["do_pseudo_sphere"])
+    model_DISORT.set_utau(inp.values["utau"])
 
-    model_DISORT.set_fisot(b["fisot"])
-    model_DISORT.set_albedo(b["albedo"])
+    model_DISORT.set_fisot(inp.values["fisot"])
+    model_DISORT.set_albedo(inp.values["albedo"])
 
 
-    model_DISORT.set_temis(b["temis"])
+    model_DISORT.set_temis(inp.values["temis"])
     model_DISORT.set_earth_radius(6371)
     model_DISORT.set_rhoq(
         np.zeros(
@@ -522,6 +542,27 @@ def run_srfm(x,b):
     model_DISORT.set_bemst(np.zeros(shape=(int(model_DISORT.disort_input["maxcmu"] / 2))))
     model_DISORT.set_emust(np.zeros(shape=(model_DISORT.disort_input["maxumu"])))
     model_DISORT.set_accur(0)
+    ########################################################################################
+    # prepare solar spectrum
+    ########################################################################################
+
+    # load solar spectrum from file
+    solar_spc, solar_spc_wvnm = utilities.load_solar_spectrum_Gueymard20018()
+    solar_spc = np.interp(RFM_wvnm, solar_spc_wvnm[::-1], solar_spc[::-1]) # interpolate to RFM_wvnm (the calculation grid)
+
+    # scale with year day (different Sun-Earth distance throughout the year
+    # the original specturm is for 1 AU
+    solar_spc = utilities.scale_solar_spectrum(solar_spc,year_day)
+
+    # get incoming solar beam polar angle for DISORT
+    solar_zen_deg = iasi_data["sza"][px] # solar zenith angle [degrees]
+    solar_zen_rad = np.deg2rad(solar_zen_deg) # solar zenith angle [rad]
+    solar_zen_cos = np.cos(solar_zen_rad).item() # cosine of the solar zenith angle, UMU0
+
+    model_DISORT.set_umu0(solar_zen_cos)
+    model_DISORT.set_phi0(iasi_data["saa"][px])
+    model_DISORT.set_umu([iasi_zen_cos])
+    model_DISORT.set_phi([iasi_data["azi"][px]])
 
 
     # initialize disort input arrays for output variables from a single run
@@ -531,9 +572,8 @@ def run_srfm(x,b):
     # set DISORT DISOBRDF variables
     ########################################################################################
 
-
-
-
+    # TBD
+    
     ########################################################################################
     # prepare SRFM common variables
     ########################################################################################
@@ -557,8 +597,8 @@ def run_srfm(x,b):
             val_idx = pct_val.index(wvnm)
             print(f"Running main DISORT loop. {pct[val_idx]}% done...")
             
-        model_DISORT.set_header(f"Now starting calculation for {col} cm-1.")
-    #    model_DISORT.set_header("NO HEADER") # the string "NO HEADER" will cause no printout
+#        model_DISORT.set_header(f"Now starting calculation for {col} cm-1.")
+        model_DISORT.set_header("NO HEADER") # the string "NO HEADER" will cause no printout
         model_DISORT.set_wvnm(wvnm)
         model_DISORT.set_wvl(wvl)
         
@@ -625,7 +665,7 @@ def run_srfm(x,b):
                                w_p=w_p)
         
         # calculate phase function moments for Rayleigh and particle scattering from DISORT
-        pmom_R = model_DISORT.calc_pmom(iphas=2,prec=b["disort_precision"])
+        pmom_R = model_DISORT.calc_pmom(iphas=2,prec=inp.values["disort_precision"])
 
 
         #set phase function moments for particle scattering from Mie code
@@ -665,13 +705,13 @@ def run_srfm(x,b):
         model_DISORT.test_disort_input_integrity()
         
         # call DISOBRDF
-    #    model_DISORT.run_disobrdf(prec=b["disort_precision"],
+    #    model_DISORT.run_disobrdf(prec=inp.values["disort_precision"],
     #                              debug=False, 
     #                              brdf_type=2, # Cox-Munk
     #                              brdf_arg=[1,1.34,False,0], # wind speed, water refractive index, do_shadow
     #                              nmug=200) # number of quadrature angles
         # run disort
-        model_DISORT.run_disort(prec=b["disort_precision"])
+        model_DISORT.run_disort(prec=inp.values["disort_precision"])
         
         # store result in SRFM()
         model_SRFM.store_disort_result(model_DISORT, wvl_idx)
@@ -681,7 +721,7 @@ def run_srfm(x,b):
     print("Main DISORT loop finished.")
 
     # convolve final radiance spectrum with iasi instrument line shape 
-    model_SRFM.convolve_with_iasi(b["ils"])
+    model_SRFM.convolve_with_iasi(inp.values["ils"])
 
     # interpolate resulting bbt and radiances to final grid
     model_SRFM.interp(fin_grid)
@@ -689,13 +729,13 @@ def run_srfm(x,b):
     # calculate brightness temperature for the final spectrum
     model_SRFM.calc_bbt()
 
-    if b["savetxt"] == True:
+    if inp.values["savetxt"] == True:
         ########################################################################################
         # (optional) save spectrum to file
         ########################################################################################
-        np.savetxt(f"{b['results_fldr']}/{keystr}_spc.txt",np.column_stack((model_SRFM.wvnm,model_SRFM.bbt[:,0,0,0])))
+        np.savetxt(f"{inp.values['results_fldr']}/{keystr}_spc.txt",np.column_stack((model_SRFM.wvnm,model_SRFM.bbt[:,0,0,0])))
 
-    if b["base_plots"] == True:
+    if inp.values["base_plots"] == True:
         ########################################################################################
         # (optional) create base plots
         ########################################################################################
@@ -780,7 +820,7 @@ def run_srfm(x,b):
             plt.legend()
             plt.title(f"{keystr}")
         #        plt.show() 
-            plt.savefig(f"b['results_fldr']/{keystr}_spc.png")         
+            plt.savefig(f"inp.values['results_fldr']/{keystr}_spc.png")         
             plt.close()   
             
         ########################################################################################
@@ -821,7 +861,7 @@ def run_srfm(x,b):
             plt.legend()
             plt.title(f"{keystr}")
         #        plt.show() 
-            plt.savefig(f"{b['results_fldr']}/{keystr}_spc_vs_iasi.png")         
+            plt.savefig(f"{inp.values['results_fldr']}/{keystr}_spc_vs_iasi.png")         
             plt.show()
 
         ########################################################################################
@@ -851,7 +891,7 @@ def run_srfm(x,b):
             plt.legend()
             plt.title(f"{keystr}")
         #        plt.show() 
-            plt.savefig(f"{b['results_fldr']}/{keystr}_diff.png")         
+            plt.savefig(f"{inp.values['results_fldr']}/{keystr}_diff.png")         
             plt.close()
 
         

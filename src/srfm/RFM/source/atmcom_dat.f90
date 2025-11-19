@@ -8,14 +8,17 @@ MODULE ATMCOM_DAT
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION
-!   Atmospheric profile data
-!   Values are defined at profile levels 1:NATM
+!   Atmospheric profile data.
+!   Values are defined at profile levels 1:NATM. ATMCOM_RESET deallocates all
+!   associated storage so the model can be reinitialised between successive
+!   Python-driven runs.
 !
 ! VARIABLE KINDS
     USE KIND_DAT
 !
   IMPLICIT NONE
   SAVE
+  PUBLIC :: ATMCOM_RESET
 !
 ! GLOBAL CONSTANTS
      INTEGER(I4), PARAMETER :: LENATM = 20 ! Max length of .atm profile label
@@ -59,4 +62,44 @@ MODULE ATMCOM_DAT
     REAL(R8),    ALLOCATABLE :: WCOATM(:,:) ! Weights for cooling rates
     CHARACTER(LENATM), ALLOCATABLE :: NAMVMR(:) ! Names of VMR profiles
 !
+CONTAINS
+
+  SUBROUTINE ATMCOM_RESET()
+    IF ( ALLOCATED ( LINVMR ) )    DEALLOCATE ( LINVMR )
+    IF ( ALLOCATED ( NTEVMR ) )    DEALLOCATE ( NTEVMR )
+    IF ( ALLOCATED ( SETVMR ) )    DEALLOCATE ( SETVMR )
+    IF ( ALLOCATED ( ICOATM ) )    DEALLOCATE ( ICOATM )
+    IF ( ALLOCATED ( ITNATM ) )    DEALLOCATE ( ITNATM )
+    IF ( ALLOCATED ( NCOATM ) )    DEALLOCATE ( NCOATM )
+    IF ( ALLOCATED ( DNSATM ) )    DEALLOCATE ( DNSATM )
+    IF ( ALLOCATED ( DSHATM ) )    DEALLOCATE ( DSHATM )
+    IF ( ALLOCATED ( EXTATM ) )    DEALLOCATE ( EXTATM )
+    IF ( ALLOCATED ( HGTATM ) )    DEALLOCATE ( HGTATM )
+    IF ( ALLOCATED ( LNDATM ) )    DEALLOCATE ( LNDATM )
+    IF ( ALLOCATED ( LNPATM ) )    DEALLOCATE ( LNPATM )
+    IF ( ALLOCATED ( PREATM ) )    DEALLOCATE ( PREATM )
+    IF ( ALLOCATED ( QFNATM ) )    DEALLOCATE ( QFNATM )
+    IF ( ALLOCATED ( RFRATM ) )    DEALLOCATE ( RFRATM )
+    IF ( ALLOCATED ( TEMATM ) )    DEALLOCATE ( TEMATM )
+    IF ( ALLOCATED ( VIBATM ) )    DEALLOCATE ( VIBATM )
+    IF ( ALLOCATED ( VMRATM ) )    DEALLOCATE ( VMRATM )
+    IF ( ASSOCIATED ( LEVATM ) )   NULLIFY ( LEVATM )
+    IF ( ALLOCATED ( WCOATM ) )    DEALLOCATE ( WCOATM )
+    IF ( ALLOCATED ( NAMVMR ) )    DEALLOCATE ( NAMVMR )
+
+    FIXPRE = .FALSE.
+    SETHGT = .FALSE.
+    SETPRE = .FALSE.
+    SETTEM = .FALSE.
+    IATSFC = 1
+    IAIVMR = 0
+    IAXVMR = 0
+    NATM   = 0
+    NVIB   = 0
+    NVMR   = 0
+    HGTSFC = 0.0_R4
+    HGTTOA = 0.0_R4
+    PRESFC = 0.0_R4
+  END SUBROUTINE ATMCOM_RESET
+
 END MODULE ATMCOM_DAT

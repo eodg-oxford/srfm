@@ -1,0 +1,4 @@
+{
+    'real': {'r8': 'double'},
+    'double precision': {'': 'double'},
+}
