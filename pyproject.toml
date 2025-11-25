@@ -26,6 +26,8 @@ dependencies = [
     "cartopy",
     "numba",
     "psutil",
+    "mergedeep",
+    "netcdf4"
 ]
 
 [project.urls]

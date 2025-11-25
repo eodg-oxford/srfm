@@ -2,6 +2,8 @@
 
     Note that the SRFM can be run interactively (i.e. used as a package, use the
     inside of run_srfm() as and example), or with a driver table.
+    
+    This module is intended to run the srfm with preprocessed iasi spectra.
 
 - Name: iasi_main
 - Parent package: srfm
@@ -11,7 +13,6 @@
 """
 
 from __future__ import annotations
-import scipy
 import numpy as np
 import matplotlib.pyplot as plt
 from . import utilities
@@ -32,57 +33,9 @@ import importlib.util
 import uuid
 from .RFM import rfm_py
 from . import rfm_helper
-
-
-class Srfm_iasi_inputs:
-    """Class that collects inputs for the main srfm run.
-
-    Has various methods to read and combine inputs from different sources.
-
-    """
-
-    def __init__(self, **kwargs):
-        """Init function, set one explicit parameter values, which is a dict containing
-        the actual parameters for srfm.
-
-        """
-        self.values = {}
-        for key, val in kwargs.items():
-            setattr(self, key, val)
-
-    def read_srfm_drv(self, drv: str | Path) -> None:
-        """Read srfm driver table and load inputs into the values dictionary.
-
-        Args:
-            drv (str, Path): Path to driver table.
-
-        Raises:
-            TypeError: Raised when input path format not recognized.
-            FileNotFoundError: Raised when driver table not found.
-
-        """
-        if isinstance(drv, str):
-            drv = Path(drv).expanduser().resolve()
-        elif isinstance(drv, Path):
-            pass
-        else:
-            raise TypeError("drv must be str or pathlib.Path.")
-
-        if not drv.is_file():
-            raise FileNotFoundError(f"Driver path not found: {drv}.")
-
-        module_name = f"_driver_table_{uuid.uuid4().hex}"
-        spec = importlib.util.spec_from_file_location(module_name, drv)
-        if spec is None or spec.loader is None:
-            raise ImportError(f"Unable to load driver table from {filepath}")
-
-        module = importlib.util.module_from_spec(spec)
-        loader = spec.loader
-        loader.exec_module(module)
-
-        self.values = getattr(module, "inputs")
-        return
-
+from mergedeep import merge
+from netCDF4 import Dataset
+import json
 
 @utilities.show_runtime
 def run_srfm(inp):
@@ -91,7 +44,10 @@ def run_srfm(inp):
     Optimized for IASI data.
 
     Args:
-        inp (obj): Instance of Srfm_iasi_inputs.
+        inp (obj): Instance of inputs.Inputs.
+    
+    Returns:
+        model_SRFM (obj): Instance of forward_model.SRFM.
 
     """
     ########################################################################################
@@ -864,7 +820,7 @@ def run_srfm(inp):
     # calculate brightness temperature for the final spectrum
     model_SRFM.calc_bbt()
 
-    if inp.values["savetxt"] == True:
+    if inp.values["out_mode"] == "txt":
         ########################################################################################
         # (optional) save spectrum to file
         ########################################################################################
@@ -872,6 +828,27 @@ def run_srfm(inp):
             f"{inp.values['results_fldr']}/{keystr}_spc.txt",
             np.column_stack((model_SRFM.wvnm, model_SRFM.bbt[:, 0, 0, 0])),
         )
+    elif inp.values["out_mode"] == "netcdf":
+        out_nm = f"{inp.values['results_fldr']}/{keystr}_spc.nc"
+        
+        with Dataset(out_nm, 'w', format='NETCDF4') as nc_file:
+            nc_file.description = f"SRFM output for {keystr}."
+            nc_file.history = f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
+            nc_file.createDimension("wavenumber", fin_grid.shape[0]) # determines the output spectrum shape
+            bbt = nc_file.createVariable("bbt", "f8", ("wavenumber",), zlib=True, complevel=4)
+            
+            bbt.units = "K"
+            bbt.long_name = "Brightness temperature"
+            bbt[:] = model_SRFM.bbt[:, 0, 0, 0]
+            
+            # store inputs as well
+            inp.values["driver_inputs"]["spectral"] = str(inp.values["driver_inputs"]["spectral"])
+            _inp = json.dumps(inp.values)
+            bbt.srfm_params = _inp
+            
+    elif inp.values["out_mode"] == None:
+        pass
+        
 
     if inp.values["base_plots"] == True:
         ########################################################################################
@@ -1010,7 +987,8 @@ def run_srfm(inp):
             plt.title(f"{keystr}")
             #        plt.show()
             plt.savefig(f"{inp.values['results_fldr']}/{keystr}_spc_vs_iasi.png")
-            plt.show()
+            if inp.values["show_plots"] == True:
+                plt.show()
 
         ########################################################################################
         # (optional) plot difference between srfm and iasi spectra

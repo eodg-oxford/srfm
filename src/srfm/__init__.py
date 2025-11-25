@@ -20,6 +20,8 @@ __all__ = [
     "iasi_main",
     "rfm_helper",
     "RFM",
+    "main",
+    "inputs"
 ]
 
 """Import srfm modules."""
@@ -42,3 +44,5 @@ from . import orography
 from . import iasi_main
 from . import rfm_helper
 from . import RFM
+from . import main
+from . import inputs
