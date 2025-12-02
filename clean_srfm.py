@@ -1,61 +1,57 @@
 """
-Run to delete all files resulting from compilation and running the srfm.
-Deletes:
+Utility script to delete build artifacts produced by the SRFM toolchain.
+Removes
 - rfm outputs
-- .o files
-- .mod files
-- rfm executable
-- disort output files
-- compiled modules (.so files)
+- DISORT intermediates
+- compiled modules (.so/.pyd)
 - cache files
-- rfm .log file
 """
 
-import os
+from pathlib import Path
 import shutil
 
-# function to list files
-def list_files_walk(start_path='.'):
-    all_fnames = []
-    for root, dirs, files in os.walk(start_path):
-        for file in files:
-            all_fnames.append(os.path.join(root, file))
-    return all_fnames
 
-# list files
-all_fnames = list_files_walk()
+REPO_ROOT = Path(__file__).resolve().parent
 
-#remove files
-for file in all_fnames:
-    if file.endswith(".asc"):
-        os.remove(file)
-    elif file.endswith(".o"):
-        os.remove(file)
-    elif file.endswith(".so"):
-        os.remove(file)
-    elif file.endswith(".mod"):
-        os.remove(file)
-    elif file.endswith("rfm"):
-        os.remove(file)
-    elif file.endswith("code.f"):
-        os.remove(file)
-    elif file.endswith("INTENSITY.dat"):
-        os.remove(file)
-    elif file.endswith(".pyc"):
-        os.remove(file)
-    elif file.endswith("rfm.log"):
-        os.remove(file)
-    elif file.endswith("build.log"):
-        os.remove(file)
-    else:
-        pass
 
-#directories to remove
-dirs = ["./src/srfm/__pycache__/", "./.idea"]
+def iter_files(start_path: Path):
+    for path in start_path.rglob("*"):
+        if path.is_file():
+            yield path
 
-for d in dirs:
-    if os.path.isdir(d):
-        shutil.rmtree(d)
-    
 
-print("Successfully cleaned srfm.")
+def should_remove_file(path: Path) -> bool:
+    suffix_matches = {".asc", ".o", ".so", ".pyd", ".mod", ".pyc"}
+    name_matches = {
+        "rfm",
+        "rfm.exe",
+        "code.f",
+        "combined.f90",
+        "INTENSITY.dat",
+        "rfm.log",
+        "build.log",
+    }
+    return path.suffix in suffix_matches or path.name in name_matches
+
+
+def clean() -> None:
+    for file_path in iter_files(REPO_ROOT):
+        if should_remove_file(file_path):
+            file_path.unlink()
+
+    removable_dirs = [
+        REPO_ROOT / "src" / "srfm" / "__pycache__",
+        REPO_ROOT / ".idea",
+    ]
+    for pycache in REPO_ROOT.rglob("__pycache__"):
+        removable_dirs.append(pycache)
+
+    for directory in removable_dirs:
+        if directory.is_dir():
+            shutil.rmtree(directory)
+
+    print("Successfully cleaned srfm.")
+
+
+if __name__ == "__main__":
+    clean()

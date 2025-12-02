@@ -1,3 +1,9 @@
+"""Top-level SRFM package."""
+
+from importlib import import_module
+import warnings
+
+
 version = "0.0.1"
 
 __all__ = [
@@ -21,28 +27,27 @@ __all__ = [
     "rfm_helper",
     "RFM",
     "main",
-    "inputs"
+    "inputs",
 ]
 
-"""Import srfm modules."""
-from . import units
-from . import readers
-from . import plotting
-from . import utilities
-from . import disort_functions
-from . import forward_model
-from . import rfm_functions
-from . import DISORT
-from . import DISORT_dbl
-from . import ARIA_module
-from . import optical_properties
-from . import quadrature
-from . import size_distribution
-from . import mie_module
-from . import layer
-from . import orography
-from . import iasi_main
-from . import rfm_helper
-from . import RFM
-from . import main
-from . import inputs
+
+def _safe_import(name: str, optional: bool = False):
+    try:
+        module = import_module(f".{name}", __name__)
+        globals()[name] = module
+    except ModuleNotFoundError:
+        if optional:
+            warnings.warn(
+                f"Optional extension '{name}' is unavailable. "
+                "Run 'python build_extensions.py' to compile the native modules.",
+                stacklevel=2,
+            )
+            globals()[name] = None
+        else:
+            raise
+
+
+_OPTIONAL_MODULES = {"mie_module"}
+
+for module_name in __all__:
+    _safe_import(module_name, optional=module_name in _OPTIONAL_MODULES)

@@ -1806,6 +1806,7 @@ c *********************Test Case 15d *********************************
 
       END
 
+
 c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c $Rev: 90 $ $Date: 2017-11-30 20:01:24 -0500 (Thu, 30 Nov 2017) $
 c FORTRAN 77
@@ -9928,6 +9929,7 @@ c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 c ******************************************************************
 c ********** End of IBCND=1 special case routines ******************
 c ******************************************************************
+
 c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c $Rev: 55 $ $Date: 2014-12-31 12:16:59 -0500 (Wed, 31 Dec 2014) $
 c FORTRAN 77
@@ -10404,6 +10406,7 @@ c +--------------------------------------------------------------------
 
       END
 c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
       SUBROUTINE DISOBRDF(NSTR, USRANG, NUMU, UMU, 
      &           FBEAM, UMU0, LAMBER, ALBEDO, ONLYFL,
      &           RHOQ, RHOU, EMUST, BEMST, DEBUG,
@@ -11126,6 +11129,7 @@ c     ..
       END
 c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+
 c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c $Rev: 55 $ $Date: 2014-12-31 12:16:59 -0500 (Wed, 31 Dec 2014) $
 c FORTRAN 77
@@ -11226,6 +11230,7 @@ c       percent error from the correct value;  return  'FALSE'.
 
       RETURN
       END
+
 c Date: 15 Jan 2025, Author: Antonin Knizek
 c This version of LINPACK was built as a double precision version of the LINPACK
 c supplied with the DISORT code (version DISORT4.0.99).
@@ -12940,6 +12945,7 @@ c
   100 continue
       return
       end
+
 c Date: 15 Jan 2025, Author: Antonin Knizek
 c This version of LAPACK was taken from DISORT4.0.99.
 c DISORT can be found at http://www.rtatmocn.com/disort/
@@ -22126,6 +22132,7 @@ c       LSAME
 *     End of SSCAL
 *
       END
+
 c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c $Rev: 42 $ $Date: 2014-11-07 12:42:45 -0500 (Fri, 07 Nov 2014) $
 c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -22395,3 +22402,4 @@ c --------------------------------------------------------------------
 
       RETURN
       END FUNCTION I1MACH
+

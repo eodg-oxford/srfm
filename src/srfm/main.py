@@ -31,6 +31,7 @@ from . import rfm_helper
 from mergedeep import merge
 from netCDF4 import Dataset
 import json
+import copy
 
 @utilities.show_runtime
 def run_srfm(inp):
@@ -474,7 +475,7 @@ def run_srfm(inp):
         # print current status:m
     #    print(model_DISORT.status)
     print("Main DISORT loop finished.")
-
+    
     # convolve final radiance spectrum with iasi instrument line shape
     if inp.values["convolve_iasi"] == True:
         model_SRFM.convolve_with_iasi(inp.values["iasi_ils"])
@@ -533,8 +534,9 @@ def run_srfm(inp):
                 bbt[:] = model_SRFM.bbt[:, 0, 0, 0]
                 
                 # store inputs as well
-                inp.values["driver_inputs"]["spectral"] = str(inp.values["driver_inputs"]["spectral"])
-                _inp = json.dumps(inp.values)
+                metadata = copy.deepcopy(inp.values)
+                metadata["driver_inputs"]["spectral"] = str(metadata["driver_inputs"]["spectral"])
+                _inp = json.dumps(metadata)
                 bbt.srfm_params = _inp
         
         if inp.values["rad"] == True:
@@ -554,9 +556,10 @@ def run_srfm(inp):
                 rad[:] = model_SRFM.uu[:, 0, 0, 0]
                 
                 # store inputs as well
-                inp.values["driver_inputs"]["spectral"] = str(inp.values["driver_inputs"]["spectral"])
-                _inp = json.dumps(inp.values)
-                rad.srfm_params = _inp
+                metadata = copy.deepcopy(inp.values)
+                metadata["driver_inputs"]["spectral"] = str(metadata["driver_inputs"]["spectral"])
+                _inp = json.dumps(metadata)
+                bbt.srfm_params = _inp
             
     elif inp.values["out_mode"] == None:
         pass

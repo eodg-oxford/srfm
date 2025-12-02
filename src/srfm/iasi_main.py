@@ -36,6 +36,7 @@ from . import rfm_helper
 from mergedeep import merge
 from netCDF4 import Dataset
 import json
+import copy
 
 @utilities.show_runtime
 def run_srfm(inp):
@@ -820,31 +821,80 @@ def run_srfm(inp):
     # calculate brightness temperature for the final spectrum
     model_SRFM.calc_bbt()
 
+    ########################################################################################
+    # (optional) save spectrum to file
+    ########################################################################################
     if inp.values["out_mode"] == "txt":
-        ########################################################################################
-        # (optional) save spectrum to file
-        ########################################################################################
-        np.savetxt(
-            f"{inp.values['results_fldr']}/{keystr}_spc.txt",
-            np.column_stack((model_SRFM.wvnm, model_SRFM.bbt[:, 0, 0, 0])),
-        )
-    elif inp.values["out_mode"] == "netcdf":
-        out_nm = f"{inp.values['results_fldr']}/{keystr}_spc.nc"
+        if inp.values["bbt"] == True:
+            if isinstance(inp.values["bbt_out_fname"], str):
+                np.savetxt(
+                    f"{inp.values['results_fldr']}/{inp.values['bbt_out_fname']}.txt",
+                    np.column_stack((model_SRFM.wvnm, model_SRFM.bbt[:, 0, 0, 0])),
+                )       
+            else:         
+                np.savetxt(
+                    f"{inp.values['results_fldr']}/bbt.txt",
+                    np.column_stack((model_SRFM.wvnm, model_SRFM.bbt[:, 0, 0, 0])),
+                )
+        if inp.values["rad"] == True:
+            if isinstance(inp.values["rad_out_fname"], str):
+                np.savetxt(
+                    f"{inp.values['results_fldr']}/{inp.values['rad_out_fname']}.txt",
+                    np.column_stack((model_SRFM.wvnm, model_SRFM.uu[:, 0, 0, 0])),
+                )       
+            else:         
+                np.savetxt(
+                    f"{inp.values['results_fldr']}/rad.txt",
+                    np.column_stack((model_SRFM.wvnm, model_SRFM.uu[:, 0, 0, 0])),
+                )
+        else:
+            warnings.warn("driver table doesn't specify output bbt or rad.")
+            pass
         
-        with Dataset(out_nm, 'w', format='NETCDF4') as nc_file:
-            nc_file.description = f"SRFM output for {keystr}."
-            nc_file.history = f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
-            nc_file.createDimension("wavenumber", fin_grid.shape[0]) # determines the output spectrum shape
-            bbt = nc_file.createVariable("bbt", "f8", ("wavenumber",), zlib=True, complevel=4)
+    elif inp.values["out_mode"] == "netcdf":
+        if inp.values["bbt"] == True:
+            if isinstance(inp.values["bbt_out_fname"], str):
+                out_nm = f"{inp.values['results_fldr']}/{inp.values['bbt_out_fname']}.nc" 
+            else:
+                out_nm = f"{inp.values['results_fldr']}/bbt.nc"
             
-            bbt.units = "K"
-            bbt.long_name = "Brightness temperature"
-            bbt[:] = model_SRFM.bbt[:, 0, 0, 0]
+            with Dataset(out_nm, 'w', format='NETCDF4') as nc_file:
+                nc_file.description = f"SRFM output."
+                nc_file.history = f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
+                nc_file.createDimension("wavenumber", fin_grid.shape[0]) # determines the output spectrum shape
+                bbt = nc_file.createVariable("bbt", "f8", ("wavenumber",), zlib=True, complevel=4)
+                
+                bbt.units = "K"
+                bbt.long_name = "Brightness temperature"
+                bbt[:] = model_SRFM.bbt[:, 0, 0, 0]
+                
+                # store inputs as well
+                metadata = copy.deepcopy(inp.values)
+                metadata["driver_inputs"]["spectral"] = str(metadata["driver_inputs"]["spectral"])
+                _inp = json.dumps(metadata)
+                bbt.srfm_params = _inp
+        
+        if inp.values["rad"] == True:
+            if isinstance(inp.values["rad_out_fname"], str):
+                out_nm = f"{inp.values['results_fldr']}/{inp.values['rad_out_fname']}.nc" 
+            else:
+                out_nm = f"{inp.values['results_fldr']}/rad.nc"
             
-            # store inputs as well
-            inp.values["driver_inputs"]["spectral"] = str(inp.values["driver_inputs"]["spectral"])
-            _inp = json.dumps(inp.values)
-            bbt.srfm_params = _inp
+            with Dataset(out_nm, 'w', format='NETCDF4') as nc_file:
+                nc_file.description = f"SRFM output."
+                nc_file.history = f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
+                nc_file.createDimension("wavenumber", fin_grid.shape[0]) # determines the output spectrum shape
+                rad = nc_file.createVariable("rad", "f8", ("wavenumber",), zlib=True, complevel=4)
+                
+                rad.units = "W m-2 sr-1 cm"
+                rad.long_name = "Radiance"
+                rad[:] = model_SRFM.uu[:, 0, 0, 0]
+                
+                # store inputs as well
+                metadata = copy.deepcopy(inp.values)
+                metadata["driver_inputs"]["spectral"] = str(metadata["driver_inputs"]["spectral"])
+                _inp = json.dumps(metadata)
+                bbt.srfm_params = _inp
             
     elif inp.values["out_mode"] == None:
         pass

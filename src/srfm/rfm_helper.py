@@ -27,6 +27,7 @@ import numpy as np
 import pandas as pd
 
 from .RFM import rfm_py
+from . import utilities
 
 
 @dataclass
@@ -1033,7 +1034,7 @@ def run_rfm_with_parameters(
         optical_match_tol=optical_match_tol,
     )
 
-
+@utilities.show_runtime
 def rfm_main(
     *,
     configuration: Mapping[str, Any] | None,
