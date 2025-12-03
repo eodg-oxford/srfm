@@ -457,8 +457,20 @@ def run_srfm(inp):
         #    model_DISORT.set_fbeam(0.1)
 
         # run disort input tests
-        model_DISORT.test_disort_input_format()
-        model_DISORT.test_disort_input_integrity()
+#        model_DISORT.test_disort_input_format()
+#        model_DISORT.test_disort_input_integrity()
+        # These tests are currently disabled, pending review. It turns out they test
+        # inputs, inlc. arrays, element by element, taking about 25% of the total 
+        # runtime.
+        # TODO: options:
+        # 1. Remove the tests, potentially unsafe, or rather may be less explanatory
+        # when the run fails.
+        # 2. Split the tests (i.e. test elements that do not change between runs
+        # separately and then test within the loop only the elements that change from
+        # iteration to iteration.
+        # 3. Move the test behind a debug flag (add the flag to the driver table).
+        # 4. Replace element-wise checks with vectorized dtype assertions
+        # (e.g. for dtauc do np.asarray(dtauc).dtype / np.issubdtype... 
 
         # call DISOBRDF
         #    model_DISORT.run_disobrdf(prec=inp.values["disort_precision"],

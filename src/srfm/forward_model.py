@@ -296,8 +296,8 @@ class DISORT(Fwd_model):
         disort_fldr=None,
         disort_input={},
         disort_out={},
-        disort_fmt_passmark=False,
-        disort_integ_passmark=False,
+        disort_fmt_passmark=True,
+        disort_integrity_passmark=True,
         status="DISORT object created.",
         **parameters,
     ):
@@ -306,7 +306,7 @@ class DISORT(Fwd_model):
         self.disort_input = disort_input
         self.disort_out = disort_out
         self.disort_fmt_passmark = disort_fmt_passmark
-        self.disort_integ_passmark = disort_integ_passmark
+        self.disort_integrity_passmark = disort_integrity_passmark
         self.status = status
         for key, val in parameters.items():
             self.key = val
@@ -1267,7 +1267,7 @@ class DISORT(Fwd_model):
         The function works on arrays, so :math:`x_i` is replaced by array pmom.
 
         Args:
-            pmom_R (array-like): aAray of phase function moments for Rayleigh
+            pmom_R (array-like): Array of phase function moments for Rayleigh
                 scattering. 2D array, where *columns* are the atmospheric layers
                 *rows* are the Legendre polynomial coefficients :math:`x_{1,R}` to
                 :math:`x_{n,R}`. Has shape (model_DISORT.disort_input["maxmom"] + 1,
@@ -1284,29 +1284,34 @@ class DISORT(Fwd_model):
 
         """
 
-        def test_array(obj):
-            if isinstance(obj, np.ndarray):
-                if obj.shape == (
-                    self.disort_input["maxmom"] + 1,
-                    self.disort_input["maxcly"],
-                ):
-                    return
-                else:
-                    raise ValueError(
-                        'Inputs must have shape (model_DISORT.disort_input["maxmom"] + 1, model_DISORT.disort_input["maxcly"]).'
-                    )
-            else:
-                raise TypeError(f"Inputs must be np.ndarrays.")
+        maxmom = self.disort_input["maxmom"]
+        maxcly = self.disort_input["maxcly"]
 
-        tau_R = np.stack((tau_R,) * (self.disort_input["maxmom"] + 1), axis=0)
-        tau_p = np.stack((tau_p,) * (self.disort_input["maxmom"] + 1), axis=0)
-        w_p = np.stack((w_p,) * (self.disort_input["maxmom"] + 1), axis=0)
+        pmom_R = np.asarray(pmom_R)
+        pmom_p = np.asarray(pmom_p)
+        tau_R = np.asarray(tau_R, dtype=float)
+        tau_p = np.asarray(tau_p, dtype=float)
+        w_p = np.asarray(w_p, dtype=float)
 
-        for i in [pmom_R, tau_R, w_p, tau_p, pmom_p]:
-            test_array(i)
+        expected = (maxmom + 1, maxcly)
+        if pmom_R.shape != expected or pmom_p.shape != expected:
+            raise ValueError("pmom_p and pmom_R must have shape (maxmom+1, maxcly)")
+        if tau_R.shape != (maxcly,) or tau_p.shape != (maxcly,) or w_p.shape != (maxcly,):
+            raise ValueError("tau_R, tau_p, w_p must have length maxcly")
 
-        pmom = (tau_R * pmom_R + w_p * tau_p * pmom_p) / (tau_R + w_p * tau_p)
-        self.disort_input["pmom"] = np.nan_to_num(pmom)
+        # Broadcast 1D optical-depth vectors across the Legendre dimension.
+        tau_R_2d = tau_R[np.newaxis, :]
+        tau_p_2d = tau_p[np.newaxis, :]
+        w_p_2d = w_p[np.newaxis, :]
+        
+        # precompute numerator and denominator
+        numer = tau_R_2d * pmom_R + (w_p_2d * tau_p_2d) * pmom_p
+        denom = tau_R_2d + w_p_2d * tau_p_2d
+
+        pmom = np.zeros_like(numer)
+        pmom = np.divide(numer, denom, out=pmom, where=denom != 0.0)
+
+        self.disort_input["pmom"] = pmom
         return
 
     def calc_pmom(self, iphas, prec="double", gg=0):

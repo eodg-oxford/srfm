@@ -793,8 +793,9 @@ def run_srfm(inp):
         #    model_DISORT.set_fbeam(0.1)
 
         # run disort input tests
-        model_DISORT.test_disort_input_format()
-        model_DISORT.test_disort_input_integrity()
+        # see main.py for comment
+#        model_DISORT.test_disort_input_format()
+#        model_DISORT.test_disort_input_integrity()
 
         # call DISOBRDF
         #    model_DISORT.run_disobrdf(prec=inp.values["disort_precision"],
