@@ -36,8 +36,9 @@ c     ..
 c     .. Array Arguments ..
 
       REAL      PMOM( 0:NMOM )
-c     ..
+
 !f2py intent(in,out) pmom
+c     ..
 c     .. Local Scalars ..
 
       INTEGER   K

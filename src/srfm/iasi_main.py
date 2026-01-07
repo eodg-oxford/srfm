@@ -60,16 +60,11 @@ def run_srfm(inp):
     ########################################################################################
     # set iasi grid and final grid to interpolate to
     ########################################################################################
-    fin_grid = np.linspace(
-        inp.values["fin_wvnmlo"],
-        inp.values["fin_wvnmhi"],
-        int(
-            (inp.values["fin_wvnmhi"] - inp.values["fin_wvnmlo"])
-            / inp.values["fin_res"]
-            + 1
-        ),
-    )
-    iasi_grid = np.linspace(645, 2760, int((2760 - 645) / 0.25 + 1))
+    npts = int(np.floor((inp.values["fin_wvnmhi"] - inp.values["fin_wvnmlo"]) / inp.values["fin_res"])) + 1 # expected number of points in the grid
+    fin_grid = inp.values["fin_wvnmlo"] + np.arange(npts) * inp.values["fin_res"]
+    
+    iasi_npts = int(np.floor((2760-645)/0.25)) + 1
+    iasi_grid = 645 + np.arange(iasi_npts) * 0.25
 
     ########################################################################################
     # pick an iasi spectral file (processed)
@@ -1073,4 +1068,4 @@ def run_srfm(inp):
             plt.savefig(f"{inp.values['results_fldr']}/{keystr}_diff.png")
             plt.close()
 
-        return model_SRFM
+    return model_SRFM

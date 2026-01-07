@@ -36,8 +36,9 @@ c     ..
 c     .. Array Arguments ..
 
       REAL      PMOM( 0:NMOM )
-c     ..
+
 !f2py intent(in,out) pmom
+c     ..
 c     .. Local Scalars ..
 
       INTEGER   K
@@ -2184,7 +2185,7 @@ c     .. Array Arguments ..
 
 c     ..
 c     .. Local Scalars ..
-      LOGICAL   COMPAR, CORINT, DELTAM, LYRCUT, PASS1 
+      LOGICAL   COMPAR, CORINT, DELTAM, LYRCUT, PASS1
       INTEGER   IQ, IU, J, KCONV, L, LC, LEV, LU, MAZIM, NAZ, NCOL,
      &          NCOS, NCUT, NN
       REAL      ANGCOS, AZERR, AZTERM, BPLANK, COSPHI, DELM0, DITHER,
@@ -2354,17 +2355,9 @@ c       ** Ensure that SLFTST sets all print flags off
 
    20 CONTINUE
 
-c      IF( .NOT.PASS1 .AND. LEN( HEADER ).NE.0 ) THEN
-c         WRITE( *,'(//,1X,100(''*''),/,A,/,1X,100(''*''))' )
-c     &    ' DISORT: '//HEADER
-c      ENDIF
-      
-c      IF( .NOT.PASS1 .AND. LEN( HEADER ).NE.0 ) THEN
-c         WRITE( *,* ) HEADER
-c      ENDIF
-      
-      IF (.NOT.PASS1 .AND. HEADER(1:9).NE."NO HEADER") THEN
-         WRITE( *,* ) HEADER
+      IF( .NOT.PASS1 .AND. LEN( HEADER ).NE.0 ) THEN
+         WRITE( *,'(//,1X,100(''*''),/,A,/,1X,100(''*''))' )
+     &    ' DISORT: '//HEADER
       ENDIF
 
 c     ** Calculate cumulative optical depth and dither single-scatter albedo
@@ -2417,6 +2410,7 @@ c     ** Perform various setup operations
      &             UTAUPR, UMU, UMU0, USRTAU, USRANG, NAZZ, MI, SQT,
      &             DO_PSEUDO_SPHERE, EARTH_RADIUS, H_LYR, UMU0L,
      &             DELTAMPLUS )
+
 
 c     ** Print input information
       IF( PRNT( 1 ) ) THEN
@@ -2532,6 +2526,7 @@ c         ** Version 3: update SOLEIG argument: EIGEN_MAT
      &                 WKD )
 
 
+
 c         ** Version 3: fix singularity problem in particular solution
           IF( FBEAM.GT. 0.0) THEN
             UMU0DI = UMU0L(LC)
@@ -2555,6 +2550,7 @@ c         ** and LAPACK.
      &                   MAXCMU, CMU, DELM0, FBEAM, 
      &                   GL(0,LC), YLM0, YLMC, PI, UMU0DI,
      o                   ZJ, ZZ( 1,LC) )
+
           ENDIF
 
 c         ** Calculate particular solutions of Eq. SS(15), STWL(25) for
@@ -2587,6 +2583,7 @@ c           ** Interpolate source terms to user angles
      &                   YLMC, YLMU, PSI0, PSI1, XR0( LC ),
      &                   XR1( LC ), Z0, Z1, ZJ, ZBEAM( 1,LC ),
      &                   Z0U( 1,LC ), Z1U( 1,LC ) )
+
           ENDIF
 
    80   CONTINUE
@@ -2599,6 +2596,7 @@ c       ** interface conditions.
      &               LAMBER, LYRCUT, MAXCMU, NCOL, NCUT,
      &               NLYR, NN, NSTR, TAUCPR, WK )
 
+
 c       ** Solve for constants of integration in homogeneous solution (general
 c       ** boundary conditions).
 c       ** Version 3 upgrade: LAPACK solver
@@ -2606,6 +2604,7 @@ c       ** Version 3 upgrade: LAPACK solver
      &               FBEAM, FISOT, IPVT, LAMBER, LL, LYRCUT, MAZIM, 
      &               MAXCMU, NCOL, NCUT, NN, NSTR, NLYR, PI,
      &               TPLANK, TAUCPR, UMU0, ZZ, ZPLK0, ZPLK1 )
+
 
 c       ** Compute upward and downward fluxes
         IF( MAZIM.EQ.0 ) THEN
@@ -2648,6 +2647,7 @@ c         ** Compute azimuthal intensity components at quadrature angles
      &                 UMU0L, DTAUCP)
         ENDIF
 
+
         IF( MAZIM.EQ.0 ) THEN
 c         ** Save azimuthally averaged intensities
           DO 130 LU = 1, NTAU
@@ -2655,9 +2655,10 @@ c         ** Save azimuthally averaged intensities
               U0U( IU, LU ) = UUM( IU, LU )
               DO 110 J = 1, NPHI
                 UU( IU, LU, J ) = UUM( IU, LU )
-  110         CONTINUE
-  120       CONTINUE
-  130     CONTINUE
+ 110         CONTINUE
+ 120       CONTINUE
+ 130     CONTINUE
+
 
 c         ** Print azimuthally averaged intensities at user angles
           IF( PRNTU0( 2 ) ) THEN
@@ -2753,6 +2754,7 @@ c       ** Compare test case results with correct answers and abort if bad
          PASS1 = .FALSE.
          GOTO 20
       ENDIF
+
 
       RETURN
       END
@@ -2860,9 +2862,9 @@ c     .. Intrinsic Functions ..
 
       INTRINSIC ABS, MIN, SIGN, SQRT
 c     ..
-      DATA      C1 / 0.4375D0 / , C2 / 0.5D0 / , C3 / 0.75D0 / ,
-     &          C4 / 0.95D0 / , C5 / 16.D0 / , C6 / 256.D0 / ,
-     &          ZERO / 0.D0 / , ONE / 1.D0 /
+      DATA      C1 / 0.4375D0 /, C2 / 0.5D0 /, C3 / 0.75D0 /,
+     &          C4 / 0.95D0 /, C5 / 16.D0 /, C6 / 256.D0 /,
+     &          ZERO / 0.D0 /, ONE / 1.D0 /
 
       P = 0d0
       Q = 0d0
@@ -3651,7 +3653,7 @@ c     ..
 c     .. Local Scalars ..
 
       INTEGER   IQ, JQ, LU, LYU, LC
-      REAL      ZINT
+      REAL      BEAMFAC, ZINT
 c     ..
 c     .. Intrinsic Functions ..
 
@@ -3664,6 +3666,16 @@ c                                       ** Loop over user levels
          LYU  = LAYRU( LU )
 
          IF( LYRCUT .AND. LYU.GT.NCUT ) GO TO  40
+         BEAMFAC = 0.0
+         IF( FBEAM.GT.0.0 ) THEN
+            BEAMFAC = 1.0
+            DO 5 LC = 1, LYU - 1
+               BEAMFAC = BEAMFAC * EXP( -DTAUCP( LC )/UMU0L( LC ) )
+    5       CONTINUE
+            BEAMFAC = BEAMFAC *
+     &                EXP( ( TAUCPR( LYU-1 ) - UTAUPR( LU ) ) /
+     &                     UMU0L( LYU ) )
+         END IF
 
          DO 30 IQ = 1, NSTR
 
@@ -3687,13 +3699,7 @@ c comment and upgrade pseudo spherical correction
 c            IF( FBEAM.GT.0.0 ) UUM( IQ, LU ) = ZINT +
 c     &                         ZZ( IQ, LYU )*EXP( -UTAUPR( LU )/UMU0 )
             IF( FBEAM.GT.0.0 ) THEN
-              UUM(IQ, LU) = ZZ( IQ, LYU )
-              DO LC = 1, LYU-1
-                UUM( IQ, LU ) = UUM( IQ, LU ) 
-     &             * EXP(-DTAUCP(LC)/UMU0L(LC))
-              ENDDO
-              UUM(IQ, LU) = ZINT + UUM(IQ, LU)
-     &             * EXP( ( TAUCPR(LYU-1) - UTAUPR(LU) ) / UMU0L(LYU) )
+               UUM( IQ, LU ) = ZINT + ZZ( IQ, LYU ) * BEAMFAC
             ENDIF
 
             IF( PLANK .AND. MAZIM.EQ.0 )
@@ -3814,8 +3820,9 @@ c     ..
 c     .. Local Scalars ..
 
       INTEGER   IQ, JQ, LU, LYU, LC
-      REAL      ANG1, ANG2, DIRINT, FACT, FDNTOT, FNET, PLSORC, ZINT
-      REAL      FACT2
+      REAL      ANG1, ANG2, DELTA1, DELTA2, DIRINT, FACT, FDNTOT,
+     &          FNET, PLSORC, ZINT
+      REAL      FACT2, PI_INV, TWO_PI, FOUR_PI
 c     ..
 c     .. External Subroutines ..
 
@@ -3840,6 +3847,9 @@ c                                        ** Zero DISORT output arrays
       CALL ZEROIT( FLDN, MXULV )
       !CALL ZEROIT( FACT, 1 )
       FACT = 0.0
+      PI_INV = 1. / PI
+      TWO_PI = 2. * PI
+      FOUR_PI = 4. * PI
 
 c                                        ** Loop over user levels
       DO 80 LU = 1, NTAU
@@ -3856,6 +3866,9 @@ c                                                ** this level
 
          END IF
 
+
+         DELTA1 = UTAUPR( LU ) - TAUCPR( LYU )
+         DELTA2 = UTAUPR( LU ) - TAUCPR( LYU-1 )
 
          IF( FBEAM.GT.0.0 ) THEN
 
@@ -3895,14 +3908,12 @@ c  condiser pseudo spherical correction
 
             DO 10 JQ = 1, NN
                ZINT = ZINT + GC( IQ, JQ, LYU )*LL( JQ, LYU )*
-     &                EXP( -KK( JQ,LYU )*( UTAUPR( LU ) -
-     &                TAUCPR( LYU ) ) )
+     &                EXP( -KK( JQ,LYU )*DELTA1 )
    10       CONTINUE
 
             DO 20 JQ = NN + 1, NSTR
                ZINT = ZINT + GC( IQ, JQ, LYU )*LL( JQ, LYU )*
-     &                EXP( -KK( JQ,LYU )*( UTAUPR( LU ) -
-     &                TAUCPR( LYU-1 ) ) )
+     &                EXP( -KK( JQ,LYU )*DELTA2 )
    20       CONTINUE
 
             U0C( IQ, LU ) = ZINT
@@ -3923,14 +3934,12 @@ c  condiser pseudo spherical correction
 
             DO 40 JQ = 1, NN
                ZINT = ZINT + GC( IQ, JQ, LYU )*LL( JQ, LYU )*
-     &                EXP( -KK( JQ,LYU )*( UTAUPR( LU ) -
-     &                TAUCPR( LYU ) ) )
+     &                EXP( -KK( JQ,LYU )*DELTA1 )
    40       CONTINUE
 
             DO 50 JQ = NN + 1, NSTR
                ZINT = ZINT + GC( IQ, JQ, LYU )*LL( JQ, LYU )*
-     &                EXP( -KK( JQ,LYU )*( UTAUPR( LU ) -
-     &                TAUCPR( LYU-1 ) ) )
+     &                EXP( -KK( JQ,LYU )*DELTA2 )
    50       CONTINUE
 
             U0C( IQ, LU ) = ZINT
@@ -3945,14 +3954,14 @@ c  condiser pseudo spherical correction
    60    CONTINUE
 
 
-         FLUP( LU )  = 2.*PI*FLUP( LU )
-         FLDN( LU )  = 2.*PI*FLDN( LU )
+         FLUP( LU )  = TWO_PI * FLUP( LU )
+         FLDN( LU )  = TWO_PI * FLDN( LU )
          FDNTOT      = FLDN( LU ) + FLDIR( LU )
          FNET        = FDNTOT - FLUP( LU )
          RFLDN( LU ) = FDNTOT - RFLDIR( LU )
-         UAVG( LU )  = ( 2.*PI*UAVG( LU ) + DIRINT ) / ( 4.*PI )
+         UAVG( LU )  = ( TWO_PI * UAVG( LU ) + DIRINT ) / FOUR_PI
          PLSORC      = XR0( LYU ) + XR1( LYU )*UTAUPR( LU )
-         DFDT( LU )  = ( 1. - SSALB( LYU ) ) * 4.*PI *
+         DFDT( LU )  = ( 1. - SSALB( LYU ) ) * FOUR_PI *
      &                 ( UAVG( LU ) - PLSORC )
 
    70    CONTINUE
@@ -3976,8 +3985,8 @@ c  condiser pseudo spherical correction
      &        '     Angle (deg)   cos(Angle)     Intensity'
 
             DO 90 IQ = 1, NN
-               ANG1 = ( 180./PI )*ACOS( CMU( 2 *NN-IQ+1 ) )
-               ANG2 = ( 180./PI )*ACOS( CMU( IQ ) )
+               ANG1 = ( 180. * PI_INV )*ACOS( CMU( 2 *NN-IQ+1 ) )
+               ANG2 = ( 180. * PI_INV )*ACOS( CMU( IQ ) )
                WRITE ( *, '(2(0P,F16.4,F13.5,1P,E14.3))' )
      &           ANG1, CMU(2*NN-IQ+1), U0C(IQ,LU),
      &           ANG2, CMU(IQ),        U0C(IQ+NN,LU)
@@ -4104,7 +4113,7 @@ c     .. Local Scalars ..
 
       INTEGER   IU, JP, K, LC, LTAU, LU
       REAL      CTHETA, DTHETA, DUIMS, PL, PLM1, PLM2, THETA0, THETAP,
-     &          USSNDM, USSP
+     &          USSNDM, USSP, SQRT1MU0, SQRT1MUI
       REAL      f, sigma_sq, c 
 c     ..
 c     .. External Functions ..
@@ -4123,6 +4132,8 @@ c     ..
 
       DTHETA = 10.
 
+      SQRT1MU0 = SQRT( 1. - UMU0*UMU0 )
+      THETA0 = ACOS( -UMU0 ) / RPD
 
 
 
@@ -4131,13 +4142,14 @@ c                                ** Start loop over zenith angles
 
       DO 110 IU = 1, NUMU
 
+         SQRT1MUI = SQRT( 1. - UMU( IU )*UMU( IU ) )
+
          IF( UMU( IU ).LT.0. ) THEN
 
 c                                ** Calculate zenith angles of icident
 c                                ** and emerging directions
 
 
-            THETA0 = ACOS( -UMU0 ) / RPD
             THETAP = ACOS( UMU( IU ) ) / RPD
 
          END IF
@@ -4149,8 +4161,8 @@ c                                ** Start loop over azimuth angles
 c                                ** Calculate cosine of scattering
 c                                ** angle, Eq. STWL(4)
 
-            CTHETA = -UMU0*UMU( IU ) + SQRT( ( 1.-UMU0**2 )*
-     &               ( 1.-UMU( IU )**2 ) )*COS( PHIRAD( JP ) )
+            CTHETA = -UMU0*UMU( IU ) + SQRT1MU0*SQRT1MUI*
+     &               COS( PHIRAD( JP ) )
 
 c                                ** Initialize phase function
             DO 10 LC = 1, NCUT
@@ -4356,7 +4368,7 @@ c +-------------------------------------------------------------------+
       INTEGER   IU, J, MAXULV, LAYRU( * )
       REAL      TAUCPR( 0:* ), UTAUPR( * )
       REAL      RHOU(MXUMU,0:MI, 0:NAZZ)
-      REAL      DRHO, USS, PI, UU( MAXUMU, MAXULV, * )
+      REAL      DRHO, USS, PI, UU( MAXUMU, MAXULV, * ), BASE, UMU_INV
       
 
        DO IU = 1, NUMU
@@ -4369,15 +4381,17 @@ c +-------------------------------------------------------------------+
      &                                      RHOU(IU,0,0:NSTR-1) )
 
 
+             DRHO = RHO_ACCURATE(IU,J) - RHO_APPROX(IU,J) 
+             BASE = UMU0 * FBEAM * DRHO
+     &              * EXP( -TAUCPR(NCUT) / UMU0 )
+             UMU_INV = 1. / UMU(IU)
+
              DO LU = 1, NTAU
 
                IF( .NOT.LYRCUT .OR. LAYRU( LU ) .LE. NCUT ) THEN
 
-                 DRHO = RHO_ACCURATE(IU,J) - RHO_APPROX(IU,J) 
-
-                 USS = UMU0 * FBEAM * DRHO
-     &                  * EXP( -TAUCPR(NCUT) / UMU0 )
-     &                  * EXP( (UTAUPR(LU) - TAUCPR(NCUT))/UMU(IU) )
+                 USS = BASE * EXP( (UTAUPR(LU) - TAUCPR(NCUT))*
+     &                            UMU_INV )
 
                  UU( IU, LU, J ) = UU( IU, LU, J) + USS
                END IF
@@ -4455,8 +4469,8 @@ c     .. Array Arguments ..
 c     ..
 c     .. Local Scalars ..
       INTEGER   K, LYR
-      REAL      DTAU, FBAR, GBAR, PL, PLM1, PLM2, PSPIKE, STAU, UMU0P,
-     &          WBAR, ZERO
+      REAL      FBAR, GBAR, PL, PLM1, PLM2, PSPIKE, STAU, UMU0P, WBAR,
+     &          ZERO, DENOM, DTAUL, FWBAR, INV_DENOM
 c     ..
 c     .. External Functions ..
       REAL      XIFUNC
@@ -4469,10 +4483,10 @@ c                          ** Calculate vertically averaged value of
 c                          ** single scattering albedo and separated
 c                          ** fraction f, Eq. STWL (A.15)
 
-      DTAU = UTAU - TAUC( LAYRU - 1 )
-      WBAR = SSALB( LAYRU ) * DTAU
+      DTAUL = UTAU - TAUC( LAYRU - 1 )
+      WBAR = SSALB( LAYRU ) * DTAUL
       FBAR = FLYR( LAYRU ) * WBAR
-      STAU = DTAU
+      STAU = DTAUL
 
       DO 10 LYR = 1, LAYRU - 1
 
@@ -4492,6 +4506,9 @@ c                          ** fraction f, Eq. STWL (A.15)
 
       FBAR  = FBAR / WBAR
       WBAR  = WBAR / STAU
+      FWBAR = FBAR * WBAR
+      DENOM = FWBAR * STAU
+      INV_DENOM = 1. / DENOM
 
 
 c                          ** Calculate PSPIKE=(2P"-P"**2)
@@ -4516,30 +4533,28 @@ c                                   ** PSPIKE for L>2N-1
          PLM2  = PLM1
          PLM1  = PL
 
-         DTAU = UTAU - TAUC( LAYRU - 1 )
-
-         GBAR = PMOM( K, LAYRU ) * SSALB( LAYRU ) * DTAU
+         GBAR = PMOM( K, LAYRU ) * SSALB( LAYRU ) * DTAUL
 
          DO 30 LYR = 1, LAYRU - 1
             GBAR = GBAR + PMOM( K, LYR ) * SSALB( LYR ) * DTAUC( LYR )
    30    CONTINUE
 
-         IF( FBAR*WBAR*STAU .LE. ZERO ) THEN
+         IF( DENOM .LE. ZERO ) THEN
             GBAR   = 0.0
          ELSE
-            GBAR   = GBAR / ( FBAR*WBAR*STAU )
+            GBAR   = GBAR * INV_DENOM
          END IF
 
          PSPIKE = PSPIKE + ( 2.*GBAR - GBAR**2 )*( 2*K + 1 )*PL
 
    40 CONTINUE
 
-      UMU0P = UMU0 / ( 1. - FBAR*WBAR )
+      UMU0P = UMU0 / ( 1. - FWBAR )
 
 c                              ** Calculate IMS correction term,
 c                              ** Eq. STWL (A.13)
 
-      SECSCA = FBEAM / ( 4.*PI ) * ( FBAR*WBAR )**2 / ( 1.-FBAR*WBAR ) *
+      SECSCA = FBEAM / ( 4.*PI ) * ( FWBAR**2 ) / ( 1.-FWBAR ) *
      &         PSPIKE * XIFUNC( -UMU, UMU0P, UMU0P, UTAU )
 
 
@@ -4621,7 +4636,7 @@ c     .. Local Scalars ..
 
       INTEGER   IQ, IU, K, LC, LU, n
       REAL      ABSCUT, ABSTAU, F, YESSCT, TAU_SLANT(0:NLYR )
-      real      sigma_sq, c 
+      real      sigma_sq, c, LOG_R1, UMU0INV
       INTEGER   NAZZ, MI, NS
 c     ..
 c     .. External Subroutines ..
@@ -4635,6 +4650,8 @@ c     .. Intrinsic Functions ..
 c     ..
       DATA      ABSCUT / 10. /
 
+      LOG_R1 = -LOG( R1MACH( 1 ) )
+      UMU0INV = 1. / UMU0
  
 
       IF( .NOT.USRTAU ) THEN
@@ -4736,8 +4753,8 @@ c        ** correct solar zenith angle
          IF( FBEAM.GT.0.0 ) THEN
             IF( .NOT. DO_PSEUDO_SPHERE ) THEN
 !                print*, LC, TAUCPR(LC), -TAUCPR( LC )/UMU0
-                IF( TAUCPR( LC )/UMU0 .LT. -LOG(R1MACH(1)) ) THEN 
-                    EXPBEA( LC ) = EXP( -TAUCPR( LC )/UMU0 )
+                IF( TAUCPR( LC )*UMU0INV .LT. LOG_R1 ) THEN 
+                    EXPBEA( LC ) = EXP( -TAUCPR( LC )*UMU0INV )
                 ELSE
                     EXPBEA( LC ) = 0.0;
                 ENDIF
@@ -4958,8 +4975,8 @@ c           0  0  0  0 65 66
 c
 c      then its LAPACK input form would be:
 c
-c           *  *  *  +  +  +  , * = not used
-c           *  * 13 24 35 46  , + = used for pivoting
+c           *  *  *  +  +  +, * = not used
+c           *  * 13 24 35 46, + = used for pivoting
 c           * 12 23 34 45 56
 c          11 22 33 44 55 66
 c          21 32 43 54 65  *
@@ -5006,7 +5023,8 @@ c     ..
 c     .. Local Scalars ..
 
       INTEGER   IQ, IROW, JCOL, JQ, K, LC, LDA, NCD, NNCOL, NSHIFT
-      REAL      EXPA, SUM
+      REAL      EXPA, SUM, SCALE
+      LOGICAL   NOAZ
 c     ..
 c     .. External Subroutines ..
 
@@ -5024,6 +5042,8 @@ c     ..
       LDA    = 3*NCD + 1
       NSHIFT = LDA - 2*NSTR + 1
       NCOL   = 0
+      NOAZ   = LYRCUT .OR. ( LAMBER .AND. DELM0.EQ.0. )
+      SCALE  = 1. + DELM0
 c                         ** Use continuity conditions of Eq. STWJ(17)
 c                         ** to form coefficient matrix in STWJ(20);
 c                         ** employ scaling transformation STWJ(22)
@@ -5112,7 +5132,7 @@ c                           ** STWJ(20c) for last layer
 
          DO 120 JQ = NN + 1, NSTR
 
-            IF( LYRCUT .OR. ( LAMBER .AND. DELM0.EQ.0 ) ) THEN
+            IF( NOAZ ) THEN
 
 c                          ** No azimuthal-dependent intensity if Lam-
 c                          ** bert surface; no intensity component if
@@ -5129,8 +5149,7 @@ c                          ** truncated bottom layer
      &                     GC( NN + 1 - K, IQ, NCUT )
   110          CONTINUE
 
-               CBAND( IROW, NNCOL ) = GC( JQ, IQ, NCUT ) -
-     &                                ( 1.+ DELM0 )*SUM
+               CBAND( IROW, NNCOL ) = GC( JQ, IQ, NCUT ) - SCALE*SUM
             END IF
 
             IROW  = IROW + 1
@@ -5150,7 +5169,7 @@ c                          ** truncated bottom layer
 
          DO 150 JQ = NN + 1, NSTR
 
-            IF( LYRCUT .OR. ( LAMBER .AND. DELM0.EQ.0 ) ) THEN
+            IF( NOAZ ) THEN
 
                CBAND( IROW, NNCOL ) = GC( JQ, IQ, NCUT )*EXPA
 
@@ -5163,8 +5182,8 @@ c                          ** truncated bottom layer
      &                         GC( NN + 1 - K, IQ, NCUT )
   140          CONTINUE
 
-               CBAND( IROW, NNCOL ) = ( GC( JQ,IQ,NCUT ) -
-     &                                ( 1.+ DELM0 )*SUM )*EXPA
+               CBAND( IROW, NNCOL ) = ( GC( JQ,IQ,NCUT ) - SCALE*SUM )*
+     &                                EXPA
             END IF
 
             IROW  = IROW + 1
@@ -5226,7 +5245,7 @@ c     ..
 c     .. Local Scalars ..
 
       INTEGER   LYR
-      REAL      EXP0, EXP1
+      REAL      EXP0, EXP1, UMU_INV, UMU0_INV, UMU_UMU0
 
 c     ..
 c     .. Intrinsic Functions ..
@@ -5236,7 +5255,10 @@ c     ..
 
 
       SINSCA = 0.
-      EXP0 = EXP( -UTAU/UMU0 )
+      UMU0_INV = 1. / UMU0
+      UMU_INV = 1. / UMU
+      UMU_UMU0 = UMU * UMU0_INV
+      EXP0 = EXP( -UTAU*UMU0_INV )
 
       IF( ABS( UMU+UMU0 ).LE.DITHER ) THEN
 
@@ -5248,7 +5270,7 @@ c                                 ** UMU=UMU0, Eq. STWL (65e)
      &               ( TAU( LYR ) - TAU( LYR-1 ) )
    10    CONTINUE
 
-         SINSCA = FBEAM / ( 4.*PI * UMU0 ) * EXP0 * ( SINSCA +
+         SINSCA = FBEAM / ( 4.*PI ) * UMU0_INV * EXP0 * ( SINSCA +
      &            OMEGA( LAYRU )*PHASE( LAYRU )*( UTAU-TAU(LAYRU-1) ) )
 
          RETURN
@@ -5261,7 +5283,8 @@ c                                 ** Upward intensity, Eq. STWL (65b)
 
  
          DO 20 LYR = LAYRU, NLYR
-            EXP1 = EXP( -( ( TAU( LYR )-UTAU )/UMU + TAU( LYR )/UMU0 ) )
+            EXP1 = EXP( -( ( TAU( LYR )-UTAU )*UMU_INV +
+     &                     TAU( LYR )*UMU0_INV ) )
             SINSCA = SINSCA + OMEGA( LYR )*PHASE( LYR )*( EXP0 - EXP1 )
             EXP0 = EXP1
    20    CONTINUE
@@ -5270,7 +5293,8 @@ c                                 ** Upward intensity, Eq. STWL (65b)
 c                                 ** Downward intensity, Eq. STWL (65d)
          DO 30 LYR = LAYRU, 1, -1
 
-            EXP1 = EXP( -( ( TAU(LYR-1)-UTAU )/UMU + TAU(LYR-1)/UMU0 ) )
+            EXP1 = EXP( -( ( TAU(LYR-1)-UTAU )*UMU_INV +
+     &                     TAU(LYR-1)*UMU0_INV ) )
             SINSCA = SINSCA + OMEGA( LYR )*PHASE( LYR )*( EXP0 - EXP1 )
             EXP0 = EXP1
 
@@ -5278,7 +5302,7 @@ c                                 ** Downward intensity, Eq. STWL (65d)
 
       END IF
 
-      SINSCA = FBEAM / ( 4.*PI * ( 1. + UMU/UMU0 ) ) * SINSCA
+      SINSCA = FBEAM / ( 4.*PI * ( 1. + UMU_UMU0 ) ) * SINSCA
 
 !c     ** Version 3 old
 !      IF( .NOT. PASS1) THEN
@@ -5313,16 +5337,18 @@ c     ** Version 3 function
 
       REAL     COSMPHI
       REAL     PI
+      REAL     DPHI_RAD
       INTEGER  NAZ
 
 
       NAZ = NSTR-1
+      DPHI_RAD = DPHI*PI/180.0
 
       RHO_APPROX = 0.0
 
       DO M = 0, NAZ
         RHO_FLOURIER(M) = RHOU(M)/PI
-        COSMPHI = COS(M*DPHI*PI/180.)
+        COSMPHI = COS(M*DPHI_RAD)
         RHO_APPROX = RHO_APPROX + RHO_FLOURIER(M)*COSMPHI 
       END DO
 
@@ -5662,8 +5688,13 @@ c     .. Array Arguments ..
 c     ..
 c     .. Local Scalars ..
 
-      INTEGER   IPNT, IQ, IT, JQ, LC, NCD, INFO
-      REAL      SUM
+      INTEGER   IPNT, IQ, IT, JQ, LC, NCD, NCOL_NN, INFO
+      REAL      BDR_IQ0, BEM_IQ_BPLANK, CWT_CMU, EXPBEA_LC, EXPBEA_NCUT,
+     &          SUM, TAUCPR_LC, TAUCPR_NCUT, TOP_PLANK, UMU0_FBEAM_PI
+      REAL      ZZ_BOTTOM, ZZ_DEL, ZZ_TOP, ZPLK0_DEL, ZPLK0_TOP,
+     &          ZPLK1_DEL
+      REAL      ZPLK0_IQ_NCUT, ZPLK1_IQ_NCUT, ZZ_IQ_NCUT
+      REAL      ZPLK0_JQ_NCUT, ZPLK1_JQ_NCUT, ZZ_JQ_NCUT
 c     ..
 c     .. External Subroutines ..
 
@@ -5676,6 +5707,11 @@ c     ..
 
 
       CALL ZEROIT( B, NSTR*NLYR )
+      UMU0_FBEAM_PI = UMU0*FBEAM/PI
+      EXPBEA_NCUT = EXPBEA( NCUT )
+      TAUCPR_NCUT = TAUCPR( NCUT )
+      NCOL_NN = NCOL - NN
+      TOP_PLANK = FISOT + TPLANK
 c                              ** Construct B,  STWJ(20a,c) for
 c                              ** parallel beam + bottom reflection +
 c                              ** thermal emission at top and/or bottom
@@ -5689,10 +5725,12 @@ c               ** no intensity component for truncated bottom layer
 
             DO 10 IQ = 1, NN
 c                                                  ** Top boundary
-               B( IQ ) = -ZZ( NN + 1 - IQ, 1 )
+               ZZ_TOP = ZZ( NN + 1 - IQ, 1 )
+               ZZ_BOTTOM = ZZ( IQ + NN, NCUT )
+               B( IQ ) = -ZZ_TOP
 c                                                  ** Bottom boundary
 
-               B( NCOL - NN + IQ ) = -ZZ( IQ + NN, NCUT )*EXPBEA( NCUT )
+               B( NCOL_NN + IQ ) = -ZZ_BOTTOM*EXPBEA_NCUT
 
    10       CONTINUE
 
@@ -5701,18 +5739,21 @@ c                                                  ** Bottom boundary
 
             DO 30 IQ = 1, NN
 
-               B( IQ ) = -ZZ( NN + 1 - IQ, 1 )
+               ZZ_TOP = ZZ( NN + 1 - IQ, 1 )
+               ZZ_BOTTOM = ZZ( IQ + NN, NCUT )
+               BDR_IQ0 = BDR( IQ, 0 )
+               B( IQ ) = -ZZ_TOP
 
                SUM  = 0.
                DO 20 JQ = 1, NN
-                  SUM  = SUM + CWT( JQ )*CMU( JQ )*BDR( IQ, JQ )*
-     &                         ZZ( NN + 1 - JQ, NCUT )*EXPBEA( NCUT )
+                  ZZ_JQ_NCUT = ZZ( NN + 1 - JQ, NCUT )
+                  CWT_CMU = CWT( JQ )*CMU( JQ )
+                  SUM  = SUM + CWT_CMU*BDR( IQ, JQ )*
+     &                         ZZ_JQ_NCUT*EXPBEA_NCUT
    20          CONTINUE
 
-               B( NCOL - NN + IQ ) = SUM
-               IF( FBEAM.GT.0.0 ) B( NCOL - NN + IQ ) = SUM +
-     &             ( BDR( IQ,0 )*UMU0*FBEAM/PI
-     &             - ZZ( IQ+NN,NCUT ) )*EXPBEA( NCUT )
+               B( NCOL_NN + IQ ) = SUM +
+     &             ( BDR_IQ0*UMU0_FBEAM_PI - ZZ_BOTTOM )*EXPBEA_NCUT
 
    30       CONTINUE
 
@@ -5722,10 +5763,12 @@ c                             ** interfaces of Eq. STWJ(20b)
          IT  = NN
 
          DO 50 LC = 1, NCUT - 1
+            EXPBEA_LC = EXPBEA( LC )
 
             DO 40 IQ = 1, NSTR
                IT  = IT + 1
-               B( IT ) = ( ZZ( IQ,LC+1 ) - ZZ( IQ,LC ) )*EXPBEA( LC )
+               ZZ_DEL = ZZ( IQ,LC+1 ) - ZZ( IQ,LC )
+               B( IT ) = ZZ_DEL*EXPBEA_LC
    40       CONTINUE
 
    50    CONTINUE
@@ -5739,7 +5782,8 @@ c                                   ** Azimuth-independent case
             DO 60 IQ = 1, NN
 c                                      ** Top boundary
 
-               B( IQ ) = -ZPLK0( NN + 1 - IQ, 1 ) + FISOT + TPLANK
+               ZPLK0_TOP = ZPLK0( NN + 1 - IQ, 1 )
+               B( IQ ) = -ZPLK0_TOP + TOP_PLANK
 
    60       CONTINUE
 
@@ -5750,9 +5794,10 @@ c                               ** bottom layer
                DO 70 IQ = 1, NN
 c                                      ** Bottom boundary
 
-                  B( NCOL - NN + IQ ) = - ZPLK0( IQ + NN, NCUT ) -
-     &                                    ZPLK1( IQ + NN, NCUT ) *
-     &                                    TAUCPR( NCUT )
+                  ZPLK0_IQ_NCUT = ZPLK0( IQ + NN, NCUT )
+                  ZPLK1_IQ_NCUT = ZPLK1( IQ + NN, NCUT )
+                  B( NCOL_NN + IQ ) = - ZPLK0_IQ_NCUT -
+     &                                    ZPLK1_IQ_NCUT*TAUCPR_NCUT
    70          CONTINUE
 
 
@@ -5760,17 +5805,22 @@ c                                      ** Bottom boundary
 
                DO 90 IQ = 1, NN
 
+                  ZPLK0_IQ_NCUT = ZPLK0( IQ + NN, NCUT )
+                  ZPLK1_IQ_NCUT = ZPLK1( IQ + NN, NCUT )
                   SUM  = 0.
                   DO 80 JQ = 1, NN
-                     SUM  = SUM + CWT( JQ )*CMU( JQ )*BDR( IQ, JQ )*
-     &                        ( ZPLK0( NN+1-JQ, NCUT ) +
-     &                          ZPLK1( NN+1-JQ, NCUT ) *TAUCPR( NCUT ) )
+                     ZPLK0_JQ_NCUT = ZPLK0( NN+1-JQ, NCUT )
+                     ZPLK1_JQ_NCUT = ZPLK1( NN+1-JQ, NCUT )
+                     CWT_CMU = CWT( JQ )*CMU( JQ )
+                     SUM  = SUM + CWT_CMU*BDR( IQ, JQ )*
+     &                        ( ZPLK0_JQ_NCUT +
+     &                          ZPLK1_JQ_NCUT*TAUCPR_NCUT )
    80             CONTINUE
 
-                  B( NCOL - NN + IQ ) = 2.*SUM + BEM( IQ )*BPLANK -
-     &                                  ZPLK0( IQ + NN, NCUT ) -
-     &                                  ZPLK1( IQ + NN, NCUT ) *
-     &                                  TAUCPR( NCUT )
+                  BEM_IQ_BPLANK = BEM( IQ )*BPLANK
+                  B( NCOL_NN + IQ ) = 2.*SUM + BEM_IQ_BPLANK -
+     &                                  ZPLK0_IQ_NCUT -
+     &                                  ZPLK1_IQ_NCUT*TAUCPR_NCUT
    90          CONTINUE
 
             END IF
@@ -5778,12 +5828,13 @@ c                             ** Continuity condition for layer
 c                             ** interfaces, STWJ(20b)
             IT  = NN
             DO 110 LC = 1, NCUT - 1
+               TAUCPR_LC = TAUCPR( LC )
 
                DO 100 IQ = 1, NSTR
                   IT  = IT + 1
-                  B( IT ) =   ZPLK0( IQ, LC + 1 ) - ZPLK0( IQ, LC ) +
-     &                      ( ZPLK1( IQ, LC + 1 ) - ZPLK1( IQ, LC ) )*
-     &                      TAUCPR( LC )
+                  ZPLK0_DEL = ZPLK0( IQ, LC + 1 ) - ZPLK0( IQ, LC )
+                  ZPLK1_DEL = ZPLK1( IQ, LC + 1 ) - ZPLK1( IQ, LC )
+                  B( IT ) = ZPLK0_DEL + ZPLK1_DEL*TAUCPR_LC
   100          CONTINUE
 
   110       CONTINUE
@@ -5792,16 +5843,20 @@ c                             ** interfaces, STWJ(20b)
          ELSE
 
             DO 120 IQ = 1, NN
-               B( IQ ) = -ZZ( NN + 1 - IQ, 1 ) -
-     &                   ZPLK0( NN + 1 - IQ, 1 ) + FISOT + TPLANK
+               ZZ_TOP = ZZ( NN + 1 - IQ, 1 )
+               ZPLK0_TOP = ZPLK0( NN + 1 - IQ, 1 )
+               B( IQ ) = -ZZ_TOP - ZPLK0_TOP + TOP_PLANK
   120       CONTINUE
 
             IF( LYRCUT ) THEN
 
                DO 130 IQ = 1, NN
-                  B( NCOL-NN+IQ ) = - ZZ(IQ+NN, NCUT) * EXPBEA(NCUT)
-     &                              - ZPLK0(IQ+NN, NCUT)
-     &                              - ZPLK1(IQ+NN, NCUT) * TAUCPR(NCUT)
+                  ZZ_IQ_NCUT = ZZ( IQ + NN, NCUT )
+                  ZPLK0_IQ_NCUT = ZPLK0( IQ + NN, NCUT )
+                  ZPLK1_IQ_NCUT = ZPLK1( IQ + NN, NCUT )
+                  B( NCOL_NN+IQ ) = - ZZ_IQ_NCUT*EXPBEA_NCUT
+     &                              - ZPLK0_IQ_NCUT
+     &                              - ZPLK1_IQ_NCUT*TAUCPR_NCUT
   130          CONTINUE
 
 
@@ -5809,19 +5864,28 @@ c                             ** interfaces, STWJ(20b)
 
                DO 150 IQ = 1, NN
 
+                  ZZ_IQ_NCUT = ZZ( IQ + NN, NCUT )
+                  ZPLK0_IQ_NCUT = ZPLK0( IQ + NN, NCUT )
+                  ZPLK1_IQ_NCUT = ZPLK1( IQ + NN, NCUT )
                   SUM  = 0.
                   DO 140 JQ = 1, NN
-                     SUM = SUM + CWT(JQ) * CMU(JQ) * BDR(IQ,JQ)
-     &                          * ( ZZ(NN+1-JQ, NCUT) * EXPBEA(NCUT)
-     &                            + ZPLK0(NN+1-JQ, NCUT)
-     &                            + ZPLK1(NN+1-JQ, NCUT) * TAUCPR(NCUT))
+                     ZZ_JQ_NCUT = ZZ( NN+1-JQ, NCUT )
+                     ZPLK0_JQ_NCUT = ZPLK0( NN+1-JQ, NCUT )
+                     ZPLK1_JQ_NCUT = ZPLK1( NN+1-JQ, NCUT )
+                     CWT_CMU = CWT( JQ )*CMU( JQ )
+                     SUM = SUM + CWT_CMU*BDR(IQ,JQ)
+     &                          * ( ZZ_JQ_NCUT * EXPBEA_NCUT
+     &                            + ZPLK0_JQ_NCUT
+     &                            + ZPLK1_JQ_NCUT*TAUCPR_NCUT)
   140             CONTINUE
 
-                  B(NCOL-NN+IQ) = 2.*SUM + ( BDR(IQ,0) * UMU0*FBEAM/PI
-     &                            - ZZ(IQ+NN, NCUT) ) * EXPBEA(NCUT)
-     &                            + BEM(IQ) * BPLANK
-     &                            - ZPLK0(IQ+NN, NCUT)
-     &                            - ZPLK1(IQ+NN, NCUT) * TAUCPR(NCUT)
+                  BDR_IQ0 = BDR( IQ, 0 )
+                  BEM_IQ_BPLANK = BEM( IQ )*BPLANK
+                  B(NCOL_NN+IQ) = 2.*SUM + ( BDR_IQ0*UMU0_FBEAM_PI
+     &                            - ZZ_IQ_NCUT ) * EXPBEA_NCUT
+     &                            + BEM_IQ_BPLANK
+     &                            - ZPLK0_IQ_NCUT
+     &                            - ZPLK1_IQ_NCUT*TAUCPR_NCUT
   150          CONTINUE
 
             END IF
@@ -5830,13 +5894,17 @@ c                             ** interfaces, STWJ(20b)
             IT  = NN
 
             DO 170 LC = 1, NCUT - 1
+               EXPBEA_LC = EXPBEA( LC )
+               TAUCPR_LC = TAUCPR( LC )
 
                DO 160 IQ = 1, NSTR
 
                   IT  = IT + 1
-                  B(IT) = ( ZZ(IQ,LC+1) - ZZ(IQ,LC) ) * EXPBEA(LC)
-     &                    + ZPLK0(IQ,LC+1) - ZPLK0(IQ,LC) +
-     &                    ( ZPLK1(IQ,LC+1) - ZPLK1(IQ,LC) ) * TAUCPR(LC)
+                  ZZ_DEL = ZZ( IQ,LC+1 ) - ZZ( IQ,LC )
+                  ZPLK0_DEL = ZPLK0( IQ,LC+1 ) - ZPLK0( IQ,LC )
+                  ZPLK1_DEL = ZPLK1( IQ,LC+1 ) - ZPLK1( IQ,LC )
+                  B(IT) = ZZ_DEL*EXPBEA_LC + ZPLK0_DEL +
+     &                    ZPLK1_DEL*TAUCPR_LC
   160          CONTINUE
 
   170       CONTINUE
@@ -5985,6 +6053,7 @@ c     .. Local Scalars ..
 
       LOGICAL   PASS1
       INTEGER   IQ, IU, JQ
+      REAL      ALB1
 
 c     ..
 c     .. External Functions ..
@@ -6018,6 +6087,7 @@ c      END IF
 
       CALL ZEROIT( BDR, NN*( NN+1 ) )
       CALL ZEROIT( BEM, NN )
+      ALB1 = 1.0 - ALBEDO
 
 c                             ** Compute Fourier expansion coefficient
 c                             ** of surface bidirectional reflectance
@@ -6026,7 +6096,7 @@ c                             ** at computational angles Eq. STWL (41)
       IF( LAMBER .AND. MAZIM.EQ.0 ) THEN
 
          DO 30 IQ = 1, NN
-            BEM( IQ ) = 1.0 - ALBEDO
+            BEM( IQ ) = ALB1
 
             DO 20 JQ = 0, NN
                BDR( IQ, JQ ) = ALBEDO
@@ -6045,13 +6115,13 @@ c                             ** at computational angles Eq. STWL (41)
 
    50       CONTINUE
 
-            IF( FBEAM.GT.0.0 ) THEN
-       
-                BDR(IQ,0) = RHOQ(IQ,0,MAZIM)
-
-            END IF
-
    70    CONTINUE
+
+         IF( FBEAM.GT.0.0 ) THEN
+            DO 75 IQ = 1, NN
+               BDR(IQ,0) = RHOQ(IQ,0,MAZIM)
+   75       CONTINUE
+         END IF
 
 
          IF( MAZIM.EQ.0 ) THEN
@@ -6088,7 +6158,7 @@ c                             ** at user angles Eq. STWL (41)
                      RMU(IU,IQ) = ALBEDO
   110             CONTINUE
 
-                  EMU(IU) = 1.0 - ALBEDO
+                  EMU(IU) = ALB1
 
                ELSE IF( .NOT.LAMBER ) THEN
 
@@ -6096,13 +6166,6 @@ c                             ** at user angles Eq. STWL (41)
                   RMU(IU,IQ) = RHOU(IU,IQ,MAZIM)
 
   130             CONTINUE
-
-                  IF( FBEAM.GT.0.0 ) THEN
-
-                   RMU(IU,0) = RHOU(IU,0,MAZIM)
-
-                  END IF
-
 
                   IF( MAZIM.EQ.0 ) THEN
 
@@ -6121,6 +6184,13 @@ c                               ** user angle cosines -UMU-.
             END IF
 
   170    CONTINUE
+
+         IF( .NOT.LAMBER .AND. FBEAM.GT.0.0 ) THEN
+            DO 175 IU = 1, NUMU
+               IF( UMU(IU).GT.0.0 )
+     &            RMU(IU,0) = RHOU(IU,0,MAZIM)
+  175       CONTINUE
+         END IF
 
       END IF
 
@@ -6151,7 +6221,7 @@ c     ..
 c     .. Local Scalars ..
 
       INTEGER   IQ, IU, JQ, L
-      REAL      SUM
+      REAL      CWT_JQ, GLHALF, SUM, YLMC_LJ
 c     ..
 
 
@@ -6161,11 +6231,14 @@ c     ..
 c                                   ** Inner sum in SD(8) times all
 c                                   ** factors in outer sum but PLM(mu)
             SUM  = 0.0
+            GLHALF = 0.5*GL( L )
             DO 10 JQ = 1, NSTR
-               SUM  = SUM + CWT( JQ )*YLMC( L, JQ )*EVECC( JQ, IQ )
+               CWT_JQ = CWT( JQ )
+               YLMC_LJ = YLMC( L, JQ )
+               SUM  = SUM + CWT_JQ*YLMC_LJ*EVECC( JQ, IQ )
    10       CONTINUE
 
-            WK( L + 1 ) = 0.5*GL( L )*SUM
+            WK( L + 1 ) = GLHALF*SUM
 
    20    CONTINUE
 c                                    ** Finish outer sum in SD(8)
@@ -6265,7 +6338,9 @@ c     ..
 c     .. Local Scalars ..
 
       INTEGER   IQ, IU, JQ
-      REAL      FACT, PSUM, PSUM0, PSUM1, SUM, SUM0, SUM1
+      REAL      CWT_JQ, FACT, GL_IQ, PSUM, PSUM0, PSUM1, PSI0_IQ,
+     &          PSI1_IQ, SUM, SUM0, SUM1, YLMC_IQ, YLMU_IQ
+      REAL      XR0S, XR1S
 c     ..
 
 
@@ -6276,7 +6351,8 @@ c                                  ** Beam source terms; Eq. SD(9)
 
             PSUM   = 0.
             DO 10 JQ = 1, NSTR
-               PSUM  = PSUM + CWT( JQ )*YLMC( IQ, JQ )*ZJ( JQ )
+               CWT_JQ = CWT( JQ )
+               PSUM  = PSUM + CWT_JQ*YLMC( IQ, JQ )*ZJ( JQ )
    10       CONTINUE
 
             PSI0( IQ + 1 ) = 0.5*GL( IQ )*PSUM
@@ -6289,8 +6365,10 @@ c                                  ** Beam source terms; Eq. SD(9)
 
             SUM    = 0.
             DO 30 IQ = MAZIM, NSTR - 1
-               SUM  = SUM + YLMU( IQ, IU )*
-     &                    ( PSI0( IQ+1 ) + FACT*GL( IQ )*YLM0(IQ,1) )
+               GL_IQ = GL( IQ )
+               YLMU_IQ = YLMU( IQ, IU )
+               SUM  = SUM + YLMU_IQ *
+     &                    ( PSI0( IQ+1 ) + FACT*GL_IQ*YLM0(IQ,1) )
    30       CONTINUE
 
             ZBEAM( IU ) = SUM
@@ -6304,13 +6382,18 @@ c                                  ** Beam source terms; Eq. SD(9)
 
 c                          ** Thermal source terms, STWJ(27c), STWL(31c)
 c
+         XR0S = ( 1.0 - OPRIM )*XR0
+         XR1S = ( 1.0 - OPRIM )*XR1
+
          DO 60 IQ = MAZIM, NSTR - 1
 
             PSUM0  = 0.0
             PSUM1  = 0.0
             DO 50 JQ = 1, NSTR
-               PSUM0  = PSUM0 + CWT( JQ )*YLMC( IQ, JQ )*Z0( JQ )
-               PSUM1  = PSUM1 + CWT( JQ )*YLMC( IQ, JQ )*Z1( JQ )
+               CWT_JQ = CWT( JQ )
+               YLMC_IQ = YLMC( IQ, JQ )
+               PSUM0  = PSUM0 + CWT_JQ*YLMC_IQ*Z0( JQ )
+               PSUM1  = PSUM1 + CWT_JQ*YLMC_IQ*Z1( JQ )
    50       CONTINUE
 
             PSI0( IQ + 1 ) = 0.5*GL( IQ ) * PSUM0
@@ -6323,12 +6406,15 @@ c
             SUM0   = 0.0
             SUM1   = 0.0
             DO 70 IQ = MAZIM, NSTR - 1
-               SUM0  = SUM0 + YLMU( IQ, IU ) * PSI0( IQ + 1 )
-               SUM1  = SUM1 + YLMU( IQ, IU ) * PSI1( IQ + 1 )
+               YLMU_IQ = YLMU( IQ, IU )
+               PSI0_IQ = PSI0( IQ + 1 )
+               PSI1_IQ = PSI1( IQ + 1 )
+               SUM0  = SUM0 + YLMU_IQ * PSI0_IQ
+               SUM1  = SUM1 + YLMU_IQ * PSI1_IQ
    70       CONTINUE
 
-            Z0U( IU ) = SUM0 + ( 1. - OPRIM ) * XR0
-            Z1U( IU ) = SUM1 + ( 1. - OPRIM ) * XR1
+            Z0U( IU ) = SUM0 + XR0S
+            Z1U( IU ) = SUM1 + XR1S
 
    80    CONTINUE
 
@@ -6410,10 +6496,13 @@ c     .. Array Arguments ..
 c     ..      
 c     .. Local Scalars ..
 
-      INTEGER   IQ, KQ, JOB
+      INTEGER   IQ, K, KQ, JOB
 
-      REAL*8    LEFT_MAT(NN,NN),  ZZP(NN), ZZM(NN) 
-      REAL*8    SUM, SUM1, SUM2, ZJM(NN), ZJP(NN), FACTOR
+      REAL*8    LEFT_MAT(NN,NN), ZZP(NN), ZZM(NN) 
+      REAL*8    SUM, SUM1, SUM2, ZJM(NN), ZJP(NN), FACTOR, CMU_INV,
+     &          UMU0_INV, UMU0_INV2, GL_K, YLM0_K, YLMC_KIQ, YLMC_KIQN,
+     &          ZJM_KQ, ZZM_KQ, APB_IQKQ, AMB_IQKQ, CMU_IQ, UMU0_LOC,
+     &          ZJM_IQ
       INTEGER   INFO
 
 c     ..
@@ -6426,48 +6515,59 @@ c     ** Pass argument, avoid contamination to array
 
 c      LEFT_MAT = ARRAY*UMU0**2
       LEFT_MAT = REAL(ARRAY,8)
+      UMU0_INV = 1d0 / REAL(UMU0,8)
+      UMU0_INV2 = UMU0_INV * UMU0_INV
+      FACTOR = ( 2d0-REAL(DELM0,8) )*REAL(FBEAM,8)/( 4d0*REAL(PI,8) )
 
       DO 50 IQ = 1, NN
 
 c     .. Left Matrix
 
 c         LEFT_MAT(IQ,IQ) = LEFT_MAT(IQ,IQ) - 1.
-         LEFT_MAT(IQ,IQ) = LEFT_MAT(IQ,IQ) - 1d0/REAL(UMU0,8)**2
+         LEFT_MAT(IQ,IQ) = LEFT_MAT(IQ,IQ) - UMU0_INV2
 
 c     .. Right Vector
        
          SUM1 = 0d0
          SUM2 = 0d0
          DO 60 K = MAZIM, 2*NN-1
-            SUM1  = SUM1 +
-     &        REAL(GL(K),8)*REAL(YLMC(K,IQ),8)   *REAL(YLM0(K,1),8)
-            SUM2  = SUM2 + 
-     &        REAL(GL(K),8)*REAL(YLMC(K,IQ+NN),8)*REAL(YLM0(K,1),8)
+            GL_K = REAL(GL(K),8)
+            YLM0_K = REAL(YLM0(K,1),8)
+            YLMC_KIQ = REAL(YLMC(K,IQ),8)
+            YLMC_KIQN = REAL(YLMC(K,IQ+NN),8)
+            SUM1  = SUM1 + GL_K * YLMC_KIQ * YLM0_K
+            SUM2  = SUM2 + GL_K * YLMC_KIQN * YLM0_K
    60    CONTINUE
 
-         FACTOR = ( 2d0-REAL(DELM0,8) )*REAL(FBEAM,8)/( 4d0*REAL(PI,8) )
-
-         ZJP(IQ) = FACTOR*(SUM1+SUM2)/REAL(CMU(IQ),8)
-         ZJM(IQ) = FACTOR*(SUM1-SUM2)/REAL(CMU(IQ),8)
+         CMU_IQ = REAL(CMU(IQ),8)
+         CMU_INV = 1d0 / CMU_IQ
+         ZJP(IQ) = FACTOR*(SUM1+SUM2)*CMU_INV
+         ZJM(IQ) = FACTOR*(SUM1-SUM2)*CMU_INV
 
    50 CONTINUE
+
          
 
       DO 70 IQ = 1, NN
          SUM = 0d0
-         DO 80 KQ = 1, NN
-            SUM = SUM + REAL(APB(IQ,KQ),8)*ZJM(KQ)
+        DO 80 KQ = 1, NN
+           APB_IQKQ = REAL(APB(IQ,KQ),8)
+           ZJM_KQ = ZJM(KQ)
+           SUM = SUM + APB_IQKQ*ZJM_KQ
    80    CONTINUE
 c         ZZM(IQ) = -SUM*UMU0**2- ZJP(IQ)*UMU0
-         ZZM(IQ) = -SUM - ZJP(IQ)/REAL(UMU0,8)
+         ZZM(IQ) = -SUM - ZJP(IQ)*UMU0_INV
 
    70 CONTINUE
+
 
 c                  ** Find L-U (lower/upper triangular) decomposition
 c                  ** of ARRAY and see if it is nearly singular
 c                  ** (NOTE: LEFT_MAT is altered)
 
+
       CALL DGETRF( NN, NN, LEFT_MAT, NN, IPVT, INFO )
+
 
 
       IF(INFO .NE. 0 ) THEN
@@ -6485,12 +6585,17 @@ c                ** ZJ;  return solution(s) in ZJ
          PRINT*, 'BEAM SOLUTION (DGETRS) FAIL'
       END IF
 
+
+        UMU0_LOC = REAL(UMU0,8)
         DO 90 IQ = 1, NN
           SUM = 0.
           DO 100 KQ = 1,NN
-            SUM = SUM + AMB(IQ,KQ)*ZZM(KQ)
+            AMB_IQKQ = AMB(IQ,KQ)
+            ZZM_KQ = ZZM(KQ)
+            SUM = SUM + AMB_IQKQ*ZZM_KQ
   100     CONTINUE 
-          ZZP(IQ) = ( SUM + ZJM(IQ) )*UMU0   
+          ZJM_IQ = ZJM(IQ)
+          ZZP(IQ) = ( SUM + ZJM_IQ )*UMU0_LOC
    90   CONTINUE
 
         DO 110 IQ = 1,NN
@@ -6499,6 +6604,7 @@ c                ** ZJ;  return solution(s) in ZJ
            ZZ( IQ+NN )  = ZJ( IQ )
            ZZ( NN+1-IQ) = ZJ( IQ + NN )
   110   CONTINUE
+
 
       END
 c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -6541,11 +6647,11 @@ c
 c   I N T E R N A L    V A R I A B L E S:
 c
 c       ARRAY  :  Coefficient matrix in left-hand side of EQ. SS(16)
-c       IPVT   :  Integer vector of pivot indices required by LINPACK
-c       WK     :  Scratch array required by LINPACK
+c       IPVT   :  Integer vector of pivot indices required by LAPACK
+c       WK     :  Scratch array required by LAPACK
 c
 c   Called by- DISORT
-c   Calls- SGECO, ERRMSG, SGESL
+c   Calls- SGETRF, ERRMSG, SGETRS
 c +-------------------------------------------------------------------+
 
 c     .. Scalar Arguments ..
@@ -6562,14 +6668,18 @@ c     .. Array Arguments ..
 c     ..
 c     .. Local Scalars ..
 
-      INTEGER   IQ, JQ
-      REAL      RCOND
+      INTEGER   IQ, JQ, INFO
+      REAL      OM1, XR0S, XR1S
 c     ..
 c     .. External Subroutines ..
 
-      EXTERNAL  ERRMSG, SGECO, SGESL
+      EXTERNAL  ERRMSG, SGETRF, SGETRS
 c     ..
 
+
+      OM1  = 1.0 - OPRIM
+      XR0S = OM1*XR0
+      XR1S = OM1*XR1
 
       DO 20 IQ = 1, NSTR
 
@@ -6579,25 +6689,22 @@ c     ..
 
          ARRAY( IQ, IQ ) = 1.0 + ARRAY( IQ, IQ )
 
-         Z1( IQ ) = ( 1. - OPRIM ) * XR1
+         Z1( IQ ) = XR1S
 
    20 CONTINUE
 c                       ** Solve linear equations: same as in UPBEAM,
 c                       ** except ZJ replaced by Z1 and Z0
-      RCOND  = 0.0
+      CALL SGETRF( NSTR, NSTR, ARRAY, NSTR, IPVT, INFO )
+      IF( INFO .NE. 0 )
+     &    CALL ERRMSG('UPISOT--SGETRF matrix near singular',.FALSE.)
 
-      CALL SGECO( ARRAY, NSTR, NSTR, IPVT, RCOND, WK )
-
-      IF( 1.0 + RCOND.EQ.1.0 )
-     &    CALL ERRMSG('UPISOT--SGECO says matrix near singular',.False.)
-
-      CALL SGESL( ARRAY, NSTR, NSTR, IPVT, Z1, 0 )
+      CALL SGETRS( 'N', NSTR, 1, ARRAY, NSTR, IPVT, Z1, NSTR, INFO )
 
       DO 30 IQ = 1, NSTR
-         Z0( IQ ) = ( 1. - OPRIM ) * XR0 + CMU( IQ ) * Z1( IQ )
+         Z0( IQ ) = XR0S + CMU( IQ ) * Z1( IQ )
    30 CONTINUE
 
-      CALL SGESL( ARRAY, NSTR, NSTR, IPVT, Z0, 0 )
+      CALL SGETRS( 'N', NSTR, 1, ARRAY, NSTR, IPVT, Z0, NSTR, INFO )
 
       DO 40 IQ = 1, NN
          ZPLK0( IQ + NN ) = Z0( IQ )
@@ -6736,10 +6843,16 @@ c     ..
 c     .. Local Scalars ..
 
       LOGICAL   NEGUMU
-      INTEGER   IQ, IU, JQ, LC, LU, LYREND, LYRSTR, LYU
+      INTEGER   IQ, IU, JQ, LC, LU, LYREND, LYRSTR, LYU, IQ_MIR
       REAL      BNDDFU, BNDDIR, BNDINT, DENOM, DFUINT, DTAU, DTAU1,
-     &          DTAU2, EXP0, EXP1, EXP2, EXPN, F0N, F1N, FACT, PALINT,
-     &          PLKINT, SGN
+     &          DTAU2, EXP0, EXP1, EXP2, EXPN
+      REAL      F0N, F1N, FACT, PALINT, PLKINT, SGN, UMU_INV, UMU_VAL,
+     &          RMU_IQ, CMU_IQ
+      REAL      CWT_IQ, KK_IQ, KK_NEG, UMU0L_LYU, UMU0L_LC, EXPBEA_LYUM,
+     &          EXPBEA_LYU
+      REAL      DTAU_LYU, TAUCPR_LCM, TAUCPR_LC, TAUCPR_LYUM, TAUCPR_LYU
+      REAL      UTAUPR_LU
+      REAL      GU_IQ, Z0U_IU, Z1U_IU
 c     ..
 c     .. Intrinsic Functions ..
 
@@ -6788,7 +6901,9 @@ c                              ** intensities are desired
 
             IF( LYRCUT .AND. LYU.GT.NCUT ) GO TO  150
 
-            NEGUMU = UMU( IU ) .LT. 0.0
+            UMU_VAL = UMU( IU )
+            UMU_INV = 1.0 / UMU_VAL
+            NEGUMU = UMU_VAL .LT. 0.0
 
             IF( NEGUMU ) THEN
 
@@ -6809,11 +6924,14 @@ c                          ** integrate from bottom to LYU+1 in S1(9)
             PALINT = 0.0
             PLKINT = 0.0
 
+            UTAUPR_LU = UTAUPR( LU )
             DO 60 LC = LYRSTR, LYREND
 
                DTAU = DTAUCP( LC )
-               EXP1 = EXP( ( UTAUPR(LU) - TAUCPR(LC-1) ) / UMU( IU ) )
-               EXP2 = EXP( ( UTAUPR(LU) - TAUCPR(LC)   ) / UMU( IU ) )
+               TAUCPR_LCM = TAUCPR( LC-1 )
+               TAUCPR_LC = TAUCPR( LC )
+               EXP1 = EXP( ( UTAUPR_LU - TAUCPR_LCM ) * UMU_INV )
+               EXP2 = EXP( ( UTAUPR_LU - TAUCPR_LC  ) * UMU_INV )
 
                IF( PLANK .AND. MAZIM.EQ.0 ) THEN
 
@@ -6821,21 +6939,24 @@ c                          ** Eqs. STWL(36b,c, 37b,c)
 c
                   F0N = SGN * ( EXP1 - EXP2 )
 
-                  F1N = SGN * ( ( TAUCPR( LC-1 ) + UMU( IU ) ) * EXP1 -
-     &                          ( TAUCPR( LC )   + UMU( IU ) ) * EXP2 )
+                  F1N = SGN * ( ( TAUCPR_LCM + UMU_VAL ) * EXP1 -
+     &                          ( TAUCPR_LC  + UMU_VAL ) * EXP2 )
 
-                  PLKINT = PLKINT + Z0U( IU,LC )*F0N + Z1U( IU,LC )*F1N
+                  Z0U_IU = Z0U( IU, LC )
+                  Z1U_IU = Z1U( IU, LC )
+                  PLKINT = PLKINT + Z0U_IU*F0N + Z1U_IU*F1N
 
                END IF
 
 
                IF( FBEAM.GT.0.0 ) THEN
 
-                  DENOM  = 1. + UMU( IU ) / UMU0L(LC)
+                  UMU0L_LC = UMU0L( LC )
+                  DENOM  = 1. + UMU_VAL / UMU0L_LC
 
                   IF( ABS( DENOM ).LT.0.0001 ) THEN
 c                                                   ** L'Hospital limit
-                     EXPN   = ( DTAU / UMU0L(LC) )*EXP0
+                     EXPN   = ( DTAU / UMU0L_LC )*EXP0
 
                   ELSE
 
@@ -6852,11 +6973,11 @@ c                                                   ** KK is negative
                DO 40 IQ = 1, NN
 
                   WK( IQ ) = EXP( KK( IQ,LC )*DTAU )
-                  DENOM  = 1.0 + UMU( IU )*KK( IQ, LC )
+                  DENOM  = 1.0 + UMU_VAL*KK( IQ, LC )
 
                   IF( ABS( DENOM ).LT.0.0001 ) THEN
 c                                                   ** L'Hospital limit
-                     EXPN   = DTAU / UMU( IU )*EXP2
+                     EXPN   = DTAU * UMU_INV * EXP2
 
                   ELSE
 
@@ -6871,11 +6992,11 @@ c                                                   ** L'Hospital limit
 c                                                   ** KK is positive
                DO 50 IQ = NN + 1, NSTR
 
-                  DENOM  = 1.0 + UMU( IU )*KK( IQ, LC )
+                  DENOM  = 1.0 + UMU_VAL*KK( IQ, LC )
 
                   IF( ABS( DENOM ).LT.0.0001 ) THEN
 c                                                   ** L'Hospital limit
-                     EXPN  = -DTAU / UMU( IU )*EXP1
+                     EXPN  = -DTAU * UMU_INV * EXP1
 
                   ELSE
 
@@ -6892,30 +7013,35 @@ c                                                   ** L'Hospital limit
 c                           ** Calculate contribution from user
 c                           ** output level to next computational level
 
-            DTAU1  = UTAUPR( LU ) - TAUCPR( LYU - 1 )
-            DTAU2  = UTAUPR( LU ) - TAUCPR( LYU )
+            TAUCPR_LYUM = TAUCPR( LYU - 1 )
+            TAUCPR_LYU = TAUCPR( LYU )
+            DTAU1  = UTAUPR_LU - TAUCPR_LYUM
+            DTAU2  = UTAUPR_LU - TAUCPR_LYU
 
             IF( ABS( DTAU1 ).LT.1.E-6 .AND. NEGUMU ) GO TO  90
             IF( ABS( DTAU2 ).LT.1.E-6 .AND. (.NOT.NEGUMU ) ) GO TO  90
 
-            IF( NEGUMU )      EXP1  = EXP( DTAU1/UMU( IU ) )
-            IF( .NOT.NEGUMU ) EXP2  = EXP( DTAU2/UMU( IU ) )
+            IF( NEGUMU )      EXP1  = EXP( DTAU1 * UMU_INV )
+            IF( .NOT.NEGUMU ) EXP2  = EXP( DTAU2 * UMU_INV )
 
             IF( FBEAM.GT.0.0 ) THEN
 
-               DENOM  = 1. + UMU( IU ) / UMU0L(LYU)
+               UMU0L_LYU = UMU0L(LYU)
+               EXPBEA_LYU = EXPBEA(LYU)
+               EXPBEA_LYUM = EXPBEA(LYU-1)
+               DENOM  = 1. + UMU_VAL / UMU0L_LYU
 
                IF( ABS( DENOM ).LT.0.0001 ) THEN
 
-                  EXPN   = ( DTAU1 / UMU0L(LYU) )*EXP0
+                  EXPN   = ( DTAU1 / UMU0L_LYU )*EXP0
 
                ELSE IF( NEGUMU ) THEN
 
-                  EXPN  = ( EXP0 - EXPBEA( LYU-1 )*EXP1 ) / DENOM
+                  EXPN  = ( EXP0 - EXPBEA_LYUM*EXP1 ) / DENOM
 
                ELSE
 
-                  EXPN  = ( EXP0 - EXPBEA( LYU )*EXP2 ) / DENOM
+                  EXPN  = ( EXP0 - EXPBEA_LYU*EXP2 ) / DENOM
 
                END IF
 
@@ -6924,54 +7050,61 @@ c                           ** output level to next computational level
             END IF
 
 c                                                   ** KK is negative
-            DTAU  = DTAUCP( LYU )
+            DTAU_LYU = DTAUCP( LYU )
+            DTAU  = DTAU_LYU
 
             DO 70 IQ = 1, NN
 
-               DENOM  = 1. + UMU( IU )*KK( IQ, LYU )
+               KK_IQ = KK( IQ, LYU )
+               KK_NEG = -KK_IQ
+               DENOM  = 1. + UMU_VAL*KK_IQ
 
                IF( ABS( DENOM ).LT.0.0001 ) THEN
 
-                  EXPN = -DTAU2 / UMU( IU )*EXP2
+                  EXPN = -DTAU2 * UMU_INV * EXP2
 
                ELSE IF( NEGUMU ) THEN
 
-                  EXPN = ( EXP( -KK( IQ,LYU ) * DTAU2 ) -
-     &                     EXP(  KK( IQ,LYU ) * DTAU  ) * EXP1 ) / DENOM
+                  EXPN = ( EXP( KK_NEG * DTAU2 ) -
+     &                     EXP(  KK_IQ * DTAU  ) * EXP1 ) / DENOM
 
                ELSE
 
-                  EXPN = ( EXP( -KK( IQ,LYU ) * DTAU2 ) - EXP2 ) / DENOM
+                  EXPN = ( EXP( KK_NEG * DTAU2 ) - EXP2 ) / DENOM
 
                END IF
 
-               PALINT = PALINT + GU( IU, IQ, LYU )*EXPN
+               GU_IQ = GU( IU, IQ, LYU )
+               PALINT = PALINT + GU_IQ*EXPN
 
    70       CONTINUE
 
 c                                                   ** KK is positive
             DO 80 IQ = NN + 1, NSTR
 
-               DENOM  = 1. + UMU( IU )*KK( IQ, LYU )
+               KK_IQ = KK( IQ, LYU )
+               KK_NEG = -KK_IQ
+               DENOM  = 1. + UMU_VAL*KK_IQ
 
                IF( ABS( DENOM ).LT.0.0001 ) THEN
 
-                  EXPN   = -DTAU1 / UMU( IU )*EXP1
+                  EXPN   = -DTAU1 * UMU_INV * EXP1
 
                ELSE IF( NEGUMU ) THEN
 
-                  EXPN = ( EXP( -KK( IQ,LYU ) * DTAU1 ) - EXP1 ) / DENOM
+                  EXPN = ( EXP( KK_NEG * DTAU1 ) - EXP1 ) / DENOM
 
                ELSE
 
-                  EXPN = ( EXP( -KK( IQ,LYU ) * DTAU1 ) -
-     &                     EXP( -KK( IQ,LYU ) * DTAU  ) * EXP2 ) / DENOM
+                  EXPN = ( EXP( KK_NEG * DTAU1 ) -
+     &                     EXP( KK_NEG * DTAU  ) * EXP2 ) / DENOM
 
                END IF
 
-               PALINT = PALINT + GU( IU, IQ, LYU )*EXPN
+               GU_IQ = GU( IU, IQ, LYU )
+               PALINT = PALINT + GU_IQ*EXPN
 
-   80       CONTINUE
+  80       CONTINUE
 
 
             IF( PLANK .AND. MAZIM.EQ.0 ) THEN
@@ -6984,17 +7117,17 @@ c                            ** directions
                IF( NEGUMU ) THEN
 
                   EXPN  = EXP1
-                  FACT  = TAUCPR( LYU - 1 ) + UMU( IU )
+                  FACT  = TAUCPR( LYU - 1 ) + UMU_VAL
 
                ELSE
 
                   EXPN  = EXP2
-                  FACT  = TAUCPR( LYU ) + UMU( IU )
+                  FACT  = TAUCPR( LYU ) + UMU_VAL
 
                END IF
 
                F0N  = 1. - EXPN
-               F1N  = UTAUPR( LU ) + UMU( IU ) - FACT * EXPN
+               F1N  = UTAUPR( LU ) + UMU_VAL - FACT * EXPN
 
                PLKINT = PLKINT + Z0U( IU, LYU )*F0N + Z1U( IU, LYU )*F1N
 
@@ -7009,7 +7142,7 @@ c                            ** component for isotropic surface
 
             IF( NEGUMU .AND. MAZIM.EQ.0 ) THEN
 
-               BNDINT = (FISOT + TPLANK) * EXP( UTAUPR(LU ) / UMU(IU) )
+               BNDINT = (FISOT + TPLANK) * EXP( UTAUPR(LU ) * UMU_INV )
 
 
             ELSE IF( .NOT.NEGUMU ) THEN
@@ -7039,8 +7172,12 @@ c                            ** component for isotropic surface
 
                   DFUINT = DFUINT + DELM0 * ( ZPLK0( IQ, NLYR ) +
      &                              ZPLK1( IQ,NLYR ) *TAUCPR( NLYR ) )
-                  BNDDFU = BNDDFU + ( 1.+DELM0 ) * RMU(IU,NN+1-IQ)
-     &                            * CMU(NN+1-IQ) * CWT(NN+1-IQ)* DFUINT
+                  IQ_MIR = NN + 1 - IQ
+                  RMU_IQ = RMU(IU, IQ_MIR)
+                  CMU_IQ = CMU(IQ_MIR)
+                  CWT_IQ = CWT(IQ_MIR)
+                  BNDDFU = BNDDFU + ( 1.+DELM0 ) * RMU_IQ
+     &                            * CMU_IQ * CWT_IQ * DFUINT
   130          CONTINUE
 
                BNDDIR = 0.0
@@ -7048,7 +7185,7 @@ c                            ** component for isotropic surface
      &                               / PI*RMU( IU, 0 ) * EXPBEA( NLYR )
 
                BNDINT = ( BNDDFU + BNDDIR + DELM0 * EMU(IU) * BPLANK )
-     &                  * EXP( (UTAUPR(LU)-TAUCPR(NLYR)) / UMU(IU) )
+     &                  * EXP( (UTAUPR(LU)-TAUCPR(NLYR)) * UMU_INV )
 
             END IF
 
@@ -7085,7 +7222,7 @@ c     .. Scalar Arguments ..
 c     ..
 c     .. Local Scalars ..
 
-      REAL      EXP1, X1, X2
+      REAL      EXP1, UMU1_INV, UMU2_INV, UMU3_INV, X1, X2, UMU1UMU2
 c     ..
 c     .. Intrinsic Functions ..
 
@@ -7093,35 +7230,40 @@ c     .. Intrinsic Functions ..
 c     ..
 
 
-      X1     = 1. / UMU1 - 1. / UMU2
-      X2     = 1. / UMU1 - 1. / UMU3
+      UMU1_INV = 1. / UMU1
+      UMU2_INV = 1. / UMU2
+      UMU3_INV = 1. / UMU3
+      UMU1UMU2 = UMU1 * UMU2
+
+      X1     = UMU1_INV - UMU2_INV
+      X2     = UMU1_INV - UMU3_INV
 
       EXP1 = EXP( -TAU/UMU1 )
 
       IF( UMU2.EQ.UMU3 .AND. UMU1.EQ.UMU2 ) THEN
 
-         XIFUNC = TAU*TAU * EXP1 / ( 2.*UMU1*UMU2 )
+         XIFUNC = TAU*TAU * EXP1 / ( 2.*UMU1UMU2 )
 
       ELSE IF( UMU2.EQ.UMU3 .AND. UMU1.NE.UMU2 ) THEN
 
          XIFUNC = ( ( TAU - 1./X1 ) * EXP( -TAU/UMU2 ) + EXP1 / X1 )
-     &            / ( X1*UMU1*UMU2 )
+     &            / ( X1*UMU1UMU2 )
 
       ELSE IF( UMU2.NE.UMU3 .AND. UMU1.EQ.UMU2 ) THEN
 
          XIFUNC = ( ( EXP( -TAU/UMU3 ) - EXP1 ) / X2 - TAU * EXP1 )
-     &            / ( X2*UMU1*UMU2 )
+     &            / ( X2*UMU1UMU2 )
 
       ELSE IF( UMU2.NE.UMU3 .AND. UMU1.EQ.UMU3 ) THEN
 
          XIFUNC = ( ( EXP( -TAU/UMU2 ) - EXP1 ) / X1 - TAU * EXP1 )
-     &            / ( X1*UMU1*UMU2 )
+     &            / ( X1*UMU1UMU2 )
 
       ELSE
 
          XIFUNC = ( ( EXP( -TAU/UMU3 ) - EXP1 ) / X2 -
      &            (   EXP( -TAU/UMU2 ) - EXP1 ) / X1 ) /
-     &            ( X2*UMU1*UMU2 )
+     &            ( X2*UMU1UMU2 )
 
       END IF
 
@@ -7613,7 +7755,7 @@ c     ..
 c     .. Local Scalars ..
 
       INTEGER   I, L
-      REAL      TMP1, TMP2
+      REAL      A, INVL, INV_TMP1, MUVAL, TMP1, TMP2
 c     ..
 
 
@@ -7628,9 +7770,12 @@ c                             ** Legendre polynomials
 
          DO 40 L = 2, TWONM1
 
+            A    = 2*L - 1
+            INVL = 1.0 / L
             DO 30 I = 1, NMU
-               YLM( L, I ) = ( ( 2*L - 1 )*MU( I )*YLM( L-1, I ) -
-     &                         ( L - 1 )*YLM( L-2, I ) ) / L
+               MUVAL = MU( I )
+               YLM( L, I ) = ( A*MUVAL*YLM( L-1, I ) -
+     &                         ( L - 1 )*YLM( L-2, I ) )*INVL
    30       CONTINUE
 
    40    CONTINUE
@@ -7659,10 +7804,13 @@ c                                   ** STWL(58a)
 
             TMP1  = SQT( L - M )*SQT( L + M )
             TMP2  = SQT( L - M - 1 )*SQT( L + M - 1 )
+            INV_TMP1 = 1.0 / TMP1
+            A     = 2*L - 1
 
             DO 60 I = 1, NMU
-               YLM( L, I ) = ( ( 2*L - 1 )*MU( I )*YLM( L-1, I ) -
-     &                         TMP2*YLM( L-2, I ) ) / TMP1
+               MUVAL = MU( I )
+               YLM( L, I ) = ( A*MUVAL*YLM( L-1, I ) -
+     &                         TMP2*YLM( L-2, I ) )*INV_TMP1
    60       CONTINUE
 
    70    CONTINUE
@@ -7735,7 +7883,7 @@ c     ..
 c     .. Local Scalars ..
 
       INTEGER   L
-      REAL      TMP1, TMP2
+      REAL      A, INVL, INV_TMP1, TMP1, TMP2
 c     ..
 
 
@@ -7751,8 +7899,10 @@ c   20    CONTINUE
          DO 40 L = 2, TWONM1
 
 c            DO 30 I = 1, NMU
-               YLM( L) = ( ( 2*L - 1 )*MU*YLM( L-1 ) -
-     &                         ( L - 1 )*YLM( L-2 ) ) / L
+               A    = 2*L - 1
+               INVL = 1.0 / L
+               YLM( L ) = ( A*MU*YLM( L-1 ) -
+     &                      ( L - 1 )*YLM( L-2 ) )*INVL
 c   30       CONTINUE
 
    40    CONTINUE
@@ -7781,10 +7931,12 @@ c                                   ** STWL(58a)
 
             TMP1  = SQT( L - M )*SQT( L + M )
             TMP2  = SQT( L - M - 1 )*SQT( L + M - 1 )
+            INV_TMP1 = 1.0 / TMP1
+            A     = 2*L - 1
 
 c            DO 60 I = 1, NMU
-               YLM( L ) = ( ( 2*L - 1 )*MU*YLM( L-1 ) -
-     &                         TMP2*YLM( L-2 ) ) / TMP1
+               YLM( L ) = ( A*MU*YLM( L-1 ) -
+     &                      TMP2*YLM( L-2 ) )*INV_TMP1
 c   60       CONTINUE
 
    70    CONTINUE
@@ -7889,7 +8041,8 @@ c     .. Local Scalars ..
 
       INTEGER   I, K, M, MMAX, N, SMALLV
       REAL      C2, CONC, DEL, EPSIL, EX, EXM, HH, MV, OLDVAL, PI,
-     &          SIGDPI, SIGMA, VAL, VAL0, VCUT, VMAX, VSQ, X
+     &          SIGDPI, SIGMA, VAL, VAL0, VCUT, VMAX, VSQ
+      REAL      C, TERM, SUMT
 c     ..
 c     .. Local Arrays ..
 
@@ -7897,8 +8050,8 @@ c     .. Local Arrays ..
 c     ..
 c     .. External Functions ..
 
-      REAL      R1MACH
-      EXTERNAL  R1MACH
+      REAL      R1MACH, PLKFSAFE
+      EXTERNAL  R1MACH, PLKFSAFE
 c     ..
 c     .. External Subroutines ..
 
@@ -7909,20 +8062,11 @@ c     .. Intrinsic Functions ..
 !      INTRINSIC ABS, ASIN, EXP, LOG, MOD
       INTRINSIC ABS, ASIN, LOG, MOD
 c     ..
-c     .. Statement Functions ..
-
-      REAL      PLKF
-c     ..
       SAVE      PI, CONC, VMAX, EPSIL, SIGDPI
 
-      DATA      C2 / 1.438786 / , SIGMA / 5.67032E-8 / , VCUT / 1.5 / ,
+      DATA      C2 / 1.438786 /, SIGMA / 5.67032E-8 /, VCUT / 1.5 /,
      &          VCP / 10.25, 5.7, 3.9, 2.9, 2.3, 1.9, 0.0 /
       DATA      PI / 0.0 /
-
-c     .. Statement Function definitions ..
-
-      PLKF( X ) = X**3 / ( EXP( X ) - 1 )
-c     ..
 
       P( 1 ) = 0.0
       P( 2 ) = 0.0
@@ -7963,20 +8107,29 @@ c                          ** by iterating Simpson rule to convergence.
 
          HH     = V( 2 ) - V( 1 )
          OLDVAL = 0.0
-         VAL0   = PLKF( V( 1 ) ) + PLKF( V( 2 ) )
+         VAL0   = PLKFSAFE( V( 1 ) ) + PLKFSAFE( V( 2 ) )
 
          DO 20 N = 1, 10
 
             DEL  = HH / ( 2*N )
             VAL  = VAL0
+            C    = 0.0
 
             DO 10 K = 1, 2*N - 1
-               VAL  = VAL + 2*( 1 + MOD( K,2 ) )*
-     &                      PLKF( V( 1 ) + K*DEL )
+               TERM = 2*( 1 + MOD( K,2 ) )*
+     &                PLKFSAFE( V( 1 ) + K*DEL )
+               SUMT = TERM - C
+               SUMT = VAL + SUMT
+               C    = ( SUMT - VAL ) - ( TERM - C )
+               VAL  = SUMT
    10       CONTINUE
 
             VAL  = DEL / 3.*VAL
-            IF( ABS( ( VAL - OLDVAL ) / VAL ).LE.1.E-6 ) GO TO  30
+            IF( VAL .EQ. 0.0 ) THEN
+               IF( OLDVAL .EQ. 0.0 ) GO TO 30
+            ELSE
+               IF( ABS( ( VAL - OLDVAL ) / VAL ).LE.1.E-6 ) GO TO 30
+            ENDIF
             OLDVAL = VAL
 
    20    CONTINUE
@@ -8062,6 +8215,41 @@ c                                    ** WNUMLO and WNUMHI both large
       RETURN
       END
 c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+c ---------------------------------------------------------------------
+      REAL FUNCTION PLKFSAFE( X )
+
+c        Stable evaluation of x^3 / (exp(x) - 1) for large/small x
+
+c     .. Scalar Arguments ..
+      REAL      X
+c     ..
+c     .. Local Scalars ..
+      REAL      EX, DEN, XSQ
+c     ..
+c     .. Parameters ..
+      REAL      XSMALL
+      PARAMETER ( XSMALL = 1.0E-3 )
+c     ..
+c     .. Intrinsic Functions ..
+      INTRINSIC EXP
+c     ..
+
+      IF( X .LT. XSMALL ) THEN
+         XSQ = X*X
+         PLKFSAFE = XSQ*( 1.0 - 0.5*X + X*X/12.0 )
+      ELSE
+         EX = EXP( -X )
+         DEN = 1.0 - EX
+         IF( DEN .EQ. 0.0 ) THEN
+            PLKFSAFE = 0.0
+         ELSE
+            PLKFSAFE = X*X*X * EX / DEN
+         ENDIF
+      ENDIF
+
+      RETURN
+      END
 
 c ---------------------------------------------------------------------
       SUBROUTINE PRAVIN( UMU, NUMU, MXUMU, UTAU, NTAU, U0U )
@@ -8446,9 +8634,10 @@ c     ..
 c     .. Local Scalars ..
 
       INTEGER   ITER, K, LIM, MAXIT, NN, NP1
-      DOUBLE PRECISION CONA, PI, T
+      DOUBLE PRECISION CONA, HALF, PI, T
       DOUBLE PRECISION EN, NNP1, ONE, P, P2PRI, PM1, PM2, PPR, PROD,
-     &                 TMP, TOL, TWO, X, XI
+     &                 TMP, TOL, TWO, X, X2, XI
+      DOUBLE PRECISION DEN, ENPM2, P_OVER_PPR, PPR_INV, TWOX
 c     ..
 c     .. External Functions ..
 
@@ -8465,8 +8654,8 @@ c     .. Intrinsic Functions ..
 c     ..
       SAVE      PI, TOL
 
-      DATA      PI / 0.D0 / , MAXIT / 1000 / , ONE / 1.D0 / ,
-     &          TWO / 2.D0 /
+      DATA      PI / 0.D0 /, MAXIT / 1000 /, ONE / 1.D0 /,
+     &          TWO / 2.D0 /, HALF / 0.5D0 /
 
       IF( PI.EQ.0.0 ) THEN
          PI   = 2.D0*DASIN( 1.D0 )
@@ -8509,11 +8698,15 @@ c                                        ** Legendre polynomials
             PM1  = P
    20    CONTINUE
 c                                              ** Newton Method
-         TMP    = ONE / ( ONE - X**2 )
-         PPR    = EN*( PM2 - X*P )*TMP
-         P2PRI  = ( TWO*X*PPR - NNP1*P )*TMP
-         XI     = X - ( P / PPR )*( ONE +
-     &            ( P / PPR )*P2PRI / ( TWO*PPR ) )
+         X2       = X*X
+         TMP      = ONE / ( ONE - X2 )
+         PPR      = EN*( PM2 - X*P )*TMP
+         PPR_INV  = ONE / PPR
+         P_OVER_PPR = P*PPR_INV
+         TWOX     = TWO*X
+         P2PRI    = ( TWOX*PPR - NNP1*P )*TMP
+         XI       = X - P_OVER_PPR*( ONE +
+     &            P_OVER_PPR*P2PRI*( HALF*PPR_INV ) )
 
 c                                              ** Check for convergence
          IF( DABS( XI - X ).GT.TOL ) THEN
@@ -8528,7 +8721,9 @@ c                                              ** Check for convergence
 c                             ** Iteration finished--calculate weights,
 c                             ** abscissae for (-1,1)
          GMU( K ) = - REAL( X )
-         GWT( K ) = REAL( TWO / ( TMP*( EN*PM2 )**2 ) )
+         ENPM2  = EN*PM2
+         DEN    = TMP*( ENPM2*ENPM2 )
+         GWT( K ) = REAL( TWO / DEN )
          GMU( NP1 - K ) = -GMU( K )
          GWT( NP1 - K ) = GWT( K )
    30 CONTINUE
@@ -8548,8 +8743,8 @@ c                                    ** for rules of odd order
 
 c                                        ** Convert from (-1,1) to (0,1)
       DO 50 K = 1, M
-         GMU( K ) = 0.5*GMU( K ) + 0.5
-         GWT( K ) = 0.5*GWT( K )
+         GMU( K ) = REAL( HALF )*GMU( K ) + REAL( HALF )
+         GWT( K ) = REAL( HALF )*GWT( K )
    50 CONTINUE
 
 
@@ -9244,7 +9439,7 @@ c
 c       (most others documented in DISORT)
 c
 c   Called by- DISORT
-c   Calls- LEPOLY, ZEROIT, SGBCO, SOLEIG, TERPEV, SETMTX, SOLVE1,
+c   Calls- LEPOLY, ZEROIT, SGBTRF, SOLEIG, TERPEV, SETMTX, SOLVE1,
 c          ALTRIN, SPALTR, PRALTR
 c +-------------------------------------------------------------------+
 
@@ -9275,12 +9470,12 @@ c     ..
 c     .. Local Scalars ..
 
       LOGICAL   LAMBER, LYRCUT
-      INTEGER   IQ, IU, L, LC, MAZIM, NCD, NCOL, NCUT
+      INTEGER   IQ, IU, L, LC, MAZIM, NCD, NCOL, NCUT, INFO
       REAL      DELM0, FISOT, RCOND, SGN, SPHALB, SPHTRN
 c     ..
 c     .. External Subroutines ..
 
-      EXTERNAL  ALTRIN, ERRMSG, LEPOLY, PRALTR, SETMTX, SGBCO, SOLEIG,
+      EXTERNAL  ALTRIN, ERRMSG, LEPOLY, PRALTR, SETMTX, SGBTRF, SOLEIG,
      &          SOLVE1, SPALTR, TERPEV, ZEROIT
 c     ..
 c     .. Intrinsic Functions ..
@@ -9356,12 +9551,12 @@ c                      ** LINPACK routines)
      &             LAMBER, LYRCUT, MXCMU, NCOL, NCUT,
      &             NLYR, NN, NSTR, TAUCPR, WK )
 
-c                      ** LU-decompose the coeff. matrix (LINPACK)
+c                      ** LU-decompose the coeff. matrix (LAPACK)
 
       NCD  = 3*NN - 1
-      CALL SGBCO( CBAND, 9*NN-2, NCOL, NCD, NCD, IPVT, RCOND, Z )
-      IF( 1.0+RCOND .EQ. 1.0 )
-     &    CALL ERRMSG('ALBTRN--SGBCO says matrix near singular',.FALSE.)
+      CALL SGBTRF( NCOL, NCOL, NCD, NCD, CBAND, 9*NN-2, IPVT, INFO )
+      IF( INFO .NE. 0 )
+     &    CALL ERRMSG('ALBTRN--SGBTRF matrix near singular',.FALSE.)
 
 c                             ** First, illuminate from top; if only
 c                             ** one layer, this will give us everything
@@ -9691,7 +9886,7 @@ c     I N P U T      V A R I A B L E S:
 c
 c       CBAND    :  Left-hand side matrix of banded linear system
 c                   Eq. SC(5), scaled by Eq. SC(12); assumed already
-c                   in LU-decomposed form, ready for LINPACK solver
+c                   in LU-decomposed form, ready for LAPACK solver
 c
 c       IHOM     :  Direction of illumination flag (1, top; 2, bottom)
 c
@@ -9705,7 +9900,7 @@ c
 c    O U T P U T     V A R I A B L E S:
 c
 c       B        :  Right-hand side vector of Eq. SC(5) going into
-c                   SGBSL; returns as solution vector of Eq.
+c                   SGBTRS; returns as solution vector of Eq.
 c                   SC(12), constants of integration without
 c                   exponential term
 c
@@ -9718,7 +9913,7 @@ c       IPVT     :  INTEGER vector of pivot indices
 c       NCD      :  Number of diagonals below or above main diagonal
 c
 c   Called by- ALBTRN
-c   Calls- ZEROIT, SGBSL
+c   Calls- ZEROIT, SGBTRS
 c +-------------------------------------------------------------------+
 
 c     .. Scalar Arguments ..
@@ -9733,11 +9928,11 @@ c     .. Array Arguments ..
 c     ..
 c     .. Local Scalars ..
 
-      INTEGER   I, IPNT, IQ, LC, NCD
+      INTEGER   I, IPNT, IQ, LC, NCD, INFO
 c     ..
 c     .. External Subroutines ..
 
-      EXTERNAL  SGBSL, ZEROIT
+      EXTERNAL  SGBTRS, ZEROIT
 c     ..
 
 
@@ -9762,7 +9957,8 @@ c                             ** sources, remainder of B array is zero
 
 
       NCD  = 3*NN - 1
-      CALL SGBSL( CBAND, 9*NN-2, NCOL, NCD, NCD, IPVT, B, 0 )
+      CALL SGBTRS( 'N', NCOL, NCD, NCD, 1, CBAND, 9*NN-2, IPVT,
+     &              B, NSTR*NLYR, INFO )
 
       DO 40 LC = 1, NCUT
 
@@ -10546,7 +10742,9 @@ c     &     ABS(1.-UMU(2)).LT.1.E-5 ) ) THEN
 
       DO 180 MAZIM = 0, NAZ
        
-        WRITE(6,990,ADVANCE='NO') MAZIM
+        IF(DEBUG .EQV. .TRUE.) THEN
+           WRITE(6,990,ADVANCE='NO') MAZIM
+        ENDIF
         IF(MAZIM .EQ. NAZ) THEN
           WRITE(6,*) ""
         ENDIF
@@ -11090,7 +11288,6 @@ c     ..
       RETURN
       END
 c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 
 c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c $Rev: 55 $ $Date: 2014-12-31 12:16:59 -0500 (Wed, 31 Dec 2014) $
@@ -13245,6 +13442,40 @@ c     ..
 *
 *     End of DGEMM .
 *
+      END
+
+      SUBROUTINE SGETRF( M, N, A, LDA, IPIV, INFO )
+      INTEGER            M, N, LDA, INFO
+      INTEGER            IPIV( * )
+      REAL               A( LDA, * )
+
+      INFO = 0
+      IF( M.NE.N ) THEN
+         INFO = -1
+         RETURN
+      END IF
+
+      CALL SGEFA( A, LDA, N, IPIV, INFO )
+
+      RETURN
+      END
+
+      SUBROUTINE SGETRS( TRANS, N, NRHS, A, LDA, IPIV, B, LDB, INFO )
+      CHARACTER*(*)      TRANS
+      INTEGER            N, NRHS, LDA, LDB, INFO
+      INTEGER            IPIV( * )
+      REAL               A( LDA, * ), B( LDB, * )
+      INTEGER            J, JOB
+
+      INFO = 0
+      JOB = 0
+      IF( TRANS.NE.'N' .AND. TRANS.NE.'n' ) JOB = 1
+
+      DO 10 J = 1, NRHS
+         CALL SGESL( A, LDA, N, IPIV, B( 1, J ), JOB )
+   10 CONTINUE
+
+      RETURN
       END
 *> \brief \b DGER
 *

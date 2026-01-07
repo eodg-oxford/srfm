@@ -1403,10 +1403,6 @@ c       LSAME
       CHARACTER          CMACH
 *     ..
 *
-*     .. Scalar Arguments ..
-      DOUBLE PRECISION   A, B
-*     ..
-*
 * =====================================================================
 *
 *     .. Parameters ..
@@ -3350,6 +3346,12 @@ c       LSAME
       INTRINSIC          LOG, MAX, MOD, NINT, REAL
 *     ..
 *     .. Executable Statements ..
+      NH = 0
+      NS = 0
+      IF( ISPEC.LT.0 ) THEN
+         IF( LEN( NAME ).GT.0 .OR. LEN( OPTS ).GT.0 ) CONTINUE
+         IF( N+ILO+IHI+LWORK+ISPEC.EQ.-9999 ) CONTINUE
+      END IF
       IF( ( ISPEC.EQ.ISHFTS ) .OR. ( ISPEC.EQ.INWIN ) .OR.
      $    ( ISPEC.EQ.IACC22 ) ) THEN
 *
@@ -6100,6 +6102,7 @@ c       LSAME
 *
 *     Test the input parameters.
 *
+      KX = 1
       INFO = 0
       IF (.NOT.LSAME(UPLO,'U') .AND. .NOT.LSAME(UPLO,'L')) THEN
           INFO = 1
@@ -8587,6 +8590,7 @@ c       LSAME
 *
 *     Test the input parameters.
 *
+      KX = 1
       INFO = 0
       IF (.NOT.LSAME(UPLO,'U') .AND. .NOT.LSAME(UPLO,'L')) THEN
           INFO = 1

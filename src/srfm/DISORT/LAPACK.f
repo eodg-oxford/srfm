@@ -386,6 +386,40 @@
 *     End of DGEMM .
 *
       END
+
+      SUBROUTINE SGETRF( M, N, A, LDA, IPIV, INFO )
+      INTEGER            M, N, LDA, INFO
+      INTEGER            IPIV( * )
+      REAL               A( LDA, * )
+
+      INFO = 0
+      IF( M.NE.N ) THEN
+         INFO = -1
+         RETURN
+      END IF
+
+      CALL SGEFA( A, LDA, N, IPIV, INFO )
+
+      RETURN
+      END
+
+      SUBROUTINE SGETRS( TRANS, N, NRHS, A, LDA, IPIV, B, LDB, INFO )
+      CHARACTER*(*)      TRANS
+      INTEGER            N, NRHS, LDA, LDB, INFO
+      INTEGER            IPIV( * )
+      REAL               A( LDA, * ), B( LDB, * )
+      INTEGER            J, JOB
+
+      INFO = 0
+      JOB = 0
+      IF( TRANS.NE.'N' .AND. TRANS.NE.'n' ) JOB = 1
+
+      DO 10 J = 1, NRHS
+         CALL SGESL( A, LDA, N, IPIV, B( 1, J ), JOB )
+   10 CONTINUE
+
+      RETURN
+      END
 *> \brief \b DGER
 *
 *  =========== DOCUMENTATION ===========

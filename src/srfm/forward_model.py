@@ -913,12 +913,23 @@ class DISORT(Fwd_model):
         self.disort_input["albmed"] = np.zeros(self.disort_input["maxumu"])
         self.disort_input["trnmed"] = np.zeros(self.disort_input["maxumu"])
 
-    def run_disort(self, prec="double"):
-        """Calls function to run disort with required precision."""
+    def run_disort(self, prec="double", adjust_maxcmu=True):
+        """Calls function to run disort with required precision.
+        
+        Args:
+            prec (str): Determines Fortran precision to be used (single vs double).
+                Default is double precision calculation.
+            adjust_maxcmu (bool): If True, check the output intensity in the downward
+                direction. If that turns out negative and close to zero, it's likely
+                caused by roundoff errors in the Delta-M+ algorithm. Increasing the 
+                number of computational streams usually fixes it, so in case this 
+                happens, the number of streams is automatically adjusted and DISORT run
+                again.
+        """
         if prec == "double":
-            self.run_disort_double()
+            self.run_disort_double(adjust_maxcmu)
         elif prec == "single":
-            self.run_disort_single()
+            self.run_disort_single(adjust_maxcmu)
         else:
             raise ValueError("prec must be 'single' or 'double'.")
         return
@@ -941,10 +952,88 @@ class DISORT(Fwd_model):
         """
         self.wvl = wvl
 
-    def run_disort_single(self):
+    def run_disort_single(self,adjust_maxcmu):
         """Runs disort, single precision."""
-        if self.disort_fmt_passmark == True:
-            if self.disort_integrity_passmark == True:
+        # run DISORT
+        res = dms.disort(
+            maxcly=self.disort_input["maxcly"],
+            maxmom=self.disort_input["maxmom"],
+            maxcmu=self.disort_input["maxcmu"],
+            maxumu=self.disort_input["maxumu"],
+            maxphi=self.disort_input["maxphi"],
+            maxulv=self.disort_input["maxulv"],
+            usrang=self.disort_input["usrang"],
+            usrtau=self.disort_input["usrtau"],
+            ibcnd=self.disort_input["ibcnd"],
+            onlyfl=self.disort_input["onlyfl"],
+            prnt=self.disort_input["prnt"],
+            plank=self.disort_input["plank"],
+            lamber=self.disort_input["lamber"],
+            deltamplus=self.disort_input["deltamplus"],
+            do_pseudo_sphere=self.disort_input["do_pseudo_sphere"],
+            dtauc=self.disort_input["dtauc"],
+            ssalb=self.disort_input["ssalb"],
+            pmom=self.disort_input["pmom"],
+            temper=self.disort_input["temper"],
+            wvnmlo=self.disort_input["wvnmlo"],
+            wvnmhi=self.disort_input["wvnmhi"],
+            utau=self.disort_input["utau"],
+            umu0=self.disort_input["umu0"],
+            phi0=self.disort_input["phi0"],
+            umu=self.disort_input["umu"],
+            phi=self.disort_input["phi"],
+            fbeam=self.disort_input["fbeam"],
+            fisot=self.disort_input["fisot"],
+            albedo=self.disort_input["albedo"],
+            btemp=self.disort_input["btemp"],
+            ttemp=self.disort_input["ttemp"],
+            temis=self.disort_input["temis"],
+            earth_radius=self.disort_input["earth_radius"],
+            h_lyr=self.disort_input["h_lyr"],
+            rhoq=self.disort_input["rhoq"],
+            rhou=self.disort_input["rhou"],
+            rho_accurate=self.disort_input["rho_accurate"],
+            bemst=self.disort_input["bemst"],
+            emust=self.disort_input["emust"],
+            accur=self.disort_input["accur"],
+            header=self.disort_input["header"],
+            rfldir=self.disort_input["rfldir"],
+            rfldn=self.disort_input["rfldn"],
+            flup=self.disort_input["flup"],
+            dfdt=self.disort_input["dfdt"],
+            uavg=self.disort_input["uavg"],
+            uu=self.disort_input["uu"],
+            albmed=self.disort_input["albmed"],
+            trnmed=self.disort_input["trnmed"],
+        )
+        
+#        res[5][res[5]<1e-6] = 0
+        
+        if adjust_maxcmu:
+            # check if intensity is negative and potentially rerun DISORT
+            # use carefully as there may be cases where intensity is negative (see DISORT docs)
+            maxcmu_multiplier = 1
+            old_maxcmu = self.disort_input["maxcmu"] # save old maxcmu
+            old_maxmom = self.disort_input["maxmom"] # save old maxmom
+            while not np.all(res[5] / (self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]) > 0):
+                self.disort_input["maxcmu"] = old_maxcmu * 2 * maxcmu_multiplier
+                if self.disort_input["maxmom"] < self.disort_input["maxcmu"]:
+                    self.disort_input["maxmom"] = self.disort_input["maxcmu"]
+                self.disort_input["rhoq"] = np.zeros(
+                                        shape=(
+                                        int(self.disort_input["maxcmu"] / 2),
+                                        int(self.disort_input["maxcmu"] / 2 + 1),
+                                        int(self.disort_input["maxcmu"]),
+                                    )
+                                )
+                self.disort_input["rhou"] = np.zeros(
+                    shape=(
+                        self.disort_input["maxumu"],
+                        int(self.disort_input["maxcmu"] / 2 + 1),
+                        self.disort_input["maxcmu"],
+                    )
+                )
+                self.disort_input["bemst"] = np.zeros(shape=(int(self.disort_input["maxcmu"] / 2)))
                 res = dms.disort(
                     maxcly=self.disort_input["maxcly"],
                     maxmom=self.disort_input["maxmom"],
@@ -996,110 +1085,142 @@ class DISORT(Fwd_model):
                     albmed=self.disort_input["albmed"],
                     trnmed=self.disort_input["trnmed"],
                 )
-                self.status = "DISORT run completed."
-            else:
-                raise ValueError(
-                    "Disort input passmark is not True, run input integrity test first."
-                )
+                
+                maxcmu_multiplier += 1
+                if self.disort_input["maxcmu"] > 128:
+                    self.disort_input["maxcmu"] = old_maxcmu
+                    self.disort_input["maxmom"] = old_maxmom
+                    self.disort_input["rhoq"] = np.zeros(
+                                            shape=(
+                                            int(self.disort_input["maxcmu"] / 2),
+                                            int(self.disort_input["maxcmu"] / 2 + 1),
+                                            int(self.disort_input["maxcmu"]),
+                                        )
+                                    )
+                    self.disort_input["rhou"] = np.zeros(
+                        shape=(
+                            self.disort_input["maxumu"],
+                            int(self.disort_input["maxcmu"] / 2 + 1),
+                            self.disort_input["maxcmu"],
+                        )
+                    )
+                    self.disort_input["bemst"] = np.zeros(shape=(int(self.disort_input["maxcmu"] / 2)))
+                    print(f"maxcmu increased to {old_maxcmu * 2 * maxcmu_multiplier} and intensity still negative, skipping.")
+                    break
+
+        self.disort_out[self.wvnm] = {}
+        self.disort_out[self.wvnm]["wavenumber (cm-1)"] = self.wvnm
+        self.disort_out[self.wvnm]["wavelength (um)"] = self.wvl
+        self.disort_out[self.wvnm]["rfldir"] = res[0] / (
+            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
+        )
+        self.disort_out[self.wvnm]["rfldn"] = res[1] / (
+            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
+        )
+        self.disort_out[self.wvnm]["flup"] = res[2] / (
+            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
+        )
+        self.disort_out[self.wvnm]["dfdt"] = res[3] / (
+            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
+        )
+        self.disort_out[self.wvnm]["uavg"] = res[4] / (
+            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
+        )
+        self.disort_out[self.wvnm]["uu"] = res[5] / (
+            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
+        )
+        self.disort_out[self.wvnm]["albmed"] = res[6]
+        if len(res) == 8:
+            self.disort_out[self.wvnm]["trnmed"] = res[7]
         else:
-            raise ValueError(
-                "Disort format passmark is not True, run format test first."
-            )
+            self.disort_out[self.wvnm]["trnmed"] = 0
 
-        return res
+        self.status = "DISORT run completed."
 
-    def run_disort_double(self):
+        return
+
+    def run_disort_double(self, adjust_maxcmu):
         """Runs disort, double precision."""
-        if self.disort_fmt_passmark == True:
-            if self.disort_integrity_passmark == True:
-                res = dmd.disort(
-                    maxcly=self.disort_input["maxcly"],
-                    maxmom=self.disort_input["maxmom"],
-                    maxcmu=self.disort_input["maxcmu"],
-                    maxumu=self.disort_input["maxumu"],
-                    maxphi=self.disort_input["maxphi"],
-                    maxulv=self.disort_input["maxulv"],
-                    usrang=self.disort_input["usrang"],
-                    usrtau=self.disort_input["usrtau"],
-                    ibcnd=self.disort_input["ibcnd"],
-                    onlyfl=self.disort_input["onlyfl"],
-                    prnt=self.disort_input["prnt"],
-                    plank=self.disort_input["plank"],
-                    lamber=self.disort_input["lamber"],
-                    deltamplus=self.disort_input["deltamplus"],
-                    do_pseudo_sphere=self.disort_input["do_pseudo_sphere"],
-                    dtauc=self.disort_input["dtauc"],
-                    ssalb=self.disort_input["ssalb"],
-                    pmom=self.disort_input["pmom"],
-                    temper=self.disort_input["temper"],
-                    wvnmlo=self.disort_input["wvnmlo"],
-                    wvnmhi=self.disort_input["wvnmhi"],
-                    utau=self.disort_input["utau"],
-                    umu0=self.disort_input["umu0"],
-                    phi0=self.disort_input["phi0"],
-                    umu=self.disort_input["umu"],
-                    phi=self.disort_input["phi"],
-                    fbeam=self.disort_input["fbeam"],
-                    fisot=self.disort_input["fisot"],
-                    albedo=self.disort_input["albedo"],
-                    btemp=self.disort_input["btemp"],
-                    ttemp=self.disort_input["ttemp"],
-                    temis=self.disort_input["temis"],
-                    earth_radius=self.disort_input["earth_radius"],
-                    h_lyr=self.disort_input["h_lyr"],
-                    rhoq=self.disort_input["rhoq"],
-                    rhou=self.disort_input["rhou"],
-                    rho_accurate=self.disort_input["rho_accurate"],
-                    bemst=self.disort_input["bemst"],
-                    emust=self.disort_input["emust"],
-                    accur=self.disort_input["accur"],
-                    header=self.disort_input["header"],
-                    rfldir=self.disort_input["rfldir"],
-                    rfldn=self.disort_input["rfldn"],
-                    flup=self.disort_input["flup"],
-                    dfdt=self.disort_input["dfdt"],
-                    uavg=self.disort_input["uavg"],
-                    uu=self.disort_input["uu"],
-                    albmed=self.disort_input["albmed"],
-                    trnmed=self.disort_input["trnmed"],
-                )
+        res = dmd.disort(
+            maxcly=self.disort_input["maxcly"],
+            maxmom=self.disort_input["maxmom"],
+            maxcmu=self.disort_input["maxcmu"],
+            maxumu=self.disort_input["maxumu"],
+            maxphi=self.disort_input["maxphi"],
+            maxulv=self.disort_input["maxulv"],
+            usrang=self.disort_input["usrang"],
+            usrtau=self.disort_input["usrtau"],
+            ibcnd=self.disort_input["ibcnd"],
+            onlyfl=self.disort_input["onlyfl"],
+            prnt=self.disort_input["prnt"],
+            plank=self.disort_input["plank"],
+            lamber=self.disort_input["lamber"],
+            deltamplus=self.disort_input["deltamplus"],
+            do_pseudo_sphere=self.disort_input["do_pseudo_sphere"],
+            dtauc=self.disort_input["dtauc"],
+            ssalb=self.disort_input["ssalb"],
+            pmom=self.disort_input["pmom"],
+            temper=self.disort_input["temper"],
+            wvnmlo=self.disort_input["wvnmlo"],
+            wvnmhi=self.disort_input["wvnmhi"],
+            utau=self.disort_input["utau"],
+            umu0=self.disort_input["umu0"],
+            phi0=self.disort_input["phi0"],
+            umu=self.disort_input["umu"],
+            phi=self.disort_input["phi"],
+            fbeam=self.disort_input["fbeam"],
+            fisot=self.disort_input["fisot"],
+            albedo=self.disort_input["albedo"],
+            btemp=self.disort_input["btemp"],
+            ttemp=self.disort_input["ttemp"],
+            temis=self.disort_input["temis"],
+            earth_radius=self.disort_input["earth_radius"],
+            h_lyr=self.disort_input["h_lyr"],
+            rhoq=self.disort_input["rhoq"],
+            rhou=self.disort_input["rhou"],
+            rho_accurate=self.disort_input["rho_accurate"],
+            bemst=self.disort_input["bemst"],
+            emust=self.disort_input["emust"],
+            accur=self.disort_input["accur"],
+            header=self.disort_input["header"],
+            rfldir=self.disort_input["rfldir"],
+            rfldn=self.disort_input["rfldn"],
+            flup=self.disort_input["flup"],
+            dfdt=self.disort_input["dfdt"],
+            uavg=self.disort_input["uavg"],
+            uu=self.disort_input["uu"],
+            albmed=self.disort_input["albmed"],
+            trnmed=self.disort_input["trnmed"],
+        )
 
-                self.disort_out[self.wvnm] = {}
-                self.disort_out[self.wvnm]["wavenumber (cm-1)"] = self.wvnm
-                self.disort_out[self.wvnm]["wavelength (um)"] = self.wvl
-                self.disort_out[self.wvnm]["rfldir"] = res[0] / (
-                    self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-                )
-                self.disort_out[self.wvnm]["rfldn"] = res[1] / (
-                    self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-                )
-                self.disort_out[self.wvnm]["flup"] = res[2] / (
-                    self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-                )
-                self.disort_out[self.wvnm]["dfdt"] = res[3] / (
-                    self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-                )
-                self.disort_out[self.wvnm]["uavg"] = res[4] / (
-                    self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-                )
-                self.disort_out[self.wvnm]["uu"] = res[5] / (
-                    self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-                )
-                self.disort_out[self.wvnm]["albmed"] = res[6]
-                if len(res) == 8:
-                    self.disort_out[self.wvnm]["trnmed"] = res[7]
-                else:
-                    self.disort_out[self.wvnm]["trnmed"] = 0
-
-                self.status = "DISORT run completed."
-            else:
-                raise ValueError(
-                    "Disort input passmark is not True, run input integrity test first."
-                )
+        self.disort_out[self.wvnm] = {}
+        self.disort_out[self.wvnm]["wavenumber (cm-1)"] = self.wvnm
+        self.disort_out[self.wvnm]["wavelength (um)"] = self.wvl
+        self.disort_out[self.wvnm]["rfldir"] = res[0] / (
+            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
+        )
+        self.disort_out[self.wvnm]["rfldn"] = res[1] / (
+            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
+        )
+        self.disort_out[self.wvnm]["flup"] = res[2] / (
+            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
+        )
+        self.disort_out[self.wvnm]["dfdt"] = res[3] / (
+            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
+        )
+        self.disort_out[self.wvnm]["uavg"] = res[4] / (
+            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
+        )
+        self.disort_out[self.wvnm]["uu"] = res[5] / (
+            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
+        )
+        self.disort_out[self.wvnm]["albmed"] = res[6]
+        if len(res) == 8:
+            self.disort_out[self.wvnm]["trnmed"] = res[7]
         else:
-            raise ValueError(
-                "Disort format passmark is not True, run format test first."
-            )
+            self.disort_out[self.wvnm]["trnmed"] = 0
+
+        self.status = "DISORT run completed."
 
         return
 
@@ -1595,23 +1716,21 @@ class SRFM(Fwd_model):
         # check if model grid is regular
         a = np.diff(self.wvnm, n=2)  # calculate 2nd discrete difference
         a[a < 1e12] = 0  # remove small numbers (arising from computer precision limits)
-        assert (
-            np.all(a) == False
-        ), """Wavenumber grid is 
-        not regular."""  # check is all values in a are 0 (0 evaluates to False)
+        assert not np.all(a), """Wavenumber grid is not regular."""  # check is all values in a are 0 (0 evaluates to False)
 
         # determine resolution from model wavenumber grid
         num = len(self.wvnm)
         lo = self.wvnm.min()
         hi = self.wvnm.max()
-        res = np.round(
-            (hi - lo) / num, decimals=8
-        )  # this is inadvertedly introduces a limit
+        res = np.round((hi - lo) / num, decimals=8)  
+        # this is inadvertedly introduces a limit
         # on the minimum resolution used in the code as 1e-8 cm-1, which should be
         # enough though, and also this may not be the numerically most stable way to go
 
         # generate new grid for ils
-        new_x = np.linspace(ils_lo, ils_hi, int((ils_hi - ils_lo) / res + 1))
+        npts = int(np.floor((ils_hi - ils_lo) / res)) + 1 # expected number of points in the grid
+        new_x = ils_lo + np.arange(npts) * res
+#        new_x = np.linspace(ils_lo, ils_hi, int((ils_hi - ils_lo) / res + 1))
 
         # interpolate ils to new grid
         new_y = np.interp(new_x, ils_x, ils_y)
@@ -1622,19 +1741,34 @@ class SRFM(Fwd_model):
         # determine shape of uu from DISORT (basically a set of output spectra a
         # different optical dpeths, polar and azimuthal angles
         uu_shape = self.uu.shape  # tuple
+        nwv = uu_shape[0] # first dimension size
+        rest = uu_shape[1] * uu_shape[2] * uu_shape[3] # multiple of other dimension sizes for flattening,
+        # rest basically gives a number of stored spectra in the variable
+        
+        # reshape uu (view)
+        uu_flat = uu_unconvolved.reshape(nwv, rest)
+        out_flat = np.empty_like(uu_flat)
+        
+        # loop over columns (each column is a spectrum)
+        for j in range(rest):
+            out_flat[:,j] = convolve(uu_flat[:,j], new_y, mode="same") / norm
+        
+        # reshape back
+        self.uu = out_flat.reshape(uu_shape)
+        
+## OLD
+#        # determine all combinations of indices of uu
+#        combs = []
+#        for i in range(uu_shape[1]):
+#            for ii in range(uu_shape[2]):
+#                for iii in range(uu_shape[3]):
+#                    combs.append([i, ii, iii])
 
-        # determine all combinations of indices of uu
-        combs = []
-        for i in range(uu_shape[1]):
-            for ii in range(uu_shape[2]):
-                for iii in range(uu_shape[3]):
-                    combs.append([i, ii, iii])
-
-        # convolve spectra in a loop
-        for c in combs:
-            self.uu[:, c[0], c[1], c[2]] = (
-                convolve(uu_unconvolved[:, c[0], c[1], c[2]], new_y, mode="same") / norm
-            )
+#        # convolve spectra in a loop
+#        for c in combs:
+#            self.uu[:, c[0], c[1], c[2]] = (
+#                convolve(uu_unconvolved[:, c[0], c[1], c[2]], new_y, mode="same") / norm
+#            )
 
         return
 

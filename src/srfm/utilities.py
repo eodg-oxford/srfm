@@ -816,14 +816,17 @@ def calc_grids(lo, hi, res, units):
 
     # calculate the grids
     if units == "cm-1":
-        wvnm = np.linspace(lo, hi, int((hi - lo) / res + 1))
+        npts = int(np.floor((hi - lo) / res)) + 1 # expected number of points in the grid
+        wvnm = lo + np.arange(npts) * res
         wvls = (1 / wvnm) * 1e4
     elif units == "um":
-        wvls = np.linspace(lo, hi, int((hi - lo) / res + 1))[::-1]
+        npts = int(np.floor((hi - lo) / res)) + 1 # expected number of points in the grid
+        wvls = lo + np.arange(npts) * res
         wvnm = (1 / wvls) * 1e4
     elif units == "nm":
         lo, hi, res = lo * 1e-3, hi * 1e-3, res * 1e-3
-        wvls = np.linspace(lo, hi, int((hi - lo) / res + 1))[::-1]
+        npts = int(np.floor((hi - lo) / res)) + 1 # expected number of points in the grid
+        wvls = lo + np.arange(npts) * res
         wvnm = (1 / wvls) * 1e4
     return wvnm, wvls
 

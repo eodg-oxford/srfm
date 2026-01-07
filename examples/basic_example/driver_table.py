@@ -1,32 +1,26 @@
 import os
-#import sys
-#from pathlib import Path
-
-#DEFAULT_SRFM_DIR = Path("/home/k/knizek/Documents/srfm_main/src")
-#SRFM_HOME = Path(os.environ.get("SRFM_HOME", DEFAULT_SRFM_DIR))
-#if SRFM_HOME.is_dir() and str(SRFM_HOME) not in sys.path:
-#    sys.path.insert(0, str(SRFM_HOME))
-
 from srfm import *
 
 # Define common grids and helper constants first so they can be reused below
 ABS_PATH = os.getcwd()
 
-FIN_WVNMLO = 645.0
-FIN_WVNMHI = 1500.0
-FIN_RES = 0.25
+# Final grid to output results at, units cm-1
+FIN_WVNMLO = 920.0 # min
+FIN_WVNMHI = 925.0 # max
+FIN_RES = 0.25 # resolution
 
-SPC_RES = 0.05
-SPC_WVNMLO = FIN_WVNMLO - 3.0
-SPC_WVNMHI = FIN_WVNMHI + 3.0
-SPC_UNITS = "cm-1"
+# Computational grid
+SPC_RES = 0.05 # resolution
+SPC_WVNMLO = FIN_WVNMLO - 3.0 # min
+SPC_WVNMHI = FIN_WVNMHI + 3.0 # max
+SPC_UNITS = "cm-1" # units (cm-1, nm, um)
 
 inputs = {
-    ## Retrieval configuration
+    ## Retrieval configuration (optional)
     "fwd_model" : "SRFM", # which forward model to use, currently only SRFM
     "instrument" : "IASI", # which instrument are data from, currently only IASI
     
-    ## Measurement configuration
+    ## Measurement configuration (optional)
     "iasi_spc_fldr": "/network/group/aopp/eodg/RGG008_GRAINGER_IASIVOLC/knizek/raikoke_ssaccs/spectra_w_iasi_L2",
     "iasi_fl": "hlat_20190701_A.pkl",
     "px": 8,
@@ -68,7 +62,7 @@ inputs = {
         # and not capture the raw files as well.
     },
     
-    # inputs that mirror the standard RFM driver table
+    # inputs that mirror the standard RFM driver table https://eodg.atm.ox.ac.uk/RFM/index.html
     "driver_inputs":
         dict(
         # mandatory sections
@@ -89,29 +83,31 @@ inputs = {
     ),
 
     ## DISORT configuration
-    "fisot": 0.0,
-    "albedo": 0.0,
-    "temis": 1.0,
-    "earth_radius": 6371.0,
-    "nmom": 3,
-    "maxcmu": 16,
-    "maxumu": 1,
-    "maxphi": 1,
-    "maxulv": 1,
-    "usrang": True,
-    "usrtau": True,
-    "ibcnd": 0,
-    "onlyfl": False,
-    "prnt": [False, False, False, False, False],
-    "planck": True,
-    "lamber": True,
-    "deltamplus": True,
-    "do_pseudo_sphere": False,
-    "utau": [0.0],
-    "disort_precision": "double",
+    "fisot": 0.0, # isotropic illumination at the top of the atmosphere
+    "albedo": 0.0, # bottom boundary albedo
+    "temis": 1.0, # top boundary emissivity
+    "earth_radius": 6371.0, # Earth radius (km0
+    "nmom": 3, # number of phase function moments
+    "maxcmu": 16, # number of computational streams
+    "maxumu": 1, # number of user output polar angles
+    "maxphi": 1, # number of user azimuth angles
+    "maxulv": 1, # number of user optical depths
+    "usrang": True, # return output at user angles?
+    "usrtau": True, # return output at user optical depths?
+    "ibcnd": 0, # boundary conditions
+    "onlyfl": False, # return only fluxes?
+    "prnt": [False, False, False, False, False], # what gets prints to terminal
+    "planck": True, # include internal Planck function?
+    "lamber": True, # Lambertian reflector surface
+    "deltamplus": True, # Delta-M+ approximation to phase functions
+    "do_pseudo_sphere": False, # bent surface?
+    "utau": [0.0], # user optical depths for output
+    "disort_precision": "double", # Fortran precision
     "header": "NO HEADER", # header for terminal printing, "NO HEADER" == supressed.
 
     ## Scattering configuration
+    # scattering layers are named and are as keys in this dict, refer to docs for 
+    # specific parameters
     "scat_lyrs_inputs": {
         "Sulphuric_acid_1": {
             "name": "Sulphuric_acid_1",
@@ -119,27 +115,27 @@ inputs = {
             "upp_spc": SPC_WVNMHI,
             "res": 3.0,
             "spec_units": SPC_UNITS,
-            "rho": 1670.0,
-            "n": None,
-            "s": 1.75,
-            "s_a_den": None,
-            "v_den": None,
-            "dist_type": "log_normal",
-            "comp": "sulphuric acid",
-            "center_alt": 14.0,
-            "thick": 1.5,
-            "alt_upp": None,
-            "alt_low": None,
-            "radii": 181,
-            "eta": 1e-6,
-            "phase_quad_N": 200,
-            "phase_quad_type": "L",
-            "radii_quad_type": "T",
-            "leg_coeffs": True,
-            "leg_coeffs_type": "normalised",
-            "multiprocess": False,
-            "mass_loading": 0.2,
-            "r": 0.4
+            "rho": 1670.0, # scatterer density
+            "n": None, # number concentration
+            "s": 1.75, # size distribution spread
+            "s_a_den": None, # surface area density
+            "v_den": None, # volume density
+            "dist_type": "log_normal", # size distribution type
+            "comp": "sulphuric acid", # refractive index
+            "center_alt": 14.0, # scattering layer center altitude
+            "thick": 1.5, # scattering layer thickness
+            "alt_upp": None, # scattering layer upper boundary
+            "alt_low": None, # scattering layer lower boundary
+            "radii": 181, # number of particle radii in particle size distribution
+            "eta": 1e-6, # size distribution cut-off
+            "phase_quad_N": 200, # number of quadrature points in the phase function
+            "phase_quad_type": "L", # phase function quadrature type
+            "radii_quad_type": "T", # size distribution quadrature type
+            "leg_coeffs": True, # return Legendre expansion coefficients
+            "leg_coeffs_type": "normalised", # what type of coefficients
+            "multiprocess": False, # attempt to parallelize calculations, EXPERIMENTAL
+            "mass_loading": 0.2, # scatterer mass loading (g m-2)
+            "r": 0.4 # particle mean radius
         },
         "Ash_1": {
             "name": "Ash_1",

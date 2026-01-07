@@ -55,15 +55,9 @@ def run_srfm(inp):
     ########################################################################################
     # set final grid to interpolate to
     ########################################################################################
-    fin_grid = np.linspace(
-        inp.values["fin_wvnmlo"],
-        inp.values["fin_wvnmhi"],
-        int(
-            (inp.values["fin_wvnmhi"] - inp.values["fin_wvnmlo"])
-            / inp.values["fin_res"]
-            + 1
-        ),
-    )
+    # this seems to be the most robust way of generating a grid (both np.arange and linspace are prone to failing) 
+    npts = int(np.floor((inp.values["fin_wvnmhi"] - inp.values["fin_wvnmlo"]) / inp.values["fin_res"])) + 1 # expected number of points in the grid
+    fin_grid = inp.values["fin_wvnmlo"] + np.arange(npts) * inp.values["fin_res"]
     
     if "date" in inp.values:
         if not isintance(inp.values["date"], tuple) or not len(inp.values["date"]) == 3:
@@ -453,7 +447,10 @@ def run_srfm(inp):
         model_DISORT.set_wvnm_range(wvnm - 0.5, wvnm + 0.5)
 
         # set incoming beam of (solar) radiation
-        model_DISORT.set_fbeam(solar_spc[wvl_idx])
+        if inp.values["sun"] == True:
+            model_DISORT.set_fbeam(solar_spc[wvl_idx])
+        else:
+            model_DISORT.set_fbeam(0)
         #    model_DISORT.set_fbeam(0.1)
 
         # run disort input tests
@@ -479,7 +476,7 @@ def run_srfm(inp):
         #                              brdf_arg=[1,1.34,False,0], # wind speed, water refractive index, do_shadow
         #                              nmug=200) # number of quadrature angles
         # run disort
-        model_DISORT.run_disort(prec=inp.values["disort_precision"])
+        model_DISORT.run_disort(prec=inp.values["disort_precision"], adjust_maxcmu=inp.values["adjust_maxcmu"])
 
         # store result in SRFM()
         model_SRFM.store_disort_result(model_DISORT, wvl_idx)
@@ -571,7 +568,7 @@ def run_srfm(inp):
                 metadata = copy.deepcopy(inp.values)
                 metadata["driver_inputs"]["spectral"] = str(metadata["driver_inputs"]["spectral"])
                 _inp = json.dumps(metadata)
-                bbt.srfm_params = _inp
+                rad.srfm_params = _inp
             
     elif inp.values["out_mode"] == None:
         pass
@@ -581,9 +578,9 @@ def run_srfm(inp):
         ########################################################################################
         # (optional) create base plots
         ########################################################################################
-        y_type = (
-            "bbt"  # plot in radiances (W m-2 sr-1 cm) or brightness temperatures [K]
-        )
+        y_type = inp.values["plot_type"]
+        if not y_type == "rad" and not y_type == "bbt":
+            raise ValueError("Plot type not recognized. Please use 'bbt' of 'rad'.")
         x_type = "cm-1"  # plot vs. wavenumbers [cm-1] or wavelengths [um] or [nm]
 
         plt.figure(figsize=(11.7, 8.4))
@@ -628,6 +625,7 @@ def run_srfm(inp):
         plt.legend()
         plt.savefig(f"{inp.values['results_fldr']}/base_plot.png")
         if inp.values["show_plots"] == True:
+            plt.ion()
             plt.show()
         else:
             plt.close()

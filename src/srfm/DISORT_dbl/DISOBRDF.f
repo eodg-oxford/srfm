@@ -174,7 +174,9 @@ c     &     ABS(1.-UMU(2)).LT.1.E-5 ) ) THEN
 
       DO 180 MAZIM = 0, NAZ
        
-        WRITE(6,990,ADVANCE='NO') MAZIM
+        IF(DEBUG .EQV. .TRUE.) THEN
+           WRITE(6,990,ADVANCE='NO') MAZIM
+        ENDIF
         IF(MAZIM .EQ. NAZ) THEN
           WRITE(6,*) ""
         ENDIF
@@ -719,4 +721,3 @@ c     ..
       RETURN
       END
 c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-

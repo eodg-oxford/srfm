@@ -57,6 +57,12 @@ make dist            # rebuild wheel + sdist under dist/
 make install         # install from the freshly built artifacts
 ```
 
+or
+
+```
+python build_extensions.py      # builds Fortran extensions 
+```
+
 ### Windows (PowerShell or Command Prompt)
 ```
 py tools/build_package.py native
