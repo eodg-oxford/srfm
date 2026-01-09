@@ -1,6 +1,11 @@
 PROGRAM DISORT_DRIVER
 IMPLICIT NONE
 
+! Added by ChatGPT in 2024: Thin driver used to assemble DISORT inputs
+! from namelists or hard-coded experiments; keep declarations here in
+! sync with DISORT signature so the harness demonstrates typical usage
+! patterns without duplicating solver logic.
+
 !------------------------------------------------------------------------------!
 !                               INPUT VARIABLES
 !------------------------------------------------------------------------------!
@@ -241,4 +246,3 @@ DEALLOCATE( RHOQ, RHOU, EMUST, BEMST, RHO_ACCURATE )
 DEALLOCATE( RFLDIR, RFLDN, FLUP, DFDT, UAVG, ALBMED, TRNMED, UU )
 
 END PROGRAM DISORT_DRIVER
-

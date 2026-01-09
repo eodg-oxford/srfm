@@ -23,6 +23,11 @@ c     3) Removed all fix-dimension symbolic variables
 c      
 c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c
+c Antonin Knizek: DISOBRDF builds Fourier components of the
+c surface BRDF used by DISORT, sharing BDREF definitions; it precomputes
+c quadrature weights/azimuth factors once, then populates both user and
+c quadrature rho arrays plus emissivities for later intensity correction.
+c
 c +-------------------------------------------------------------------+
 c
 c +-------------------------------------------------------------------+

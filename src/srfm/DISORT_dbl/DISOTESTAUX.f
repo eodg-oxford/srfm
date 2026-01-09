@@ -3,7 +3,6 @@
 c        Calculate phase function Legendre expansion coefficients
 c        in various special cases
 
-
 c       INPUT: IPHAS   Phase function options
 c                      1 : Isotropic
 c                      2 : Rayleigh

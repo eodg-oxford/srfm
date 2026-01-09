@@ -3,7 +3,6 @@
 c        Calculate phase function Legendre expansion coefficients
 c        in various special cases
 
-
 c       INPUT: IPHAS   Phase function options
 c                      1 : Isotropic
 c                      2 : Rayleigh
@@ -1803,7 +1802,6 @@ c *********************Test Case 15d *********************************
 
       END
 
-
 c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c $Rev: 90 $ $Date: 2017-11-30 20:01:24 -0500 (Thu, 30 Nov 2017) $
 c FORTRAN 77
@@ -2355,9 +2353,13 @@ c       ** Ensure that SLFTST sets all print flags off
 
    20 CONTINUE
 
-      IF( .NOT.PASS1 .AND. LEN( HEADER ).NE.0 ) THEN
-         WRITE( *,'(//,1X,100(''*''),/,A,/,1X,100(''*''))' )
-     &    ' DISORT: '//HEADER
+c      IF( .NOT.PASS1 .AND. LEN( HEADER ).NE.0 ) THEN
+c         WRITE( *,'(//,1X,100(''*''),/,A,/,1X,100(''*''))' )
+c     &    ' DISORT: '//HEADER
+c      ENDIF
+      
+      IF (.NOT.PASS1 .AND. HEADER(1:9).NE."NO HEADER") THEN
+         WRITE( *,* ) HEADER
       ENDIF
 
 c     ** Calculate cumulative optical depth and dither single-scatter albedo
@@ -10592,6 +10594,7 @@ c     3) Removed all fix-dimension symbolic variables
 c      
 c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c
+c
 c +-------------------------------------------------------------------+
 c
 c +-------------------------------------------------------------------+
@@ -13053,7 +13056,6 @@ c     ..
       END IF
 
       END FUNCTION ISAMAX
-
 
 *> \brief \b DGEMM
 *
@@ -20071,7 +20073,6 @@ c     ..
 c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 c $Rev: 42 $ $Date: 2014-11-07 12:42:45 -0500 (Fri, 07 Nov 2014) $
 c ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 c ---------------------------------------------------------------------
 c  Fortran-90 versions of machine-constant routines R1MACH, D1MACH, I1MACH
 c

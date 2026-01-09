@@ -56,6 +56,10 @@ def run_srfm(inp):
     ########################################################################################
     with as_file(files("srfm") / "RFM") as path:
         rfm_fldr = os.fspath(path)
+    
+    # check if results directory exists, if not, then create it
+    if not os.path.exists(inp.values["results_fldr"]):
+        os.mkdir(inp.values["results_fldr"])  
 
     ########################################################################################
     # set iasi grid and final grid to interpolate to
