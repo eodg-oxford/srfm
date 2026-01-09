@@ -19,6 +19,7 @@ from numba import njit
 from bisect import bisect
 from functools import wraps
 from importlib.resources import files, as_file
+from scipy.signal import convolve
 
 
 def closest(lst_lon, lon, lst_lat, lat):
@@ -1040,3 +1041,73 @@ def load_solar_spectrum_Gueymard20018():
         )  # conversion from W m-2 um-1 to W m-2 cm-1, wavenumbers are decreasing
         solar_spc_wvnm = 1 / (solar_spc_fl[:, 0] * 1e-4)  # wavenumbers are decreasing
     return solar_spc, solar_spc_wvnm
+
+def convolve_spectrum(spc, x, ils):
+    """Convolves a calculated spectrum with an instrument line shape.
+
+    Note that the convolved spectrum suffers from boundary effects (scipy
+    interpolate does zero padding of the data at the boundaries). Best avoided 
+    by calculating your original spectra at a wider interval and then
+    interpolating/truncating. For interpolation (best used to get spectra at 
+    your simulated satellite grid).
+
+    Args:
+        spc (array-like): Spectrum to be convolved. Could be as short as single
+            value.
+        x (array-like): Spectral grid (wavenumbers/wavelengths/..). Must be
+            regularly spaced.
+        ils (str, ): Path to the instrument line shape. Make sure the units of 
+            the ils and spectrum grids are identical. If the file extension is
+            .atm, then the file is assumed to be and RFM-formatted .atm file
+            (see `here`_).
+            
+            .. _here: https://eodg.atm.ox.ac.uk/RFM/sum/atmfil.html
+            
+            If the file is in any other format, then the file is read through
+            numpy.loadtxt, so must conform to that format with the first column
+            being the grid and the second column the intensity/radiance.
+        
+    Returns:
+        spc_conv (array-like): Convolved spectrum.
+    
+    """
+    
+    # read instrument line shape
+    if ils.endswith(".ils"):
+        ils_x, ils_y, ils_lo, ils_hi = read_ils(ils)
+    else:
+        ils_all = np.loadtxt(ils)
+        ils_x = ils_all[:,0]
+        ils_y = ils_all[:,1]
+        ils_lo = ils_x[0]
+        ils_hi = ils_x[-1]
+
+    # check if spectral grid is regular
+    a = np.diff(x, n=2)  # calculate 2nd discrete difference
+    a[a < 1e12] = 0  # remove small numbers (arising from computer precision limits)
+    assert not np.all(a), """Wavenumber grid is not regular."""  # check is all values in a are 0 (0 evaluates to False)
+
+    # determine resolution from model wavenumber grid
+    num = len(x)
+    lo = x[0]
+    hi = x[-1]
+    res = np.round((hi - lo) / num, decimals=8)  
+    # this is inadvertedly introduces a limit
+    # on the minimum resolution used in the code as 1e-8 cm-1, which should be
+    # enough though, and also this may not be the numerically most stable way to go
+
+    # generate new grid for ils
+    npts = int(np.floor((ils_hi - ils_lo) / res)) + 1 # expected number of points in the grid
+    new_x = ils_lo + np.arange(npts) * res
+
+    # interpolate ils to new grid
+    new_y = np.interp(new_x, ils_x, ils_y)
+
+    # calculate sum of instrument line shape for normalization later
+    norm = np.sum(new_y)
+        
+    # convolve
+    spc_c = convolve(spc, new_y, mode="same") / norm
+
+    return spc_c
+
