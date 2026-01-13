@@ -869,9 +869,9 @@ def track_lev_to_track_lyr(lev):
 def read_ils(filename):
     """Read instrument line shape file in RFM format.
 
-    For description of the format, see `here`_.
+    The file is assumed to be in RFM's `ils`_ format.
 
-    .. _here: https://eodg.atm.ox.ac.uk/RFM/sum/ilsfil.html
+    .. _ils: https://eodg.atm.ox.ac.uk/RFM/sum/ilsfil.html
 
     Args:
         filename (str): Filename of the instrument line shape file in RFM format.
@@ -1058,10 +1058,10 @@ def convolve_spectrum(spc, x, ils):
             regularly spaced.
         ils (str, ): Path to the instrument line shape. Make sure the units of 
             the ils and spectrum grids are identical. If the file extension is
-            .atm, then the file is assumed to be and RFM-formatted .atm file
-            (see `here`_).
+            .atm, then the file is assumed to be and RFM-formatted `.atm`_ 
+            file.
             
-            .. _here: https://eodg.atm.ox.ac.uk/RFM/sum/atmfil.html
+            .. _.atm: https://eodg.atm.ox.ac.uk/RFM/sum/atmfil.html
             
             If the file is in any other format, then the file is read through
             numpy.loadtxt, so must conform to that format with the first column
