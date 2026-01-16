@@ -103,6 +103,9 @@ def run_srfm(inp):
                 inp.values["scat_lyrs_inputs"][lyr]
                 | inp.values["scat_lyrs_inputs"][lyr]
             )
+            # note: the pipe "|" here creates a shallow copy, i.e. 
+            # inp.values["scat_lyers_inputs"][lyr] and scat_layers_inputs][lyr]
+            # are now different objects in memory
             scat_lyrs[lyr] = layer.MieLayer()
             scat_lyrs[lyr].set_input_from_dict(
                 scat_lyrs_inputs[lyr]

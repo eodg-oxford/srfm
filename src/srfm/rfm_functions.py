@@ -541,7 +541,10 @@ def write_atm_file(data, filename, header=None):
             else:
                 f.write("!")
                 f.write(header)
-        f.write(str(len(data["HGT [km]"])) + "\n")
+        f.write("\n")
+        f.write(str(len(data["HGT [km]"])))
+        f.write("! No. of levels in profiles.")
+        f.write("\n")
         f.write("*HGT [km]\n")
         for i, ii in enumerate(data["HGT [km]"]):
             if (i % 5) == 0 and i != 0:
