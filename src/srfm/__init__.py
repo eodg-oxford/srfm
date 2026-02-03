@@ -3,7 +3,6 @@
 from importlib import import_module
 import warnings
 
-
 version = "0.0.1"
 
 __all__ = [
@@ -28,6 +27,7 @@ __all__ = [
     "RFM",
     "main",
     "inputs",
+    "oxharp_iasi_main",
 ]
 
 

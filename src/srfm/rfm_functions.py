@@ -539,11 +539,12 @@ def write_atm_file(data, filename, header=None):
             if header.startswith("!"):
                 f.write(header)
             else:
-                f.write("!")
+                f.write("! ")
                 f.write(header)
         f.write("\n")
+        f.write("  ")
         f.write(str(len(data["HGT [km]"])))
-        f.write("! No. of levels in profiles.")
+        f.write(" ! No. of levels in profiles.")
         f.write("\n")
         f.write("*HGT [km]\n")
         for i, ii in enumerate(data["HGT [km]"]):

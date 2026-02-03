@@ -4,6 +4,8 @@
     inside of run_srfm() as and example), or with a driver table.
     
     This module is intended to run the srfm with preprocessed iasi spectra.
+    
+    NOTE: Not really sure this module is relevant anymore.
 
 - Name: iasi_main
 - Parent package: srfm
@@ -224,9 +226,9 @@ def run_srfm(inp):
         plt.savefig(f"{inp.values['results_fldr']}/{keystr}_prf.png")
         plt.close()
 
-    ########################################################################################
+    #######################################################################################
     # work out where to insert a liquid water cloud
-    ########################################################################################
+    #######################################################################################
 
     # (exclude region above 2200 cm-1 where reflected solar radiation starts to matter)
     lim = (
@@ -251,20 +253,20 @@ def run_srfm(inp):
         temperature."""
         )
 
-    # concept of the following few lines:
-    # 1. Assumption 1: The main cause of noise in the spectrum is instrument noise.
-    # 2. iasi_nedt.txt is a file that contains iasi NEDT @280K, see the file for details
-    # 3. I interpolate the nedt to obs_bbt_wvnm
-    # 4. Since this is noise, I take the value*1/2 and subtract from obs_bbt
-    # 5. In this way I have hopefully removed the effect of noise from my reading.
-    # 6. Assumption 2: obs_bbt does not coincide with a strong absorption line (ie is
-    #    truly from a black/grey body.
-    # 7. Assumption 3: NEDT is taken just as the instrument noise at 280K, no
-    #    interpolation to other temperatures (generally in this case, the difference
-    #    should be <20 K anyway.
-    # 8. Assumption 3: Scene specific NEDT is not used (see Vincent, A, Retrieval of
-    #    trace gases using IASI, thesis, Univ Oxford (EODG), 2016
-    # 9. Assumption 4: The noise is random and taking a mean, or halving it, makes sense.
+#     concept of the following few lines:
+#     1. Assumption 1: The main cause of noise in the spectrum is instrument noise.
+#     2. iasi_nedt.txt is a file that contains iasi NEDT @280K, see the file for details
+#     3. I interpolate the nedt to obs_bbt_wvnm
+#     4. Since this is noise, I take the value*1/2 and subtract from obs_bbt
+#     5. In this way I have hopefully removed the effect of noise from my reading.
+#     6. Assumption 2: obs_bbt does not coincide with a strong absorption line (ie is
+#        truly from a black/grey body.
+#     7. Assumption 3: NEDT is taken just as the instrument noise at 280K, no
+#        interpolation to other temperatures (generally in this case, the difference
+#        should be <20 K anyway.
+#     8. Assumption 3: Scene specific NEDT is not used (see Vincent, A, Retrieval of
+#        trace gases using IASI, thesis, Univ Oxford (EODG), 2016
+#     9. Assumption 4: The noise is random and taking a mean, or halving it, makes sense.
 
     # open iasi noise equivalent delta temperature file
     nedt = np.loadtxt(inp.values["nedt"], skiprows=3)  # [[wvnm,nedt]]
@@ -294,18 +296,18 @@ def run_srfm(inp):
     corr_alt = round(corr_alt, 3)
     corr_alt = corr_alt.item()
 
-    ########################################################################################
-    # update rfm profiles with data from previous two sections
-    ########################################################################################
+    #######################################################################################
+    #update rfm profiles with data from previous two sections
+    #######################################################################################
 
-    # update first temperature in the profile according to the maximum observed temperature
-    # minus nedt. The logic being that if there's no cloud, this correspond to surface
-    # temperature. This is necessary since the spectrum is sensitive to surface temperature
-    # and ecmwf data may be inaccurate in this. If there is a cloud, then the surface
-    # temperature does not matter anyway.
-    # new_T[0] = iasi_out_spc[max_obs_bbt_idx]
+#     update first temperature in the profile according to the maximum observed temperature
+#     minus nedt. The logic being that if there's no cloud, this correspond to surface
+#     temperature. This is necessary since the spectrum is sensitive to surface temperature
+#     and ecmwf data may be inaccurate in this. If there is a cloud, then the surface
+#     temperature does not matter anyway.
+#     new_T[0] = iasi_out_spc[max_obs_bbt_idx]
 
-    # update rfm_prf
+#     update rfm_prf
     rfm_prf["TEM [K]"] = new_T
     rfm_prf["PRE [mb]"] = new_p
     rfm_prf["O3 [ppmv]"] = new_o3

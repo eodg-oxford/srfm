@@ -10,7 +10,7 @@ FIN_WVNMHI = 925.0 # max
 FIN_RES = 0.25 # resolution
 
 # Computational grid
-SPC_RES = 0.05 # resolution
+SPC_RES = 0.001 # resolution
 SPC_WVNMLO = FIN_WVNMLO - 3.0 # min
 SPC_WVNMHI = FIN_WVNMHI + 3.0 # max
 SPC_UNITS = "cm-1" # units (cm-1, nm, um)
