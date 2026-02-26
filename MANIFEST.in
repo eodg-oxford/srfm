@@ -1,0 +1,14 @@
+include Makefile build_extensions.py clean_srfm.py hatch_build.py
+include pyproject.toml README.md LICENCE.md CITATION.cff
+recursive-include tools *.py
+recursive-include src/srfm *.py
+include src/srfm/Makefile src/srfm/mie_ewp.f90
+include src/srfm/.f2py_f2cmap src/srfm/RFM/.f2py_f2cmap
+recursive-include src/srfm/DISORT *.f
+recursive-include src/srfm/DISORT_dbl *.f
+include src/srfm/RFM/rfm_wrapper.pyf
+recursive-include src/srfm/RFM/source *.f90
+recursive-include src/srfm/RFM/rfm_files *
+recursive-include src/srfm/data *
+recursive-exclude src/srfm *.so *.pyd *.dll *.dylib *.mod *.smod
+recursive-exclude src/srfm __pycache__ build.log

@@ -3,7 +3,8 @@
 from importlib import import_module
 import warnings
 
-version = "0.0.1"
+version = "0.0.2"
+__version__ = version
 
 __all__ = [
     "units",
@@ -27,7 +28,7 @@ __all__ = [
     "RFM",
     "main",
     "inputs",
-    "oxharp_iasi_main",
+    "oxharp_main",
 ]
 
 

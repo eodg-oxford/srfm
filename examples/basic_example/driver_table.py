@@ -5,14 +5,14 @@ from srfm import *
 ABS_PATH = os.getcwd()
 
 # Final grid to output results at, units cm-1
-FIN_WVNMLO = 920.0 # min
-FIN_WVNMHI = 925.0 # max
+FIN_WVNMLO = 720.0 # min
+FIN_WVNMHI = 800.0 # max
 FIN_RES = 0.25 # resolution
 
 # Computational grid
-SPC_RES = 0.001 # resolution
-SPC_WVNMLO = FIN_WVNMLO - 3.0 # min
-SPC_WVNMHI = FIN_WVNMHI + 3.0 # max
+SPC_RES = 0.1 # resolution
+SPC_WVNMLO = FIN_WVNMLO - 2.0 # min
+SPC_WVNMHI = FIN_WVNMHI + 2.0 # max
 SPC_UNITS = "cm-1" # units (cm-1, nm, um)
 
 inputs = {
@@ -26,15 +26,16 @@ inputs = {
     "px": 8,
 
     ## General    
-    "plot_profiles": True, # (optional) is using srfm.iasi_main
+    "plot_profiles": False, # (optional) is using srfm.iasi_main
     "base_plots": True, # if srfm.main, then plots output spectrum, if srfm.iasi_main, plots output spectrum and comparisons
     "out_mode": "netcdf", # file format to save to, netcdf, txt or None
-    "show_plots": True, # show plots on screen
+    "show_plots": False, # show plots on screen
     "results_fldr": os.path.join(ABS_PATH, "results"),
     "rad": False, # True - save radiances
     "bbt": True, # True - save brightness temperatures
     "rad_out_fname": None, # manually set radiances output filename
     "bbt_out_fname": None, # manually set bbt output filename
+    "plot_type": "bbt", # plot rad or bbt
     
     # insturment line shape (ILS)
     "convolve_iasi": False, # if True, convolves spectrum with IASI ILS
@@ -87,7 +88,7 @@ inputs = {
     "albedo": 0.0, # bottom boundary albedo
     "temis": 1.0, # top boundary emissivity
     "earth_radius": 6371.0, # Earth radius (km0
-    "nmom": 3, # number of phase function moments
+    "nmom": 17, # number of phase function moments
     "maxcmu": 16, # number of computational streams
     "maxumu": 1, # number of user output polar angles
     "maxphi": 1, # number of user azimuth angles
@@ -104,6 +105,7 @@ inputs = {
     "utau": [0.0], # user optical depths for output
     "disort_precision": "double", # Fortran precision
     "header": "NO HEADER", # header for terminal printing, "NO HEADER" == supressed.
+    "adjust_maxcmu": False, # if DISORT output intensity is negative, rerun with more streams
 
     ## Scattering configuration
     # scattering layers are named and are as keys in this dict, refer to docs for 
@@ -178,8 +180,8 @@ inputs = {
             "v_den": None,
             "dist_type": "log_normal",
             "comp": "H2O_263K_Rowe_2020.ri",
-            "center_alt": None,
-            "thick": None,
+            "center_alt": 3,
+            "thick": 1,
             "radii": 181,
             "eta": 1e-6,
             "phase_quad_N": 200,
@@ -190,8 +192,8 @@ inputs = {
             "multiprocess": False,
             "mass_loading": 100.0,
             "r": 15.0,
-            "alt_upp": 3.0,
-            "alt_low": 2.0,
+            "alt_upp": None,
+            "alt_low": None,
         },
     },
     

@@ -1,23 +1,21 @@
-# TODO
-This README is outdated and need updating (22 Oct 2025, AK).
-
 # SRFM
 Welcome to SRFM, a package designed to manage satelitte data and perform retrievals.
 
 ## Components
+This is a Python package.
 The package contains three external codes - RFM, DISORT and mie_ewp.
-The general idea is to run RFM first, mie_ewp after that and DISORT at the end.
-Other models can be used, of course. 
-This code is designed to be as general-purpose as possible.
+These codes are in Fortran and are compiled as python modules with numpy. 
+This code is designed to be as general-purpose and modular.
 
 ### DISORT
 The package contains DISORT code as and external addition.
 DISORT is a code that calculates radiative transfer (with scattering).
-This code is written if Fortran.
 Two versions - single and double precision - are present.
+Slight modifications to DISORT were performed above regarding printing.
 
 ### RFM
 The code contains the Reference Forward Model (RFM) which calculates gas absorption in the atmosphere.
+Small changes with respect to RFM were made
 
 ### mie_ewp
 The mie_ewp module calculates Mie scattering on particles.
@@ -86,7 +84,8 @@ python -m pip install --no-index --find-links dist SRFM
 The `tools/install_from_dist.py` wrapper runs the same command and performs the
 Meson/Ninja bootstrap step first. This works unchanged on Linux and Windows.
 
-The package comes with an example test script, which you should be able to just run,
+### Usage
+The package comes with an examples, which you should be able to just run,
 and also use as a template to create your own codes.
 At this stage, users are recommended to develop their own script similar to the test script.
 
@@ -96,10 +95,6 @@ If required, the package can be easily imported as a whole by typing
     `import srfm`
 Modules can also be imported individually.
 
-RFM also needs to be compiled.
-This can be done manually or from python after the required inputs are set (recommended).
-There is a class method that does that from python and is shown in the example code (srfm.forward\_model.RFM.compile\_rfm()).
-
 # Developer instructions
 The full documentation and instructions can be found on the links below:
 
@@ -108,7 +103,7 @@ Full documentation (working version) can be found here: https://www.overleaf.com
 And some underlying science here: https://www.overleaf.com/8669653368vnvvvhdgsyvs#04edb8
 
 ## Developer notes
-The RFM bindings are compiled as a python module via `build_extensions.py`
+The Fortran bindings are compiled as a python module via `build_extensions.py`
 (or the Makefile, which delegates to the same helper). 
 To succeed, the compiler needs the ".f2py_f2cmap" file in src/srfm/RFM. Do not delete that!!!
 That file ensures that correct types are enforced during the compilation.

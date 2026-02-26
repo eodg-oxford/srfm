@@ -54,3 +54,37 @@ exclude = [
 [tool.hatch.build.targets.wheel]
 packages = ["src/srfm"]
 include = ["src/srfm/data/*"]
+pure = false
+[tool.hatch.build.targets.wheel.hooks.custom]
+path = "hatch_build.py"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "build_extensions.py",
+    "Makefile",
+    "clean_srfm.py",
+    "hatch_build.py",
+    "src/srfm/*.py",
+    "src/srfm/**/*.py",
+    "src/srfm/data/*",
+    "src/srfm/.f2py_f2cmap",
+    "src/srfm/RFM/.f2py_f2cmap",
+    "src/srfm/Makefile",
+    "src/srfm/mie_ewp.f90",
+    "src/srfm/DISORT/*.f",
+    "src/srfm/DISORT_dbl/*.f",
+    "src/srfm/RFM/rfm_wrapper.pyf",
+    "src/srfm/RFM/source/*.f90",
+    "src/srfm/RFM/rfm_files/*",
+    "tools/*.py",
+]
+exclude = [
+    "src/srfm/**/*.so",
+    "src/srfm/**/*.pyd",
+    "src/srfm/**/*.dll",
+    "src/srfm/**/*.dylib",
+    "src/srfm/**/*.mod",
+    "src/srfm/**/*.smod",
+    "src/srfm/**/__pycache__",
+    "src/srfm/build.log",
+]
