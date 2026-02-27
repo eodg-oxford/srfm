@@ -53,4 +53,3 @@ def reraise_from_process(callable_args: Sequence[str]) -> None:
     primarily a convenience wrapper to keep the higher level scripts tidy.
     """
     _run(list(callable_args))
-

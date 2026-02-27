@@ -50,8 +50,10 @@ def legendre_polynomial_expansion(inp, qv, qw, phase):
     # Catch insensible inputs
     Imaxnp = 10000  # maximum allowed Legendre points
     if inp > Imaxnp:
-        raise ValueError("""Error in legendre_polynomial_expansion: Too many quadrature
-        points. Limit is 10,000.""")
+        raise ValueError(
+            """Error in legendre_polynomial_expansion: Too many quadrature
+        points. Limit is 10,000."""
+        )
 
     # Initialize array of Legendre coefficients
     lc = np.zeros(inp, dtype=np.float64)
@@ -409,7 +411,7 @@ def phase_from_normalised_legendre(inlc, lc, inp, qv):
 
 
 # @utils.show_runtime
-#@jit(nopython=True, error_model="numpy", parallel=False, fastmath=True)
+# @jit(nopython=True, error_model="numpy", parallel=False, fastmath=True)
 def mie_ewp(Dx, SCm, Dqv):
     """Mie calculation (python version).
 
@@ -434,12 +436,16 @@ def mie_ewp(Dx, SCm, Dqv):
         if Dqv.ndim == 1:
             Inp = Dqv.shape[0]
         else:
-            raise ValueError(f"""Dqv must be a 1D Array or list, but currently is
-            a {Dqv.ndim}-D array.""")
+            raise ValueError(
+                f"""Dqv must be a 1D Array or list, but currently is
+            a {Dqv.ndim}-D array."""
+            )
     else:
-        raise TypeError(f"""Dqv must be a list or 1-D np.ndarray, but currently is 
-            {type(Dqv)}.""")
-    
+        raise TypeError(
+            f"""Dqv must be a list or 1-D np.ndarray, but currently is 
+            {type(Dqv)}."""
+        )
+
     Imaxx = 105000
     Itermax = 106000
 
@@ -728,8 +734,8 @@ def loop_mie_over_radii(radii, sp, ri, angles, cos_angle_value):
 
     for j in range(radii):
         # Perform Mie calculations
-        Q_ext_value[j], Q_sca_value[j], phase_function_value[j, :] = (
-            mie_module.mie_ewp(sp[j], ri, cos_angle_value)
+        Q_ext_value[j], Q_sca_value[j], phase_function_value[j, :] = mie_module.mie_ewp(
+            sp[j], ri, cos_angle_value
         )
 
     return Q_ext_value, Q_sca_value, phase_function_value
@@ -931,13 +937,13 @@ def loop_mie_over_wavelengths(
             val_idx = pct_val.index(i)
             print(f"Calculating particle optical properties. {pct[val_idx]}% done...")
 
-#        Q_ext_value, Q_sca_value, phase_function_value = loop_mie_over_radii(
-#                                            radii=radii,
-#                                            sp=size_parameters[:,i],
-#                                            ri=refractive_index_arr[i],
-#                                            angles=angles,
-#                                            cos_angle_value=cos_angle_value
-#                                        )
+        #        Q_ext_value, Q_sca_value, phase_function_value = loop_mie_over_radii(
+        #                                            radii=radii,
+        #                                            sp=size_parameters[:,i],
+        #                                            ri=refractive_index_arr[i],
+        #                                            angles=angles,
+        #                                            cos_angle_value=cos_angle_value
+        #                                        )
 
         Q_ext_value, Q_sca_value, phase_function_value, error = mie_module.mie_ewp(
             size_parameters[:, i], refractive_index_arr[i], cos_angle_value

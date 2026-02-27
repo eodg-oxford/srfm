@@ -34,6 +34,7 @@ from netCDF4 import Dataset
 import json
 import copy
 
+
 @utilities.show_runtime
 def run_srfm(inp):
     """Main function that runs srfm.
@@ -43,7 +44,7 @@ def run_srfm(inp):
 
     Args:
         inp (obj): Instance of inputs.Inputs.
-    
+
     Returns:
         model_SRFM (obj): Instance of forward_model.SRFM.
 
@@ -53,15 +54,23 @@ def run_srfm(inp):
     ########################################################################################
     with as_file(files("srfm") / "RFM") as path:
         rfm_fldr = os.fspath(path)
-    
+
     # check if results directory exists, if not, then create it
     if not os.path.exists(inp.values["results_fldr"]):
-        os.mkdir(inp.values["results_fldr"])  
+        os.mkdir(inp.values["results_fldr"])
 
     ########################################################################################
     # set final grid to interpolate to
     ########################################################################################
-    npts = int(np.floor((inp.values["fin_wvnmhi"] - inp.values["fin_wvnmlo"]) / inp.values["fin_res"])) + 1 # expected number of points in the grid
+    npts = (
+        int(
+            np.floor(
+                (inp.values["fin_wvnmhi"] - inp.values["fin_wvnmlo"])
+                / inp.values["fin_res"]
+            )
+        )
+        + 1
+    )  # expected number of points in the grid
     fin_grid = inp.values["fin_wvnmlo"] + np.arange(npts) * inp.values["fin_res"]
 
     ########################################################################################
@@ -111,11 +120,55 @@ def run_srfm(inp):
     if "levels" in inp.values.keys():
         levels = inp.values["levels"]
     else:
-        levels = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 
-            12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0,
-            24.0, 25.0, 27.5, 30.0, 32.5, 35.0, 37.5, 40.0, 42.5, 45.0, 47.5, 50.0,
-            55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0, 115.0, 
-            120.0
+        levels = [
+            0.0,
+            1.0,
+            2.0,
+            3.0,
+            4.0,
+            5.0,
+            6.0,
+            7.0,
+            8.0,
+            9.0,
+            10.0,
+            11.0,
+            12.0,
+            13.0,
+            14.0,
+            15.0,
+            16.0,
+            17.0,
+            18.0,
+            19.0,
+            20.0,
+            21.0,
+            22.0,
+            23.0,
+            24.0,
+            25.0,
+            27.5,
+            30.0,
+            32.5,
+            35.0,
+            37.5,
+            40.0,
+            42.5,
+            45.0,
+            47.5,
+            50.0,
+            55.0,
+            60.0,
+            65.0,
+            70.0,
+            75.0,
+            80.0,
+            85.0,
+            90.0,
+            95.0,
+            100.0,
+            115.0,
+            120.0,
         ]
 
     # define tracker array for atmospheric structure
@@ -141,9 +194,9 @@ def run_srfm(inp):
     driver_inputs = inp.values["driver_inputs"]
     driver_inputs["tangent"] = (str(inp.values["zen_sec"]),)
     driver_inputs["lev"] = tuple(str(val) for val in levels)
-#    driver_inputs["atmosphere"] = list(driver_inputs["atmosphere"])
-#    driver_inputs["atmosphere"][1] = f"{inp.values['results_fldr']}/{keystr}.atm"
-#    driver_inputs["atmosphere"] = tuple(driver_inputs["atmosphere"])
+    #    driver_inputs["atmosphere"] = list(driver_inputs["atmosphere"])
+    #    driver_inputs["atmosphere"][1] = f"{inp.values['results_fldr']}/{keystr}.atm"
+    #    driver_inputs["atmosphere"] = tuple(driver_inputs["atmosphere"])
 
     # initialize RFM model class
     model_RFM = forward_model.RFM()
@@ -274,7 +327,7 @@ def run_srfm(inp):
     ########################################################################################
     # set date
     year_day = inp.values["year_day"]
-    
+
     # load solar spectrum from file
     solar_spc, solar_spc_wvnm = utilities.load_solar_spectrum_Gueymard20018()
     solar_spc = np.interp(
@@ -309,7 +362,21 @@ def run_srfm(inp):
     model_SRFM.initialize_srfm_output_arrays_from_disort(model_DISORT)
 
     # track progress
-    pct = [1, 2, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100] # percent completed to report
+    pct = [
+        1,
+        2,
+        5,
+        10,
+        20,
+        30,
+        40,
+        50,
+        60,
+        70,
+        80,
+        90,
+        100,
+    ]  # percent completed to report
     pct_val = [RFM_wvnm[int(i * len(RFM_wvnm) / 100 - 1)] for i in pct]
 
     ########################################################################################
@@ -437,8 +504,8 @@ def run_srfm(inp):
 
         # run disort input tests
         # see main.py for comment
-#        model_DISORT.test_disort_input_format()
-#        model_DISORT.test_disort_input_integrity()
+        #        model_DISORT.test_disort_input_format()
+        #        model_DISORT.test_disort_input_integrity()
 
         # call DISOBRDF
         #    model_DISORT.run_disobrdf(prec=inp.values["disort_precision"],
@@ -475,8 +542,8 @@ def run_srfm(inp):
                 np.savetxt(
                     f"{inp.values['results_fldr']}/{inp.values['bbt_out_fname']}.txt",
                     np.column_stack((model_SRFM.wvnm, model_SRFM.bbt[:, 0, 0, 0])),
-                )       
-            else:         
+                )
+            else:
                 np.savetxt(
                     f"{inp.values['results_fldr']}/bbt.txt",
                     np.column_stack((model_SRFM.wvnm, model_SRFM.bbt[:, 0, 0, 0])),
@@ -486,8 +553,8 @@ def run_srfm(inp):
                 np.savetxt(
                     f"{inp.values['results_fldr']}/{inp.values['rad_out_fname']}.txt",
                     np.column_stack((model_SRFM.wvnm, model_SRFM.uu[:, 0, 0, 0])),
-                )       
-            else:         
+                )
+            else:
                 np.savetxt(
                     f"{inp.values['results_fldr']}/rad.txt",
                     np.column_stack((model_SRFM.wvnm, model_SRFM.uu[:, 0, 0, 0])),
@@ -495,52 +562,72 @@ def run_srfm(inp):
         else:
             warnings.warn("driver table doesn't specify output bbt or rad.")
             pass
-        
+
     elif inp.values["out_mode"] == "netcdf":
         if inp.values["bbt"] == True:
             if isinstance(inp.values["bbt_out_fname"], str):
-                out_nm = f"{inp.values['results_fldr']}/{inp.values['bbt_out_fname']}.nc" 
+                out_nm = (
+                    f"{inp.values['results_fldr']}/{inp.values['bbt_out_fname']}.nc"
+                )
             else:
                 out_nm = f"{inp.values['results_fldr']}/bbt.nc"
-            
-            with Dataset(out_nm, 'w', format='NETCDF4') as nc_file:
+
+            with Dataset(out_nm, "w", format="NETCDF4") as nc_file:
                 nc_file.description = f"SRFM output."
-                nc_file.history = f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
-                nc_file.createDimension("wavenumber", fin_grid.shape[0]) # determines the output spectrum shape
-                bbt = nc_file.createVariable("bbt", "f8", ("wavenumber",), zlib=True, complevel=4)
-                
+                nc_file.history = (
+                    f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
+                )
+                nc_file.createDimension(
+                    "wavenumber", fin_grid.shape[0]
+                )  # determines the output spectrum shape
+                bbt = nc_file.createVariable(
+                    "bbt", "f8", ("wavenumber",), zlib=True, complevel=4
+                )
+
                 bbt.units = "K"
                 bbt.long_name = "Brightness temperature"
                 bbt[:] = model_SRFM.bbt[:, 0, 0, 0]
-                
+
                 # store inputs as well
                 metadata = copy.deepcopy(inp.values)
-                metadata["driver_inputs"]["spectral"] = str(metadata["driver_inputs"]["spectral"])
+                metadata["driver_inputs"]["spectral"] = str(
+                    metadata["driver_inputs"]["spectral"]
+                )
                 _inp = json.dumps(metadata)
                 bbt.srfm_params = _inp
-        
+
         if inp.values["rad"] == True:
             if isinstance(inp.values["rad_out_fname"], str):
-                out_nm = f"{inp.values['results_fldr']}/{inp.values['rad_out_fname']}.nc" 
+                out_nm = (
+                    f"{inp.values['results_fldr']}/{inp.values['rad_out_fname']}.nc"
+                )
             else:
                 out_nm = f"{inp.values['results_fldr']}/rad.nc"
-            
-            with Dataset(out_nm, 'w', format='NETCDF4') as nc_file:
+
+            with Dataset(out_nm, "w", format="NETCDF4") as nc_file:
                 nc_file.description = f"SRFM output."
-                nc_file.history = f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
-                nc_file.createDimension("wavenumber", fin_grid.shape[0]) # determines the output spectrum shape
-                rad = nc_file.createVariable("rad", "f8", ("wavenumber",), zlib=True, complevel=4)
-                
+                nc_file.history = (
+                    f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
+                )
+                nc_file.createDimension(
+                    "wavenumber", fin_grid.shape[0]
+                )  # determines the output spectrum shape
+                rad = nc_file.createVariable(
+                    "rad", "f8", ("wavenumber",), zlib=True, complevel=4
+                )
+
                 rad.units = "W m-2 sr-1 cm"
                 rad.long_name = "Radiance"
                 rad[:] = model_SRFM.uu[:, 0, 0, 0]
-                
+
                 # store inputs as well
                 metadata = copy.deepcopy(inp.values)
-                metadata["driver_inputs"]["spectral"] = str(metadata["driver_inputs"]["spectral"])
+                metadata["driver_inputs"]["spectral"] = str(
+                    metadata["driver_inputs"]["spectral"]
+                )
                 _inp = json.dumps(metadata)
                 bbt.srfm_params = _inp
-            
+
     elif inp.values["out_mode"] == None:
         pass
 

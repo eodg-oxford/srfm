@@ -915,14 +915,14 @@ class DISORT(Fwd_model):
 
     def run_disort(self, prec="double", adjust_maxcmu=True):
         """Calls function to run disort with required precision.
-        
+
         Args:
             prec (str): Determines Fortran precision to be used (single vs double).
                 Default is double precision calculation.
             adjust_maxcmu (bool): If True, check the output intensity in the downward
                 direction. If that turns out negative and close to zero, it's likely
-                caused by roundoff errors in the Delta-M+ algorithm. Increasing the 
-                number of computational streams usually fixes it, so in case this 
+                caused by roundoff errors in the Delta-M+ algorithm. Increasing the
+                number of computational streams usually fixes it, so in case this
                 happens, the number of streams is automatically adjusted and DISORT run
                 again.
         """
@@ -952,7 +952,7 @@ class DISORT(Fwd_model):
         """
         self.wvl = wvl
 
-    def run_disort_single(self,adjust_maxcmu):
+    def run_disort_single(self, adjust_maxcmu):
         """Runs disort, single precision."""
         # run DISORT
         res = dms.disort(
@@ -1006,26 +1006,28 @@ class DISORT(Fwd_model):
             albmed=self.disort_input["albmed"],
             trnmed=self.disort_input["trnmed"],
         )
-        
-#        res[5][res[5]<1e-6] = 0
-        
+
+        #        res[5][res[5]<1e-6] = 0
+
         if adjust_maxcmu:
             # check if intensity is negative and potentially rerun DISORT
             # use carefully as there may be cases where intensity is negative (see DISORT docs)
             maxcmu_multiplier = 1
-            old_maxcmu = self.disort_input["maxcmu"] # save old maxcmu
-            old_maxmom = self.disort_input["maxmom"] # save old maxmom
-            while not np.all(res[5] / (self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]) > 0):
+            old_maxcmu = self.disort_input["maxcmu"]  # save old maxcmu
+            old_maxmom = self.disort_input["maxmom"]  # save old maxmom
+            while not np.all(
+                res[5] / (self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]) > 0
+            ):
                 self.disort_input["maxcmu"] = old_maxcmu * 2 * maxcmu_multiplier
                 if self.disort_input["maxmom"] < self.disort_input["maxcmu"]:
                     self.disort_input["maxmom"] = self.disort_input["maxcmu"]
                 self.disort_input["rhoq"] = np.zeros(
-                                        shape=(
-                                        int(self.disort_input["maxcmu"] / 2),
-                                        int(self.disort_input["maxcmu"] / 2 + 1),
-                                        int(self.disort_input["maxcmu"]),
-                                    )
-                                )
+                    shape=(
+                        int(self.disort_input["maxcmu"] / 2),
+                        int(self.disort_input["maxcmu"] / 2 + 1),
+                        int(self.disort_input["maxcmu"]),
+                    )
+                )
                 self.disort_input["rhou"] = np.zeros(
                     shape=(
                         self.disort_input["maxumu"],
@@ -1033,7 +1035,9 @@ class DISORT(Fwd_model):
                         self.disort_input["maxcmu"],
                     )
                 )
-                self.disort_input["bemst"] = np.zeros(shape=(int(self.disort_input["maxcmu"] / 2)))
+                self.disort_input["bemst"] = np.zeros(
+                    shape=(int(self.disort_input["maxcmu"] / 2))
+                )
                 res = dms.disort(
                     maxcly=self.disort_input["maxcly"],
                     maxmom=self.disort_input["maxmom"],
@@ -1085,18 +1089,18 @@ class DISORT(Fwd_model):
                     albmed=self.disort_input["albmed"],
                     trnmed=self.disort_input["trnmed"],
                 )
-                
+
                 maxcmu_multiplier += 1
                 if self.disort_input["maxcmu"] > 128:
                     self.disort_input["maxcmu"] = old_maxcmu
                     self.disort_input["maxmom"] = old_maxmom
                     self.disort_input["rhoq"] = np.zeros(
-                                            shape=(
-                                            int(self.disort_input["maxcmu"] / 2),
-                                            int(self.disort_input["maxcmu"] / 2 + 1),
-                                            int(self.disort_input["maxcmu"]),
-                                        )
-                                    )
+                        shape=(
+                            int(self.disort_input["maxcmu"] / 2),
+                            int(self.disort_input["maxcmu"] / 2 + 1),
+                            int(self.disort_input["maxcmu"]),
+                        )
+                    )
                     self.disort_input["rhou"] = np.zeros(
                         shape=(
                             self.disort_input["maxumu"],
@@ -1104,8 +1108,12 @@ class DISORT(Fwd_model):
                             self.disort_input["maxcmu"],
                         )
                     )
-                    self.disort_input["bemst"] = np.zeros(shape=(int(self.disort_input["maxcmu"] / 2)))
-                    print(f"maxcmu increased to {old_maxcmu * 2 * maxcmu_multiplier} and intensity still negative, skipping.")
+                    self.disort_input["bemst"] = np.zeros(
+                        shape=(int(self.disort_input["maxcmu"] / 2))
+                    )
+                    print(
+                        f"maxcmu increased to {old_maxcmu * 2 * maxcmu_multiplier} and intensity still negative, skipping."
+                    )
                     break
 
         self.disort_out[self.wvnm] = {}
@@ -1417,14 +1425,18 @@ class DISORT(Fwd_model):
         expected = (maxmom + 1, maxcly)
         if pmom_R.shape != expected or pmom_p.shape != expected:
             raise ValueError("pmom_p and pmom_R must have shape (maxmom+1, maxcly)")
-        if tau_R.shape != (maxcly,) or tau_p.shape != (maxcly,) or w_p.shape != (maxcly,):
+        if (
+            tau_R.shape != (maxcly,)
+            or tau_p.shape != (maxcly,)
+            or w_p.shape != (maxcly,)
+        ):
             raise ValueError("tau_R, tau_p, w_p must have length maxcly")
 
         # Broadcast 1D optical-depth vectors across the Legendre dimension.
         tau_R_2d = tau_R[np.newaxis, :]
         tau_p_2d = tau_p[np.newaxis, :]
         w_p_2d = w_p[np.newaxis, :]
-        
+
         # precompute numerator and denominator
         numer = tau_R_2d * pmom_R + (w_p_2d * tau_p_2d) * pmom_p
         denom = tau_R_2d + w_p_2d * tau_p_2d
@@ -1716,21 +1728,25 @@ class SRFM(Fwd_model):
         # check if model grid is regular
         a = np.diff(self.wvnm, n=2)  # calculate 2nd discrete difference
         a[a < 1e12] = 0  # remove small numbers (arising from computer precision limits)
-        assert not np.all(a), """Wavenumber grid is not regular."""  # check is all values in a are 0 (0 evaluates to False)
+        assert not np.all(
+            a
+        ), """Wavenumber grid is not regular."""  # check is all values in a are 0 (0 evaluates to False)
 
         # determine resolution from model wavenumber grid
         num = len(self.wvnm)
         lo = self.wvnm.min()
         hi = self.wvnm.max()
-        res = np.round((hi - lo) / num, decimals=8)  
+        res = np.round((hi - lo) / num, decimals=8)
         # this is inadvertedly introduces a limit
         # on the minimum resolution used in the code as 1e-8 cm-1, which should be
         # enough though, and also this may not be the numerically most stable way to go
 
         # generate new grid for ils
-        npts = int(np.floor((ils_hi - ils_lo) / res)) + 1 # expected number of points in the grid
+        npts = (
+            int(np.floor((ils_hi - ils_lo) / res)) + 1
+        )  # expected number of points in the grid
         new_x = ils_lo + np.arange(npts) * res
-#        new_x = np.linspace(ils_lo, ils_hi, int((ils_hi - ils_lo) / res + 1))
+        #        new_x = np.linspace(ils_lo, ils_hi, int((ils_hi - ils_lo) / res + 1))
 
         # interpolate ils to new grid
         new_y = np.interp(new_x, ils_x, ils_y)
@@ -1741,34 +1757,36 @@ class SRFM(Fwd_model):
         # determine shape of uu from DISORT (basically a set of output spectra a
         # different optical dpeths, polar and azimuthal angles
         uu_shape = self.uu.shape  # tuple
-        nwv = uu_shape[0] # first dimension size
-        rest = uu_shape[1] * uu_shape[2] * uu_shape[3] # multiple of other dimension sizes for flattening,
+        nwv = uu_shape[0]  # first dimension size
+        rest = (
+            uu_shape[1] * uu_shape[2] * uu_shape[3]
+        )  # multiple of other dimension sizes for flattening,
         # rest basically gives a number of stored spectra in the variable
-        
+
         # reshape uu (view)
         uu_flat = uu_unconvolved.reshape(nwv, rest)
         out_flat = np.empty_like(uu_flat)
-        
+
         # loop over columns (each column is a spectrum)
         for j in range(rest):
-            out_flat[:,j] = convolve(uu_flat[:,j], new_y, mode="same") / norm
-        
+            out_flat[:, j] = convolve(uu_flat[:, j], new_y, mode="same") / norm
+
         # reshape back
         self.uu = out_flat.reshape(uu_shape)
-        
-## OLD
-#        # determine all combinations of indices of uu
-#        combs = []
-#        for i in range(uu_shape[1]):
-#            for ii in range(uu_shape[2]):
-#                for iii in range(uu_shape[3]):
-#                    combs.append([i, ii, iii])
 
-#        # convolve spectra in a loop
-#        for c in combs:
-#            self.uu[:, c[0], c[1], c[2]] = (
-#                convolve(uu_unconvolved[:, c[0], c[1], c[2]], new_y, mode="same") / norm
-#            )
+        ## OLD
+        #        # determine all combinations of indices of uu
+        #        combs = []
+        #        for i in range(uu_shape[1]):
+        #            for ii in range(uu_shape[2]):
+        #                for iii in range(uu_shape[3]):
+        #                    combs.append([i, ii, iii])
+
+        #        # convolve spectra in a loop
+        #        for c in combs:
+        #            self.uu[:, c[0], c[1], c[2]] = (
+        #                convolve(uu_unconvolved[:, c[0], c[1], c[2]], new_y, mode="same") / norm
+        #            )
 
         return
 

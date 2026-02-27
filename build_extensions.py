@@ -209,7 +209,9 @@ def _order_sources_with_dependencies(source_paths: list[Path]) -> list[Path]:
                 dependencies[path].add(provider)
                 reverse_deps[provider].add(path)
 
-    in_degree: Dict[Path, int] = {path: len(deps) for path, deps in dependencies.items()}
+    in_degree: Dict[Path, int] = {
+        path: len(deps) for path, deps in dependencies.items()
+    }
     queue: List[tuple[str, Path]] = [
         (path.name.lower(), path) for path, degree in in_degree.items() if degree == 0
     ]
@@ -226,9 +228,7 @@ def _order_sources_with_dependencies(source_paths: list[Path]) -> list[Path]:
 
     if len(ordered) != len(source_paths):
         # Cycle detected; append remaining files in alphabetical order to avoid stalls.
-        remaining = [
-            path for path in source_paths if path not in ordered
-        ]
+        remaining = [path for path in source_paths if path not in ordered]
         ordered.extend(sorted(remaining, key=lambda item: item.name.lower()))
 
     return ordered
@@ -328,9 +328,7 @@ def _build_rfm(fflags: str, backend_args: list[str]) -> None:
         raise FileNotFoundError(f"RFM source folder '{source_dir}' was not found.")
     exclusions = {"rfm.f90", "combined.f90"}
     sources = [
-        path
-        for path in source_dir.glob("*.f90")
-        if path.name.lower() not in exclusions
+        path for path in source_dir.glob("*.f90") if path.name.lower() not in exclusions
     ]
     sources = _order_sources_with_dependencies(sources)
     if not sources:

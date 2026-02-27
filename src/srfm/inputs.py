@@ -13,6 +13,7 @@ import importlib.util
 import uuid
 from mergedeep import merge
 
+
 class Inputs:
     """Class that collects inputs for the main srfm run.
 
@@ -95,6 +96,6 @@ class Inputs:
 
         _x = getattr(module, "STATE")
         _b = getattr(module, "ANCILLARY")
-        
+
         self.values = merge({}, _x, _b)
         return

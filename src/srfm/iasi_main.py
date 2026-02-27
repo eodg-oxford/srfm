@@ -2,9 +2,9 @@
 
     Note that the SRFM can be run interactively (i.e. used as a package, use the
     inside of run_srfm() as and example), or with a driver table.
-    
+
     This module is intended to run the srfm with preprocessed iasi spectra.
-    
+
     NOTE: Not really sure this module is relevant anymore.
 
 - Name: iasi_main
@@ -40,6 +40,7 @@ from netCDF4 import Dataset
 import json
 import copy
 
+
 @utilities.show_runtime
 def run_srfm(inp):
     """Main function that runs srfm.
@@ -48,7 +49,7 @@ def run_srfm(inp):
 
     Args:
         inp (obj): Instance of inputs.Inputs.
-    
+
     Returns:
         model_SRFM (obj): Instance of forward_model.SRFM.
 
@@ -58,18 +59,26 @@ def run_srfm(inp):
     ########################################################################################
     with as_file(files("srfm") / "RFM") as path:
         rfm_fldr = os.fspath(path)
-    
+
     # check if results directory exists, if not, then create it
     if not os.path.exists(inp.values["results_fldr"]):
-        os.mkdir(inp.values["results_fldr"])  
+        os.mkdir(inp.values["results_fldr"])
 
     ########################################################################################
     # set iasi grid and final grid to interpolate to
     ########################################################################################
-    npts = int(np.floor((inp.values["fin_wvnmhi"] - inp.values["fin_wvnmlo"]) / inp.values["fin_res"])) + 1 # expected number of points in the grid
+    npts = (
+        int(
+            np.floor(
+                (inp.values["fin_wvnmhi"] - inp.values["fin_wvnmlo"])
+                / inp.values["fin_res"]
+            )
+        )
+        + 1
+    )  # expected number of points in the grid
     fin_grid = inp.values["fin_wvnmlo"] + np.arange(npts) * inp.values["fin_res"]
-    
-    iasi_npts = int(np.floor((2760-645)/0.25)) + 1
+
+    iasi_npts = int(np.floor((2760 - 645) / 0.25)) + 1
     iasi_grid = 645 + np.arange(iasi_npts) * 0.25
 
     ########################################################################################
@@ -253,20 +262,20 @@ def run_srfm(inp):
         temperature."""
         )
 
-#     concept of the following few lines:
-#     1. Assumption 1: The main cause of noise in the spectrum is instrument noise.
-#     2. iasi_nedt.txt is a file that contains iasi NEDT @280K, see the file for details
-#     3. I interpolate the nedt to obs_bbt_wvnm
-#     4. Since this is noise, I take the value*1/2 and subtract from obs_bbt
-#     5. In this way I have hopefully removed the effect of noise from my reading.
-#     6. Assumption 2: obs_bbt does not coincide with a strong absorption line (ie is
-#        truly from a black/grey body.
-#     7. Assumption 3: NEDT is taken just as the instrument noise at 280K, no
-#        interpolation to other temperatures (generally in this case, the difference
-#        should be <20 K anyway.
-#     8. Assumption 3: Scene specific NEDT is not used (see Vincent, A, Retrieval of
-#        trace gases using IASI, thesis, Univ Oxford (EODG), 2016
-#     9. Assumption 4: The noise is random and taking a mean, or halving it, makes sense.
+    #     concept of the following few lines:
+    #     1. Assumption 1: The main cause of noise in the spectrum is instrument noise.
+    #     2. iasi_nedt.txt is a file that contains iasi NEDT @280K, see the file for details
+    #     3. I interpolate the nedt to obs_bbt_wvnm
+    #     4. Since this is noise, I take the value*1/2 and subtract from obs_bbt
+    #     5. In this way I have hopefully removed the effect of noise from my reading.
+    #     6. Assumption 2: obs_bbt does not coincide with a strong absorption line (ie is
+    #        truly from a black/grey body.
+    #     7. Assumption 3: NEDT is taken just as the instrument noise at 280K, no
+    #        interpolation to other temperatures (generally in this case, the difference
+    #        should be <20 K anyway.
+    #     8. Assumption 3: Scene specific NEDT is not used (see Vincent, A, Retrieval of
+    #        trace gases using IASI, thesis, Univ Oxford (EODG), 2016
+    #     9. Assumption 4: The noise is random and taking a mean, or halving it, makes sense.
 
     # open iasi noise equivalent delta temperature file
     nedt = np.loadtxt(inp.values["nedt"], skiprows=3)  # [[wvnm,nedt]]
@@ -297,17 +306,17 @@ def run_srfm(inp):
     corr_alt = corr_alt.item()
 
     #######################################################################################
-    #update rfm profiles with data from previous two sections
+    # update rfm profiles with data from previous two sections
     #######################################################################################
 
-#     update first temperature in the profile according to the maximum observed temperature
-#     minus nedt. The logic being that if there's no cloud, this correspond to surface
-#     temperature. This is necessary since the spectrum is sensitive to surface temperature
-#     and ecmwf data may be inaccurate in this. If there is a cloud, then the surface
-#     temperature does not matter anyway.
-#     new_T[0] = iasi_out_spc[max_obs_bbt_idx]
+    #     update first temperature in the profile according to the maximum observed temperature
+    #     minus nedt. The logic being that if there's no cloud, this correspond to surface
+    #     temperature. This is necessary since the spectrum is sensitive to surface temperature
+    #     and ecmwf data may be inaccurate in this. If there is a cloud, then the surface
+    #     temperature does not matter anyway.
+    #     new_T[0] = iasi_out_spc[max_obs_bbt_idx]
 
-#     update rfm_prf
+    #     update rfm_prf
     rfm_prf["TEM [K]"] = new_T
     rfm_prf["PRE [mb]"] = new_p
     rfm_prf["O3 [ppmv]"] = new_o3
@@ -377,11 +386,55 @@ def run_srfm(inp):
     if "levels" in inp.values.keys():
         levels = inp.values["levels"]
     else:
-        levels = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 
-            12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0,
-            24.0, 25.0, 27.5, 30.0, 32.5, 35.0, 37.5, 40.0, 42.5, 45.0, 47.5, 50.0,
-            55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0, 115.0, 
-            120.0
+        levels = [
+            0.0,
+            1.0,
+            2.0,
+            3.0,
+            4.0,
+            5.0,
+            6.0,
+            7.0,
+            8.0,
+            9.0,
+            10.0,
+            11.0,
+            12.0,
+            13.0,
+            14.0,
+            15.0,
+            16.0,
+            17.0,
+            18.0,
+            19.0,
+            20.0,
+            21.0,
+            22.0,
+            23.0,
+            24.0,
+            25.0,
+            27.5,
+            30.0,
+            32.5,
+            35.0,
+            37.5,
+            40.0,
+            42.5,
+            45.0,
+            47.5,
+            50.0,
+            55.0,
+            60.0,
+            65.0,
+            70.0,
+            75.0,
+            80.0,
+            85.0,
+            90.0,
+            95.0,
+            100.0,
+            115.0,
+            120.0,
         ]
 
     # define tracker array for atmospheric structure
@@ -721,8 +774,8 @@ def run_srfm(inp):
 
         # run disort input tests
         # see main.py for comment
-#        model_DISORT.test_disort_input_format()
-#        model_DISORT.test_disort_input_integrity()
+        #        model_DISORT.test_disort_input_format()
+        #        model_DISORT.test_disort_input_integrity()
 
         # call DISOBRDF
         #    model_DISORT.run_disobrdf(prec=inp.values["disort_precision"],
@@ -758,8 +811,8 @@ def run_srfm(inp):
                 np.savetxt(
                     f"{inp.values['results_fldr']}/{inp.values['bbt_out_fname']}.txt",
                     np.column_stack((model_SRFM.wvnm, model_SRFM.bbt[:, 0, 0, 0])),
-                )       
-            else:         
+                )
+            else:
                 np.savetxt(
                     f"{inp.values['results_fldr']}/bbt.txt",
                     np.column_stack((model_SRFM.wvnm, model_SRFM.bbt[:, 0, 0, 0])),
@@ -769,8 +822,8 @@ def run_srfm(inp):
                 np.savetxt(
                     f"{inp.values['results_fldr']}/{inp.values['rad_out_fname']}.txt",
                     np.column_stack((model_SRFM.wvnm, model_SRFM.uu[:, 0, 0, 0])),
-                )       
-            else:         
+                )
+            else:
                 np.savetxt(
                     f"{inp.values['results_fldr']}/rad.txt",
                     np.column_stack((model_SRFM.wvnm, model_SRFM.uu[:, 0, 0, 0])),
@@ -778,55 +831,74 @@ def run_srfm(inp):
         else:
             warnings.warn("driver table doesn't specify output bbt or rad.")
             pass
-        
+
     elif inp.values["out_mode"] == "netcdf":
         if inp.values["bbt"] == True:
             if isinstance(inp.values["bbt_out_fname"], str):
-                out_nm = f"{inp.values['results_fldr']}/{inp.values['bbt_out_fname']}.nc" 
+                out_nm = (
+                    f"{inp.values['results_fldr']}/{inp.values['bbt_out_fname']}.nc"
+                )
             else:
                 out_nm = f"{inp.values['results_fldr']}/bbt.nc"
-            
-            with Dataset(out_nm, 'w', format='NETCDF4') as nc_file:
+
+            with Dataset(out_nm, "w", format="NETCDF4") as nc_file:
                 nc_file.description = f"SRFM output."
-                nc_file.history = f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
-                nc_file.createDimension("wavenumber", fin_grid.shape[0]) # determines the output spectrum shape
-                bbt = nc_file.createVariable("bbt", "f8", ("wavenumber",), zlib=True, complevel=4)
-                
+                nc_file.history = (
+                    f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
+                )
+                nc_file.createDimension(
+                    "wavenumber", fin_grid.shape[0]
+                )  # determines the output spectrum shape
+                bbt = nc_file.createVariable(
+                    "bbt", "f8", ("wavenumber",), zlib=True, complevel=4
+                )
+
                 bbt.units = "K"
                 bbt.long_name = "Brightness temperature"
                 bbt[:] = model_SRFM.bbt[:, 0, 0, 0]
-                
+
                 # store inputs as well
                 metadata = copy.deepcopy(inp.values)
-                metadata["driver_inputs"]["spectral"] = str(metadata["driver_inputs"]["spectral"])
+                metadata["driver_inputs"]["spectral"] = str(
+                    metadata["driver_inputs"]["spectral"]
+                )
                 _inp = json.dumps(metadata)
                 bbt.srfm_params = _inp
-        
+
         if inp.values["rad"] == True:
             if isinstance(inp.values["rad_out_fname"], str):
-                out_nm = f"{inp.values['results_fldr']}/{inp.values['rad_out_fname']}.nc" 
+                out_nm = (
+                    f"{inp.values['results_fldr']}/{inp.values['rad_out_fname']}.nc"
+                )
             else:
                 out_nm = f"{inp.values['results_fldr']}/rad.nc"
-            
-            with Dataset(out_nm, 'w', format='NETCDF4') as nc_file:
+
+            with Dataset(out_nm, "w", format="NETCDF4") as nc_file:
                 nc_file.description = f"SRFM output."
-                nc_file.history = f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
-                nc_file.createDimension("wavenumber", fin_grid.shape[0]) # determines the output spectrum shape
-                rad = nc_file.createVariable("rad", "f8", ("wavenumber",), zlib=True, complevel=4)
-                
+                nc_file.history = (
+                    f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
+                )
+                nc_file.createDimension(
+                    "wavenumber", fin_grid.shape[0]
+                )  # determines the output spectrum shape
+                rad = nc_file.createVariable(
+                    "rad", "f8", ("wavenumber",), zlib=True, complevel=4
+                )
+
                 rad.units = "W m-2 sr-1 cm"
                 rad.long_name = "Radiance"
                 rad[:] = model_SRFM.uu[:, 0, 0, 0]
-                
+
                 # store inputs as well
                 metadata = copy.deepcopy(inp.values)
-                metadata["driver_inputs"]["spectral"] = str(metadata["driver_inputs"]["spectral"])
+                metadata["driver_inputs"]["spectral"] = str(
+                    metadata["driver_inputs"]["spectral"]
+                )
                 _inp = json.dumps(metadata)
                 bbt.srfm_params = _inp
-            
+
     elif inp.values["out_mode"] == None:
         pass
-        
 
     if inp.values["base_plots"] == True:
         ########################################################################################

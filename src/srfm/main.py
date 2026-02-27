@@ -33,15 +33,16 @@ from netCDF4 import Dataset
 import json
 import copy
 
+
 @utilities.show_runtime
 def run_srfm(inp):
     """Main function that runs srfm.
-    
+
     Generic srfm  run.
 
     Args:
         inp (obj): Instance of inputs.Inputs.
-    
+
     Returns:
         model_SRFM (obj): Instance of forward_model.SRFM.
 
@@ -51,27 +52,37 @@ def run_srfm(inp):
     ########################################################################################
     with as_file(files("srfm") / "RFM") as path:
         rfm_fldr = os.fspath(path)
-    
+
     # check if results directory exists, if not, then create it
     if not os.path.exists(inp.values["results_fldr"]):
-        os.mkdir(inp.values["results_fldr"])    
+        os.mkdir(inp.values["results_fldr"])
 
     ########################################################################################
     # set final grid to interpolate to
     ########################################################################################
-    # this seems to be the most robust way of generating a grid (both np.arange and linspace are prone to failing) 
-    npts = int(np.floor((inp.values["fin_wvnmhi"] - inp.values["fin_wvnmlo"]) / inp.values["fin_res"])) + 1 # expected number of points in the grid
+    # this seems to be the most robust way of generating a grid (both np.arange and linspace are prone to failing)
+    npts = (
+        int(
+            np.floor(
+                (inp.values["fin_wvnmhi"] - inp.values["fin_wvnmlo"])
+                / inp.values["fin_res"]
+            )
+        )
+        + 1
+    )  # expected number of points in the grid
     fin_grid = inp.values["fin_wvnmlo"] + np.arange(npts) * inp.values["fin_res"]
-    
+
     if "date" in inp.values:
         if not isintance(inp.values["date"], tuple) or not len(inp.values["date"]) == 3:
             raise ValueError("date must be a tuple of len 3 (see datetime.datetime.")
         else:
             date = inp.values["date"]
     else:
-        date = datetime.datetime(2025,3,23) # default date, approx spring equinox, avg Earth-Sun dist
+        date = datetime.datetime(
+            2025, 3, 23
+        )  # default date, approx spring equinox, avg Earth-Sun dist
     year_day = date.timetuple().tm_yday
-    
+
     ########################################################################################
     # specify spectral calculation grid
     ########################################################################################
@@ -103,7 +114,7 @@ def run_srfm(inp):
                 inp.values["scat_lyrs_inputs"][lyr]
                 | inp.values["scat_lyrs_inputs"][lyr]
             )
-            # note: the pipe "|" here creates a shallow copy, i.e. 
+            # note: the pipe "|" here creates a shallow copy, i.e.
             # inp.values["scat_lyers_inputs"][lyr] and scat_layers_inputs][lyr]
             # are now different objects in memory
             scat_lyrs[lyr] = layer.MieLayer()
@@ -122,11 +133,55 @@ def run_srfm(inp):
     if "levels" in inp.values.keys():
         levels = inp.values["levels"]
     else:
-        levels = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 
-            12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0,
-            24.0, 25.0, 27.5, 30.0, 32.5, 35.0, 37.5, 40.0, 42.5, 45.0, 47.5, 50.0,
-            55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0, 115.0, 
-            120.0
+        levels = [
+            0.0,
+            1.0,
+            2.0,
+            3.0,
+            4.0,
+            5.0,
+            6.0,
+            7.0,
+            8.0,
+            9.0,
+            10.0,
+            11.0,
+            12.0,
+            13.0,
+            14.0,
+            15.0,
+            16.0,
+            17.0,
+            18.0,
+            19.0,
+            20.0,
+            21.0,
+            22.0,
+            23.0,
+            24.0,
+            25.0,
+            27.5,
+            30.0,
+            32.5,
+            35.0,
+            37.5,
+            40.0,
+            42.5,
+            45.0,
+            47.5,
+            50.0,
+            55.0,
+            60.0,
+            65.0,
+            70.0,
+            75.0,
+            80.0,
+            85.0,
+            90.0,
+            95.0,
+            100.0,
+            115.0,
+            120.0,
         ]
 
     # define tracker array for atmospheric structure
@@ -141,15 +196,15 @@ def run_srfm(inp):
     # convert the tracking levels array to a tracking layers array
     track_lyr = utilities.track_lev_to_track_lyr(track_lev)
     track_lyr = track_lyr[::-1]
-    
+
     ########################################################################################
     # prepare and call RFM
     ########################################################################################
-    # precalculate angles    
-    zen_rad = np.deg2rad(inp.values["zen"]) # zenith angle to rad
-    zen_cos = np.cos(zen_rad).item() # cosine of zenith angle
-    zen_sec = 1/ zen_cos # secant of zenith angle
-    
+    # precalculate angles
+    zen_rad = np.deg2rad(inp.values["zen"])  # zenith angle to rad
+    zen_cos = np.cos(zen_rad).item()  # cosine of zenith angle
+    zen_sec = 1 / zen_cos  # secant of zenith angle
+
     # RFM global config
     rfm_config = inp.values["rfm_config"]
 
@@ -313,7 +368,7 @@ def run_srfm(inp):
     # Angles
     model_DISORT.set_phi([inp.values["azi"]])
     model_DISORT.set_umu([zen_cos])
-    
+
     # initialize disort input arrays for output variables from a single run
     model_DISORT.initialize_disort_output_arrays()
 
@@ -332,7 +387,21 @@ def run_srfm(inp):
     model_SRFM.initialize_srfm_output_arrays_from_disort(model_DISORT)
 
     # track progress
-    pct = [1, 2, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]  # percent completed to report
+    pct = [
+        1,
+        2,
+        5,
+        10,
+        20,
+        30,
+        40,
+        50,
+        60,
+        70,
+        80,
+        90,
+        100,
+    ]  # percent completed to report
     pct_val = [RFM_wvnm[int(i * len(RFM_wvnm) / 100 - 1)] for i in pct]
 
     ########################################################################################
@@ -462,10 +531,10 @@ def run_srfm(inp):
         #    model_DISORT.set_fbeam(0.1)
 
         # run disort input tests
-#        model_DISORT.test_disort_input_format()
-#        model_DISORT.test_disort_input_integrity()
+        #        model_DISORT.test_disort_input_format()
+        #        model_DISORT.test_disort_input_integrity()
         # These tests are currently disabled, pending review. It turns out they test
-        # inputs, inlc. arrays, element by element, taking about 25% of the total 
+        # inputs, inlc. arrays, element by element, taking about 25% of the total
         # runtime.
         # TODO: options:
         # 1. Remove the tests, potentially unsafe, or rather may be less explanatory
@@ -475,7 +544,7 @@ def run_srfm(inp):
         # iteration to iteration.
         # 3. Move the test behind a debug flag (add the flag to the driver table).
         # 4. Replace element-wise checks with vectorized dtype assertions
-        # (e.g. for dtauc do np.asarray(dtauc).dtype / np.issubdtype... 
+        # (e.g. for dtauc do np.asarray(dtauc).dtype / np.issubdtype...
 
         # call DISOBRDF
         #    model_DISORT.run_disobrdf(prec=inp.values["disort_precision"],
@@ -484,7 +553,10 @@ def run_srfm(inp):
         #                              brdf_arg=[1,1.34,False,0], # wind speed, water refractive index, do_shadow
         #                              nmug=200) # number of quadrature angles
         # run disort
-        model_DISORT.run_disort(prec=inp.values["disort_precision"], adjust_maxcmu=inp.values["adjust_maxcmu"])
+        model_DISORT.run_disort(
+            prec=inp.values["disort_precision"],
+            adjust_maxcmu=inp.values["adjust_maxcmu"],
+        )
 
         # store result in SRFM()
         model_SRFM.store_disort_result(model_DISORT, wvl_idx)
@@ -492,7 +564,7 @@ def run_srfm(inp):
         # print current status:m
     #    print(model_DISORT.status)
     print("Main DISORT loop finished.")
-    
+
     # convolve final radiance spectrum with iasi instrument line shape
     if inp.values["convolve_iasi"] == True:
         model_SRFM.convolve_with_iasi(inp.values["iasi_ils"])
@@ -512,8 +584,8 @@ def run_srfm(inp):
                 np.savetxt(
                     f"{inp.values['results_fldr']}/{inp.values['bbt_out_fname']}.txt",
                     np.column_stack((model_SRFM.wvnm, model_SRFM.bbt[:, 0, 0, 0])),
-                )       
-            else:         
+                )
+            else:
                 np.savetxt(
                     f"{inp.values['results_fldr']}/bbt.txt",
                     np.column_stack((model_SRFM.wvnm, model_SRFM.bbt[:, 0, 0, 0])),
@@ -523,8 +595,8 @@ def run_srfm(inp):
                 np.savetxt(
                     f"{inp.values['results_fldr']}/{inp.values['rad_out_fname']}.txt",
                     np.column_stack((model_SRFM.wvnm, model_SRFM.uu[:, 0, 0, 0])),
-                )       
-            else:         
+                )
+            else:
                 np.savetxt(
                     f"{inp.values['results_fldr']}/rad.txt",
                     np.column_stack((model_SRFM.wvnm, model_SRFM.uu[:, 0, 0, 0])),
@@ -532,55 +604,74 @@ def run_srfm(inp):
         else:
             warnings.warn("driver table doesn't specify output bbt or rad.")
             pass
-        
+
     elif inp.values["out_mode"] == "netcdf":
         if inp.values["bbt"] == True:
             if isinstance(inp.values["bbt_out_fname"], str):
-                out_nm = f"{inp.values['results_fldr']}/{inp.values['bbt_out_fname']}.nc" 
+                out_nm = (
+                    f"{inp.values['results_fldr']}/{inp.values['bbt_out_fname']}.nc"
+                )
             else:
                 out_nm = f"{inp.values['results_fldr']}/bbt.nc"
-            
-            with Dataset(out_nm, 'w', format='NETCDF4') as nc_file:
+
+            with Dataset(out_nm, "w", format="NETCDF4") as nc_file:
                 nc_file.description = f"SRFM output."
-                nc_file.history = f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
-                nc_file.createDimension("wavenumber", fin_grid.shape[0]) # determines the output spectrum shape
-                bbt = nc_file.createVariable("bbt", "f8", ("wavenumber",), zlib=True, complevel=4)
-                
+                nc_file.history = (
+                    f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
+                )
+                nc_file.createDimension(
+                    "wavenumber", fin_grid.shape[0]
+                )  # determines the output spectrum shape
+                bbt = nc_file.createVariable(
+                    "bbt", "f8", ("wavenumber",), zlib=True, complevel=4
+                )
+
                 bbt.units = "K"
                 bbt.long_name = "Brightness temperature"
                 bbt[:] = model_SRFM.bbt[:, 0, 0, 0]
-                
+
                 # store inputs as well
                 metadata = copy.deepcopy(inp.values)
-                metadata["driver_inputs"]["spectral"] = str(metadata["driver_inputs"]["spectral"])
+                metadata["driver_inputs"]["spectral"] = str(
+                    metadata["driver_inputs"]["spectral"]
+                )
                 _inp = json.dumps(metadata)
                 bbt.srfm_params = _inp
-        
+
         if inp.values["rad"] == True:
             if isinstance(inp.values["rad_out_fname"], str):
-                out_nm = f"{inp.values['results_fldr']}/{inp.values['rad_out_fname']}.nc" 
+                out_nm = (
+                    f"{inp.values['results_fldr']}/{inp.values['rad_out_fname']}.nc"
+                )
             else:
                 out_nm = f"{inp.values['results_fldr']}/rad.nc"
-            
-            with Dataset(out_nm, 'w', format='NETCDF4') as nc_file:
+
+            with Dataset(out_nm, "w", format="NETCDF4") as nc_file:
                 nc_file.description = f"SRFM output."
-                nc_file.history = f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
-                nc_file.createDimension("wavenumber", fin_grid.shape[0]) # determines the output spectrum shape
-                rad = nc_file.createVariable("rad", "f8", ("wavenumber",), zlib=True, complevel=4)
-                
+                nc_file.history = (
+                    f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
+                )
+                nc_file.createDimension(
+                    "wavenumber", fin_grid.shape[0]
+                )  # determines the output spectrum shape
+                rad = nc_file.createVariable(
+                    "rad", "f8", ("wavenumber",), zlib=True, complevel=4
+                )
+
                 rad.units = "W m-2 sr-1 cm"
                 rad.long_name = "Radiance"
                 rad[:] = model_SRFM.uu[:, 0, 0, 0]
-                
+
                 # store inputs as well
                 metadata = copy.deepcopy(inp.values)
-                metadata["driver_inputs"]["spectral"] = str(metadata["driver_inputs"]["spectral"])
+                metadata["driver_inputs"]["spectral"] = str(
+                    metadata["driver_inputs"]["spectral"]
+                )
                 _inp = json.dumps(metadata)
                 rad.srfm_params = _inp
-            
+
     elif inp.values["out_mode"] == None:
         pass
-        
 
     if inp.values["base_plots"] == True:
         ########################################################################################
@@ -609,7 +700,6 @@ def run_srfm(inp):
         elif y_type == "rad":
             y_lbl = r"Radiance (W m$^{-2}$ sr$^{-1}$ cm)"
 
-
         # determine x:
         if x_type == "cm-1":
             x = model_SRFM.wvnm
@@ -617,7 +707,7 @@ def run_srfm(inp):
             x = model_SRFM.wvls
         elif x_type == "nm":
             x = model_SRFM.wvls * 1e3
-        
+
         # determine y:
         if y_type == "bbt":
             y = model_SRFM.bbt[:, 0, 0, 0]
