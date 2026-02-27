@@ -1,0 +1,15 @@
+| Section                   | Description                                                     |
+| ------------------------- | --------------------------------------------------------------- |
+| `Args:`                   | Describes the function's arguments (names, types, and purpose). |
+| `Returns:`                | Describes the return value and its type.                        |
+| `Yields:`                 | Used for generator functions instead of `Returns:`.             |
+| `Raises:`                 | Lists exceptions the function may raise, with conditions.       |
+| `Attributes:`             | For class docstrings – describes instance attributes.           |
+| `Methods:`                | For class docstrings – describes available methods.             |
+| `Examples:`               | Provides example usage (often with `>>>` prompts for doctest).  |
+| `Note:` or `Notes:`       | Adds extra details or caveats.                                  |
+| `Warning:` or `Warnings:` | Highlights important usage warnings.                            |
+| `See Also:`               | Cross-references to related functions or modules.               |
+| `Todo:`                   | Lists future work or improvements.                              |
+| `References:`             | Points to external documentation or academic sources.           |
+
