@@ -756,7 +756,9 @@ def run_srfm(inp):
                     1 / pmom_p[0, track_lyr_local.index(lyr)]
                 )  # unused, can be used to track expansion precision
                 if abs(Legendre_precision - 1) > 1e-5:
-                    raise RuntimeError("Something is wrong with the phase function")
+                    raise RuntimeError(f"""Something is wrong with the phase function.
+                    The first coefficient is {pmom_p[0, track_lyr_local.index(lyr)]}, but should be 1.0.
+                    Try increasing number of quadrature points.""")
                 pmom_p[0, track_lyr_local.index(lyr)] = 1.0
 
         # calculate the weighted sum of phase function moments
