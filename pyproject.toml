@@ -9,7 +9,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "SRFM"
-version = "0.0.2"
+version = "0.0.3"
 authors = [
   { name="Antonin Knizek", email="antonin.knizek@physics.ox.ac.uk" },
   { name="Roy Grainger", email="don.grainger@physics.ox.ac.uk"}
