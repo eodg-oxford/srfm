@@ -184,10 +184,10 @@ Refractive indices to use are again specified in the driver table
 
 ## Documentation
 The full documentation can be found at:
-**INSERT LINK**
+<https://srfm.readthedocs.io/en/latest/>.
 This is a Sphinx-generated documentation from function docstrings, i.e. 
 equivalent information may be found in the docstrings within the code.
 
 ## References
-The package has been published at:
+The package paper has been published at:
 **INSERT LINK**
