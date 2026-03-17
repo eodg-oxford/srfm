@@ -14,3 +14,10 @@ python:
     - method: pip
       path: .
     - requirements: docs/requirements.txt
+
+apt:
+  packages:
+    - gfortran
+    - build-essential
+    - meson
+    - ninja-build
