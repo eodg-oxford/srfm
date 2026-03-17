@@ -1077,10 +1077,8 @@ class Iasi_L2:
         self.so2_altitude += altitude
         self.so2_col_at_altitudes += col_at_altitudes
 
-
-# l2dir = '/network/group/aopp/sat_data/SAT015_METOP_IASI_L1C_GLOBAL/IASI-A_L2/2018/06/'
 # l2fil = l2dir + \
-"IASI_SND_02_M02_20180618041455Z_20180618055655Z_N_O_20180618055859Z.nat"
+#"IASI_SND_02_M02_20180618041455Z_20180618055655Z_N_O_20180618055859Z.nat"
 
 #'IASI_SND_02_M02_20180618155959Z_20180618174159Z_N_O_20180618174149Z.nat'
 
