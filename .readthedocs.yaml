@@ -21,3 +21,10 @@ apt:
     - build-essential
     - meson
     - ninja-build
+    # Native deps for cartopy/netCDF4 wheels
+    - libgeos-dev
+    - libproj-dev
+    - proj-data
+    - proj-bin
+    - libhdf5-dev
+    - libnetcdf-dev
