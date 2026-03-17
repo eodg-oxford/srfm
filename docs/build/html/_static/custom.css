@@ -1,1 +1,96 @@
-/* This file intentionally left blank. */
+:root {
+    --srfm-primary: #0d9488;
+    --srfm-accent: #f97316;
+    --srfm-ink: #0f172a;
+    --srfm-muted: #64748b;
+    --pst-color-primary: var(--srfm-primary);
+    --pst-color-secondary: var(--srfm-accent);
+    --pst-color-link: var(--srfm-primary);
+    --pst-font-family-base: "Source Sans 3", "Helvetica Neue", "Segoe UI", sans-serif;
+}
+
+body {
+    background: radial-gradient(circle at 20% 20%, rgba(13, 148, 136, 0.06), transparent 35%),
+                radial-gradient(circle at 80% 0%, rgba(249, 115, 22, 0.08), transparent 40%),
+                #f8fafc;
+    color: var(--srfm-ink);
+}
+
+.bd-header {
+    border-bottom: 0;
+    background: linear-gradient(120deg, rgba(13, 148, 136, 0.12), rgba(249, 115, 22, 0.12));
+}
+
+.bd-article-container h1 {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.hero {
+    padding: 1.5rem 1.75rem;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(13, 148, 136, 0.18), rgba(249, 115, 22, 0.12));
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.12);
+    margin-bottom: 1.25rem;
+}
+
+.hero p {
+    margin: 0.25rem 0 0;
+    color: #0b172a;
+    font-size: 1.05rem;
+}
+
+.pill {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    background: #ecfeff;
+    color: var(--srfm-primary);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    border: 1px solid rgba(13, 148, 136, 0.18);
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.9rem;
+    margin: 1rem 0 1.5rem;
+    padding: 0;
+    list-style: none;
+}
+
+.feature-card {
+    padding: 1rem;
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid rgba(15, 23, 42, 0.05);
+    box-shadow: 0 6px 24px rgba(15, 23, 42, 0.08);
+}
+
+.feature-card h3 {
+    margin-top: 0;
+    margin-bottom: 0.35rem;
+    font-size: 1.05rem;
+    color: var(--srfm-ink);
+}
+
+.feature-card p {
+    margin: 0;
+    color: var(--srfm-muted);
+    font-size: 0.95rem;
+    line-height: 1.45;
+}
+
+.quickstart {
+    border-left: 4px solid var(--srfm-primary);
+    padding-left: 0.75rem;
+    margin: 1rem 0;
+}
+
+.quickstart code {
+    background: rgba(13, 148, 136, 0.08);
+    color: #0b172a;
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.35rem;
+}

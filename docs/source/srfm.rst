@@ -1,17 +1,5 @@
-srfm package
-============
-
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 4
-
-
-
-
-Submodules
-----------
+Modules and Functions
+=====================
 
 srfm.ARIA\_module module
 ------------------------

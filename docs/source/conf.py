@@ -9,6 +9,7 @@ import sys
 import os
 import re
 import warnings
+import sphinx_rtd_theme
 
 project = 'SRFM'
 copyright = '2026, Antonin Knizek, Roy Grainger'
@@ -24,7 +25,8 @@ sys.path.insert(0, os.path.abspath('../../src'))
 extensions = ["sphinx.ext.napoleon",
               "sphinx.ext.autodoc",
               "sphinx.ext.apidoc",
-              "sphinx.ext.todo"
+              "sphinx.ext.todo",
+              "sphinx_rtd_theme"
               ]
 
 templates_path = ['_templates']
@@ -139,8 +141,13 @@ def _cleanup_docstring(_app, _what, _name, _obj, _options, lines):
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
+html_theme_options = {
+    "collapse_navigation": False,
+    "navigation_depth": -1,
+    "titles_only": False,
+}
 
 
 def setup(app):
