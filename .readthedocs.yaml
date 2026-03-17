@@ -6,6 +6,10 @@ build:
   tools:
     python: "3.13"
   apt_packages:
+    - gfortran
+    - build-essential
+    - meson
+    - ninja-build
     - libgeos-dev
     - libproj-dev
     - proj-data
