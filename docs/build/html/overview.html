@@ -22,13 +22,28 @@
     <link rel="next" title="Modules and Functions" href="srfm.html" />
     <link rel="prev" title="SRFM documentation" href="index.html" />
    
-  <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-M598215MF0"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
+
+    // Default: deny analytics storage until user consents
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'analytics_storage': 'denied',
+      'wait_for_update': 500
+    });
+
     gtag('js', new Date());
-    gtag('config', 'G-M598215MF0');
+
+    // Apply saved choice immediately
+    (function() {
+      const choice = localStorage.getItem('ga-consent');
+      if (choice === 'granted') {
+        gtag('consent', 'update', {analytics_storage: 'granted'});
+        gtag('config', 'G-M598215MF0');
+      }
+    })();
   </script>
 
 </head>
@@ -364,6 +379,14 @@
       </nav>
 
       <div class="wy-nav-content">
+  <div id="cookie-banner" style="display:none; position:fixed; bottom:0; left:0; right:0; background:#111827; color:#f8fafc; padding:12px 16px; z-index:9999; box-shadow:0 -2px 12px rgba(0,0,0,0.2); font-size:14px;">
+    We use Google Analytics to understand traffic. <a href="/privacy.html" style="color:#93c5fd;">Learn more</a>.
+    <div style="float:right;">
+      <button id="cookie-accept" style="margin-left:8px;">Accept</button>
+      <button id="cookie-reject" style="margin-left:8px;">Reject</button>
+    </div>
+  </div>
+  
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
@@ -492,6 +515,32 @@
 
 </footer>
         </div>
+  <script>
+    (function() {
+      const banner = document.getElementById('cookie-banner');
+      const choice = localStorage.getItem('ga-consent');
+      if (!choice) {
+        banner.style.display = 'block';
+      }
+
+      function update(consent) {
+        localStorage.setItem('ga-consent', consent);
+        if (consent === 'granted') {
+          gtag('consent', 'update', {analytics_storage: 'granted'});
+          gtag('config', 'G-M598215MF0');
+        } else {
+          gtag('consent', 'update', {analytics_storage: 'denied'});
+        }
+        banner.style.display = 'none';
+      }
+
+      const acceptBtn = document.getElementById('cookie-accept');
+      const rejectBtn = document.getElementById('cookie-reject');
+      if (acceptBtn) acceptBtn.onclick = () => update('granted');
+      if (rejectBtn) rejectBtn.onclick = () => update('denied');
+    })();
+  </script>
+
       </div>
     </section>
   </div>
