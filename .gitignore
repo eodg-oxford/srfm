@@ -1,0 +1,7 @@
+# Ignore .pyc (python compiled), .pyo (python optimised) and .pyd (Python DLL/shared libraries) files
+*.py[cod]
+
+# Ignores all __pycache__ folders
+__pycache__/
+
+
