@@ -8,7 +8,6 @@
 - Date: 21 Jan 2025
 """
 
-from __future__ import annotations
 import numpy as np
 import matplotlib.pyplot as plt
 from . import utilities
@@ -18,18 +17,11 @@ from . import layer
 import os
 import sys
 import datetime
-import time
 import warnings
-from multiprocessing import Process, Manager
-from bisect import bisect
-import pickle
 from importlib.resources import files, as_file
 from pathlib import Path
 import importlib.util
-import uuid
-from .RFM import rfm_py
 from . import rfm_helper
-from mergedeep import merge
 from netCDF4 import Dataset
 import json
 import copy
@@ -183,7 +175,7 @@ def run_srfm(inp):
     # convert the tracking levels array to a tracking layers array
     track_lyr = utilities.track_lev_to_track_lyr(track_lev)
     track_lyr = track_lyr[::-1]
-
+    
     ########################################################################################
     # prepare and call RFM
     ########################################################################################
@@ -194,9 +186,6 @@ def run_srfm(inp):
     driver_inputs = inp.values["driver_inputs"]
     driver_inputs["tangent"] = (str(inp.values["zen_sec"]),)
     driver_inputs["lev"] = tuple(str(val) for val in levels)
-    #    driver_inputs["atmosphere"] = list(driver_inputs["atmosphere"])
-    #    driver_inputs["atmosphere"][1] = f"{inp.values['results_fldr']}/{keystr}.atm"
-    #    driver_inputs["atmosphere"] = tuple(driver_inputs["atmosphere"])
 
     # initialize RFM model class
     model_RFM = forward_model.RFM()
@@ -328,21 +317,25 @@ def run_srfm(inp):
     # set date
     year_day = inp.values["year_day"]
 
-    # load solar spectrum from file
-    solar_spc, solar_spc_wvnm = utilities.load_solar_spectrum_Gueymard20018()
-    solar_spc = np.interp(
-        RFM_wvnm, solar_spc_wvnm[::-1], solar_spc[::-1]
-    )  # interpolate to RFM_wvnm (the calculation grid)
+    if inp.values["sun"] == True:
+        # load solar spectrum from file
+        solar_spc, solar_spc_wvnm = utilities.load_solar_spectrum_Gueymard20018()
+        solar_spc = np.interp(
+            RFM_wvnm, solar_spc_wvnm[::-1], solar_spc[::-1]
+        )  # interpolate to RFM_wvnm (the calculation grid)
 
-    # scale with year day (different Sun-Earth distance throughout the year
-    # the original specturm is for 1 AU
-    solar_spc = utilities.scale_solar_spectrum(solar_spc, year_day)
+        # scale with year day (different Sun-Earth distance throughout the year
+        # the original specturm is for 1 AU
+        solar_spc = utilities.scale_solar_spectrum(solar_spc, year_day)
 
-    # get incoming solar beam polar angle for DISORT
-    model_DISORT.set_umu0(inp.values["sza_cos"])
-    model_DISORT.set_phi0(inp.values["saa"])
-    model_DISORT.set_umu([inp.values["zen_cos"]])
-    model_DISORT.set_phi([inp.values["saa"]])
+        # get incoming solar beam polar angle for DISORT
+        model_DISORT.set_umu0(inp.values["sza_cos"])
+        model_DISORT.set_phi0(inp.values["saa"])
+        model_DISORT.set_umu([inp.values["zen_cos"]])
+        model_DISORT.set_phi([inp.values["saa"]])
+    else:
+        model_DISORT.set_umu0(1)
+        model_DISORT.set_phi0(0)
 
     # initialize disort input arrays for output variables from a single run
     model_DISORT.initialize_disort_output_arrays()

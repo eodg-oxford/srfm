@@ -534,6 +534,8 @@ def write_atm_file(data, filename, header=None):
             is None.
 
     """
+    hgt_key = [i for i in rfm_prf if i.lower().startswith("hgt ")]
+    
     with open(filename, "w") as f:
         if header is not None:
             if header.startswith("!"):
@@ -547,14 +549,14 @@ def write_atm_file(data, filename, header=None):
         f.write(" ! No. of levels in profiles.")
         f.write("\n")
         f.write("*HGT [km]\n")
-        for i, ii in enumerate(data["HGT [km]"]):
+        for i, ii in enumerate(data[f"{data[hgt_key]}"]):
             if (i % 5) == 0 and i != 0:
-                f.write(f'\n{data["HGT [km]"][i]:.4e}    ')
+                f.write(f'\n{data[hgt_key][i]:.4e}    ')
             else:
-                f.write(f'{data["HGT [km]"][i]:.4e}    ')
+                f.write(f'{data[hgt_key][i]:.4e}    ')
         f.write("\n")
         keys = list(data.keys())
-        keys.remove("HGT [km]")
+        keys.remove(hgt_key)
         for key in keys:
             f.write(f"*{key}\n")
             for i, ii in enumerate(data[key]):
@@ -564,5 +566,46 @@ def write_atm_file(data, filename, header=None):
                     f.write(f"{data[key][i]:.4e}    ")
             f.write("\n")
         f.write("*END")
+    f.close()
+    return
+
+def write_xsc_file(data, filename, header=None):
+    """Write out a file with extinction cross sections 
+    in RFM's .xsc file format.
+
+    Saves an .xsc file in the with the specified name.
+
+    Args:
+        data (dictionary): Data to be written to the file.
+        filename (str): Filename for the output file (has to be a path).
+        header (str): Header for the file, optional, each line starts with "!". Default
+            is None.
+
+    """
+    
+    tem_key = [i for i in data if i.lower().startswith("pre ")]
+    pre_key = [i for i in data if i.lower().startswith("tem ")]
+    
+    with open(filename, "w") as f:
+        if header is not None:
+            if header.startswith("!"):
+                f.write(header)
+            else:
+                f.write("! ")
+                f.write(header)
+        f.write("\n")
+        for lev in data:    
+            f.write("  " + data[lev]["molec"]
+                   + data[lev]["low_spc"] + data[lev]["upp_spc"]
+                   + data[lev]["npts"] + data[lev][tem_key]
+                   + data[lev][pre_key] + "\n"
+                   )
+        
+            for i, ii in enumerate(data[lev]["beta_ext"]):
+                if (i % 10) == 0 and i != 0:
+                    f.write(f'\n{data[lev]["beta_ext"][i]:.4e}    ')
+                else:
+                    f.write(f'{data[lev]["beta_ext"][i]:.4e}    ')
+            f.write("\n")
     f.close()
     return

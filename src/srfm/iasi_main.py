@@ -32,10 +32,8 @@ import pickle
 from importlib.resources import files, as_file
 from pathlib import Path
 import importlib.util
-import uuid
 from .RFM import rfm_py
 from . import rfm_helper
-from mergedeep import merge
 from netCDF4 import Dataset
 import json
 import copy
@@ -461,7 +459,7 @@ def run_srfm(inp):
     driver_inputs["tangent"] = (str(iasi_zen_sec),)
     driver_inputs["lev"] = tuple(str(val) for val in levels)
     driver_inputs["atmosphere"] = list(driver_inputs["atmosphere"])
-    driver_inputs["atmosphere"][1] = f"{inp.values['results_fldr']}/{keystr}.atm"
+    driver_inputs["atmosphere"].append(f"{inp.values['results_fldr']}/{keystr}.atm")
     driver_inputs["atmosphere"] = tuple(driver_inputs["atmosphere"])
 
     # initialize RFM model class

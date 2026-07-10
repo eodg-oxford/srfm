@@ -87,7 +87,7 @@ inputs = {
             "SO2",
         ),
         atmosphere=(
-            os.path.join(ABS_PATH, "hgt_std.atm"),
+            os.path.join(ABS_PATH, "hgt_std.atm"), 
             os.path.join(
                 ABS_PATH, "day.atm"
             ),  # make sure that the actual profiles are the second item in this tuple

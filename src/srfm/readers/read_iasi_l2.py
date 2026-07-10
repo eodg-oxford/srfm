@@ -804,7 +804,7 @@ class Iasi_L2:
         grh = np.fromfile(f, dtype=self.GRH, count=1)[0]
         mphsiz = grh["record_size"] - self.GRH_SIZE  # subtract GRH component
         rec = np.fromfile(f, dtype="b", count=mphsiz)  # Read remaining MPH as bytes
-        mphrec = rec.tostring().decode("utf-8")  # convert bytes to characters
+        mphrec = rec.tobytes().decode("utf-8")  # convert bytes to characters
         ipt = 0
         mph = {}  # create dictionary
         while ipt < mphsiz:

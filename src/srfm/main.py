@@ -10,7 +10,6 @@
 - Date: 25 Nov 2025
 """
 
-from __future__ import annotations
 import numpy as np
 import matplotlib.pyplot as plt
 from . import utilities
@@ -18,17 +17,10 @@ from . import forward_model
 from . import rfm_functions
 from . import layer
 import os
-import sys
 import datetime
-import time
 import warnings
-from multiprocessing import Process, Manager
-from bisect import bisect
-import pickle
 from importlib.resources import files, as_file
-from .RFM import rfm_py
 from . import rfm_helper
-from mergedeep import merge
 from netCDF4 import Dataset
 import json
 import copy
@@ -125,6 +117,14 @@ def run_srfm(inp):
                 lyr
             ].calculate_op()  # calculates layer optical properties, may run in parallel
 
+    # add output from optical properties calculation
+    for lyr in scat_lyrs.keys():
+        scat_lyrs[lyr].add_op_calc_output()
+
+        # interpolate layer optical properties
+        scat_lyrs[lyr].regrid(wvls, track_diff=False)
+        scat_lyrs[lyr].calc_tau()
+
     ########################################################################################
     # prepare atmospheric layer structure
     ########################################################################################
@@ -188,7 +188,7 @@ def run_srfm(inp):
     track_lev = [None for i in levels]
 
     # add upper and lower particle layer boundaries, delete any levels "within" the layer
-    for lyr in scat_lyrs.keys():
+    for lyr in scat_lyrs:
         levels, track_lev = utilities.add_lyr_from_Layer(
             lev=levels, track_lev=track_lev, new_lyr=scat_lyrs[lyr]
         )
@@ -196,6 +196,41 @@ def run_srfm(inp):
     # convert the tracking levels array to a tracking layers array
     track_lyr = utilities.track_lev_to_track_lyr(track_lev)
     track_lyr = track_lyr[::-1]
+    
+#    # insert "aerosol" into RFM: prepare xsc file and atm file
+#    rfm_prf = rfm_functions.read_atm_file(inp.values["driver_inputs"]["atmosphere"][1])
+#    hgt_key = [i for i in rfm_prf if i.lower().startswith("hgt ")] 
+#    tem_key = [i for i in rfm_prf if i.lower().startswith("pre ")]
+#    pre_key = [i for i in rfm_prf if i.lower().startswith("tem ")]
+#    
+#    xscs = {} # dictionary with extinxtions for xsc file, keys are just numbers
+#    
+#    for i,lyr in enumerate(scat_lyrs):
+#        xscs[f"{0}l"] = {}
+#        xscs[f"{0}l"]["molec"] = "Aerosol"
+#        xscs[f"{0}l"][tem_key] = np.interp(lyr.alt_low,rfm_prf[hgt_key],rfm_prf[tem_key])
+#        xscs[f"{0}l"][pre_key] = np.exp(np.interp(lyr.alt_low,rfm_prf[hgt_key], np.log(np.maximum(rfm_prf[pre_key],tiny))))
+#        xscs[f"{0}l"]["low_spc"] = lyr.low_spc
+#        xscs[f"{0}l"]["upp_spc"] = lyr.upp_spc 
+#        xscs[f"{0}l"]["npts"] = (int(np.floor((lyr.upp_spc - lyr.low_spc)/ lyr.res))+ 1)  # expected number of points in the grid
+#        xscs[f"{0}l"]["xsc"] = lyr.beta_ext # units m-1
+#        
+#        xscs[f"{0}u"] = {}
+#        xscs[f"{0}u"]["molec"] = "Aerosol"
+#        xscs[f"{0}u"][tem_key] = np.interp(lyr.alt_upp,rfm_prf[hgt_key],rfm_prf[tem_key])
+#        xscs[f"{0}u"][pre_key] = np.exp(np.interp(lyr.alt_upp,rfm_prf[hgt_key], np.log(np.maximum(rfm_prf[pre_key],tiny))))
+#        xscs[f"{0}u"]["low_spc"] = lyr.low_spc
+#        xscs[f"{0}u"]["upp_spc"] = lyr.upp_spc 
+#        xscs[f"{0}u"]["npts"] = (int(np.floor((lyr.upp_spc - lyr.low_spc)/ lyr.res))+ 1)  # expected number of points in the grid
+#        xscs[f"{0}u"]["xsc"] = lyr.beta_ext # units m-1
+#    
+#    # write xsc file
+#    rfm_functions.write_xsc_file(xscs, filename=os.path.join(inp.values["results_fldr"],"aerosol.xsc"))
+#    
+#    aslprf = {}
+#    aslprf["HGT (km)"] = levels
+#    aslmask = [1 if track_lev[levels.index(i)] != None else 0 for i in levels]
+#    rfm_functions.write_atm_file(aslmask,filename=f"{inp.values['results_fldr']}/aerosol.atm")
 
     ########################################################################################
     # prepare and call RFM
@@ -212,6 +247,13 @@ def run_srfm(inp):
     driver_inputs = inp.values["driver_inputs"]
     driver_inputs["lev"] = tuple(str(val) for val in levels)
     driver_inputs["tangent"] = (str(zen_sec),)
+#    driver_inputs["atmosphere"] = list(driver_inputs["atmosphere"])
+#    driver_inputs["atmosphere"].append(f"{inp.values['results_fldr']}/aerosol.atm")
+#    driver_inputs["atmosphere"] = tuple(driver_inputs["atmosphere"])
+
+#    driver_inputs["xsc"] = list(driver_inputs["xsc"])
+#    driver_inputs["xsc"].append(f"{inp.values['results_fldr']}/aerosol.xsc")
+#    driver_inputs["xsc"] = tuple(driver_inputs["xsc"])
 
     # initialize RFM model class
     model_RFM = forward_model.RFM()
@@ -249,14 +291,6 @@ def run_srfm(inp):
             "Failed to parse wavenumbers from RFM output columns."
         ) from exc
     wvls = (1.0 / RFM_wvnm) * 1e4
-
-    # add output from optical properties calculation, TODO MOVE UP?
-    for lyr in scat_lyrs.keys():
-        scat_lyrs[lyr].add_op_calc_output()
-
-        # interpolate layer optical properties
-        scat_lyrs[lyr].regrid(wvls, track_diff=False)
-        scat_lyrs[lyr].calc_tau()
 
     ########################################################################################
     # prepare DISORT common variables

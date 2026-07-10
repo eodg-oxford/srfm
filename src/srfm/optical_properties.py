@@ -952,8 +952,8 @@ def loop_mie_over_wavelengths(
         # calculate weighted sums of some variables:
 
         # Weighted sums for extinction and scattering
-        beta_ext[i] = np.pi * np.sum(radius_weight * radius**2 * Q_ext_value) * 1e-6
-        beta_sca[i] = np.pi * np.sum(radius_weight * radius**2 * Q_sca_value) * 1e-6
+        beta_ext[i] = np.pi * np.sum(radius_weight * radius**2 * Q_ext_value) * 1e-6 # [m-1]
+        beta_sca[i] = np.pi * np.sum(radius_weight * radius**2 * Q_sca_value) * 1e-6 # [m-1]
 
         # Weighted sums for phase function
         for k in range(angles):

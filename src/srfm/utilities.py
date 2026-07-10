@@ -443,9 +443,11 @@ def add_lyr_from_Layer(lev, track_lev, new_lyr):
 
     idx_low = bisect(lev, new_lyr.alt_low)
     lev.insert(idx_low, new_lyr.alt_low)
+#    lev.insert(idx_low, new_lyr.alt_low-0.001)
     track_lev.insert(idx_low, new_lyr.name)
 
     idx_upp = bisect(lev, new_lyr.alt_upp)
+#    lev.insert(idx_upp, new_lyr.alt_upp+0.001)
     lev.insert(idx_upp, new_lyr.alt_upp)
     track_lev.insert(idx_upp, new_lyr.name)
 
@@ -945,7 +947,7 @@ def scale_solar_spectrum(spc, yday):
     return sc_spc
 
 
-def get_altitude_prf(p, T, z0=0, M=28.97, g=9.81):
+def get_altitude_prf(p, T, z0=0, M=28.965, g=9.81):
     """Calculates atmospheric altitude profile given pressure and temperature profiles.
 
     Manually integrates/sums the hydrostatic equation (using ideal gas law) to
