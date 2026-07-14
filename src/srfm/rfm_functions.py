@@ -537,6 +537,8 @@ def write_atm_file(data, filename, header=None):
     hgt_key = [i for i in data if i.lower().startswith("hgt ")]
     if len(hgt_key) != 1:
         raise ValueError("Expected exactly one key starting with 'hgt '.")    
+    else:
+        hgt_key = hgt_key[0]
     
     with open(filename, "w") as f:
         if header is not None:
