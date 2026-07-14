@@ -534,7 +534,9 @@ def write_atm_file(data, filename, header=None):
             is None.
 
     """
-    hgt_key = [i for i in rfm_prf if i.lower().startswith("hgt ")]
+    hgt_key = [i for i in data if i.lower().startswith("hgt ")]
+    if len(hgt_key) != 1:
+        raise ValueError("Expected exactly one key starting with 'hgt '.")    
     
     with open(filename, "w") as f:
         if header is not None:

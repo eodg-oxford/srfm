@@ -1,5 +1,5 @@
 SRFM native build log
-Timestamp: 2026-02-27T13:45:00.409664
+Timestamp: 2026-07-13T15:17:09.153494
 Python: 3.13.8
 fflags: -O3 -g -Wall
 backend: meson
@@ -7,8 +7,8 @@ backend: meson
 $ /home/k/knizek/miniforge3/envs/my_general/bin/python -m numpy.f2py -c /home/k/knizek/Documents/srfm_main/src/srfm/mie_ewp.f90 -m mie_module --backend meson
 The Meson build system
 Version: 1.9.0
-Source dir: /tmp/tmp2rm0ixrm
-Build dir: /tmp/tmp2rm0ixrm/bbdir
+Source dir: /tmp/tmpf56fxxnf
+Build dir: /tmp/tmpf56fxxnf/bbdir
 Build type: native build
 Project name: mie_module
 Project version: 0.1
@@ -25,12 +25,11 @@ Library quadmath found: YES
 Build targets in project: 1
 
 Found ninja-1.13.1 at /home/k/knizek/miniforge3/envs/my_general/bin/ninja
-ninja: Entering directory `/tmp/tmp2rm0ixrm/bbdir'
+ninja: Entering directory `/tmp/tmpf56fxxnf/bbdir'
 [1/7] Scanning target mie_module.cpython-313-x86_64-linux-gnu for modules
 [2/7] Generating dynamic dependency information for target mie_module.cpython-313-x86_64-linux-gnu
 [3/7] Compiling Fortran object mie_module.cpython-313-x86_64-linux-gnu.so.p/mie_module-f2pywrappers.f.o
-[4/7] Compiling C object mie_module.cpython-313-x86_64-linux-gnu.so.p/mie_modulemodule.c.o
-[5/7] Compiling Fortran object mie_module.cpython-313-x86_64-linux-gnu.so.p/mie_ewp.f90.o
+[4/7] Compiling Fortran object mie_module.cpython-313-x86_64-linux-gnu.so.p/mie_ewp.f90.o
 ../mie_ewp.f90:82:15:
 
    82 |           Ir = 1 / Cm
@@ -96,10 +95,11 @@ Warning: Possible change of value in conversion from COMPLEX(8) to REAL(8) at (1
   158 |              Apsi1 = Psi1
       |                     1
 Warning: Possible change of value in conversion from REAL(16) to REAL(8) at (1) [-Wconversion]
+[5/7] Compiling C object mie_module.cpython-313-x86_64-linux-gnu.so.p/mie_modulemodule.c.o
 [6/7] Compiling C object mie_module.cpython-313-x86_64-linux-gnu.so.p/c13a65332d26e643cc6b56c011e31a03a7b674b8_.._.._f2py_src_fortranobject.c.o
 [7/7] Linking target mie_module.cpython-313-x86_64-linux-gnu.so
 INFO: autodetecting backend as ninja
-INFO: calculating backend command to run: /home/k/knizek/miniforge3/envs/my_general/bin/ninja -C /tmp/tmp2rm0ixrm/bbdir
+INFO: calculating backend command to run: /home/k/knizek/miniforge3/envs/my_general/bin/ninja -C /tmp/tmpf56fxxnf/bbdir
 Using meson backend
 Will pass --lower to f2py
 See https://numpy.org/doc/stable/f2py/buildtools/meson.html
@@ -217,8 +217,8 @@ rmbadname1: Replacing "min" with "min_bn".
 rmbadname1: Replacing "max" with "max_bn".
 The Meson build system
 Version: 1.9.0
-Source dir: /tmp/tmpocdvz7bp
-Build dir: /tmp/tmpocdvz7bp/bbdir
+Source dir: /tmp/tmpdvgluyeu
+Build dir: /tmp/tmpdvgluyeu/bbdir
 Build type: native build
 Project name: disort_module_s
 Project version: 0.1
@@ -235,7 +235,7 @@ Library quadmath found: YES
 Build targets in project: 1
 
 Found ninja-1.13.1 at /home/k/knizek/miniforge3/envs/my_general/bin/ninja
-ninja: Entering directory `/tmp/tmpocdvz7bp/bbdir'
+ninja: Entering directory `/tmp/tmpdvgluyeu/bbdir'
 [1/7] Scanning target disort_module_s.cpython-313-x86_64-linux-gnu for modules
 [2/7] Generating dynamic dependency information for target disort_module_s.cpython-313-x86_64-linux-gnu
 [3/7] Compiling Fortran object disort_module_s.cpython-313-x86_64-linux-gnu.so.p/disort_module_s-f2pywrappers.f.o
@@ -344,7 +344,7 @@ Warning: '__result_bdref' may be used uninitialized [-Wmaybe-uninitialized]
 note: '__result_bdref' declared here
 [7/7] Linking target disort_module_s.cpython-313-x86_64-linux-gnu.so
 INFO: autodetecting backend as ninja
-INFO: calculating backend command to run: /home/k/knizek/miniforge3/envs/my_general/bin/ninja -C /tmp/tmpocdvz7bp/bbdir
+INFO: calculating backend command to run: /home/k/knizek/miniforge3/envs/my_general/bin/ninja -C /tmp/tmpdvgluyeu/bbdir
 Using meson backend
 Will pass --lower to f2py
 See https://numpy.org/doc/stable/f2py/buildtools/meson.html
@@ -1822,8 +1822,8 @@ rmbadname1: Replacing "max" with "max_bn".
 rmbadname1: Replacing "min" with "min_bn".
 The Meson build system
 Version: 1.9.0
-Source dir: /tmp/tmppsupsi_y
-Build dir: /tmp/tmppsupsi_y/bbdir
+Source dir: /tmp/tmpmu6f_qd_
+Build dir: /tmp/tmpmu6f_qd_/bbdir
 Build type: native build
 Project name: disort_module_d
 Project version: 0.1
@@ -1840,7 +1840,7 @@ Library quadmath found: YES
 Build targets in project: 1
 
 Found ninja-1.13.1 at /home/k/knizek/miniforge3/envs/my_general/bin/ninja
-ninja: Entering directory `/tmp/tmppsupsi_y/bbdir'
+ninja: Entering directory `/tmp/tmpmu6f_qd_/bbdir'
 [1/7] Scanning target disort_module_d.cpython-313-x86_64-linux-gnu for modules
 [2/7] Compiling C object disort_module_d.cpython-313-x86_64-linux-gnu.so.p/c13a65332d26e643cc6b56c011e31a03a7b674b8_.._.._f2py_src_fortranobject.c.o
 [3/7] Generating dynamic dependency information for target disort_module_d.cpython-313-x86_64-linux-gnu
@@ -1874,7 +1874,7 @@ Warning: '__result_bdref' may be used uninitialized [-Wmaybe-uninitialized]
 note: '__result_bdref' declared here
 [7/7] Linking target disort_module_d.cpython-313-x86_64-linux-gnu.so
 INFO: autodetecting backend as ninja
-INFO: calculating backend command to run: /home/k/knizek/miniforge3/envs/my_general/bin/ninja -C /tmp/tmppsupsi_y/bbdir
+INFO: calculating backend command to run: /home/k/knizek/miniforge3/envs/my_general/bin/ninja -C /tmp/tmpmu6f_qd_/bbdir
 Using meson backend
 Will pass --lower to f2py
 See https://numpy.org/doc/stable/f2py/buildtools/meson.html
@@ -3378,8 +3378,8 @@ getctype: "integer(kind=i4)" is mapped to C "int" (to override define dict(integ
 getctype: "integer(kind=i4)" is mapped to C "int" (to override define dict(integer = dict(i4="<C typespec>")) in /home/k/knizek/Documents/srfm_main/src/srfm/RFM/.f2py_f2cmap file).
 The Meson build system
 Version: 1.9.0
-Source dir: /tmp/tmp9456rk3d
-Build dir: /tmp/tmp9456rk3d/bbdir
+Source dir: /tmp/tmpbq7mdhlu
+Build dir: /tmp/tmpbq7mdhlu/bbdir
 Build type: native build
 Project name: rfm_py
 Project version: 0.1
@@ -3396,9 +3396,11 @@ Library quadmath found: YES
 Build targets in project: 1
 
 Found ninja-1.13.1 at /home/k/knizek/miniforge3/envs/my_general/bin/ninja
-ninja: Entering directory `/tmp/tmp9456rk3d/bbdir'
+ninja: Entering directory `/tmp/tmpbq7mdhlu/bbdir'
 [1/8] Scanning target rfm_py.cpython-313-x86_64-linux-gnu for modules
-[2/8] Compiling C object rfm_py.cpython-313-x86_64-linux-gnu.so.p/rfm_pymodule.c.o
+[2/8] Generating dynamic dependency information for target rfm_py.cpython-313-x86_64-linux-gnu
+[3/8] Compiling Fortran object rfm_py.cpython-313-x86_64-linux-gnu.so.p/rfm_py-f2pywrappers.f.o
+[4/8] Compiling C object rfm_py.cpython-313-x86_64-linux-gnu.so.p/rfm_pymodule.c.o
 ../rfm_pymodule.c: In function 'f2py_rout_rfm_py_rfm_run':
 ../rfm_pymodule.c:433:5: warning: this 'if' clause does not guard... [-Wmisleading-indentation]
   433 |     if (enable_capture_capi != Py_None)
@@ -3414,8 +3416,6 @@ In function 'string_from_pyobj',
 ../rfm_pymodule.c:284:5: note: in expansion of macro 'STRINGCOPYN'
   284 |     STRINGCOPYN(*str, buf, n);
       |     ^~~~~~~~~~~
-[3/8] Generating dynamic dependency information for target rfm_py.cpython-313-x86_64-linux-gnu
-[4/8] Compiling Fortran object rfm_py.cpython-313-x86_64-linux-gnu.so.p/rfm_py-f2pywrappers.f.o
 [5/8] Compiling C object rfm_py.cpython-313-x86_64-linux-gnu.so.p/c13a65332d26e643cc6b56c011e31a03a7b674b8_.._.._f2py_src_fortranobject.c.o
 [6/8] Compiling Fortran object rfm_py.cpython-313-x86_64-linux-gnu.so.p/combined.f90.o
 ../combined.f90:19631:8:
@@ -3610,7 +3610,7 @@ Warning: 'abcsav.offset' may be used uninitialized [-Wmaybe-uninitialized]
 Warning: Unused module variable 'vidhdr' which has been explicitly imported at (1) [-Wunused-variable]
 [8/8] Linking target rfm_py.cpython-313-x86_64-linux-gnu.so
 INFO: autodetecting backend as ninja
-INFO: calculating backend command to run: /home/k/knizek/miniforge3/envs/my_general/bin/ninja -C /tmp/tmp9456rk3d/bbdir
+INFO: calculating backend command to run: /home/k/knizek/miniforge3/envs/my_general/bin/ninja -C /tmp/tmpbq7mdhlu/bbdir
 Reading f2cmap from '.f2py_f2cmap' ...
 	Mapping "real(kind=r8)" to "double"
 	Warning: redefinition of {'double precision':{'':'double'->'double'}}
