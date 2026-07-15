@@ -549,11 +549,11 @@ def write_atm_file(data, filename, header=None):
                 f.write(header)
         f.write("\n")
         f.write("  ")
-        f.write(str(len(data["HGT [km]"])))
+        f.write(str(len(data[hgt_key])))
         f.write(" ! No. of levels in profiles.")
         f.write("\n")
-        f.write("*HGT [km]\n")
-        for i, ii in enumerate(data[f"{data[hgt_key]}"]):
+        f.write(f"*{hgt_key}\n")
+        for i, ii in enumerate(data[f"{hgt_key}"]):
             if (i % 5) == 0 and i != 0:
                 f.write(f'\n{data[hgt_key][i]:.4e}    ')
             else:
