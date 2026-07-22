@@ -494,7 +494,10 @@ def run_srfm(inp):
         model_DISORT.set_wvnm_range(wvnm - 0.5, wvnm + 0.5)
 
         # set incoming beam of (solar) radiation
-        model_DISORT.set_fbeam(solar_spc[wvl_idx])
+        if inp.values["sun"] == True:
+            model_DISORT.set_fbeam(solar_spc[wvl_idx])
+        else:
+            model_DISORT.set_fbeam(0)
         #    model_DISORT.set_fbeam(0.1)
 
         # run disort input tests
