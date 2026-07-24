@@ -315,7 +315,16 @@ def run_srfm(inp):
     # prepare solar spectrum
     ########################################################################################
     # set date
-    year_day = inp.values["year_day"]
+    if "date" in inp.values:
+        if not isintance(inp.values["date"], (datetime.datetime,tuple)) or not len(inp.values["date"]) == 3:
+            raise ValueError("date must be a tuple of len 3 (see datetime.datetime.")
+        else:
+            date = inp.values["date"]
+    else:
+        date = datetime.datetime(
+            2025, 3, 23
+        )  # default date, approx spring equinox, avg Earth-Sun dist
+    year_day = date.timetuple().tm_yday
 
     if inp.values["sun"] == True:
         # load solar spectrum from file
@@ -331,11 +340,13 @@ def run_srfm(inp):
         # get incoming solar beam polar angle for DISORT
         model_DISORT.set_umu0(inp.values["sza_cos"])
         model_DISORT.set_phi0(inp.values["saa"])
-        model_DISORT.set_umu([inp.values["zen_cos"]])
-        model_DISORT.set_phi([inp.values["saa"]])
+
     else:
         model_DISORT.set_umu0(1)
         model_DISORT.set_phi0(0)
+
+    model_DISORT.set_umu([inp.values["zen_cos"]])
+    model_DISORT.set_phi([inp.values["saa"]])
 
     # initialize disort input arrays for output variables from a single run
     model_DISORT.initialize_disort_output_arrays()
