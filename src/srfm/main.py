@@ -248,7 +248,7 @@ def run_srfm(inp):
     driver_inputs["lev"] = tuple(str(val) for val in levels)
     driver_inputs["tangent"] = (str(zen_sec),)
     
-    if inp.values["btemp"]:
+    if "btemp" in inp.values:
         driver_inputs["sfc"] = (f"TEMSFC={inp.values['btemp']}",)
 
 
@@ -517,13 +517,13 @@ def run_srfm(inp):
 
         
         #set bottom boundary temperature
-        if inp.values["btemp"]:
+        if "btemp" in inp.values:
             model_DISORT.set_btemp(inp.values["btemp"])
         else:
             model_DISORT.set_btemp(model_DISORT.disort_input["temper"][-1])
         
         # set top boundary temperature    
-        if inp.values["ttemp"]:
+        if "ttemp" in inp.values:
             model_DISORT.set_ttemp(inp.values["ttemp"])
         else:
             model_DISORT.set_ttemp(model_DISORT.disort_input["temper"][0])

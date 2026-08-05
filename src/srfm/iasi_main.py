@@ -462,7 +462,7 @@ def run_srfm(inp):
     driver_inputs["atmosphere"].append(f"{inp.values['results_fldr']}/{keystr}.atm")
     driver_inputs["atmosphere"] = tuple(driver_inputs["atmosphere"])
     
-    if inp.values["btemp"]:
+    if "btemp" in inp.values:
         driver_inputs["sfc"] = (f"TEMSFC={inp.values['btemp']}",)
     # initialize RFM model class
     model_RFM = forward_model.RFM()
@@ -722,13 +722,13 @@ def run_srfm(inp):
         model_DISORT.disort_input["temper"] = model_DISORT.disort_input["temper"][idx:]
 
         #set bottom boundary temperature
-        if inp.values["btemp"]:
+        if "btemp" in inp.values:
             model_DISORT.set_btemp(inp.values["btemp"])
         else:
             model_DISORT.set_btemp(model_DISORT.disort_input["temper"][-1])
         
         # set top boundary temperature    
-        if inp.values["ttemp"]:
+        if "ttemp" in inp.values:
             model_DISORT.set_ttemp(inp.values["ttemp"])
         else:
             model_DISORT.set_ttemp(model_DISORT.disort_input["temper"][0])
