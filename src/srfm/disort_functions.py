@@ -171,7 +171,7 @@ def test_disort_input_format(
         albedo (int, float): Surface albedo.
         btemp (int, float): Bottom boundary temperature.
         ttemp (int, float): Top boundary temperature.
-        temis (int, float): Top boundary emmisivity.
+        temis (int, float): Top boundary emissivity.
         earth_radius (int, float): Earth radius, [km].
         h_lyr (array-like): layer vertical extent.
         rhoq (array-like): BDREF-related.

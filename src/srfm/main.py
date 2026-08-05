@@ -670,9 +670,31 @@ def run_srfm(inp):
                 metadata = copy.deepcopy(inp.values)
                 metadata["driver_inputs"]["spectral"] = str(
                     metadata["driver_inputs"]["spectral"]
-                )
+                )                
                 _inp = json.dumps(metadata)
+                
                 bbt.srfm_params = _inp
+                
+                ## Save layer optical properties
+                ops = {}
+                for ll in scat_lyrs:
+                    ops[ll] = {}
+                    ops[ll]["ssalb"] = scat_lyrs[ll].ssalb
+                    ops[ll]["beta_ext"] = scat_lyrs[ll].beta_ext
+                    ops[ll]["phase_function"] = scat_lyrs[ll].phase_function
+                    ops[ll]["tau"] = scat_lyrs[ll].tau
+                
+                ## convert numpy arrays to lists (np.ndarray isn't json seralizable)
+                def numpy_handler(obj):
+                    if isinstance(obj, np.ndarray):
+                        return obj.tolist()
+                    if isinstance(obj, np.generic):  # Handles numpy scalars like int64, float32
+                        return obj.item()
+                    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+                
+                _ops = json.dumps(ops, default = numpy_handler)
+                
+                bbt.lyr_params = _ops
 
         if inp.values["rad"] == True:
             if isinstance(inp.values["rad_out_fname"], str):
@@ -705,6 +727,27 @@ def run_srfm(inp):
                 )
                 _inp = json.dumps(metadata)
                 rad.srfm_params = _inp
+                
+                                ## Save layer optical properties
+                ops = {}
+                for ll in scat_lyrs:
+                    ops[ll] = {}
+                    ops[ll]["ssalb"] = scat_lyrs[ll].ssalb
+                    ops[ll]["beta_ext"] = scat_lyrs[ll].beta_ext
+                    ops[ll]["phase_function"] = scat_lyrs[ll].phase_function
+                    ops[ll]["tau"] = scat_lyrs[ll].tau
+                
+                ## convert numpy arrays to lists (np.ndarray isn't json seralizable)
+                def numpy_handler(obj):
+                    if isinstance(obj, np.ndarray):
+                        return obj.tolist()
+                    if isinstance(obj, np.generic):  # Handles numpy scalars like int64, float32
+                        return obj.item()
+                    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+                
+                _ops = json.dumps(ops, default = numpy_handler)
+                
+                rad.lyr_params = _ops
 
     elif inp.values["out_mode"] == None:
         pass
