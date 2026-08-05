@@ -186,7 +186,10 @@ def run_srfm(inp):
     driver_inputs = inp.values["driver_inputs"]
     driver_inputs["tangent"] = (str(inp.values["zen_sec"]),)
     driver_inputs["lev"] = tuple(str(val) for val in levels)
-
+    
+    if inp.values["btemp"]:
+        driver_inputs["sfc"] = (f"TEMSFC={inp.values['btemp']}",)
+        
     # initialize RFM model class
     model_RFM = forward_model.RFM()
 
@@ -455,8 +458,18 @@ def run_srfm(inp):
         model_DISORT.set_temper_from_rfm(model_RFM)
         model_DISORT.disort_input["temper"] = model_DISORT.disort_input["temper"][idx:]
 
-        model_DISORT.set_btemp(model_DISORT.disort_input["temper"][-1])
-        model_DISORT.set_ttemp(model_DISORT.disort_input["temper"][0])
+        #set bottom boundary temperature
+        if inp.values["btemp"]:
+            model_DISORT.set_btemp(inp.values["btemp"])
+        else:
+            model_DISORT.set_btemp(model_DISORT.disort_input["temper"][-1])
+        
+        # set top boundary temperature    
+        if inp.values["ttemp"]:
+            model_DISORT.set_ttemp(inp.values["ttemp"])
+        else:
+            model_DISORT.set_ttemp(model_DISORT.disort_input["temper"][0])
+            
         model_DISORT.set_h_lyr(
             np.zeros(shape=(model_DISORT.disort_input["maxcly"] + 1))
         )

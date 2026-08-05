@@ -114,6 +114,8 @@ inputs = {
     "disort_precision": "double", # Fortran precision
     "header": "NO HEADER", # header for terminal printing, "NO HEADER" == supressed.
     "adjust_maxcmu": False, # if DISORT output intensity is negative, rerun with more streams
+    "btemp": 300,
+    "ttemp": 295,
 
     ## Scattering configuration
     # scattering layers are named and are as keys in this dict, refer to docs for 
