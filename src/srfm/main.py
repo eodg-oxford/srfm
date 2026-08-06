@@ -125,6 +125,46 @@ def run_srfm(inp):
         scat_lyrs[lyr].regrid(wvls, track_diff=False)
         scat_lyrs[lyr].calc_tau()
 
+    # Prepare dict with layer parameters to be saved in the output
+    layer_attrs = (
+        "name",
+        "low_spc",
+        "upp_spc",
+        "spec_units",
+        "res",
+        "mass_loading",
+        "n",
+        "r",
+        "s",
+        "rho",
+        "s_a_den",
+        "v_den",
+        "dist_type",
+        "comp",
+        "center_alt",
+        "thick",
+        "alt_low",
+        "alt_upp",
+        "radii",
+        "eta",
+        "phase_quad_N",
+        "phase_quad_type",
+        "radii_quad_type",
+        "leg_coeffs",
+        "leg_coeffs_type",
+        "multiprocess",
+    )
+
+    effective_params = copy.deepcopy(inp.values)
+    effective_params["scat_lyrs_inputs"] = {
+      lyr: {
+          attr: getattr(scat_lyrs[lyr], attr)
+          for attr in layer_attrs
+          if hasattr(scat_lyrs[lyr], attr)
+      }
+      for lyr in scat_lyrs
+    }
+
     ########################################################################################
     # prepare atmospheric layer structure
     ########################################################################################
@@ -666,51 +706,135 @@ def run_srfm(inp):
             else:
                 out_nm = f"{inp.values['results_fldr']}/bbt.nc"
 
-            with Dataset(out_nm, "w", format="NETCDF4") as nc_file:
-                nc_file.description = f"SRFM output."
-                nc_file.history = (
-                    f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
-                )
-                nc_file.createDimension(
-                    "wavenumber", fin_grid.shape[0]
-                )  # determines the output spectrum shape
-                bbt = nc_file.createVariable(
-                    "bbt", "f8", ("wavenumber",), zlib=True, complevel=4
-                )
+#            with Dataset(out_nm, "w", format="NETCDF4") as nc_file:
+#                nc_file.description = f"SRFM output."
+#                nc_file.history = (
+#                    f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
+#                )
+#                nc_file.createDimension(
+#                    "wavenumber", fin_grid.shape[0]
+#                )  # determines the output spectrum shape
+#                bbt = nc_file.createVariable(
+#                    "bbt", "f8", ("wavenumber",), zlib=True, complevel=4
+#                )
 
+#                bbt.units = "K"
+#                bbt.long_name = "Brightness temperature"
+#                bbt[:] = model_SRFM.bbt[:, 0, 0, 0]
+
+#                # store inputs as well
+#                metadata = copy.deepcopy(inp.values)
+#                metadata["driver_inputs"]["spectral"] = str(
+#                    metadata["driver_inputs"]["spectral"]
+#                )                
+#                _inp = json.dumps(metadata)
+#                
+#                bbt.srfm_params = _inp
+#                
+#                ## Save layer optical properties
+#                ops = {}
+#                for ll in scat_lyrs:
+#                    ops[ll] = {}
+#                    ops[ll]["ssalb"] = scat_lyrs[ll].ssalb
+#                    ops[ll]["beta_ext"] = scat_lyrs[ll].beta_ext
+#                    ops[ll]["phase_function"] = scat_lyrs[ll].phase_function
+#                    ops[ll]["tau"] = scat_lyrs[ll].tau
+#                
+#                ## convert numpy arrays to lists (np.ndarray isn't json seralizable)
+#                def numpy_handler(obj):
+#                    if isinstance(obj, np.ndarray):
+#                        return obj.tolist()
+#                    if isinstance(obj, np.generic):  # Handles numpy scalars like int64, float32
+#                        return obj.item()
+#                    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+#                
+#                _ops = json.dumps(ops, default = numpy_handler)
+#                
+#                bbt.lyr_params = _ops
+            
+            with Dataset(out_nm, "w", format="NETCDF4") as nc_file:
+                # --- File Global Attributes ---
+                nc_file.description = "SRFM output."
+                nc_file.history = f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
+                
+                def numpy_handler(obj):
+                    if isinstance(obj, np.ndarray): return obj.tolist()
+                    if isinstance(obj, np.generic): return obj.item()
+                    raise TypeError(f"Type {type(obj).__name__} not serializable")
+                
+                effective_params["driver_inputs"]["spectral"] = str(
+                    effective_params["driver_inputs"]["spectral"]
+                )
+                
+                nc_file.srfm_params = json.dumps(
+                    effective_params,
+                    default=numpy_handler,
+                    )
+
+
+                # --- Core Dimensions ---
+                num_wavenumbers_op = wvls.shape[0] # dimension for optical properties (on compupational grid)
+                num_wavenumbers = fin_grid.shape[0] # dimension for output spectrum (interpolated to fin_grid)
+                layer_names = list(scat_lyrs.keys())
+                num_layers = len(layer_names)
+                
+                # Extract the number of angles from the first available layer's phase function
+                # Assumes shape is (wavenumbers, angles)
+                first_layer_key = layer_names[0]
+                num_angles = scat_lyrs[first_layer_key].phase_function.shape[1]
+
+                nc_file.createDimension("wavenumber", num_wavenumbers)
+                nc_file.createDimension("wavenumber_op", num_wavenumbers_op)
+                nc_file.createDimension("layer", num_layers)
+#                nc_file.createDimension("angle", num_angles)
+
+                # --- Core Spectrum Variables ---
+                bbt = nc_file.createVariable("bbt", "f8", ("wavenumber",), zlib=True, complevel=4)
                 bbt.units = "K"
                 bbt.long_name = "Brightness temperature"
                 bbt[:] = model_SRFM.bbt[:, 0, 0, 0]
 
-                # store inputs as well
-                metadata = copy.deepcopy(inp.values)
-                metadata["driver_inputs"]["spectral"] = str(
-                    metadata["driver_inputs"]["spectral"]
-                )                
-                _inp = json.dumps(metadata)
+                # Store layer names mapping
+                var_lyr_names = nc_file.createVariable("layer_names", str, ("layer",))
+                var_lyr_names[:] = np.array(layer_names, dtype=object)
+
+                # --- Pre-allocate Matrices ---
+                grid_shape = (num_layers, num_wavenumbers_op)
+#                mat_ssalb = np.zeros(grid_shape)
+#                mat_beta_ext = np.zeros(grid_shape)
+                mat_tau = np.zeros(grid_shape)
                 
-                bbt.srfm_params = _inp
-                
-                ## Save layer optical properties
-                ops = {}
-                for ll in scat_lyrs:
-                    ops[ll] = {}
-                    ops[ll]["ssalb"] = scat_lyrs[ll].ssalb
-                    ops[ll]["beta_ext"] = scat_lyrs[ll].beta_ext
-                    ops[ll]["phase_function"] = scat_lyrs[ll].phase_function
-                    ops[ll]["tau"] = scat_lyrs[ll].tau
-                
-                ## convert numpy arrays to lists (np.ndarray isn't json seralizable)
-                def numpy_handler(obj):
-                    if isinstance(obj, np.ndarray):
-                        return obj.tolist()
-                    if isinstance(obj, np.generic):  # Handles numpy scalars like int64, float32
-                        return obj.item()
-                    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
-                
-                _ops = json.dumps(ops, default = numpy_handler)
-                
-                bbt.lyr_params = _ops
+                # 3D Matrix shape: (layer, wavenumber, angle)
+#                mat_phase = np.zeros((num_layers, num_wavenumbers_op, num_angles))
+
+                # --- Populate Matrices ---
+                for i, ll in enumerate(layer_names):
+                    lyr = scat_lyrs[ll]
+                    
+#                    mat_ssalb[i, :] = lyr.ssalb
+#                    mat_beta_ext[i, :] = lyr.beta_ext
+                    mat_tau[i, :] = lyr.tau
+                    
+                    # Insert the 2D (wavenumber, angle) array into the 3D grid
+#                    mat_phase[i, :, :] = lyr.phase_function
+
+                # --- Create & Write variables ---
+#                var_ssalb = nc_file.createVariable("ssalb", "f8", ("layer", "wavenumber_op"), zlib=True, complevel=4)
+#                var_ssalb.long_name = "Single scattering albedo per layer and wavenumber"
+#                var_ssalb[:] = mat_ssalb
+
+#                var_beta = nc_file.createVariable("beta_ext", "f8", ("layer", "wavenumber_op"), zlib=True, complevel=4)
+#                var_beta.long_name = "Extinction coefficient per layer and wavenumber"
+#                var_beta[:] = mat_beta_ext
+
+                var_tau = nc_file.createVariable("tau", "f8", ("layer", "wavenumber_op"), zlib=True, complevel=4)
+                var_tau.long_name = "Optical depth per layer and wavenumber"
+                var_tau[:] = mat_tau
+
+#                # Clean, native 3D variable for phase functions
+#                var_phase = nc_file.createVariable("phase_function", "f8", ("layer", "wavenumber_op", "angle"), zlib=True, complevel=4)
+#                var_phase.long_name = "Phase function per layer, wavenumber, and scattering angle"
+#                var_phase[:] = mat_phase
 
         if inp.values["rad"] == True:
             if isinstance(inp.values["rad_out_fname"], str):
@@ -720,50 +844,132 @@ def run_srfm(inp):
             else:
                 out_nm = f"{inp.values['results_fldr']}/rad.nc"
 
-            with Dataset(out_nm, "w", format="NETCDF4") as nc_file:
-                nc_file.description = f"SRFM output."
-                nc_file.history = (
-                    f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
-                )
-                nc_file.createDimension(
-                    "wavenumber", fin_grid.shape[0]
-                )  # determines the output spectrum shape
-                rad = nc_file.createVariable(
-                    "rad", "f8", ("wavenumber",), zlib=True, complevel=4
-                )
+#            with Dataset(out_nm, "w", format="NETCDF4") as nc_file:
+#                nc_file.description = f"SRFM output."
+#                nc_file.history = (
+#                    f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
+#                )
+#                nc_file.createDimension(
+#                    "wavenumber", fin_grid.shape[0]
+#                )  # determines the output spectrum shape
+#                rad = nc_file.createVariable(
+#                    "rad", "f8", ("wavenumber",), zlib=True, complevel=4
+#                )
 
+#                rad.units = "W m-2 sr-1 cm"
+#                rad.long_name = "Radiance"
+#                rad[:] = model_SRFM.uu[:, 0, 0, 0]
+
+#                # store inputs as well
+#                metadata = copy.deepcopy(inp.values)
+#                metadata["driver_inputs"]["spectral"] = str(
+#                    metadata["driver_inputs"]["spectral"]
+#                )
+#                _inp = json.dumps(metadata)
+#                rad.srfm_params = _inp
+#                
+#                                ## Save layer optical properties
+#                ops = {}
+#                for ll in scat_lyrs:
+#                    ops[ll] = {}
+#                    ops[ll]["ssalb"] = scat_lyrs[ll].ssalb
+#                    ops[ll]["beta_ext"] = scat_lyrs[ll].beta_ext
+#                    ops[ll]["phase_function"] = scat_lyrs[ll].phase_function
+#                    ops[ll]["tau"] = scat_lyrs[ll].tau
+#                
+#                ## convert numpy arrays to lists (np.ndarray isn't json seralizable)
+#                def numpy_handler(obj):
+#                    if isinstance(obj, np.ndarray):
+#                        return obj.tolist()
+#                    if isinstance(obj, np.generic):  # Handles numpy scalars like int64, float32
+#                        return obj.item()
+#                    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
+#                
+#                _ops = json.dumps(ops, default = numpy_handler)
+#                
+#                rad.lyr_params = _ops
+            with Dataset(out_nm, "w", format="NETCDF4") as nc_file:
+                # --- File Global Attributes ---
+                nc_file.description = "SRFM output."
+                nc_file.history = f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
+                
+                def numpy_handler(obj):
+                    if isinstance(obj, np.ndarray): return obj.tolist()
+                    if isinstance(obj, np.generic): return obj.item()
+                    raise TypeError(f"Type {type(obj).__name__} not serializable")
+                
+                effective_params["driver_inputs"]["spectral"] = str(
+                    effective_params["driver_inputs"]["spectral"]
+                )
+                
+                nc_file.srfm_params = json.dumps(
+                    effective_params,
+                    default=numpy_handler,
+                    )
+
+                # --- Core Dimensions ---
+                num_wavenumbers_op = wvls.shape[0] # dimension for optical properties (on compupational grid)
+                num_wavenumbers = fin_grid.shape[0] # dimension for output spectrum (interpolated to fin_grid)
+                layer_names = list(scat_lyrs.keys())
+                num_layers = len(layer_names)
+                
+                # Extract the number of angles from the first available layer's phase function
+                # Assumes shape is (wavenumbers, angles)
+                first_layer_key = layer_names[0]
+                num_angles = scat_lyrs[first_layer_key].phase_function.shape[1]
+
+                nc_file.createDimension("wavenumber", num_wavenumbers)
+                nc_file.createDimension("wavenumber_op", num_wavenumbers_op)
+                nc_file.createDimension("layer", num_layers)
+#                nc_file.createDimension("angle", num_angles)
+
+                # --- Core Spectrum Variables ---
+                rad = nc_file.createVariable("rad", "f8", ("wavenumber",), zlib=True, complevel=4)
                 rad.units = "W m-2 sr-1 cm"
                 rad.long_name = "Radiance"
                 rad[:] = model_SRFM.uu[:, 0, 0, 0]
 
-                # store inputs as well
-                metadata = copy.deepcopy(inp.values)
-                metadata["driver_inputs"]["spectral"] = str(
-                    metadata["driver_inputs"]["spectral"]
-                )
-                _inp = json.dumps(metadata)
-                rad.srfm_params = _inp
+                # Store layer names mapping
+                var_lyr_names = nc_file.createVariable("layer_names", str, ("layer",))
+                var_lyr_names[:] = np.array(layer_names, dtype=object)
+
+                # --- Pre-allocate Matrices ---
+                grid_shape = (num_layers, num_wavenumbers_op)
+#                mat_ssalb = np.zeros(grid_shape)
+#                mat_beta_ext = np.zeros(grid_shape)
+                mat_tau = np.zeros(grid_shape)
                 
-                                ## Save layer optical properties
-                ops = {}
-                for ll in scat_lyrs:
-                    ops[ll] = {}
-                    ops[ll]["ssalb"] = scat_lyrs[ll].ssalb
-                    ops[ll]["beta_ext"] = scat_lyrs[ll].beta_ext
-                    ops[ll]["phase_function"] = scat_lyrs[ll].phase_function
-                    ops[ll]["tau"] = scat_lyrs[ll].tau
-                
-                ## convert numpy arrays to lists (np.ndarray isn't json seralizable)
-                def numpy_handler(obj):
-                    if isinstance(obj, np.ndarray):
-                        return obj.tolist()
-                    if isinstance(obj, np.generic):  # Handles numpy scalars like int64, float32
-                        return obj.item()
-                    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
-                
-                _ops = json.dumps(ops, default = numpy_handler)
-                
-                rad.lyr_params = _ops
+                # 3D Matrix shape: (layer, wavenumber, angle)
+#                mat_phase = np.zeros((num_layers, num_wavenumbers_op, num_angles))
+
+                # --- Populate Matrices ---
+                for i, ll in enumerate(layer_names):
+                    lyr = scat_lyrs[ll]
+                    
+#                    mat_ssalb[i, :] = lyr.ssalb
+#                    mat_beta_ext[i, :] = lyr.beta_ext
+                    mat_tau[i, :] = lyr.tau
+                    
+                    # Insert the 2D (wavenumber, angle) array into the 3D grid
+#                    mat_phase[i, :, :] = lyr.phase_function
+
+                # --- Create & Write variables ---
+#                var_ssalb = nc_file.createVariable("ssalb", "f8", ("layer", "wavenumber_op"), zlib=True, complevel=4)
+#                var_ssalb.long_name = "Single scattering albedo per layer and wavenumber"
+#                var_ssalb[:] = mat_ssalb
+
+#                var_beta = nc_file.createVariable("beta_ext", "f8", ("layer", "wavenumber_op"), zlib=True, complevel=4)
+#                var_beta.long_name = "Extinction coefficient per layer and wavenumber"
+#                var_beta[:] = mat_beta_ext
+
+                var_tau = nc_file.createVariable("tau", "f8", ("layer", "wavenumber_op"), zlib=True, complevel=4)
+                var_tau.long_name = "Optical depth per layer and wavenumber"
+                var_tau[:] = mat_tau
+
+#                # Clean, native 3D variable for phase functions
+#                var_phase = nc_file.createVariable("phase_function", "f8", ("layer", "wavenumber_op", "angle"), zlib=True, complevel=4)
+#                var_phase.long_name = "Phase function per layer, wavenumber, and scattering angle"
+#                var_phase[:] = mat_phase
 
     elif inp.values["out_mode"] == None:
         pass
