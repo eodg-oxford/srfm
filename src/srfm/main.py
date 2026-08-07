@@ -780,8 +780,11 @@ def run_srfm(inp):
                 
                 # Extract the number of angles from the first available layer's phase function
                 # Assumes shape is (wavenumbers, angles)
-                first_layer_key = layer_names[0]
-                num_angles = scat_lyrs[first_layer_key].phase_function.shape[1]
+#                if num_layers > 0:
+#                    first_layer_key = layer_names[0]
+#                    num_angles = scat_lyrs[first_layer_key].phase_function.shape[1]
+#                else:
+#                    num_angles = 0
 
                 nc_file.createDimension("wavenumber", num_wavenumbers)
                 nc_file.createDimension("wavenumber_op", num_wavenumbers_op)
@@ -915,13 +918,17 @@ def run_srfm(inp):
                 
                 # Extract the number of angles from the first available layer's phase function
                 # Assumes shape is (wavenumbers, angles)
-                first_layer_key = layer_names[0]
-                num_angles = scat_lyrs[first_layer_key].phase_function.shape[1]
+#                if num_layers > 0:
+#                    first_layer_key = layer_names[0]
+#                    num_angles = scat_lyrs[first_layer_key].phase_function.shape[1]
+#                else:
+#                    num_angles = 0
 
+                
                 nc_file.createDimension("wavenumber", num_wavenumbers)
                 nc_file.createDimension("wavenumber_op", num_wavenumbers_op)
                 nc_file.createDimension("layer", num_layers)
-#                nc_file.createDimension("angle", num_angles)
+    #                nc_file.createDimension("angle", num_angles)
 
                 # --- Core Spectrum Variables ---
                 rad = nc_file.createVariable("rad", "f8", ("wavenumber",), zlib=True, complevel=4)
