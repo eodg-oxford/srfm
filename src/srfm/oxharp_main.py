@@ -359,7 +359,7 @@ def run_srfm(inp):
     ########################################################################################
     # set date
     if "date" in inp.values:
-        if not isintance(inp.values["date"], (datetime.datetime,tuple)) or not len(inp.values["date"]) == 3:
+        if not isinstance(inp.values["date"], (datetime.datetime,tuple)) or not len(inp.values["date"]) == 3:
             raise ValueError("date must be a tuple of len 3 (see datetime.datetime.")
         else:
             date = inp.values["date"]

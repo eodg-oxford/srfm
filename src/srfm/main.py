@@ -65,7 +65,7 @@ def run_srfm(inp):
     fin_grid = inp.values["fin_wvnmlo"] + np.arange(npts) * inp.values["fin_res"]
 
     if "date" in inp.values:
-        if not isintance(inp.values["date"], tuple) or not len(inp.values["date"]) == 3:
+        if not isinstance(inp.values["date"], tuple) or not len(inp.values["date"]) == 3:
             raise ValueError("date must be a tuple of len 3 (see datetime.datetime.")
         else:
             date = inp.values["date"]
