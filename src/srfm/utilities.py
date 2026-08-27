@@ -20,6 +20,7 @@ from bisect import bisect
 from functools import wraps
 from importlib.resources import files, as_file
 from scipy.signal import convolve
+import datetime
 
 
 def closest(lst_lon, lon, lst_lat, lat):
@@ -1123,3 +1124,9 @@ def convolve_spectrum(spc, x, ils):
     spc_c = convolve(spc, new_y, mode="same") / norm
 
     return spc_c
+
+def json_handler(obj):
+    if isinstance(obj, np.ndarray): return obj.tolist()
+    if isinstance(obj, np.generic): return obj.item()
+    if isinstance(obj, datetime.datetime): return obj.isoformat()
+    raise TypeError(f"Type {type(obj).__name__} not serializable")
