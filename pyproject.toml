@@ -9,7 +9,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "SRFM"
-version = "1.0.13"
+version = "1.1.0"
 authors = [
   { name="Antonin Knizek", email="antonin.knizek@physics.ox.ac.uk" },
   { name="Roy Grainger", email="don.grainger@physics.ox.ac.uk"}
@@ -38,6 +38,11 @@ dependencies = [
     "numba",
     "psutil",
     "mergedeep",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8",
 ]
 
 [project.urls]
@@ -88,4 +93,16 @@ exclude = [
     "src/srfm/**/*.smod",
     "src/srfm/**/__pycache__",
     "src/srfm/build.log",
+]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests/unit",
+    "tests/integration",
+    "tests/e2e",
+]
+markers = [
+    "unit: fast, deterministic tests isolated from native executables",
+    "integration: component-boundary tests, including optional native extensions",
+    "e2e: the complete SRFM user pathway through RFM, Mie, and DISORT",
 ]

@@ -135,6 +135,40 @@ the gases section of the RFM inputs.
 
 Users are recommended to use this example as a template to develop their own.
 
+### Driver-table validation
+
+The established driver-table format is unchanged: a Python driver file still
+defines one flat `inputs` dictionary, with nested `rfm_config`,
+`driver_inputs`, and `scat_lyrs_inputs` dictionaries. `Inputs.read_srfm_drv()`
+validates a complete table as it is loaded, and `run_srfm()` validates again
+immediately before starting a calculation. Errors are reported together with
+dotted field paths, for example `driver_inputs.flags` or
+`scat_lyrs_inputs.Ash_1.thick`, so multiple corrections can be made in one
+edit.
+
+```python
+from srfm.inputs import Inputs
+from srfm.main import run_srfm
+
+inputs = Inputs()
+inputs.read_srfm_drv("driver_table.py")  # loads and validates the existing format
+run_srfm(inputs)                         # revalidates before creating output files
+```
+
+The authoritative field definitions are in `srfm.input_schema`. They may be
+inspected without modifying the driver representation:
+
+```python
+from srfm.input_schema import get_srfm_input_schema
+
+for name, field in get_srfm_input_schema().items():
+    print(name, field.required, field.choices)
+```
+
+`read_srfm_drv(..., validate=False)` exists for developer tooling that
+deliberately reads an incomplete dictionary; incomplete inputs are never
+accepted by `run_srfm()`.
+
 Alternatively, the package can be easily imported by
     `from srfm import *`
     or

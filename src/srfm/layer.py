@@ -23,7 +23,7 @@ class Layer:
     def __init__(self, name=None, **parameters):
         self.name = name
         for key, val in parameters.items():
-            self.key = val
+            setattr(self, key, val)
 
 
 class MieLayer(Layer):
@@ -36,7 +36,7 @@ class MieLayer(Layer):
     def __init__(self, name=None, **parameters):
         super().__init__(name)
         for key, val in parameters.items():
-            self.key = val
+            setattr(self, key, val)
 
     def set_name(self, name):
         """Assign a name to the layer.
@@ -276,7 +276,7 @@ class MieLayer(Layer):
                 is normalised.
 
         """
-        self.leg_coeff_type = leg_coeffs_type
+        self.leg_coeffs_type = leg_coeffs_type
 
     def set_multiproccess(self, multiprocess):
         """Toggle multiprocessing.
@@ -352,6 +352,8 @@ class MieLayer(Layer):
         self.leg_coeffs = inp_dict["leg_coeffs"]
         self.leg_coeffs_type = inp_dict["leg_coeffs_type"]
         self.multiprocess = inp_dict["multiprocess"]
+        self.refractive_index = inp_dict.get("refractive_index")
+        self.angle = inp_dict.get("angle")
 
     def test_complete_input_format(self):
         """Checks the input for correct format before running any calculation.
@@ -481,7 +483,7 @@ class MieLayer(Layer):
             raise ValueError("Particle mean radius (r) must be non-negative.")
 
         if self.s < 1:
-            raise ValueError("Distribution spread must be <= 1.")
+            raise ValueError("Distribution spread must be >= 1.")
 
         if self.radii < 1:
             raise ValueError("Number of requested radii must be at least 1.")
@@ -1057,7 +1059,7 @@ class GreyBodyCloud(Layer):
     def __init__(self, name=None, emis=1, **parameters):
         super().__init__(name)
         for key, val in parameters.items():
-            self.key = val
+            setattr(self, key, val)
         self.emis = emis
 
     def set_name(self, name):

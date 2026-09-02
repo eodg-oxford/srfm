@@ -56,8 +56,6 @@ inputs = {
         flags=("OPT", "NAD", "SFC", "PRF", "LEV", "DBL", "CHI", "MIX"),
         spectral=[rfm_helper.SpectralRange(SPC_WVNMLO, SPC_WVNMHI, SPC_RES)],
         gases=(
-            "N2",
-            "O2",
             "CO2",
             "O3",
             "H2O",

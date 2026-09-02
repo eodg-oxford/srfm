@@ -23,11 +23,11 @@ def decimal_degree_to_DMS(dec):
     M, S = divmod(dec * 3600, 60)
     D, M = divmod(M, 60)
     if negative:
-        if D < 0:
+        if D != 0:
             D = -D
-        elif M < 0:
+        elif M != 0:
             M = -M
-        elif S < 0:
+        elif S != 0:
             S = -S
 
     dms = (int(D), int(M), int(S))

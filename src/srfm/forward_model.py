@@ -65,7 +65,7 @@ class RFM(Fwd_model):
         self.rfm_fldr = rfm_fldr
         self.status = status
         for key, val in parameters.items():
-            self.key = val
+            setattr(self, key, val)
 
     @utils.show_runtime
     def run_rfm(self, fldr, wipe=True):
@@ -155,7 +155,7 @@ class RFM(Fwd_model):
         return
 
     def calc_col_dens_and_mass(self, species, M=None):
-        """Determines total column density of a species in the atmosphere.
+        r"""Determines total column density of a species in the atmosphere.
 
         Integrates the species mixing ratio throughout the atmosphere to obtain total
         column density in units [molecules m\ :math:`^{-2}` \] and Dobson units [DU].
@@ -309,7 +309,7 @@ class DISORT(Fwd_model):
         self.disort_integrity_passmark = disort_integrity_passmark
         self.status = status
         for key, val in parameters.items():
-            self.key = val
+            setattr(self, key, val)
 
     def add_disort_input(self, d):
         """Add disort input parameters as a dictionary.
@@ -328,6 +328,12 @@ class DISORT(Fwd_model):
         simplest possible case), etc.
         """
 
+        maxcly = 1
+        maxmom = 2
+        maxcmu = 2
+        maxumu = 1
+        maxphi = 1
+        maxulv = 1
         self.disort_input = {
             "maxcly": 1,
             "maxmom": 2,
@@ -446,6 +452,7 @@ class DISORT(Fwd_model):
                 maxumu=self.disort_input["maxumu"],
                 maxphi=self.disort_input["maxphi"],
                 ibcnd=self.disort_input["ibcnd"],
+                onlyfl=self.disort_input["onlyfl"],
                 dtauc=self.disort_input["dtauc"],
                 ssalb=self.disort_input["ssalb"],
                 temper=self.disort_input["temper"],
@@ -1582,7 +1589,7 @@ class SRFM(Fwd_model):
     def __init__(self, name="SRFM", **parameters):
         super().__init__(name)
         for key, val in parameters.items():
-            self.key = val
+            setattr(self, key, val)
 
     def initialize_srfm_output_arrays_from_disort(self, DISORT):
         """Initializes srfm output arrays to which disort outputs are appended.
@@ -1726,17 +1733,17 @@ class SRFM(Fwd_model):
         ils_x, ils_y, ils_lo, ils_hi = utils.read_ils(filename)
 
         # check if model grid is regular
-        a = np.diff(self.wvnm, n=2)  # calculate 2nd discrete difference
-        a[a < 1e12] = 0  # remove small numbers (arising from computer precision limits)
-        assert not np.all(
-            a
-        ), """Wavenumber grid is not regular."""  # check is all values in a are 0 (0 evaluates to False)
+        spacing = np.diff(np.asarray(self.wvnm, dtype=float))
+        if spacing.size == 0 or not np.allclose(
+            spacing, spacing[0], rtol=1e-10, atol=1e-12
+        ):
+            raise ValueError("Wavenumber grid is not regular.")
 
         # determine resolution from model wavenumber grid
         num = len(self.wvnm)
         lo = self.wvnm.min()
         hi = self.wvnm.max()
-        res = np.round((hi - lo) / num, decimals=8)
+        res = np.round((hi - lo) / (num - 1), decimals=8)
         # this is inadvertedly introduces a limit
         # on the minimum resolution used in the code as 1e-8 cm-1, which should be
         # enough though, and also this may not be the numerically most stable way to go

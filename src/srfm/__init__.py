@@ -1,10 +1,18 @@
 """Top-level SRFM package."""
 
 from importlib import import_module
+from importlib.metadata import PackageNotFoundError, version as _distribution_version
 import warnings
 
-version = "0.0.2"
-__version__ = version
+try:
+    __version__ = _distribution_version("SRFM")
+except PackageNotFoundError:
+    # Source trees are not necessarily installed. Distribution metadata remains
+    # authoritative; this sentinel cannot silently masquerade as a release version.
+    __version__ = "0+unknown"
+
+# Backwards-compatible public alias.
+version = __version__
 
 __all__ = [
     "units",
@@ -27,6 +35,7 @@ __all__ = [
     "rfm_helper",
     "RFM",
     "main",
+    "input_schema",
     "inputs",
     "oxharp_main",
 ]

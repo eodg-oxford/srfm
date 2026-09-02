@@ -1,4 +1,4 @@
-"""Creates or returns properties of a particle size distribution.
+r"""Creates or returns properties of a particle size distribution.
 
 - Name: size_disitribution.py
 - Parent package: srfm
@@ -63,7 +63,7 @@ class GaussianDistribution(SizeDistribution):
 
 # Log-Normal Distribution Subclass
 class LogNormalDistribution(SizeDistribution):
-    """Creates a log-normal distribution.
+    r"""Creates a log-normal distribution.
 
     Note although the distribution is usually defined by n, r & s, the code allows
     the distribution to be set via the surface area density and volume density.
@@ -198,20 +198,3 @@ def create_distribution(dist_type, **kwargs):
         return GaussianDistribution(**kwargs)
     else:
         raise ValueError(f"Unknown distribution type: {dist_type}")
-
-
-if __name__ == "__main__":
-    # log-normal distribution unit test
-    sd = create_distribution("log_normal", n=1, r=np.exp(1), s=np.exp(1))
-    assert (
-        float(sd.value(1)) == 0.24197072451914337
-    ), """Log_normal distribution returns
-        incorrect value. For n = 1, r = e, s = e, eval. at 1 should be 
-        0.24197072451914337."""
-
-    sd = create_distribution("log_normal", n=1, r=np.exp(2), s=np.exp(3))
-    assert (
-        float(sd.value(0.5)) == 0.17775476480655455
-    ), """Log_normal distribution returns
-        incorrect value. For n = 1, r = exp(2), s = exp(3), eval. at 0.5 should be 
-        0.17775476480655455."""

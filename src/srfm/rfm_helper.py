@@ -26,6 +26,8 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from .input_schema import RFM_FLAG_CODES
+
 from .RFM import rfm_py
 from . import utilities
 
@@ -85,6 +87,43 @@ def clean_outputs(
                 removed.append(candidate)
 
     return removed
+
+
+def _emit_rfm_log(
+    directory: Path | str,
+    run_id: str | None = None,
+    *,
+    success: bool,
+) -> None:
+    """Move the native RFM log to the process stream used by job schedulers.
+
+    RFM always writes through its Fortran log unit.  Emitting that completed
+    file here preserves the native implementation while making its diagnostics
+    visible in interactive terminals and Slurm stdout/stderr logs.  The physical
+    file is removed after the read attempt for both successful and failed runs.
+    """
+    log_path = Path(directory) / f"rfm.log{run_id or ''}"
+    if not log_path.is_file():
+        return
+
+    try:
+        content = log_path.read_text(encoding="utf-8", errors="replace")
+    except OSError as exc:
+        print(f"Unable to read {log_path}: {exc}", file=sys.stderr, flush=True)
+        content = ""
+    finally:
+        try:
+            log_path.unlink()
+        except OSError as exc:
+            print(f"Unable to remove {log_path}: {exc}", file=sys.stderr, flush=True)
+
+    if not content:
+        return
+
+    stream = sys.stdout if success else sys.stderr
+    print(f"--- {log_path.name} ---", file=stream)
+    print(content, end="" if content.endswith("\n") else "\n", file=stream)
+    print(f"--- end {log_path.name} ---", file=stream, flush=True)
 
 
 def _run_rfm_impl(
@@ -222,6 +261,7 @@ def _run_rfm_impl(
         return rfm_py.rfm_run(**kwargs)
 
     status = 0
+    run_succeeded = False
     try:
         if mode == "files":
             exe_candidates: list[Path] = [
@@ -241,6 +281,12 @@ def _run_rfm_impl(
                     text=True,
                     capture_output=True,
                 )
+            if completed.stdout:
+                sys.stdout.write(completed.stdout)
+                sys.stdout.flush()
+            if completed.stderr:
+                sys.stderr.write(completed.stderr)
+                sys.stderr.flush()
             status = completed.returncode
             if status != 0:
                 message = textwrap.dedent(
@@ -256,7 +302,9 @@ def _run_rfm_impl(
         else:
             with _temporary_cwd(root):
                 status = _invoke()
+        run_succeeded = status == 0
     finally:
+        _emit_rfm_log(root, run_id, success=run_succeeded)
         if driver_copy_created and driver_copy_path is not None:
             if original_driver_bytes is None:
                 try:
@@ -370,6 +418,12 @@ def run_rfm(
             cwd=str(Path.cwd()),
             env=env,
         )
+        if completed.stdout:
+            sys.stdout.write(completed.stdout)
+            sys.stdout.flush()
+        if completed.stderr:
+            sys.stderr.write(completed.stderr)
+            sys.stderr.flush()
         if completed.returncode != 0:
             raise RuntimeError(
                 "RFM worker subprocess failed to start:\n"
@@ -563,6 +617,15 @@ class SpectralRange:
     spacing: float
     label: str | None = None
 
+    def __post_init__(self) -> None:
+        values = np.asarray([self.start, self.stop, self.spacing], dtype=float)
+        if not np.all(np.isfinite(values)):
+            raise ValueError("Spectral range values must be finite.")
+        if self.stop < self.start:
+            raise ValueError("Spectral range stop must be greater than or equal to start.")
+        if self.spacing <= 0:
+            raise ValueError("Spectral range spacing must be greater than zero.")
+
     def as_record(self) -> str:
         body = f"{self.start:g} {self.stop:g} {self.spacing:g}"
         return f"{self.label} {body}" if self.label else body
@@ -607,62 +670,9 @@ class SectionLine:
         return " ".join(_format_token(part) for part in self.parts)
 
 
-FLAG_CODES: tuple[str, ...] = (
-    "ABS",
-    "AVG",
-    "BBT",
-    "BFX",
-    "BIN",
-    "C32",
-    "CHI",
-    "CLC",
-    "COO",
-    "CTM",
-    "DBL",
-    "FIN",
-    "FLX",
-    "FOV",
-    "FVZ",
-    "GEO",
-    "GHZ",
-    "GRA",
-    "GRD",
-    "HOM",
-    "HYD",
-    "ILS",
-    "JAC",
-    "JTP",
-    "LAY",
-    "LEV",
-    "LIN",
-    "LOS",
-    "LUN",
-    "LUT",
-    "MIX",
-    "MTX",
-    "NAD",
-    "NEW",
-    "NTE",
-    "OBS",
-    "OPT",
-    "PRF",
-    "PTH",
-    "QAD",
-    "RAD",
-    "REJ",
-    "REX",
-    "RJT",
-    "SFC",
-    "SHH",
-    "SHP",
-    "SVD",
-    "TAB",
-    "TRA",
-    "VRT",
-    "VVW",
-    "WID",
-    "ZEN",
-)
+# Backwards-compatible public name; the centralized input schema is the single
+# source of truth shared by driver validation and RFM execution helpers.
+FLAG_CODES = RFM_FLAG_CODES
 
 OUTPUT_FLAG_CODES: tuple[str, ...] = (
     "ABS",
@@ -980,6 +990,9 @@ def run_rfm_with_parameters(
     flag_list = [code.upper() for code in flags]
     if not flag_list:
         raise ValueError("At least one flag must be supplied for *FLG.")
+    unknown_flags = [code for code in flag_list if code not in FLAG_CODES]
+    if unknown_flags:
+        raise ValueError(f"Unknown RFM flag code(s): {', '.join(unknown_flags)}")
 
     uses_tab = "TAB" in flag_list
     if uses_tab and tab_dimensions is None:
@@ -1075,11 +1088,11 @@ def rfm_main(
             not returned.
 
     Notes:
-        ``capture_files_content`` controls whether capture mode records the
-        generated ``*.asc``/log artefacts in memory (while deleting them on
-        disk). When set to ``False`` the run still suppresses file creation but
-        omits the in-memory payload, leaving only ``output_df`` (when
-        applicable).
+        ``capture_files_content`` controls whether capture mode records generated
+        file artefacts in memory while deleting them on disk. Native RFM log
+        content is always sent to stdout/stderr and is not included in this
+        payload. When set to ``False`` the run still suppresses file creation but
+        omits the in-memory payload, leaving only ``output_df`` when applicable.
     """
 
     config = dict(configuration or {})

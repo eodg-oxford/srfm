@@ -28,9 +28,10 @@ def read_output(filename):
             which is a dictionary with the description of other parameters.
 
     """
-    f = open(filename, "r")
-    f_lines = f.readlines()
-    f.close()
+    with open(filename, "r", encoding="utf-8") as handle:
+        f_lines = handle.readlines()
+    if len(f_lines) < 4:
+        raise ValueError("RFM spectrum output must contain at least four header lines.")
 
     contents = {}
     contents["info"] = {}
@@ -54,8 +55,8 @@ def read_output(filename):
     contents["info"]["SPC"] = "Spectral data value, format R/D"
 
     contents["header1"] = f_lines[0][1:].strip()
-    contents["header2"] = f_lines[0][1:].strip()
-    contents["header3"] = f_lines[0][1:].strip()
+    contents["header2"] = f_lines[1][1:].strip()
+    contents["header3"] = f_lines[2][1:].strip()
 
     flds = f_lines[3].strip().split()
     contents["NPNT"] = int(flds[0])
@@ -71,6 +72,8 @@ def read_output(filename):
         spc = (" ").join(spc)
         spc = [float(ii) for ii in spc.split()]
         contents["SPC"] = np.asarray(spc)
+        if contents["SPC"].size != contents["NPNT"]:
+            raise ValueError("RFM spectrum point count does not match NPNT.")
     else:
         tot = [i.strip() for i in f_lines[4:]]
         tot = (" ").join(tot)
@@ -95,9 +98,8 @@ def read_output_prf(filename):  # read bits of internal profile output file prf.
 
     """
     print("Attempting to read prf.asc file.")
-    f = open(filename, "r")
-    f_lines = f.readlines()
-    f.close()
+    with open(filename, "r", encoding="utf-8") as handle:
+        f_lines = handle.readlines()
 
     contents = {}  # dictionary to store that read values.
 
@@ -112,7 +114,7 @@ def read_output_prf(filename):  # read bits of internal profile output file prf.
             i.strip() for i in f_lines[sec_begin_lns[idx] + 1 : sec_begin_lns[idx + 1]]
         ]
         sec_cont = (" ").join(sec_cont)
-        sec_cont = [float(ii) for ii in sec_cont.split()]
+        sec_cont = [float(ii.rstrip(",")) for ii in sec_cont.split()]
         contents[sec_lbl] = sec_cont
 
     print("Successfully read prf.asc file.")
@@ -362,28 +364,30 @@ def construct_rfm_driver_table(inp, fldr, force=True, **kwargs):
     elif force == False:
         print("The current rfm.drv will be moved to old_rfm.drv")
         os.rename(f"{fldr}/rfm.drv", f"{fldr}/old_rfm.drv")
-        f = open("{fldr}/rfm.drv", "w")
+        f = open(f"{fldr}/rfm.drv", "w")
     else:
         raise ValueError("'force' accepts only True or False. Default is True.")
 
     # format all input strings to be written
-    for key in inp.keys():
-        inp[key] = utils.line_break_str(txt=inp[key], chars=200, delim=" ", indent=2)
+    formatted = {
+        key: utils.line_break_str(txt=value, chars=200, delim=" ", indent=2)
+        for key, value in inp.items()
+    }
 
     # write the first five sections
     for fs in first_five_secs:
         f.write(f"*{fs}\n")
-        f.write(f"  {inp[fs]}\n")
+        f.write(f"  {formatted[fs]}\n")
 
     # write sixth section
     f.write(f"*{ss[0]}\n")
-    f.write(f"  {inp[ss[0]]}\n")
+    f.write(f"  {formatted[ss[0]]}\n")
 
     # write the remaining sections
     for kkey in inp.keys():
         if kkey not in first_five_secs and kkey not in sixth_sec:
             f.write(f"*{kkey}\n")
-            f.write(f"  {inp[kkey]}\n")
+            f.write(f"  {formatted[kkey]}\n")
     f.write("*END")
 
     f.close()
@@ -471,7 +475,9 @@ def construct_rfm_grid_file(wvnm, filename="grid.spc", rfm_fldr="./srfm/RFM"):
     if not isinstance(filename, str):
         raise TypeError("filename must be a string.")
 
-    path = f"{rfm_fldr}/rfm_files/{filename}"
+    output_dir = Path(rfm_fldr) / "rfm_files"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    path = output_dir / filename
     with open(path, "w") as f:
         f.write("!\n")
         f.write("!\n")
@@ -499,9 +505,8 @@ def read_atm_file(filename):  # read bits of internal profile output file prf.as
 
     """
 
-    f = open(filename, "r")
-    f_lines = f.readlines()
-    f.close()
+    with open(filename, "r", encoding="utf-8") as handle:
+        f_lines = handle.readlines()
 
     contents = {}  # dictionary to store that read values.
 
@@ -516,7 +521,7 @@ def read_atm_file(filename):  # read bits of internal profile output file prf.as
             i.strip() for i in f_lines[sec_begin_lns[idx] + 1 : sec_begin_lns[idx + 1]]
         ]
         sec_cont = (" ").join(sec_cont)
-        sec_cont = [float(ii) for ii in sec_cont.split()]
+        sec_cont = [float(ii.rstrip(",")) for ii in sec_cont.split()]
         contents[sec_lbl] = sec_cont
 
     return contents
@@ -539,6 +544,14 @@ def write_atm_file(data, filename, header=None):
         raise ValueError("Expected exactly one key starting with 'hgt '.")    
     else:
         hgt_key = hgt_key[0]
+
+    expected_length = len(data[hgt_key])
+    for key, values in data.items():
+        if len(values) != expected_length:
+            raise ValueError(
+                f"Atmospheric profile '{key}' has {len(values)} values; "
+                f"expected {expected_length}."
+            )
     
     with open(filename, "w") as f:
         if header is not None:
@@ -587,29 +600,45 @@ def write_xsc_file(data, filename, header=None):
 
     """
     
-    tem_key = [i for i in data if i.lower().startswith("pre ")]
-    pre_key = [i for i in data if i.lower().startswith("tem ")]
-    
-    with open(filename, "w") as f:
+    if not isinstance(data, dict) or not data:
+        raise TypeError("data must be a non-empty dictionary of XSC datasets.")
+
+    with open(filename, "w", encoding="utf-8") as f:
         if header is not None:
             if header.startswith("!"):
                 f.write(header)
             else:
                 f.write("! ")
                 f.write(header)
-        f.write("\n")
-        for lev in data:    
-            f.write("  " + data[lev]["molec"]
-                   + data[lev]["low_spc"] + data[lev]["upp_spc"]
-                   + data[lev]["npts"] + data[lev][tem_key]
-                   + data[lev][pre_key] + "\n"
-                   )
-        
-            for i, ii in enumerate(data[lev]["beta_ext"]):
-                if (i % 10) == 0 and i != 0:
-                    f.write(f'\n{data[lev]["beta_ext"][i]:.4e}    ')
-                else:
-                    f.write(f'{data[lev]["beta_ext"][i]:.4e}    ')
             f.write("\n")
-    f.close()
+        for label, dataset in data.items():
+            if not isinstance(dataset, dict):
+                raise TypeError(f"XSC dataset '{label}' must be a dictionary.")
+            try:
+                molecule = str(dataset["molec"])
+                low_spc = float(dataset["low_spc"])
+                upp_spc = float(dataset["upp_spc"])
+                beta_ext = np.asarray(dataset["beta_ext"], dtype=float)
+                temperature = float(dataset["temperature"])
+                pressure = float(dataset["pressure"])
+            except KeyError as exc:
+                raise ValueError(
+                    f"XSC dataset '{label}' is missing required field {exc.args[0]!r}."
+                ) from exc
+            npts = int(dataset.get("npts", beta_ext.size))
+            if beta_ext.ndim != 1 or beta_ext.size != npts:
+                raise ValueError(
+                    f"XSC dataset '{label}' beta_ext length must equal npts."
+                )
+            if len(molecule) > 20:
+                raise ValueError("XSC molecule names may contain at most 20 characters.")
+
+            # Original HITRAN cross-section format consumed by REAXSC_SUB.
+            f.write(
+                f"{molecule:<20}{low_spc:10.4f}{upp_spc:10.4f}"
+                f"{npts:7d}{temperature:7.2f}{pressure:6.1f}\n"
+            )
+            for start in range(0, npts, 10):
+                f.write("".join(f"{value:10.3E}" for value in beta_ext[start:start + 10]))
+                f.write("\n")
     return

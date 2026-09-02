@@ -12,6 +12,11 @@ from pathlib import Path
 import importlib.util
 import uuid
 from mergedeep import merge
+from .input_schema import (
+    InputValidationError,
+    get_srfm_input_schema,
+    validate_srfm_inputs,
+)
 
 
 class Inputs:
@@ -26,15 +31,16 @@ class Inputs:
         the actual parameters for srfm.
 
         """
-        self.values = {}
-        for key, val in kwargs.items():
-            setattr(self, key, val)
+        self.values = dict(kwargs)
 
-    def read_srfm_drv(self, drv: str | Path) -> None:
+    def read_srfm_drv(self, drv: str | Path, *, validate: bool = True) -> None:
         """Read srfm driver table and load inputs into the values dictionary.
 
         Args:
             drv (str, Path): Path to driver table.
+            validate (bool): Validate the complete SRFM mapping after loading.
+                Set to False only for tooling that intentionally reads a partial
+                mapping without executing ``run_srfm``.
 
         Raises:
             TypeError: Raised when input path format not recognized.
@@ -54,14 +60,24 @@ class Inputs:
         module_name = f"_driver_table_{uuid.uuid4().hex}"
         spec = importlib.util.spec_from_file_location(module_name, drv)
         if spec is None or spec.loader is None:
-            raise ImportError(f"Unable to load driver table from {filepath}")
+            raise ImportError(f"Unable to load driver table from {drv}")
 
         module = importlib.util.module_from_spec(spec)
         loader = spec.loader
         loader.exec_module(module)
 
-        self.values = getattr(module, "inputs")
+        try:
+            values = getattr(module, "inputs")
+        except AttributeError as exc:
+            raise ValueError("SRFM driver table must define an 'inputs' mapping.") from exc
+        if not isinstance(values, dict):
+            raise TypeError("The driver table 'inputs' value must be a dictionary.")
+        self.values = validate_srfm_inputs(values) if validate else values
         return
+
+    def validate_srfm(self) -> None:
+        """Validate and normalize the current values before an SRFM run."""
+        self.values = validate_srfm_inputs(self.values)
 
     def read_oxharp_drv(self, drv: str | Path) -> None:
         """Read oxharp driver table and load inputs into the values dictionary.
@@ -88,14 +104,21 @@ class Inputs:
         module_name = f"_driver_table_{uuid.uuid4().hex}"
         spec = importlib.util.spec_from_file_location(module_name, drv)
         if spec is None or spec.loader is None:
-            raise ImportError(f"Unable to load driver table from {filepath}")
+            raise ImportError(f"Unable to load driver table from {drv}")
 
         module = importlib.util.module_from_spec(spec)
         loader = spec.loader
         loader.exec_module(module)
 
-        _x = getattr(module, "STATE")
-        _b = getattr(module, "ANCILLARY")
+        try:
+            _x = getattr(module, "STATE")
+            _b = getattr(module, "ANCILLARY")
+        except AttributeError as exc:
+            raise ValueError(
+                "OXHARP driver table must define STATE and ANCILLARY mappings."
+            ) from exc
+        if not isinstance(_x, dict) or not isinstance(_b, dict):
+            raise TypeError("STATE and ANCILLARY must both be dictionaries.")
 
         self.values = merge({}, _x, _b)
         return

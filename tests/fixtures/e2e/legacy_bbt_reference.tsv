@@ -1,0 +1,9 @@
+# Provenance: selected values from the former tests/results/bbt.nc artifact.
+# Historical grid: 601 output samples over 850 to 1000 cm-1 at 0.25 cm-1.
+# The source artifact was generated 2026-08-07 using machine-specific external data.
+index	brightness_temperature_K
+0	296.5688288572883
+150	295.17355362059527
+300	272.5495548223858
+450	299.8995687643097
+600	292.4353529855563

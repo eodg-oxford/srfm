@@ -25,6 +25,9 @@ def get_ri_filepathname(input_string):
 
     """
 
+    if not isinstance(input_string, str):
+        raise TypeError("composition must be a string.")
+
     if input_string == "ash":
         input_string = "eyjafjallajokull-ash_Reed.ri"
 
@@ -41,7 +44,9 @@ def get_ri_filepathname(input_string):
             if input_string in fls:
                 return os.path.join(root, input_string)  # Return the absolute file path
 
-    return f"Error: File '{input_string}' not found in ARIA directory tree."
+    raise FileNotFoundError(
+        f"Refractive-index file '{input_string}' was not found in bundled ARIA data."
+    )
 
 
 class ReadError(Exception):
@@ -80,92 +85,109 @@ class RI:
             filepathname: Refractive index filepath.
         """
 
-        with open(filepathname, "r") as f:
-            t = f.readlines()
-            t = [x.strip() for x in t]  # Strip whitespace from lines
+        self.header = {}
+        self.data = {}
+        try:
+            with open(filepathname, "r", encoding="utf-8") as handle:
+                lines = [line.strip() for line in handle]
+        except (OSError, UnicodeError) as exc:
+            raise ReadError(f"Could not read refractive-index file: {filepathname}") from exc
 
-            header_lines = 0
-            data_lines = 0
-            for line in t:
-                if line.startswith("#"):
-                    header_lines += 1
-                    if data_lines > 0:
-                        raise ReadError(
-                            f"Incorrectly formatted file ({filepathname}): Header not contiguous."
-                        )
-                else:
-                    data_lines += 1
-            for i in range(1, data_lines):  # Ignore blank lines at the end
-                if any(char.isdigit() for char in t[-i]):
-                    break
-                else:
-                    data_lines -= 1
+        while lines and not lines[-1]:
+            lines.pop()
 
-            if header_lines == 0:
-                raise ReadError(
-                    f"Incorrectly formatted file ({filepathname}): No header."
-                )
-            if data_lines == 0:
-                raise ReadError(
-                    f"Incorrectly formatted file ({filepathname}): No data."
-                )
-
-            # Parse headers
-            for i in range(header_lines):
-                line = t[i][1:]  # Strip leading '#'
-                if line[0] != "#":
-                    tag_name = line.split("=", 1)[0].strip().upper()
-                    if tag_name not in self.expected_header_names:
-                        print(
-                            f'Unknown header tag "{tag_name}", so ignored (file: {filepathname})'
-                        )
-                        continue
-                    try:
-                        tag_content = line.split("=", 1)[1].strip()
-                    except UnicodeDecodeError:
-                        tag_content = line.split("=", 1)[1].strip()
-                    if tag_name in self.header:
-                        tag_content = self.header[tag_name] + " " + tag_content
-                    self.header[tag_name] = tag_content
-
-            if "FORMAT" not in self.header:
-                raise ReadError(
-                    f"Incorrectly formatted file ({filepathname}): No FORMAT tag in header."
-                )
-
-            column_labels = self.header["FORMAT"].split()
-            column_labels = [x.strip().lower() for x in column_labels]
-            for cl in column_labels:
-                if cl not in self.expected_column_names:
-                    print(
-                        f'Unknown column name "{cl}", so ignored (file: {filepathname})'
+        header_lines: list[str] = []
+        data_lines: list[str] = []
+        data_started = False
+        for line in lines:
+            if not line:
+                continue
+            if line.startswith("#"):
+                if data_started:
+                    raise ReadError(
+                        f"Incorrectly formatted file ({filepathname}): Header not contiguous."
                     )
-                    continue
-                self.data[cl] = []
+                header_lines.append(line)
+            else:
+                data_started = True
+                data_lines.append(line)
 
-            for l in range(header_lines, header_lines + data_lines):
-                line = t[l].split()
-                line = [x.strip() for x in line]
-                for c in range(len(column_labels)):
-                    if column_labels[c] in self.expected_column_names:
-                        self.data[column_labels[c]].append(float(line[c]))
+        if not header_lines:
+            raise ReadError(f"Incorrectly formatted file ({filepathname}): No header.")
+        if not data_lines:
+            raise ReadError(f"Incorrectly formatted file ({filepathname}): No data.")
 
-            # Add wavl & wavn columns if needed (wavl in micro-m, wavn in cm-1)
-            if "wavn" not in self.data:
-                self.data["wavn"] = [
-                    float(10000) / x if x != 0 else float("nan")
-                    for x in self.data["wavl"]
-                ]
-            if "wavl" not in self.data:
-                self.data["wavl"] = [
-                    float(10000) / x if x != 0 else float("nan")
-                    for x in self.data["wavn"]
-                ]
-            col_lengths = [len(self.data[col]) for col in self.data]
-            if len(set(col_lengths)) > 1:
+        for raw_line in header_lines:
+            line = raw_line[1:].strip()
+            if not line or line.startswith("#"):
+                continue
+            if "=" not in line:
+                continue
+            tag_name, tag_content = (part.strip() for part in line.split("=", 1))
+            tag_name = tag_name.upper()
+            if tag_name not in self.expected_header_names:
+                continue
+            if tag_name in self.header:
+                tag_content = self.header[tag_name] + " " + tag_content
+            self.header[tag_name] = tag_content
+
+        if "FORMAT" not in self.header:
+            raise ReadError(
+                f"Incorrectly formatted file ({filepathname}): No FORMAT tag in header."
+            )
+
+        column_labels = [item.lower() for item in self.header["FORMAT"].split()]
+        if not column_labels:
+            raise ReadError(
+                f"Incorrectly formatted file ({filepathname}): Empty FORMAT tag."
+            )
+        unknown = [item for item in column_labels if item not in self.expected_column_names]
+        if unknown:
+            raise ReadError(
+                f"Incorrectly formatted file ({filepathname}): Unknown FORMAT columns: "
+                + ", ".join(unknown)
+            )
+        if len(column_labels) != len(set(column_labels)):
+            raise ReadError(
+                f"Incorrectly formatted file ({filepathname}): Duplicate FORMAT columns."
+            )
+        if "n" not in column_labels or "k" not in column_labels:
+            raise ReadError(
+                f"Incorrectly formatted file ({filepathname}): FORMAT requires n and k."
+            )
+        if "wavl" not in column_labels and "wavn" not in column_labels:
+            raise ReadError(
+                f"Incorrectly formatted file ({filepathname}): FORMAT requires wavl or wavn."
+            )
+
+        self.data = {label: [] for label in column_labels}
+        for row_number, raw_line in enumerate(data_lines, start=1):
+            fields = raw_line.split()
+            if len(fields) != len(column_labels):
                 raise ReadError(
-                    f"Incorrectly formatted file ({filepathname}): Data columns have different lengths."
+                    f"Incorrectly formatted file ({filepathname}): Data row {row_number} "
+                    f"has {len(fields)} columns; expected {len(column_labels)}."
                 )
+            try:
+                values = [float(field) for field in fields]
+            except ValueError as exc:
+                raise ReadError(
+                    f"Incorrectly formatted file ({filepathname}): Non-numeric data "
+                    f"in row {row_number}."
+                ) from exc
+            for label, value in zip(column_labels, values):
+                self.data[label].append(value)
+
+        if "wavn" not in self.data:
+            self.data["wavn"] = [
+                10000.0 / value if value != 0 else float("nan")
+                for value in self.data["wavl"]
+            ]
+        if "wavl" not in self.data:
+            self.data["wavl"] = [
+                10000.0 / value if value != 0 else float("nan")
+                for value in self.data["wavn"]
+            ]
 
     def select(self, wave=None, mode="wavelength", out_of_range="error"):
         """Selects requested data.
@@ -182,6 +204,11 @@ class RI:
 
         """
 
+        if out_of_range not in {"error", "clip", "nan"}:
+            raise ValueError(
+                "Invalid value for out_of_range. Use 'error', 'clip', or 'nan'."
+            )
+
         # Determine which data to use
         if mode == "wavelength":
             x_data = self.data.get("wavl")
@@ -197,6 +224,8 @@ class RI:
         # If no wave are provided, return full-resolution data
         if wave is None:
             return np.array(x_data), np.array(self.data["n"]), np.array(self.data["k"])
+
+        wave = np.atleast_1d(np.asarray(wave, dtype=float))
 
         # Handle out-of-range values
         min_x, max_x = min(x_data), max(x_data)
@@ -231,10 +260,6 @@ class RI:
                         wave[valid_indices], x_data_sorted, k_sorted
                     )
                 return interpolated_n, interpolated_k
-            else:
-                raise ValueError(
-                    "Invalid value for out_of_range. Use 'error', 'clip', or 'nan'."
-                )
 
         # Perform interpolation if wave are provided
         if np.all(np.diff(x_data) > 0):  # Ascending order check

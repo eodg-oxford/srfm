@@ -11,6 +11,7 @@ some physical formulas, etc.
 """
 
 import numpy as np
+import pandas as pd
 from . import units
 import warnings
 import psutil
@@ -20,6 +21,7 @@ from bisect import bisect
 from functools import wraps
 from importlib.resources import files, as_file
 from scipy.signal import convolve
+from scipy.spatial import KDTree
 import datetime
 
 
@@ -175,7 +177,7 @@ def calc_Rayleigh_opt_depths(ps, pl, pu, l):
     # calculate layer Rayleigh optical thickness
     tau_r = calc_layer_opt_thick_Rayleigh(ps=ps, pl=pl, pu=pu, tau0=tau0)
     # convert from pandas series to numpy nd.array
-    tau_r = tau_r.to_numpy()
+    tau_r = np.asarray(tau_r)
 
     return tau_r
 
@@ -218,7 +220,7 @@ def line_break_str(txt, chars, delim, indent=0):
     orig_txt = txt
     lines = []
     while len(txt) > chars:
-        occur = txt.rfind(delim)
+        occur = txt.rfind(delim, 0, chars + 1)
         if occur > -1:
             line = txt[0 : (occur + len(delim) - 1)]
             lines.append(line)
@@ -273,9 +275,9 @@ def memory_safe_np_zeros_2d(constraints=None, pct=99, max_sec_dim=10000):
     # check inputs:
     if not isinstance(pct, (int, float, type(None))):
         raise TypeError("Parameter pct must be int, float or None")
-    if not isinstance(constraints, (list, tuple, np.ndarray)):
+    if constraints is not None and not isinstance(constraints, (list, tuple, np.ndarray)):
         raise TypeError("Parameter constraints must be list, tuple or np.ndarray")
-    if len(constraints) > 2:
+    if constraints is not None and len(constraints) > 2:
         raise ValueError(
             """Number of constraints exceeds the number of required 
                         dimensions."""
@@ -291,11 +293,11 @@ def memory_safe_np_zeros_2d(constraints=None, pct=99, max_sec_dim=10000):
     isize = np.zeros(1).itemsize
 
     # calcualte the maximum number of elements the array can have
-    max_array_items = ram.available / isize
+    max_array_items = int(ram.available / isize * pct / 100)
 
     # determine shape of array to be declared and declare
     if constraints is None:
-        prime_factors = find_prime_factors(max_array_ram)
+        prime_factors = find_prime_factors(max_array_items)
         return np.zeros(
             (int(max(prime_factors)), int(max_array_items / max(prime_factors))),
             dtype=np.float64,
@@ -752,14 +754,17 @@ def monotonic(x):
             - 2 - Input strictly decreasing.
 
     """
-    if isinstance(x, list):
-        x = np.array(x, dtype=np.float64)
+    x = np.asarray(x, dtype=np.float64)
+    if x.ndim != 1:
+        raise ValueError("x must be one-dimensional.")
+    if x.size < 2:
+        raise ValueError("x must contain at least two values.")
 
     dx = np.diff(x)
 
-    if np.all(dx <= 0):  # is decreasing
+    if np.all(dx < 0):  # is decreasing
         return 2
-    elif np.all(dx >= 0):  # is increasing
+    elif np.all(dx > 0):  # is increasing
         return 1
     else:
         return 0
@@ -802,18 +807,21 @@ def calc_grids(lo, hi, res, units):
     if units not in ["cm-1", "um", "nm"]:
         raise ValueError("Accepted values for units are 'cm-1', 'nm', and 'um'.")
 
+    if res <= 0:
+        raise ValueError("res must be greater than zero.")
+
     if units == "cm-1":
-        if not lo < hi and not lo >= 0.001:
+        if not (0.001 <= lo < hi):
             raise ValueError("lo must satisfy 0.001 cm-1 <= lo < hi.")
         if hi > 50000:
             raise ValueError("hi must satisfy lo < hi <= 50,000.")
     elif units == "um":
-        if not lo < hi and not lo >= 0.2:
+        if not (0.2 <= lo < hi):
             raise ValueError("lo must satisfy 0.2 um <= lo < hi.")
         if hi > 1e7:
             raise ValueError("hi must satisfy lo < hi <= 1e7 um.")
     elif units == "nm":
-        if not lo < hi and not lo >= 200:
+        if not (200 <= lo < hi):
             raise ValueError("lo must satisfy 200 nm <= lo < hi.")
         if hi > 1e10:
             raise ValueError("hi must satisfy lo < hi <= 1e10 nm.")
@@ -940,7 +948,7 @@ def scale_solar_spectrum(spc, yday):
         ValueError: Raised when 0 < yday < 366 is not True.
 
     """
-    if yday < 0 or yday > 366:
+    if yday < 1 or yday > 366:
         raise ValueError("Yday must satisfy 0 < yday < 366.")
 
     sc_spc = (1 - 0.0167086 * np.cos((2 * np.pi * (yday - 4)) / 365.256363)) ** -2 * spc
@@ -1093,17 +1101,15 @@ def convolve_spectrum(spc, x, ils):
         ils_hi = ils_x[-1]
 
     # check if spectral grid is regular
-    a = np.diff(x, n=2)  # calculate 2nd discrete difference
-    a[a < 1e12] = 0  # remove small numbers (arising from computer precision limits)
-    assert not np.all(
-        a
-    ), """Wavenumber grid is not regular."""  # check is all values in a are 0 (0 evaluates to False)
+    spacing = np.diff(np.asarray(x, dtype=float))
+    if spacing.size == 0 or not np.allclose(spacing, spacing[0], rtol=1e-10, atol=1e-12):
+        raise ValueError("Wavenumber grid is not regular.")
 
     # determine resolution from model wavenumber grid
     num = len(x)
     lo = x[0]
     hi = x[-1]
-    res = np.round((hi - lo) / num, decimals=8)
+    res = np.round((hi - lo) / (num - 1), decimals=8)
     # this is inadvertedly introduces a limit
     # on the minimum resolution used in the code as 1e-8 cm-1, which should be
     # enough though, and also this may not be the numerically most stable way to go

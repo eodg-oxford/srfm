@@ -270,6 +270,8 @@ def ewp_hs(
         legendre_coefficient = utils.memory_safe_np_zeros_2d(
             constraints=[wavelengths_size], max_sec_dim=20000
         )
+    else:
+        legendre_coefficient = np.empty((wavelengths_size, 0), dtype=np.float64)
 
     beta_ext, beta_sca, p_f, l_c, max_lc = loop_mie_over_wavelengths(
         wavelengths_size,
@@ -682,8 +684,13 @@ def get_ri(composition, refractive_index=None, wave=None, wave_size=None):
         if refractive_index is None:
             raise RuntimeError("Error: refractive index not defined.")
         else:
-            ri_n = np.array(np.full(wave_size, np.real(refractive_index)))
-            ri_k = np.array(np.full(wae_size, np.imag(refractive_index)))
+            supplied = np.asarray(refractive_index, dtype=np.complex128)
+            if supplied.ndim == 0:
+                supplied = np.full(wave_size, supplied, dtype=np.complex128)
+            elif supplied.size != wave_size:
+                raise ValueError("refractive_index must be scalar or match wave_size.")
+            ri_n = np.real(supplied)
+            ri_k = np.imag(supplied)
     else:
         ri_object = ARIA.RI()
         ri_n, ri_k = ri_object.load_refractive_indices(

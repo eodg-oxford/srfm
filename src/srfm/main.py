@@ -19,8 +19,8 @@ from . import layer
 import os
 import datetime
 import warnings
-from importlib.resources import files, as_file
 from . import rfm_helper
+from .input_schema import validate_srfm_inputs
 from netCDF4 import Dataset
 import json
 import copy
@@ -39,15 +39,15 @@ def run_srfm(inp):
         model_SRFM (obj): Instance of forward_model.SRFM.
 
     """
+    if not hasattr(inp, "values"):
+        raise TypeError("run_srfm expects an Inputs-like object with a values mapping.")
+    inp.values = validate_srfm_inputs(inp.values)
+
     ########################################################################################
     # Assign some variables:
     ########################################################################################
-    with as_file(files("srfm") / "RFM") as path:
-        rfm_fldr = os.fspath(path)
-
-    # check if results directory exists, if not, then create it
-    if not os.path.exists(inp.values["results_fldr"]):
-        os.mkdir(inp.values["results_fldr"])
+    # Keep all run-generated files outside the installed package tree.
+    os.makedirs(inp.values["results_fldr"], exist_ok=True)
 
     ########################################################################################
     # set final grid to interpolate to
@@ -92,7 +92,7 @@ def run_srfm(inp):
     RFM_wvnm, wvls = utilities.calc_grids(low_spc, upp_spc, spec_res, spec_units)
 
     rfm_grid_fname = rfm_functions.construct_rfm_grid_file(
-        RFM_wvnm, filename="grid.spc", rfm_fldr=rfm_fldr
+        RFM_wvnm, filename="grid.spc", rfm_fldr=inp.values["results_fldr"]
     )
     ########################################################################################
     # define an atmospheric scattering layers
@@ -290,7 +290,8 @@ def run_srfm(inp):
     rfm_config = inp.values["rfm_config"]
 
     # RFM driver table
-    driver_inputs = inp.values["driver_inputs"]
+    driver_inputs = copy.deepcopy(inp.values["driver_inputs"])
+    driver_inputs["spectral"] = (rfm_helper.SpectralFile(rfm_grid_fname),)
     driver_inputs["lev"] = tuple(str(val) for val in levels)
     driver_inputs["tangent"] = (str(zen_sec),)
     
@@ -391,7 +392,7 @@ def run_srfm(inp):
     model_DISORT.set_albedo(inp.values["albedo"])
 
     model_DISORT.set_temis(inp.values["temis"])
-    model_DISORT.set_earth_radius(6371)
+    model_DISORT.set_earth_radius(inp.values.get("earth_radius", 6371.0))
     model_DISORT.set_rhoq(
         np.zeros(
             shape=(
@@ -502,7 +503,7 @@ def run_srfm(inp):
 
         #        model_DISORT.set_header(f"Now starting calculation for {col} cm-1.")
         model_DISORT.set_header(
-            "NO HEADER"
+            inp.values.get("header", "NO HEADER")
         )  # the string "NO HEADER" will cause no printout
         model_DISORT.set_wvnm(wvnm)
         model_DISORT.set_wvl(wvl)
@@ -876,4 +877,4 @@ def run_srfm(inp):
         else:
             plt.close()
 
-        return model_SRFM
+    return model_SRFM

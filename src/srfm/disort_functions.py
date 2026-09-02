@@ -793,6 +793,7 @@ def test_disort_input_integrity(
     maxumu,
     maxphi,
     ibcnd,
+    onlyfl,
     dtauc,
     ssalb,
     temper,
@@ -821,6 +822,7 @@ def test_disort_input_integrity(
         maxphi (int): Number of output azimuthal angles.
         ibcnd (int): Requested outputs flag. See DISORT documentation for full
             explanation.
+        onlyfl (bool): Whether DISORT is configured to return fluxes only.
         dtauc (array-like): Atmospheric optical depth structure (Layers' optical depth).
         ssalb (array-like): Layers' single scatter albedo.
         temper (array-like): Atmospheric tempeature structure, defined in terms of
@@ -897,9 +899,9 @@ def test_disort_input_integrity(
         max_utau = np.max(utau).item()
 
     if isinstance(dtauc, list):
-        max_dtauc = max(dtauc)
+        max_dtauc = sum(dtauc)
     elif isinstance(dtauc, np.ndarray):
-        max_dtauc = np.max(dtauc).item()
+        max_dtauc = np.sum(dtauc).item()
 
     if max_utau > max_dtauc:
         raise ValueError("Values in utau must not exceed the max value of dtauc.")
