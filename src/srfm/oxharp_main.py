@@ -22,6 +22,7 @@ from importlib.resources import files, as_file
 from pathlib import Path
 import importlib.util
 from . import rfm_helper
+from .input_schema import validate_srfm_inputs
 from netCDF4 import Dataset
 import json
 import copy
@@ -41,15 +42,17 @@ def run_srfm(inp):
         model_SRFM (obj): Instance of forward_model.SRFM.
 
     """
+    if not hasattr(inp, "values"):
+        raise TypeError("run_srfm expects an Inputs-like object with a values mapping.")
+    inp.values = validate_srfm_inputs(inp.values)
     ########################################################################################
     # Assign some variables:
     ########################################################################################
     with as_file(files("srfm") / "RFM") as path:
         rfm_fldr = os.fspath(path)
 
-    # check if results directory exists, if not, then create it
-    if not os.path.exists(inp.values["results_fldr"]):
-        os.mkdir(inp.values["results_fldr"])
+    # Keep all run-generated files outside the installed package tree.
+    os.makedirs(inp.values["results_fldr"], exist_ok=True)
 
     ########################################################################################
     # set final grid to interpolate to
@@ -322,7 +325,7 @@ def run_srfm(inp):
     model_DISORT.set_albedo(inp.values["albedo"])
 
     model_DISORT.set_temis(inp.values["temis"])
-    model_DISORT.set_earth_radius(6371)
+    model_DISORT.set_earth_radius(inp.values.get("earth_radius", 6371.0))
     model_DISORT.set_rhoq(
         np.zeros(
             shape=(
@@ -395,7 +398,7 @@ def run_srfm(inp):
         model_DISORT.set_phi0(0)
 
     model_DISORT.set_umu([inp.values["zen_cos"]])
-    model_DISORT.set_phi([inp.values["saa"]])
+    model_DISORT.set_phi([inp.values["azi"]])
 
     # initialize disort input arrays for output variables from a single run
     model_DISORT.initialize_disort_output_arrays()
@@ -582,7 +585,7 @@ def run_srfm(inp):
         #                              brdf_arg=[1,1.34,False,0], # wind speed, water refractive index, do_shadow
         #                              nmug=200) # number of quadrature angles
         # run disort
-        model_DISORT.run_disort(prec=inp.values["disort_precision"])
+        model_DISORT.run_disort(prec=inp.values["disort_precision"],adjust_maxcmu=inp.values["adjust_maxcmu"],)
 
         # store result in SRFM()
         model_SRFM.store_disort_result(model_DISORT, wvl_idx)
