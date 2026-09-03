@@ -4,11 +4,14 @@ from scipy.special import eval_legendre
 
 from srfm import quadrature as q
 
-
 pytestmark = pytest.mark.unit
 
 
 def test_bessel_zero_preserves_embedded_reference_value():
+    """Verify the Bessel-zero helper preserves its reference value.
+
+    This anchors the numerical approximation formerly demonstrated in-module.
+    """
     assert q.bessel_zero(3) == pytest.approx(10.173467949597212, rel=2e-15)
 
 
@@ -17,18 +20,42 @@ def test_bessel_zero_preserves_embedded_reference_value():
     [("G", 0.6515842860871356), ("R", 0.6497710863213735), ("L", 0.6413165972728538)],
 )
 def test_first_guess_preserves_embedded_reference_values(kind, expected):
+    """Verify quadrature first guesses against embedded references.
+
+    Each supported family starts Newton iteration from a stable approximation.
+
+    Args:
+        kind: Parameterized quadrature family code.
+        expected: Expected initial node approximation.
+    """
     assert q.first_guess(kind, 181, 50) == pytest.approx(expected, rel=2e-15)
 
 
 @pytest.mark.parametrize(
     ("kind", "expected"),
-    [("G", -0.004336062494010145), ("R", 0.0003714827832841103), ("L", -0.005288777969312314)],
+    [
+        ("G", -0.004336062494010145),
+        ("R", 0.0003714827832841103),
+        ("L", -0.005288777969312314),
+    ],
 )
 def test_newton_correction_preserves_embedded_reference_values(kind, expected):
+    """Verify Newton corrections against embedded references.
+
+    Reference corrections protect convergence of the generated nodes.
+
+    Args:
+        kind: Parameterized quadrature family code.
+        expected: Expected correction value.
+    """
     assert q.newton_g(kind, 181, 0.1) == pytest.approx(expected, rel=3e-14)
 
 
 def test_legendre_base_cases_and_reference_recurrence():
+    """Verify Legendre base cases and recurrence values.
+
+    These checks protect the polynomial foundation of all quadrature families.
+    """
     assert q.legendre(0, 0.2) == (None, None, 1.0)
     assert q.legendre(1, 0.2) == (None, 1.0, 0.2)
     result = q.legendre(181, 0.1)
@@ -39,6 +66,13 @@ def test_legendre_base_cases_and_reference_recurrence():
 
 @pytest.mark.parametrize("kind", ["G", "R", "L", "T"])
 def test_quadrature_nodes_weights_and_polynomial_integrals(kind):
+    """Verify quadrature nodes, weights, and exact polynomial integrals.
+
+    Each rule is tested up to the polynomial degree it should integrate exactly.
+
+    Args:
+        kind: Parameterized quadrature family code.
+    """
     nodes, weights = q.quadrature101(kind, 8)
     assert nodes.shape == weights.shape == (8,)
     assert np.all(np.diff(nodes) > 0)
@@ -59,12 +93,25 @@ def test_quadrature_nodes_weights_and_polynomial_integrals(kind):
     ],
 )
 def test_quadrature101_preserves_embedded_181_point_references(kind, node, weight):
+    """Verify 181-point quadrature against selected reference entries.
+
+    Large production grids are anchored without storing every generated value.
+
+    Args:
+        kind: Parameterized quadrature family code.
+        node: Expected selected quadrature node.
+        weight: Expected selected quadrature weight.
+    """
     nodes, weights = q.quadrature101(kind, 181)
     assert nodes[50] == pytest.approx(node, rel=2e-14)
     assert weights[50] == pytest.approx(weight, rel=3e-14)
 
 
 def test_shift_quadrature_preserves_integrals_and_reference():
+    """Verify shifted quadrature preserves integrals and reference values.
+
+    Affine node transformations must scale weights without losing accuracy.
+    """
     nodes, weights = q.quadrature101("L", 181)
     shifted_nodes, shifted_weights = q.shift_quadrature(nodes, weights, 0, 180)
     assert shifted_nodes[50] == pytest.approx(32.28188851298205, rel=2e-14)
@@ -74,12 +121,23 @@ def test_shift_quadrature_preserves_integrals_and_reference():
 
 
 def test_quadrature_integrates_on_transformed_interval():
+    """Verify quadrature integrates correctly on a transformed interval.
+
+    This covers non-default bounds used by particle-size calculations.
+    """
     nodes, weights = q.quadrature("G", 6, 2.0, 5.0)
     assert np.sum(weights * nodes**3) == pytest.approx((5**4 - 2**4) / 4, rel=2e-14)
 
 
 @pytest.mark.parametrize("function", [q.first_guess, q.newton_g])
 def test_invalid_quadrature_type_rejected_by_helpers(function):
+    """Verify helper functions reject unknown quadrature families.
+
+    The same family-code contract applies to each low-level helper.
+
+    Args:
+        function: Parameterized quadrature helper under test.
+    """
     args = ("bad", 8, 1 if function is q.first_guess else 0.1)
     with pytest.raises(ValueError, match="Invalid quadrature type"):
         function(*args)
@@ -87,16 +145,35 @@ def test_invalid_quadrature_type_rejected_by_helpers(function):
 
 @pytest.mark.parametrize("kind", ["S", "bad"])
 def test_unsupported_quadrature_type_rejected(kind):
+    """Verify unsupported quadrature types raise a clear error.
+
+    Public construction should fail before attempting numerical iteration.
+
+    Args:
+        kind: Parameterized unsupported family code.
+    """
     with pytest.raises(ValueError):
         q.quadrature101(kind, 4)
 
 
 @pytest.mark.parametrize("kind,npts", [("T", 1), ("L", 1), ("G", 0)])
 def test_invalid_quadrature_sizes_rejected(kind, npts):
+    """Verify invalid node counts are rejected for each family.
+
+    Family-specific minimum sizes prevent singular recurrence calculations.
+
+    Args:
+        kind: Parameterized quadrature family code.
+        npts: Invalid number of requested points.
+    """
     with pytest.raises(ValueError):
         q.quadrature101(kind, npts)
 
 
 def test_non_integer_quadrature_size_rejected():
+    """Verify quadrature node counts must be integers.
+
+    Rejecting fractional counts prevents ambiguous array dimensions.
+    """
     with pytest.raises(TypeError):
         q.quadrature101("G", 4.5)

@@ -11,6 +11,16 @@ import numpy as np
 
 
 def _disort_case(payload):
+    """Run a minimal compiled DISORT calculation.
+
+    The child-process boundary converts native crashes into test failures.
+
+    Args:
+        payload: Mapping containing the requested floating-point precision.
+
+    Returns:
+        Serializable DISORT status and radiance output.
+    """
     from srfm.forward_model import DISORT
 
     model = DISORT(disort_input={}, disort_out={})
@@ -42,6 +52,16 @@ def _disort_case(payload):
 
 
 def _mie_case(payload):
+    """Run a minimal compiled Mie optical-properties calculation.
+
+    Synthetic inputs keep native scattering coverage deterministic.
+
+    Args:
+        payload: Mapping selecting optional refractive-index inputs.
+
+    Returns:
+        Serializable optical-properties output from the native solver.
+    """
     from srfm import ARIA_module, optical_properties
     from srfm.size_distribution import LogNormalDistribution
 
@@ -73,8 +93,27 @@ def _mie_case(payload):
 
 
 def _e2e_case(payload):
+    """Run one complete SRFM pathway with the selected top-level runner.
+
+    All runners return the same serializable result contract to pytest.
+
+    Args:
+        payload: Mapping containing inputs and an optional runner identifier.
+
+    Returns:
+        Serializable spectral results and effective input keys.
+    """
     from srfm.inputs import Inputs
-    from srfm.main import run_srfm
+
+    runner_name = payload.get("runner", "main")
+    if runner_name == "main":
+        from srfm.main import run_srfm
+    elif runner_name == "oxharp":
+        from srfm.oxharp_main import run_srfm
+    elif runner_name == "iasi":
+        from srfm.iasi_main import run_srfm
+    else:
+        raise ValueError(f"Unknown E2E runner: {runner_name!r}")
 
     if payload.get("driver_path"):
         inputs = Inputs()
@@ -99,6 +138,13 @@ CASES = {
 
 
 def main() -> int:
+    """Dispatch a native test case and pickle its result for pytest.
+
+    Exceptions are printed for the parent process and converted to failure.
+
+    Returns:
+        Process exit status, with nonzero indicating a Python exception.
+    """
     case, args_name, result_name = sys.argv[1:4]
     with Path(args_name).open("rb") as handle:
         payload = pickle.load(handle)

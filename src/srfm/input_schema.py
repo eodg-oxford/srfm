@@ -15,7 +15,6 @@ from typing import Any
 
 import numpy as np
 
-
 _MISSING = object()
 
 
@@ -23,6 +22,14 @@ class InputValidationError(ValueError):
     """Raised with all problems found in an SRFM input mapping."""
 
     def __init__(self, issues: Sequence[str]):
+        """Initialize an error containing every detected input problem.
+
+        Keeping all issues on the exception lets callers report the complete
+        validation result instead of fixing one field at a time.
+
+        Args:
+            issues: Human-readable validation problems in discovery order.
+        """
         self.issues = tuple(issues)
         detail = "\n".join(f"- {issue}" for issue in self.issues)
         super().__init__(f"Invalid SRFM inputs:\n{detail}")
@@ -134,9 +141,7 @@ SRFM_INPUT_SCHEMA: dict[str, FieldSpec] = {
     "bbt": FieldSpec((bool,), required=True),
     "rad_out_fname": FieldSpec((str,), required=True, nullable=True),
     "bbt_out_fname": FieldSpec((str,), required=True, nullable=True),
-    "plot_type": FieldSpec(
-        (str,), required=True, choices=frozenset({"rad", "bbt"})
-    ),
+    "plot_type": FieldSpec((str,), required=True, choices=frozenset({"rad", "bbt"})),
     "convolve_iasi": FieldSpec((bool,), required=True),
     "iasi_ils": FieldSpec(PATH_TYPES, required=True, nullable=True),
     # Spectral grids.
@@ -188,6 +193,60 @@ SRFM_INPUT_SCHEMA: dict[str, FieldSpec] = {
     "saa": FieldSpec(NUMBER_TYPES, required=True),
     "zen": FieldSpec(NUMBER_TYPES, required=True),
     "azi": FieldSpec(NUMBER_TYPES, required=True),
+}
+
+
+# OXHARP passes a merged state/ancillary mapping to ``oxharp_main``.  The
+# generic fields remain accepted for compatibility with existing driver tables,
+# but OXHARP's derived geometry is the contract actually consumed by the runner.
+OXHARP_INPUT_SCHEMA: dict[str, FieldSpec] = {
+    **SRFM_INPUT_SCHEMA,
+    "plot_profiles": FieldSpec((bool,)),
+    "base_plots": FieldSpec((bool,)),
+    "show_plots": FieldSpec((bool,)),
+    "plot_type": FieldSpec((str,), choices=frozenset({"rad", "bbt"})),
+    "sza": FieldSpec(NUMBER_TYPES),
+    "saa": FieldSpec(NUMBER_TYPES),
+    "zen": FieldSpec(NUMBER_TYPES),
+    "sza_cos": FieldSpec(NUMBER_TYPES),
+    "zen_cos": FieldSpec(NUMBER_TYPES, required=True),
+    "zen_sec": FieldSpec(NUMBER_TYPES, required=True),
+    "sza_deg": FieldSpec(NUMBER_TYPES),
+    "sza_rad": FieldSpec(NUMBER_TYPES),
+    "sza_sec": FieldSpec(NUMBER_TYPES),
+    "zen_deg": FieldSpec(NUMBER_TYPES),
+    "zen_rad": FieldSpec(NUMBER_TYPES),
+    "atmosphere": FieldSpec(PATH_TYPES),
+    "g_rtv": FieldSpec(MAPPING_TYPES, nullable=True),
+    "maxcount": FieldSpec(INTEGER_TYPES),
+    "epsilon": FieldSpec(NUMBER_TYPES),
+    "gamma": FieldSpec(NUMBER_TYPES),
+    "parallel": FieldSpec((bool,)),
+    "eps": FieldSpec(NUMBER_TYPES),
+    "max_workers": FieldSpec(INTEGER_TYPES, nullable=True),
+}
+
+
+# ``iasi_main`` reads observation geometry and profiles from a processed IASI
+# pickle.  Consequently its file/pixel inputs are mandatory, whereas the
+# generic runner's explicit geometry and optional-convolution switch are not.
+IASI_INPUT_SCHEMA: dict[str, FieldSpec] = {
+    **SRFM_INPUT_SCHEMA,
+    "plot_profiles": FieldSpec((bool,), required=True),
+    "iasi_spc_fldr": FieldSpec(PATH_TYPES, required=True),
+    "iasi_fl": FieldSpec((str,), required=True),
+    "px": FieldSpec(INTEGER_TYPES, required=True),
+    "g_rtv": FieldSpec(MAPPING_TYPES, nullable=True),
+    "ils": FieldSpec(PATH_TYPES, required=True),
+    "nedt": FieldSpec(PATH_TYPES, required=True),
+    "convolve_iasi": FieldSpec((bool,)),
+    "iasi_ils": FieldSpec(PATH_TYPES, nullable=True),
+    "plot_type": FieldSpec((str,), choices=frozenset({"rad", "bbt"})),
+    "sun": FieldSpec((bool,)),
+    "sza": FieldSpec(NUMBER_TYPES),
+    "saa": FieldSpec(NUMBER_TYPES),
+    "zen": FieldSpec(NUMBER_TYPES),
+    "azi": FieldSpec(NUMBER_TYPES),
 }
 
 
@@ -278,10 +337,32 @@ LAYER_SCHEMA: dict[str, FieldSpec] = {
 
 
 def _is_sequence(value: Any) -> bool:
+    """Return whether a value is a non-string sequence.
+
+    Strings and bytes are excluded because schema fields such as levels and
+    RFM sections require containers of distinct values.
+
+    Args:
+        value: Object to classify.
+
+    Returns:
+        ``True`` when the object is a sequence other than text or bytes.
+    """
     return isinstance(value, Sequence) and not isinstance(value, (str, bytes))
 
 
 def _is_array_like(value: Any) -> bool:
+    """Return whether a value is a supported sequence or NumPy array.
+
+    The validation layer accepts ordinary Python sequences and NumPy arrays
+    for numerical vector fields.
+
+    Args:
+        value: Object to classify.
+
+    Returns:
+        ``True`` when the value can represent a schema vector.
+    """
     return _is_sequence(value) or isinstance(value, np.ndarray)
 
 
@@ -291,6 +372,17 @@ def _check_mapping(
     path: str,
     issues: list[str],
 ) -> None:
+    """Validate mapping keys and scalar field specifications.
+
+    Problems are appended to a shared list so nested and top-level failures
+    can be reported together after all validation passes have completed.
+
+    Args:
+        value: Mapping being validated.
+        schema: Field specifications allowed at this mapping level.
+        path: Dotted prefix used in validation messages.
+        issues: Mutable collection receiving detected problems.
+    """
     unknown = sorted(set(value) - set(schema))
     for key in unknown:
         issues.append(f"{path}{key}: unknown field")
@@ -311,8 +403,7 @@ def _check_mapping(
             if spec.expected == (bool,):
                 valid_type = type(item) is bool
             elif any(
-                isinstance(expected_type, type)
-                and issubclass(expected_type, Real)
+                isinstance(expected_type, type) and issubclass(expected_type, Real)
                 for expected_type in spec.expected
             ):
                 valid_type = valid_type and not isinstance(item, (bool, np.bool_))
@@ -326,11 +417,24 @@ def _check_mapping(
                 issues.append(f"{field_path}: must be finite")
                 continue
         if spec.choices is not None and item not in spec.choices:
-            choices = ", ".join(repr(choice) for choice in sorted(spec.choices, key=str))
+            choices = ", ".join(
+                repr(choice) for choice in sorted(spec.choices, key=str)
+            )
             issues.append(f"{field_path}: expected one of {choices}, got {item!r}")
 
 
 def _validate_positive(mapping, keys, path, issues, *, allow_zero=False):
+    """Validate selected numeric fields as positive or non-negative.
+
+    Missing and non-numeric values are left to the structural type checks.
+
+    Args:
+        mapping: Input mapping containing the selected fields.
+        keys: Field names whose numerical signs should be checked.
+        path: Dotted prefix used in validation messages.
+        issues: Mutable collection receiving detected problems.
+        allow_zero: Accept zero and reject only negative values when true.
+    """
     for key in keys:
         value = mapping.get(key)
         if isinstance(value, Real) and not isinstance(value, (bool, np.bool_)):
@@ -341,6 +445,15 @@ def _validate_positive(mapping, keys, path, issues, *, allow_zero=False):
 
 
 def _validate_rfm_config(config: Any, issues: list[str]) -> None:
+    """Validate nested RFM execution configuration.
+
+    Structural type errors are recorded by the top-level schema, so this
+    helper only descends into mappings.
+
+    Args:
+        config: Candidate RFM configuration mapping.
+        issues: Mutable collection receiving detected problems.
+    """
     if not isinstance(config, Mapping):
         return
     _check_mapping(config, RFM_CONFIG_SCHEMA, "rfm_config.", issues)
@@ -355,7 +468,19 @@ def _validate_rfm_config(config: Any, issues: list[str]) -> None:
     )
 
 
-def _validate_driver(driver: Any, issues: list[str]) -> None:
+def _validate_driver(
+    driver: Any, issues: list[str], *, minimum_atmospheres: int = 1
+) -> None:
+    """Validate nested RFM driver sections and required capture flags.
+
+    The IASI runner needs two pre-existing atmosphere entries because it reads
+    the profile at index one before appending its generated profile.
+
+    Args:
+        driver: Candidate RFM driver-section mapping.
+        issues: Mutable collection receiving detected problems.
+        minimum_atmospheres: Minimum number of atmosphere section entries.
+    """
     if not isinstance(driver, Mapping):
         return
     _check_mapping(driver, RFM_DRIVER_SCHEMA, "driver_inputs.", issues)
@@ -369,6 +494,12 @@ def _validate_driver(driver: Any, issues: list[str]) -> None:
         value = driver.get(key)
         if key in driver and (not _is_sequence(value) or len(value) == 0):
             issues.append(f"driver_inputs.{key}: must be a non-empty sequence")
+    atmosphere = driver.get("atmosphere")
+    if _is_sequence(atmosphere) and len(atmosphere) < minimum_atmospheres:
+        issues.append(
+            "driver_inputs.atmosphere: must contain at least "
+            f"{minimum_atmospheres} entries"
+        )
     flags = driver.get("flags")
     if _is_sequence(flags):
         if not all(isinstance(flag, str) for flag in flags):
@@ -392,6 +523,15 @@ def _validate_driver(driver: Any, issues: list[str]) -> None:
 
 
 def _validate_layers(layers: Any, issues: list[str]) -> None:
+    """Validate every configured scattering layer and cross-field constraint.
+
+    Layer names are included in dotted error paths so failures remain
+    actionable when a run contains several aerosol or cloud layers.
+
+    Args:
+        layers: Candidate mapping of layer names to layer input mappings.
+        issues: Mutable collection receiving detected problems.
+    """
     if layers is None:
         return
     if not isinstance(layers, Mapping):
@@ -399,7 +539,9 @@ def _validate_layers(layers: Any, issues: list[str]) -> None:
     for layer_name, layer in layers.items():
         path = f"scat_lyrs_inputs.{layer_name}."
         if not isinstance(layer_name, str):
-            issues.append(f"scat_lyrs_inputs: layer name {layer_name!r} must be a string")
+            issues.append(
+                f"scat_lyrs_inputs: layer name {layer_name!r} must be a string"
+            )
             continue
         if not isinstance(layer, Mapping):
             issues.append(f"scat_lyrs_inputs.{layer_name}: expected a mapping")
@@ -447,12 +589,18 @@ def _validate_layers(layers: Any, issues: list[str]) -> None:
             value = layer.get(key)
             if isinstance(value, Real) and value < 0:
                 issues.append(f"{path}{key}: must be non-negative")
-        if all(layer.get(key) is None for key in ("mass_loading", "n", "s_a_den", "v_den")):
+        if all(
+            layer.get(key) is None for key in ("mass_loading", "n", "s_a_den", "v_den")
+        ):
             issues.append(
                 f"{path}mass_loading: one of mass_loading, n, s_a_den, or v_den is required"
             )
-        centre_extent = layer.get("center_alt") is not None and layer.get("thick") is not None
-        bound_extent = layer.get("alt_low") is not None and layer.get("alt_upp") is not None
+        centre_extent = (
+            layer.get("center_alt") is not None and layer.get("thick") is not None
+        )
+        bound_extent = (
+            layer.get("alt_low") is not None and layer.get("alt_upp") is not None
+        )
         if not centre_extent and not bound_extent:
             issues.append(
                 f"{path}center_alt: provide center_alt/thick or alt_low/alt_upp"
@@ -467,9 +615,13 @@ def _validate_layers(layers: Any, issues: list[str]) -> None:
             and alt_low >= alt_upp
         ):
             issues.append(f"{path}alt_low: must be less than alt_upp")
-        if centre_extent and bound_extent and all(
-            isinstance(layer.get(key), Real)
-            for key in ("center_alt", "thick", "alt_low", "alt_upp")
+        if (
+            centre_extent
+            and bound_extent
+            and all(
+                isinstance(layer.get(key), Real)
+                for key in ("center_alt", "thick", "alt_low", "alt_upp")
+            )
         ):
             expected_low = layer["center_alt"] - layer["thick"] / 2
             expected_upp = layer["center_alt"] + layer["thick"] / 2
@@ -481,25 +633,43 @@ def _validate_layers(layers: Any, issues: list[str]) -> None:
                     f"{path}alt_low: explicit bounds must match center_alt/thick"
                 )
         if layer.get("comp") == "ri" and layer.get("refractive_index") is None:
-            issues.append(
-                f"{path}refractive_index: required when comp is 'ri'"
-            )
+            issues.append(f"{path}refractive_index: required when comp is 'ri'")
 
 
-def validate_srfm_inputs(values: Mapping[str, Any]) -> dict[str, Any]:
-    """Validate an existing flat SRFM mapping and return a shallow normalized copy."""
+def _validate_inputs(
+    values: Mapping[str, Any],
+    schema: Mapping[str, FieldSpec],
+    *,
+    runner: str,
+) -> dict[str, Any]:
+    """Validate inputs against a runner-specific schema.
+
+    Shared spectral, DISORT, output, RFM, and layer constraints are applied to
+    all runners before their distinct geometry and observation rules.
+
+    Args:
+        values: Flat input mapping supplied to a runner.
+        schema: Top-level field contract for that runner.
+        runner: Runner identifier: ``srfm``, ``oxharp``, or ``iasi``.
+
+    Returns:
+        A shallow normalized copy of the supplied mapping.
+
+    Raises:
+        InputValidationError: If the mapping violates any schema constraint.
+    """
     if not isinstance(values, Mapping):
         raise InputValidationError(
             [f"inputs: expected a mapping, got {type(values).__name__}"]
         )
 
     normalized = dict(values)
-    for key, spec in SRFM_INPUT_SCHEMA.items():
+    for key, spec in schema.items():
         if key not in normalized and spec.default is not _MISSING:
             normalized[key] = spec.default
 
     issues: list[str] = []
-    _check_mapping(normalized, SRFM_INPUT_SCHEMA, "", issues)
+    _check_mapping(normalized, schema, "", issues)
 
     for prefix in ("fin", "spc"):
         low = normalized.get(f"{prefix}_wvnmlo")
@@ -560,9 +730,7 @@ def validate_srfm_inputs(values: Mapping[str, Any]) -> dict[str, Any]:
             issues.append("utau: values must be finite non-negative numbers")
 
     _validate_positive(normalized, ("nmom", "maxcmu", "maxulv"), "", issues)
-    _validate_positive(
-        normalized, ("maxumu", "maxphi"), "", issues, allow_zero=True
-    )
+    _validate_positive(normalized, ("maxumu", "maxphi"), "", issues, allow_zero=True)
     if normalized.get("onlyfl") is False:
         for key in ("maxumu", "maxphi"):
             if normalized.get(key) == 0:
@@ -571,19 +739,28 @@ def validate_srfm_inputs(values: Mapping[str, Any]) -> dict[str, Any]:
         issues.append("maxcmu: must be even")
     if isinstance(normalized.get("maxcmu"), Integral) and normalized["maxcmu"] < 2:
         issues.append("maxcmu: must be at least 2")
-    for key, lower, upper in (
+    bounded_fields = [
         ("albedo", 0, 1),
         ("temis", 0, 1),
-        ("sza", 0, 180),
-        ("zen", 0, 180),
-        ("saa", 0, 360),
-        ("azi", 0, 360),
-    ):
+    ]
+    if runner == "srfm":
+        bounded_fields.extend(
+            (("sza", 0, 180), ("zen", 0, 180), ("saa", 0, 360), ("azi", 0, 360))
+        )
+    elif runner == "oxharp":
+        bounded_fields.extend(
+            (("saa", 0, 360), ("azi", 0, 360), ("sza_cos", -1, 1), ("zen_cos", -1, 1))
+        )
+    for key, lower, upper in bounded_fields:
         value = normalized.get(key)
         if isinstance(value, Real) and not lower <= value <= upper:
             issues.append(f"{key}: must be between {lower} and {upper}")
 
-    if normalized.get("convolve_iasi") is True and not normalized.get("iasi_ils"):
+    if (
+        runner != "iasi"
+        and normalized.get("convolve_iasi") is True
+        and not normalized.get("iasi_ils")
+    ):
         issues.append("iasi_ils: required when convolve_iasi is True")
     if normalized.get("out_mode") in {"txt", "netcdf"} and not (
         normalized.get("rad") or normalized.get("bbt")
@@ -604,14 +781,145 @@ def validate_srfm_inputs(values: Mapping[str, Any]) -> dict[str, Any]:
         )
 
     _validate_rfm_config(rfm_config, issues)
-    _validate_driver(normalized.get("driver_inputs"), issues)
+    _validate_driver(
+        normalized.get("driver_inputs"),
+        issues,
+        minimum_atmospheres=2 if runner == "iasi" else 1,
+    )
     _validate_layers(normalized.get("scat_lyrs_inputs"), issues)
+
+    if runner == "oxharp":
+        if normalized.get("sun") is True:
+            for key in ("sza_cos", "saa"):
+                if normalized.get(key) is None:
+                    issues.append(f"{key}: required when sun is True")
+        zen_cos = normalized.get("zen_cos")
+        zen_sec = normalized.get("zen_sec")
+        if isinstance(zen_cos, Real) and isinstance(zen_sec, Real):
+            if zen_cos == 0 or not np.isclose(zen_sec, 1 / zen_cos):
+                issues.append("zen_sec: must be the reciprocal of zen_cos")
+        _validate_positive(
+            normalized, ("maxcount", "epsilon", "gamma", "eps"), "", issues
+        )
+        max_workers = normalized.get("max_workers")
+        if isinstance(max_workers, Integral) and max_workers <= 0:
+            issues.append("max_workers: must be greater than zero")
+
+    if runner == "iasi":
+        pixel = normalized.get("px")
+        if (
+            isinstance(pixel, Integral)
+            and not isinstance(pixel, (bool, np.bool_))
+            and pixel < 0
+        ):
+            issues.append("px: must be non-negative")
+        filename = normalized.get("iasi_fl")
+        if isinstance(filename, str):
+            first_separator = filename.find("_")
+            last_separator = filename.rfind("_")
+            if first_separator < 0 or last_separator <= first_separator:
+                issues.append(
+                    "iasi_fl: must contain a YYYYMMDD date between underscores"
+                )
+            else:
+                date_text = filename[first_separator + 1 : last_separator]
+                try:
+                    dt.datetime.strptime(date_text, "%Y%m%d")
+                except ValueError:
+                    issues.append(
+                        "iasi_fl: must contain a valid YYYYMMDD date between underscores"
+                    )
 
     if issues:
         raise InputValidationError(issues)
     return normalized
 
 
+def validate_srfm_inputs(values: Mapping[str, Any]) -> dict[str, Any]:
+    """Validate inputs for the generic SRFM runner.
+
+    This public validator preserves the established flat driver-table format
+    and applies the geometry consumed by :mod:`srfm.main`.
+
+    Args:
+        values: Flat SRFM input mapping.
+
+    Returns:
+        A shallow normalized copy of the supplied mapping.
+
+    Raises:
+        InputValidationError: If any generic-runner input is invalid.
+    """
+    return _validate_inputs(values, SRFM_INPUT_SCHEMA, runner="srfm")
+
+
+def validate_oxharp_inputs(values: Mapping[str, Any]) -> dict[str, Any]:
+    """Validate inputs for the OXHARP-tailored SRFM runner.
+
+    The contract accepts retrieval metadata from the real OXHARP driver while
+    requiring the precomputed cosine and secant geometry used by the runner.
+
+    Args:
+        values: Merged OXHARP state and ancillary mapping.
+
+    Returns:
+        A shallow normalized copy of the supplied mapping.
+
+    Raises:
+        InputValidationError: If any OXHARP-runner input is invalid.
+    """
+    return _validate_inputs(values, OXHARP_INPUT_SCHEMA, runner="oxharp")
+
+
+def validate_iasi_inputs(values: Mapping[str, Any]) -> dict[str, Any]:
+    """Validate inputs for the processed-IASI SRFM runner.
+
+    This contract requires the observation file, pixel, noise table, and ILS
+    that :mod:`srfm.iasi_main` reads directly.
+
+    Args:
+        values: Flat processed-IASI input mapping.
+
+    Returns:
+        A shallow normalized copy of the supplied mapping.
+
+    Raises:
+        InputValidationError: If any IASI-runner input is invalid.
+    """
+    return _validate_inputs(values, IASI_INPUT_SCHEMA, runner="iasi")
+
+
 def get_srfm_input_schema() -> dict[str, FieldSpec]:
-    """Return a copy of the public top-level schema for inspection/tooling."""
+    """Return a copy of the generic runner's public schema.
+
+    A copy prevents inspection and tooling code from mutating the authoritative
+    mapping used during execution.
+
+    Returns:
+        A shallow copy of the generic SRFM top-level schema.
+    """
     return dict(SRFM_INPUT_SCHEMA)
+
+
+def get_oxharp_input_schema() -> dict[str, FieldSpec]:
+    """Return a copy of the OXHARP runner's public schema.
+
+    A copy keeps callers from changing validation globally while allowing
+    documentation and tooling to inspect the contract.
+
+    Returns:
+        A shallow copy of the OXHARP top-level schema.
+    """
+    return dict(OXHARP_INPUT_SCHEMA)
+
+
+def get_iasi_input_schema() -> dict[str, FieldSpec]:
+    """Return a copy of the processed-IASI runner's public schema.
+
+    A copy keeps callers from changing validation globally while allowing
+    documentation and tooling to inspect the contract.
+
+    Returns:
+        A shallow copy of the IASI top-level schema.
+    """
+    return dict(IASI_INPUT_SCHEMA)

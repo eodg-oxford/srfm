@@ -18,11 +18,10 @@ import os
 import sys
 import datetime
 import warnings
-from importlib.resources import files, as_file
 from pathlib import Path
 import importlib.util
 from . import rfm_helper
-from .input_schema import validate_srfm_inputs
+from .input_schema import validate_oxharp_inputs
 from netCDF4 import Dataset
 import json
 import copy
@@ -44,13 +43,10 @@ def run_srfm(inp):
     """
     if not hasattr(inp, "values"):
         raise TypeError("run_srfm expects an Inputs-like object with a values mapping.")
-    inp.values = validate_srfm_inputs(inp.values)
+    inp.values = validate_oxharp_inputs(inp.values)
     ########################################################################################
     # Assign some variables:
     ########################################################################################
-    with as_file(files("srfm") / "RFM") as path:
-        rfm_fldr = os.fspath(path)
-
     # Keep all run-generated files outside the installed package tree.
     os.makedirs(inp.values["results_fldr"], exist_ok=True)
 
@@ -79,7 +75,7 @@ def run_srfm(inp):
     RFM_wvnm, wvls = utilities.calc_grids(low_spc, upp_spc, spec_res, spec_units)
 
     rfm_grid_fname = rfm_functions.construct_rfm_grid_file(
-        RFM_wvnm, filename="grid.spc", rfm_fldr=rfm_fldr
+        RFM_wvnm, filename="grid.spc", rfm_fldr=inp.values["results_fldr"]
     )
     ########################################################################################
     # define an atmospheric scattering layers
@@ -178,7 +174,7 @@ def run_srfm(inp):
     # convert the tracking levels array to a tracking layers array
     track_lyr = utilities.track_lev_to_track_lyr(track_lev)
     track_lyr = track_lyr[::-1]
-    
+
     ########################################################################################
     # prepare and call RFM
     ########################################################################################
@@ -189,10 +185,10 @@ def run_srfm(inp):
     driver_inputs = inp.values["driver_inputs"]
     driver_inputs["tangent"] = (str(inp.values["zen_sec"]),)
     driver_inputs["lev"] = tuple(str(val) for val in levels)
-    
+
     if "btemp" in inp.values:
         driver_inputs["sfc"] = (f"TEMSFC={inp.values['btemp']}",)
-        
+
     # initialize RFM model class
     model_RFM = forward_model.RFM()
 
@@ -236,7 +232,7 @@ def run_srfm(inp):
         # interpolate layer optical properties
         scat_lyrs[lyr].regrid(wvls, track_diff=False)
         scat_lyrs[lyr].calc_tau()
-    
+
         # Prepare dict with layer parameters to be saved in the output
     layer_attrs = (
         "name",
@@ -269,12 +265,12 @@ def run_srfm(inp):
 
     effective_params = copy.deepcopy(inp.values)
     effective_params["scat_lyrs_inputs"] = {
-      lyr: {
-          attr: getattr(scat_lyrs[lyr], attr)
-          for attr in layer_attrs
-          if hasattr(scat_lyrs[lyr], attr)
-      }
-      for lyr in scat_lyrs
+        lyr: {
+            attr: getattr(scat_lyrs[lyr], attr)
+            for attr in layer_attrs
+            if hasattr(scat_lyrs[lyr], attr)
+        }
+        for lyr in scat_lyrs
     }
 
     ########################################################################################
@@ -507,18 +503,18 @@ def run_srfm(inp):
         model_DISORT.set_temper_from_rfm(model_RFM)
         model_DISORT.disort_input["temper"] = model_DISORT.disort_input["temper"][idx:]
 
-        #set bottom boundary temperature
+        # set bottom boundary temperature
         if "btemp" in inp.values:
             model_DISORT.set_btemp(inp.values["btemp"])
         else:
             model_DISORT.set_btemp(model_DISORT.disort_input["temper"][-1])
-        
-        # set top boundary temperature    
+
+        # set top boundary temperature
         if "ttemp" in inp.values:
             model_DISORT.set_ttemp(inp.values["ttemp"])
         else:
             model_DISORT.set_ttemp(model_DISORT.disort_input["temper"][0])
-            
+
         model_DISORT.set_h_lyr(
             np.zeros(shape=(model_DISORT.disort_input["maxcly"] + 1))
         )
@@ -642,27 +638,27 @@ def run_srfm(inp):
                 )
             else:
                 out_nm = f"{inp.values['results_fldr']}/bbt.nc"
-            
+
             with Dataset(out_nm, "w", format="NETCDF4") as nc_file:
                 # --- File Global Attributes ---
                 nc_file.description = "SRFM output."
                 nc_file.history = f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
-                
+
                 effective_params["driver_inputs"]["spectral"] = str(
                     effective_params["driver_inputs"]["spectral"]
                 )
-                
+
                 nc_file.srfm_params = json.dumps(
                     effective_params,
                     default=utilities.json_handler,
-                    )
+                )
 
                 # --- Core Dimensions ---
                 num_wavenumbers_op = wvls.shape[0] # dimension for optical properties (on compupational grid)
                 num_wavenumbers = fin_grid.shape[0] # dimension for output spectrum (interpolated to fin_grid)
                 layer_names = list(scat_lyrs.keys())
                 num_layers = len(layer_names)
-                
+
                 # Extract the number of angles from the first available layer's phase function
                 # Assumes shape is (wavenumbers, angles)
                 first_layer_key = layer_names[0]
@@ -684,7 +680,7 @@ def run_srfm(inp):
 
                 # --- Pre-allocate Matrices ---
                 grid_shape = (num_layers, num_wavenumbers_op)
-                
+
                 mat_tau = np.zeros(grid_shape)
 
                 # --- Populate Matrices ---
@@ -709,22 +705,22 @@ def run_srfm(inp):
                 # --- File Global Attributes ---
                 nc_file.description = "SRFM output."
                 nc_file.history = f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
-                
+
                 effective_params["driver_inputs"]["spectral"] = str(
                     effective_params["driver_inputs"]["spectral"]
                 )
-                
+
                 nc_file.srfm_params = json.dumps(
                     effective_params,
                     default=utilities.json_handler,
-                    )
+                )
 
                 # --- Core Dimensions ---
                 num_wavenumbers_op = wvls.shape[0] # dimension for optical properties (on compupational grid)
                 num_wavenumbers = fin_grid.shape[0] # dimension for output spectrum (interpolated to fin_grid)
                 layer_names = list(scat_lyrs.keys())
                 num_layers = len(layer_names)
-                
+
                 # Extract the number of angles from the first available layer's phase function
                 # Assumes shape is (wavenumbers, angles)
                 first_layer_key = layer_names[0]
@@ -746,7 +742,7 @@ def run_srfm(inp):
 
                 # --- Pre-allocate Matrices ---
                 grid_shape = (num_layers, num_wavenumbers_op)
-                
+
                 mat_tau = np.zeros(grid_shape)
 
                 # --- Populate Matrices ---

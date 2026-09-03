@@ -4,11 +4,14 @@ import pytest
 from srfm.layer import GreyBodyCloud, Layer, MieLayer
 from srfm.size_distribution import LogNormalDistribution
 
-
 pytestmark = pytest.mark.unit
 
 
 def test_layer_construction_assigns_named_parameters():
+    """Verify base-layer construction assigns named parameters.
+
+    Arbitrary public attributes form the common configuration mechanism.
+    """
     layer = Layer("base", altitude=5, enabled=True)
     assert layer.name == "base"
     assert layer.altitude == 5
@@ -16,6 +19,10 @@ def test_layer_construction_assigns_named_parameters():
 
 
 def test_mie_layer_setters_and_constructor_parameters():
+    """Verify Mie-layer setters and constructor parameters agree.
+
+    Both configuration paths should establish the same object state.
+    """
     layer = MieLayer("ash", custom=3)
     layer.set_spc_lim(1000, 1002)
     layer.set_spec_units("cm-1")
@@ -27,6 +34,10 @@ def test_mie_layer_setters_and_constructor_parameters():
 
 
 def test_mie_layer_extent_from_centre_and_from_bounds():
+    """Verify layer extents can be derived from either representation.
+
+    Center/thickness and lower/upper bounds should describe identical geometry.
+    """
     centred = MieLayer(center_alt=10, thick=2)
     centred.calc_layer_extent()
     assert (centred.alt_low, centred.alt_upp) == (9, 11)
@@ -36,12 +47,20 @@ def test_mie_layer_extent_from_centre_and_from_bounds():
 
 
 def test_mie_layer_rejects_inconsistent_extent():
+    """Verify inconsistent layer extent representations are rejected.
+
+    Conflicting bounds would place optical properties in ambiguous layers.
+    """
     layer = MieLayer(center_alt=10, thick=2, alt_low=7, alt_upp=11)
     with pytest.raises(AssertionError, match="do not match"):
         layer.calc_layer_extent()
 
 
 def test_mie_layer_number_surface_volume_calculations_are_equivalent():
+    """Verify number, surface, and volume density conversions agree.
+
+    Equivalent concentration inputs must recover one physical distribution.
+    """
     reference = MieLayer(n=20, r=0.5, s=1.6)
     reference.n_s_v()
     by_surface = MieLayer(s_a_den=reference.s_a_den, r=0.5, s=1.6)
@@ -53,7 +72,13 @@ def test_mie_layer_number_surface_volume_calculations_are_equivalent():
 
 
 def test_mie_layer_mass_loading_and_number_concentration_round_trip():
-    layer = MieLayer(mass_loading=0.2, rho=2300, thick=1, r=0.4, s=1.7, dist_type="log_normal")
+    """Verify mass loading and number concentration round-trip.
+
+    Density and thickness scaling should be reversible within tolerance.
+    """
+    layer = MieLayer(
+        mass_loading=0.2, rho=2300, thick=1, r=0.4, s=1.7, dist_type="log_normal"
+    )
     layer.nsv_or_ml()
     assert layer.n > 0
     assert layer.s_a_den > 0
@@ -66,6 +91,13 @@ def test_mie_layer_mass_loading_and_number_concentration_round_trip():
 
 @pytest.mark.parametrize("missing", ["r", "s", "concentration"])
 def test_mie_layer_requires_distribution_parameters(missing):
+    """Verify missing distribution parameters prevent layer preparation.
+
+    Each required size-distribution input is removed independently.
+
+    Args:
+        missing: Parameterized required attribute to remove.
+    """
     kwargs = {"r": 0.5, "s": 1.5, "n": 2}
     if missing == "concentration":
         kwargs["n"] = None
@@ -77,7 +109,20 @@ def test_mie_layer_requires_distribution_parameters(missing):
 
 
 def test_mie_layer_creates_size_distribution_and_grids():
-    layer = MieLayer(n=2, r=0.5, s=1.5, dist_type="log_normal", low_spc=1000, upp_spc=1002, res=1, spec_units="cm-1")
+    """Verify Mie layers create distributions and numerical grids.
+
+    Prepared radii, wavelengths, and angles must have consistent dimensions.
+    """
+    layer = MieLayer(
+        n=2,
+        r=0.5,
+        s=1.5,
+        dist_type="log_normal",
+        low_spc=1000,
+        upp_spc=1002,
+        res=1,
+        spec_units="cm-1",
+    )
     layer.n_s_v()
     layer.calc_size_distribution()
     layer.calc_grids()
@@ -87,13 +132,39 @@ def test_mie_layer_creates_size_distribution_and_grids():
 
 
 def test_mie_layer_optical_depth_uses_kilometre_to_metre_conversion():
+    """Verify optical depth converts layer thickness to metres.
+
+    This guards the dimensional factor between atmospheric and extinction units.
+    """
     layer = MieLayer(beta_ext=np.array([1e-3, 2e-3]), alt_low=4, alt_upp=5.5)
     layer.calc_tau()
     np.testing.assert_allclose(layer.tau, [1.5, 3.0])
 
 
 def _grey_cloud(**overrides):
-    values = dict(name="grey", low_spc=1000, upp_spc=1002, spec_units="cm-1", res=1, center_alt=5, thick=1, alt_upp=None, alt_low=None, emis=0.8, inp_tau=0.4)
+    """Build a configured grey-body cloud for unit tests.
+
+    Callers can override individual properties while retaining a valid baseline.
+
+    Args:
+        **overrides: Attribute values replacing the baseline cloud inputs.
+
+    Returns:
+        Configured grey-body cloud instance.
+    """
+    values = dict(
+        name="grey",
+        low_spc=1000,
+        upp_spc=1002,
+        spec_units="cm-1",
+        res=1,
+        center_alt=5,
+        thick=1,
+        alt_upp=None,
+        alt_low=None,
+        emis=0.8,
+        inp_tau=0.4,
+    )
     values.update(overrides)
     cloud = GreyBodyCloud()
     cloud.set_input_from_dict(values)
@@ -101,6 +172,10 @@ def _grey_cloud(**overrides):
 
 
 def test_grey_body_cloud_complete_python_calculation():
+    """Verify a grey-body cloud completes its Python calculation.
+
+    Optical depth and absorption outputs are checked without native extensions.
+    """
     cloud = _grey_cloud()
     cloud.calculate_op()
     assert (cloud.alt_low, cloud.alt_upp) == (4.5, 5.5)
@@ -110,6 +185,13 @@ def test_grey_body_cloud_complete_python_calculation():
 
 @pytest.mark.parametrize("emissivity", [-0.1, 1.1])
 def test_grey_body_cloud_validates_emissivity(emissivity):
+    """Verify grey-body emissivity remains within physical bounds.
+
+    Values outside zero to one cannot represent an emitting fraction.
+
+    Args:
+        emissivity: Parameterized invalid emissivity value.
+    """
     cloud = _grey_cloud(emis=emissivity)
     cloud.calc_layer_extent()
     with pytest.raises(ValueError, match="Emissivity"):
@@ -117,6 +199,10 @@ def test_grey_body_cloud_validates_emissivity(emissivity):
 
 
 def test_grey_body_regrid_preserves_constant_optical_depth():
+    """Verify regridding preserves constant grey-cloud optical depth.
+
+    A spectrally uniform cloud should remain uniform on a new grid.
+    """
     cloud = _grey_cloud()
     cloud.calculate_op()
     cloud.regrid(np.array([10.0, 10.005, 10.01]))

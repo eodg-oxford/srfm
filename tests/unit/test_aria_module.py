@@ -11,11 +11,17 @@ from srfm.ARIA_module import (
     read_ri_file,
 )
 
-
 pytestmark = pytest.mark.unit
 
 
 def test_find_ri_files_recurses_and_filters_extensions(tmp_path):
+    """Verify refractive-index discovery recurses and filters extensions.
+
+    Unrelated files must not enter the composition catalogue.
+
+    Args:
+        tmp_path: Pytest temporary-path fixture.
+    """
     nested = tmp_path / "nested"
     nested.mkdir()
     (tmp_path / "a.ri").write_text("", encoding="utf-8")
@@ -25,15 +31,30 @@ def test_find_ri_files_recurses_and_filters_extensions(tmp_path):
 
 
 def test_bundled_generic_composition_resolves():
+    """Verify a bundled generic composition resolves to a data file.
+
+    This protects package-resource lookup for standard refractive indices.
+    """
     assert Path(get_ri_filepathname("ash")).name == "eyjafjallajokull-ash_Reed.ri"
 
 
 def test_unknown_bundled_composition_fails_clearly():
+    """Verify unknown bundled compositions fail with a clear message.
+
+    The diagnostic should help users distinguish spelling from file errors.
+    """
     with pytest.raises(FileNotFoundError, match="not found"):
         get_ri_filepathname("not-a-real-composition")
 
 
 def test_read_wavelength_file_and_derive_wavenumber(tiny_ri_file):
+    """Verify wavelength files produce derived wavenumbers.
+
+    Reciprocal units and refractive-index columns must remain aligned.
+
+    Args:
+        tiny_ri_file: Ascending synthetic refractive-index fixture.
+    """
     ri = RI()
     ri.read(tiny_ri_file)
     assert ri.header["FORMAT"] == "wavl n k"
@@ -45,6 +66,13 @@ def test_read_wavelength_file_and_derive_wavenumber(tiny_ri_file):
 
 
 def test_read_wavenumber_file_and_derive_wavelength(descending_ri_file):
+    """Verify wavenumber files produce derived wavelengths.
+
+    Descending input should retain correct reciprocal coordinate pairs.
+
+    Args:
+        descending_ri_file: Descending synthetic refractive-index fixture.
+    """
     wave, n, k = read_ri_file(descending_ri_file, mode="wavenumber")
     np.testing.assert_array_equal(wave, [10000, 5000, 2500])
     np.testing.assert_allclose(n, [1.4, 1.5, 1.7])
@@ -53,6 +81,14 @@ def test_read_wavenumber_file_and_derive_wavelength(descending_ri_file):
 
 @pytest.mark.parametrize("fixture_name", ["tiny_ri_file", "descending_ri_file"])
 def test_interpolation_handles_ascending_and_descending_data(request, fixture_name):
+    """Verify interpolation handles either source-grid direction.
+
+    Results must be independent of how source samples are ordered.
+
+    Args:
+        request: Pytest fixture lookup object.
+        fixture_name: Parameterized refractive-index fixture name.
+    """
     path = request.getfixturevalue(fixture_name)
     mode = "wavelength" if fixture_name == "tiny_ri_file" else "wavenumber"
     target = [1.5, 3.0] if mode == "wavelength" else [3750, 7500]
@@ -64,6 +100,13 @@ def test_interpolation_handles_ascending_and_descending_data(request, fixture_na
 
 
 def test_out_of_range_error_clip_and_nan(tiny_ri_file):
+    """Verify every out-of-range interpolation policy.
+
+    Error, clipping, and NaN behavior are checked on the same tiny spectrum.
+
+    Args:
+        tiny_ri_file: Ascending synthetic refractive-index fixture.
+    """
     ri = RI()
     ri.read(tiny_ri_file)
     with pytest.raises(ValueError, match="outside"):
@@ -78,6 +121,14 @@ def test_out_of_range_error_clip_and_nan(tiny_ri_file):
 
 @pytest.mark.parametrize("mode", ["frequency", "", None])
 def test_invalid_selection_mode_rejected(tiny_ri_file, mode):
+    """Verify unsupported spectral selection modes are rejected.
+
+    Explicit validation prevents accidental interpretation in the wrong units.
+
+    Args:
+        tiny_ri_file: Ascending synthetic refractive-index fixture.
+        mode: Parameterized invalid selection mode.
+    """
     ri = RI()
     ri.read(tiny_ri_file)
     with pytest.raises(ValueError, match="Invalid mode"):
@@ -85,6 +136,13 @@ def test_invalid_selection_mode_rejected(tiny_ri_file, mode):
 
 
 def test_invalid_out_of_range_policy_rejected_even_for_in_range_data(tiny_ri_file):
+    """Verify policy names are validated before interpolation is needed.
+
+    An invalid option must not pass merely because requested data are in range.
+
+    Args:
+        tiny_ri_file: Ascending synthetic refractive-index fixture.
+    """
     ri = RI()
     ri.read(tiny_ri_file)
     with pytest.raises(ValueError, match="out_of_range"):
@@ -106,6 +164,15 @@ def test_invalid_out_of_range_policy_rejected_even_for_in_range_data(tiny_ri_fil
     ],
 )
 def test_malformed_ri_files_raise_read_error(tmp_path, content, message):
+    """Verify malformed refractive-index files report parsing errors.
+
+    Parameterized inputs cover missing metadata and invalid data records.
+
+    Args:
+        tmp_path: Pytest temporary-path fixture.
+        content: Parameterized malformed file content.
+        message: Expected diagnostic fragment.
+    """
     path = tmp_path / "bad.ri"
     path.write_text(content, encoding="utf-8")
     with pytest.raises(ReadError, match=message):
@@ -113,6 +180,14 @@ def test_malformed_ri_files_raise_read_error(tmp_path, content, message):
 
 
 def test_ri_instance_can_be_reused_without_mixing_data(tmp_path, tiny_ri_file):
+    """Verify a reader instance does not mix successive file contents.
+
+    Cached state from one spectrum must not leak into another load.
+
+    Args:
+        tmp_path: Pytest temporary-path fixture.
+        tiny_ri_file: First synthetic refractive-index fixture.
+    """
     second = tmp_path / "second.ri"
     second.write_text("# FORMAT = wavl n k\n10 2.0 0.2\n", encoding="utf-8")
     ri = RI()
@@ -122,7 +197,17 @@ def test_ri_instance_can_be_reused_without_mixing_data(tmp_path, tiny_ri_file):
 
 
 def test_load_refractive_indices_uses_composition_lookup(monkeypatch, tiny_ri_file):
-    monkeypatch.setattr("srfm.ARIA_module.get_ri_filepathname", lambda _: str(tiny_ri_file))
+    """Verify composition lookup supplies the file read by the loader.
+
+    Replacing the catalogue isolates dispatch from the parser itself.
+
+    Args:
+        monkeypatch: Pytest fixture for replacing catalogue lookup.
+        tiny_ri_file: Synthetic refractive-index fixture returned by the lookup.
+    """
+    monkeypatch.setattr(
+        "srfm.ARIA_module.get_ri_filepathname", lambda _: str(tiny_ri_file)
+    )
     n, k = RI().load_refractive_indices("synthetic", wave=[2.0])
     np.testing.assert_allclose(n, [1.5])
     np.testing.assert_allclose(k, [0.02])

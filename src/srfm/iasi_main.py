@@ -34,7 +34,7 @@ from pathlib import Path
 import importlib.util
 from .RFM import rfm_py
 from . import rfm_helper
-from .input_schema import validate_srfm_inputs
+from .input_schema import validate_iasi_inputs
 from netCDF4 import Dataset
 import json
 import copy
@@ -55,7 +55,7 @@ def run_srfm(inp):
     """
     if not hasattr(inp, "values"):
         raise TypeError("run_srfm expects an Inputs-like object with a values mapping.")
-    inp.values = validate_srfm_inputs(inp.values)
+    inp.values = validate_iasi_inputs(inp.values)
     ########################################################################################
     # Assign some variables:
     ########################################################################################
@@ -351,7 +351,7 @@ def run_srfm(inp):
     RFM_wvnm, wvls = utilities.calc_grids(low_spc, upp_spc, spec_res, spec_units)
 
     rfm_grid_fname = rfm_functions.construct_rfm_grid_file(
-        RFM_wvnm, filename="grid.spc", rfm_fldr=rfm_fldr
+        RFM_wvnm, filename="grid.spc", rfm_fldr=inp.values["results_fldr"]
     )
     ########################################################################################
     # define an atmospheric scattering layers
@@ -464,7 +464,7 @@ def run_srfm(inp):
     driver_inputs["atmosphere"] = list(driver_inputs["atmosphere"])
     driver_inputs["atmosphere"].append(f"{inp.values['results_fldr']}/{keystr}.atm")
     driver_inputs["atmosphere"] = tuple(driver_inputs["atmosphere"])
-    
+
     if "btemp" in inp.values:
         driver_inputs["sfc"] = (f"TEMSFC={inp.values['btemp']}",)
     # initialize RFM model class
@@ -510,7 +510,7 @@ def run_srfm(inp):
         # interpolate layer optical properties
         scat_lyrs[lyr].regrid(wvls, track_diff=False)
         scat_lyrs[lyr].calc_tau()
-    
+
         # Prepare dict with layer parameters to be saved in the output
     layer_attrs = (
         "name",
@@ -543,12 +543,12 @@ def run_srfm(inp):
 
     effective_params = copy.deepcopy(inp.values)
     effective_params["scat_lyrs_inputs"] = {
-      lyr: {
-          attr: getattr(scat_lyrs[lyr], attr)
-          for attr in layer_attrs
-          if hasattr(scat_lyrs[lyr], attr)
-      }
-      for lyr in scat_lyrs
+        lyr: {
+            attr: getattr(scat_lyrs[lyr], attr)
+            for attr in layer_attrs
+            if hasattr(scat_lyrs[lyr], attr)
+        }
+        for lyr in scat_lyrs
     }
 
     ########################################################################################
@@ -764,18 +764,18 @@ def run_srfm(inp):
         model_DISORT.set_temper_from_rfm(model_RFM)
         model_DISORT.disort_input["temper"] = model_DISORT.disort_input["temper"][idx:]
 
-        #set bottom boundary temperature
+        # set bottom boundary temperature
         if "btemp" in inp.values:
             model_DISORT.set_btemp(inp.values["btemp"])
         else:
             model_DISORT.set_btemp(model_DISORT.disort_input["temper"][-1])
-        
-        # set top boundary temperature    
+
+        # set top boundary temperature
         if "ttemp" in inp.values:
             model_DISORT.set_ttemp(inp.values["ttemp"])
         else:
             model_DISORT.set_ttemp(model_DISORT.disort_input["temper"][0])
-            
+
         model_DISORT.set_h_lyr(
             np.zeros(shape=(model_DISORT.disort_input["maxcly"] + 1))
         )
@@ -895,21 +895,20 @@ def run_srfm(inp):
                 )
             else:
                 out_nm = f"{inp.values['results_fldr']}/bbt.nc"
-            
+
             with Dataset(out_nm, "w", format="NETCDF4") as nc_file:
                 # --- File Global Attributes ---
                 nc_file.description = "SRFM output."
                 nc_file.history = f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
-                
+
                 effective_params["driver_inputs"]["spectral"] = str(
                     effective_params["driver_inputs"]["spectral"]
                 )
-                
+
                 nc_file.srfm_params = json.dumps(
                     effective_params,
                     default=utilities.json_handler,
-                    )
-
+                )
 
                 # --- Core Dimensions ---
                 num_wavenumbers_op = wvls.shape[0] # dimension for optical properties (on compupational grid)
@@ -920,7 +919,7 @@ def run_srfm(inp):
                 nc_file.createDimension("wavenumber", num_wavenumbers)
                 nc_file.createDimension("wavenumber_op", num_wavenumbers_op)
                 nc_file.createDimension("layer", num_layers)
-#                nc_file.createDimension("angle", num_angles)
+                #                nc_file.createDimension("angle", num_angles)
 
                 # --- Core Spectrum Variables ---
                 bbt = nc_file.createVariable("bbt", "f8", ("wavenumber",), zlib=True, complevel=4)
@@ -958,15 +957,15 @@ def run_srfm(inp):
                 # --- File Global Attributes ---
                 nc_file.description = "SRFM output."
                 nc_file.history = f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
-                
+
                 effective_params["driver_inputs"]["spectral"] = str(
                     effective_params["driver_inputs"]["spectral"]
                 )
-                
+
                 nc_file.srfm_params = json.dumps(
                     effective_params,
                     default=utilities.json_handler,
-                    )
+                )
 
                 # --- Core Dimensions ---
                 num_wavenumbers_op = wvls.shape[0] # dimension for optical properties (on compupational grid)

@@ -12,6 +12,15 @@ pytestmark = pytest.mark.integration
 def test_size_distribution_quadrature_and_native_optical_properties(
     require_native, run_native_case
 ):
+    """Verify the distribution-to-native-Mie calculation pipeline.
+
+    The test checks physical output invariants after Python quadrature feeds the
+    compiled optical-properties calculation.
+
+    Args:
+        require_native: Fixture helper for extension availability.
+        run_native_case: Fixture helper that isolates native execution.
+    """
     require_native(srfm.mie_module, "Mie")
     result, _ = run_native_case("mie", {})
     assert result["beta_ext"].shape == (1,)
@@ -25,6 +34,16 @@ def test_size_distribution_quadrature_and_native_optical_properties(
 def test_synthetic_aria_reader_feeds_native_optical_calculation(
     tiny_ri_file, require_native, run_native_case
 ):
+    """Verify synthetic ARIA indices feed the compiled Mie calculation.
+
+    This covers the boundary from text refractive-index data to native optical
+    properties without an external data catalogue.
+
+    Args:
+        tiny_ri_file: Synthetic refractive-index fixture.
+        require_native: Fixture helper for extension availability.
+        run_native_case: Fixture helper that isolates native execution.
+    """
     require_native(srfm.mie_module, "Mie")
     result, _ = run_native_case(
         "mie", {"ri_file": str(tiny_ri_file), "radius": 0.2, "spread": 1.4}
@@ -34,6 +53,14 @@ def test_synthetic_aria_reader_feeds_native_optical_calculation(
 
 
 def test_inputs_to_mie_layer_prepares_consistent_distribution_and_grids(tmp_path):
+    """Verify input mappings prepare a consistent Python-side Mie layer.
+
+    Distribution parameters and spectral grids are checked before any compiled
+    calculation is invoked.
+
+    Args:
+        tmp_path: Pytest temporary-path fixture.
+    """
     driver = tmp_path / "driver.py"
     driver.write_text(
         "inputs = {'layer': {"

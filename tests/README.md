@@ -74,8 +74,8 @@ They cover:
   handling for tiny synthetic ARIA `.ri` files;
 - RFM output/profile/atmosphere parsing and driver, grid, level, atmosphere,
   and HITRAN cross-section writers;
-- the centralized SRFM input schema, including the unchanged public example,
-  top-level and nested field validation, cross-field constraints, aggregated
+- the generic, OXHARP, and processed-IASI input schemas, including the unchanged
+  public example, runner-specific fields, cross-field constraints, aggregated
   dotted-path errors, and validation before execution side effects;
 - `Inputs`, structured RFM helper dataclasses and driver generation;
 - layer construction, extent/grid/concentration/mass-loading preparation, and
@@ -91,7 +91,7 @@ assumed.
 
 ### Integration (`tests/integration/`)
 
-Seven deliberately small component-boundary cases cover:
+Nine deliberately small component-boundary cases cover:
 
 - size distribution -> quadrature -> optical properties -> compiled Mie;
 - synthetic ARIA refractive indices -> compiled Mie optical calculation;
@@ -99,8 +99,11 @@ Seven deliberately small component-boundary cases cover:
 - structured RFM driver -> compiled RFM -> parsed optical-depth output, using
   a three-level atmosphere and three-point F11 cross section;
 - a genuine malformed native RFM run, including stderr log forwarding and
-  transient-log removal; and
-- Python DISORT configuration -> compiled single- and double-precision DISORT.
+  transient-log removal;
+- Python DISORT configuration -> compiled single- and double-precision DISORT;
+  and
+- each specialized top-level runner -> its own schema before filesystem side
+  effects.
 
 The RFM reference optical depths use explicit numerical tolerances because they
 are scientific floating-point outputs, not serialized text contracts. Mie and
@@ -109,10 +112,10 @@ crash becomes an ordinary pytest failure instead of terminating the suite.
 
 ### End to end (`tests/e2e/`)
 
-Four self-contained cases follow the public user path:
+Six self-contained cases follow the public user paths:
 
 ```text
-Inputs -> main.run_srfm -> RFM -> Mie optical properties -> DISORT
+Inputs -> main/oxharp_main/iasi_main.run_srfm -> RFM -> Mie -> DISORT
        -> radiance and brightness temperature
 ```
 
@@ -122,6 +125,9 @@ matrix comprises:
 - a direct `Inputs` run with no file or plotting output;
 - a complete basic-example-style `driver_table.py` loaded by
   `Inputs.read_srfm_drv()`;
+- an OXHARP-tailored run using precomputed cosine/secant geometry;
+- a processed-IASI run using a synthetic one-pixel spectrum, ECMWF profiles,
+  observation geometry, NEDT table, and instrument line shape;
 - single-precision DISORT with text brightness-temperature/radiance output and
   a non-interactive radiance plot; and
 - double-precision DISORT with solar illumination, IASI convolution, NetCDF
@@ -167,8 +173,8 @@ this developer feedback suite.
 
 ## Testing driver-table changes
 
-The input schema is centralized in `src/srfm/input_schema.py`, while the user
-format remains the existing `inputs = {...}` dictionary. Run its focused tests
+The three runner schemas are centralized in `src/srfm/input_schema.py`, while
+the user formats remain their existing dictionaries. Run the focused tests
 while changing driver fields or validation:
 
 ```bash

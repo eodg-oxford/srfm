@@ -12,7 +12,6 @@ import uuid
 import numpy as np
 import pytest
 
-
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = REPO_ROOT / "src"
 if str(SRC_ROOT) not in sys.path:
@@ -30,7 +29,16 @@ os.environ.setdefault("NUMBA_CACHE_DIR", "/tmp/srfm-numba")
 
 @pytest.fixture
 def tiny_ri_file(tmp_path: Path) -> Path:
-    """Three-point refractive-index spectrum with an analytically linear trend."""
+    """Create a three-point refractive-index spectrum.
+
+    Its analytically linear trend makes interpolation results transparent.
+
+    Args:
+        tmp_path: Pytest temporary-path fixture.
+
+    Returns:
+        Path to the generated refractive-index file.
+    """
     path = tmp_path / "synthetic.ri"
     path.write_text(
         "# FORMAT = wavl n k\n"
@@ -45,6 +53,16 @@ def tiny_ri_file(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def descending_ri_file(tmp_path: Path) -> Path:
+    """Create a descending three-point refractive-index spectrum.
+
+    The fixture exercises readers that must normalize wavenumber ordering.
+
+    Args:
+        tmp_path: Pytest temporary-path fixture.
+
+    Returns:
+        Path to the generated refractive-index file.
+    """
     path = tmp_path / "descending.ri"
     path.write_text(
         "# FORMAT = wavn n k\n"
@@ -58,7 +76,16 @@ def descending_ri_file(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def tiny_iasi_ils(tmp_path: Path) -> Path:
-    """Small symmetric RFM-format instrument line shape for E2E convolution."""
+    """Create a small symmetric RFM-format instrument line shape.
+
+    The compact kernel exercises E2E convolution without external IASI data.
+
+    Args:
+        tmp_path: Pytest temporary-path fixture.
+
+    Returns:
+        Path to the generated line-shape file.
+    """
     path = tmp_path / "tiny.ils"
     path.write_text(
         "! Synthetic pytest IASI-like ILS\n"
@@ -73,7 +100,16 @@ def tiny_iasi_ils(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def tiny_atmosphere(tmp_path: Path) -> Path:
-    """Three-level atmosphere suitable for parser and native RFM tests."""
+    """Create a three-level synthetic atmosphere.
+
+    Its F11 profile is suitable for parser and native RFM tests.
+
+    Args:
+        tmp_path: Pytest temporary-path fixture.
+
+    Returns:
+        Path to the generated atmosphere file.
+    """
     from srfm.rfm_functions import write_atm_file
 
     path = tmp_path / "tiny.atm"
@@ -92,6 +128,16 @@ def tiny_atmosphere(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def tiny_altitude_grid(tmp_path: Path) -> Path:
+    """Create a three-level altitude-only RFM atmosphere file.
+
+    The file supplies the explicit output grid used by native RFM tests.
+
+    Args:
+        tmp_path: Pytest temporary-path fixture.
+
+    Returns:
+        Path to the generated altitude-grid file.
+    """
     from srfm.rfm_functions import write_atm_file
 
     path = tmp_path / "heights.atm"
@@ -101,7 +147,16 @@ def tiny_altitude_grid(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def tiny_xsc_file(tmp_path: Path) -> Path:
-    """Tiny F11 HITRAN-format cross section, requiring no external database."""
+    """Create a tiny F11 HITRAN-format cross section.
+
+    Two atmospheric states avoid any dependency on an external database.
+
+    Args:
+        tmp_path: Pytest temporary-path fixture.
+
+    Returns:
+        Path to the generated cross-section file.
+    """
     from srfm.rfm_functions import write_xsc_file
 
     path = tmp_path / "f11.xsc"
@@ -132,10 +187,114 @@ def tiny_xsc_file(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
+def tiny_iasi_atmosphere(tmp_path: Path) -> Path:
+    """Create an atmosphere containing every profile read by ``iasi_main``.
+
+    The additional trace-gas profiles let the IASI runner construct its merged
+    ECMWF/RFM atmosphere without relying on external climatology files.
+
+    Args:
+        tmp_path: Pytest temporary-path fixture.
+
+    Returns:
+        Path to the generated IASI-compatible atmosphere file.
+    """
+    from srfm.rfm_functions import write_atm_file
+
+    path = tmp_path / "tiny-iasi.atm"
+    values = {
+        "HGT [km]": np.array([0.0, 1.0, 2.0]),
+        "PRE [mb]": np.array([1013.0, 900.0, 800.0]),
+        "TEM [K]": np.array([290.0, 284.0, 278.0]),
+        "F11 [ppmv]": np.ones(3),
+        "O3 [ppmv]": np.array([0.03, 0.04, 0.05]),
+        "CO [ppmv]": np.full(3, 0.1),
+        "N2O [ppmv]": np.full(3, 0.3),
+        "CO2 [ppmv]": np.full(3, 420.0),
+        "CH4 [ppmv]": np.full(3, 1.8),
+        "H2O [ppmv]": np.array([8000.0, 4000.0, 2000.0]),
+    }
+    write_atm_file(values, path, header="Synthetic pytest IASI atmosphere")
+    return path
+
+
+@pytest.fixture
+def tiny_iasi_observation(tmp_path: Path) -> Path:
+    """Create a one-pixel processed-IASI pickle with synthetic profiles.
+
+    The spectrum follows IASI's hard-coded 645--2760 cm-1 grid while the
+    atmospheric and angular arrays contain only the selected pixel.
+
+    Args:
+        tmp_path: Pytest temporary-path fixture.
+
+    Returns:
+        Path to the generated processed observation file.
+    """
+    path = tmp_path / "synthetic_20250323_A.pkl"
+    n_points = int(np.floor((2760.0 - 645.0) / 0.25)) + 1
+    data = {
+        "spec_bbt": np.full((1, n_points), 285.0),
+        "zen": np.array([0.0]),
+        "sza": np.array([0.0]),
+        "saa": np.array([0.0]),
+        "azi": np.array([0.0]),
+        "ecmwf_z": np.array([[2.0, 1.0, 0.1]]),
+        "ecmwf_T": np.array([[278.0, 284.0, 290.0]]),
+        "ecmwf_p": np.array([[800.0, 900.0, 1013.0]]),
+        "ecmwf_O3": np.array([[0.05, 0.04, 0.03]]),
+        "ecmwf_CO": np.array([[0.1, 0.1, 0.1]]),
+        "ecmwf_N2O": np.array([[0.3, 0.3, 0.3]]),
+        "ecmwf_CO2": np.array([[420.0, 420.0, 420.0]]),
+        "ecmwf_CH4": np.array([[1.8, 1.8, 1.8]]),
+        "ecmwf_H2O": np.array([[2000.0, 4000.0, 8000.0]]),
+    }
+    with path.open("wb") as handle:
+        pickle.dump(data, handle)
+    return path
+
+
+@pytest.fixture
+def tiny_iasi_nedt(tmp_path: Path) -> Path:
+    """Create a minimal IASI noise-equivalent-temperature table.
+
+    Three header rows mirror the format consumed by ``iasi_main`` before two
+    points bracket the synthetic E2E wavenumber range.
+
+    Args:
+        tmp_path: Pytest temporary-path fixture.
+
+    Returns:
+        Path to the generated NEDT text file.
+    """
+    path = tmp_path / "tiny-iasi-nedt.txt"
+    path.write_text(
+        "# Synthetic IASI NEDT\n# wavenumber temperature\n# cm-1 K\n"
+        "999.0 0.2\n1001.0 0.2\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+@pytest.fixture
 def require_native():
-    """Return a helper that skips with an actionable local build command."""
+    """Provide a helper for requiring native extensions.
+
+    Unavailable modules cause a skip with an actionable local build command.
+
+    Returns:
+        Callable that checks one imported native module.
+    """
 
     def _require(module, name: str) -> None:
+        """Skip a test when one requested native module is unavailable.
+
+        Available modules let the calling test continue unchanged.
+
+        Args:
+            module: Imported extension module or ``None`` when unavailable.
+            name: Human-readable extension name for the skip message.
+        """
         if module is None:
             pytest.skip(
                 f"{name} extension is unavailable; run python build_extensions.py"
@@ -150,9 +309,26 @@ def run_native_case(tmp_path: Path):
 
     A missing result file is treated as a failure even when a Fortran ``STOP``
     exits with status zero.
+
+    Args:
+        tmp_path: Pytest temporary-path fixture.
+
+    Returns:
+        Callable that executes one named native case.
     """
 
     def _run(case: str, payload: dict):
+        """Execute a named native case in an isolated Python subprocess.
+
+        Native termination is diagnosed from both status and result payload.
+
+        Args:
+            case: Key selecting an entry point in ``_native_cases.py``.
+            payload: Pickle-safe arguments consumed by the selected case.
+
+        Returns:
+            A pair containing the unpickled result and subprocess record.
+        """
         token = uuid.uuid4().hex
         args_path = tmp_path / f"native-{token}-args.pkl"
         result_path = tmp_path / f"native-{token}-result.pkl"

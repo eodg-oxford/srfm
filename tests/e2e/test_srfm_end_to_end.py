@@ -11,7 +11,6 @@ from srfm.DISORT_dbl import disort_module_d
 from srfm.RFM import rfm_py
 from srfm.inputs import Inputs
 
-
 pytestmark = pytest.mark.e2e
 
 
@@ -73,10 +72,20 @@ COMPLETE_RUN_INPUT_KEYS = {
 }
 
 
-def _complete_input_values(
-    results, tiny_atmosphere, tiny_altitude_grid, tiny_xsc_file
-):
-    """Return a complete, tiny equivalent of the basic-example driver inputs."""
+def _complete_input_values(results, tiny_atmosphere, tiny_altitude_grid, tiny_xsc_file):
+    """Build a tiny equivalent of the basic-example driver inputs.
+
+    The mapping includes every field read by a generic complete model run.
+
+    Args:
+        results: Destination directory for model outputs.
+        tiny_atmosphere: Synthetic atmospheric-profile fixture.
+        tiny_altitude_grid: Synthetic altitude-grid fixture.
+        tiny_xsc_file: Synthetic F11 cross-section fixture.
+
+    Returns:
+        Complete self-contained SRFM input mapping.
+    """
     return {
         "fwd_model": "SRFM",
         "instrument": "synthetic",
@@ -180,6 +189,14 @@ def _complete_input_values(
 
 
 def _require_all_native_extensions(require_native, precision="double"):
+    """Require every compiled extension used by a complete SRFM run.
+
+    Missing extensions skip the calling case with build guidance.
+
+    Args:
+        require_native: Fixture helper that skips for unavailable extensions.
+        precision: DISORT precision selecting the single or double extension.
+    """
     require_native(rfm_py, "RFM")
     require_native(srfm.mie_module, "Mie")
     if precision == "single":
@@ -189,14 +206,18 @@ def _require_all_native_extensions(require_native, precision="double"):
 
 
 def _assert_complete_result(result, results, values):
+    """Assert shared spectral and physical invariants for an E2E result.
+
+    Every top-level runner is expected to return the same model dimensions.
+
+    Args:
+        result: Serializable result returned by the native subprocess.
+        results: Directory containing generated RFM files.
+        values: Input mapping used to calculate the expected spectral grid.
+    """
     assert result is not None
     n_points = (
-        int(
-            np.floor(
-                (values["fin_wvnmhi"] - values["fin_wvnmlo"])
-                / values["fin_res"]
-            )
-        )
+        int(np.floor((values["fin_wvnmhi"] - values["fin_wvnmlo"]) / values["fin_res"]))
         + 1
     )
     expected_grid = values["fin_wvnmlo"] + np.arange(n_points) * values["fin_res"]
@@ -211,6 +232,14 @@ def _assert_complete_result(result, results, values):
 
 
 def _write_driver(path, values):
+    """Write a self-contained generic SRFM driver table.
+
+    ``pformat`` preserves structured helper objects as executable source.
+
+    Args:
+        path: Destination path for the Python driver module.
+        values: Serializable input mapping to embed in the module.
+    """
     path.write_text(
         "from srfm.rfm_helper import SpectralRange\n\n"
         f"inputs = {pformat(values, sort_dicts=False)}\n",
@@ -226,7 +255,18 @@ def test_complete_srfm_pathway_with_self_contained_scientific_inputs(
     require_native,
     run_native_case,
 ):
-    """Exercise direct Inputs -> RFM -> Mie -> DISORT -> SRFM."""
+    """Exercise direct inputs through the complete native SRFM pathway.
+
+    The case verifies an in-memory user configuration without file output.
+
+    Args:
+        tmp_path: Pytest temporary-path fixture.
+        tiny_atmosphere: Synthetic atmospheric-profile fixture.
+        tiny_altitude_grid: Synthetic altitude-grid fixture.
+        tiny_xsc_file: Synthetic F11 cross-section fixture.
+        require_native: Fixture helper for extension availability.
+        run_native_case: Fixture helper that isolates native execution.
+    """
     _require_all_native_extensions(require_native)
     results = tmp_path / "direct-results"
     values = _complete_input_values(
@@ -246,7 +286,18 @@ def test_complete_driver_table_is_read_and_executed(
     require_native,
     run_native_case,
 ):
-    """Exercise a basic-example-style driver table through the full native model."""
+    """Exercise a driver table through the complete native model.
+
+    Loading and execution follow the documented basic-example user workflow.
+
+    Args:
+        tmp_path: Pytest temporary-path fixture.
+        tiny_atmosphere: Synthetic atmospheric-profile fixture.
+        tiny_altitude_grid: Synthetic altitude-grid fixture.
+        tiny_xsc_file: Synthetic F11 cross-section fixture.
+        require_native: Fixture helper for extension availability.
+        run_native_case: Fixture helper that isolates native execution.
+    """
     _require_all_native_extensions(require_native)
     results = tmp_path / "driver-results"
     values = _complete_input_values(
@@ -272,6 +323,90 @@ def test_complete_driver_table_is_read_and_executed(
     assert "--- rfm.log ---" in completed.stdout
     assert "R-RFM: Running RFM" in completed.stdout
     assert not list(results.glob("rfm.log*"))
+
+
+def test_complete_oxharp_pathway_with_derived_geometry(
+    tmp_path,
+    tiny_atmosphere,
+    tiny_altitude_grid,
+    tiny_xsc_file,
+    require_native,
+    run_native_case,
+):
+    """Exercise OXHARP Inputs -> RFM -> Mie -> DISORT -> SRFM.
+
+    The synthetic mapping uses the cosine/secant geometry supplied by the
+    OXHARP preprocessing stage rather than the generic runner's conversions.
+
+    Args:
+        tmp_path: Pytest temporary-path fixture.
+        tiny_atmosphere: Synthetic atmospheric-profile fixture.
+        tiny_altitude_grid: Synthetic RFM altitude-grid fixture.
+        tiny_xsc_file: Synthetic F11 cross-section fixture.
+        require_native: Fixture helper for compiled-extension availability.
+        run_native_case: Fixture helper that isolates native execution.
+    """
+    _require_all_native_extensions(require_native)
+    results = tmp_path / "oxharp-results"
+    values = _complete_input_values(
+        results, tiny_atmosphere, tiny_altitude_grid, tiny_xsc_file
+    )
+    values.update(sza_cos=1.0, zen_cos=1.0, zen_sec=1.0)
+
+    result, _ = run_native_case("e2e", {"runner": "oxharp", "values": values})
+
+    _assert_complete_result(result, results, values)
+
+
+def test_complete_iasi_pathway_with_synthetic_processed_observation(
+    tmp_path,
+    tiny_iasi_atmosphere,
+    tiny_altitude_grid,
+    tiny_xsc_file,
+    tiny_iasi_ils,
+    tiny_iasi_observation,
+    tiny_iasi_nedt,
+    require_native,
+    run_native_case,
+):
+    """Exercise processed IASI Inputs -> RFM -> Mie -> DISORT -> SRFM.
+
+    A one-pixel pickle supplies synthetic IASI radiances, ECMWF profiles, and
+    observation geometry so the legacy runner remains entirely self-contained.
+
+    Args:
+        tmp_path: Pytest temporary-path fixture.
+        tiny_iasi_atmosphere: Synthetic multi-gas atmosphere fixture.
+        tiny_altitude_grid: Synthetic RFM altitude-grid fixture.
+        tiny_xsc_file: Synthetic F11 cross-section fixture.
+        tiny_iasi_ils: Synthetic IASI line-shape fixture.
+        tiny_iasi_observation: Synthetic processed-observation pickle fixture.
+        tiny_iasi_nedt: Synthetic noise-equivalent-temperature fixture.
+        require_native: Fixture helper for compiled-extension availability.
+        run_native_case: Fixture helper that isolates native execution.
+    """
+    _require_all_native_extensions(require_native)
+    results = tmp_path / "iasi-results"
+    values = _complete_input_values(
+        results, tiny_iasi_atmosphere, tiny_altitude_grid, tiny_xsc_file
+    )
+    values["driver_inputs"]["atmosphere"] = (
+        str(tiny_altitude_grid),
+        str(tiny_iasi_atmosphere),
+    )
+    values.update(
+        plot_profiles=False,
+        iasi_spc_fldr=str(tiny_iasi_observation.parent),
+        iasi_fl=tiny_iasi_observation.name,
+        px=0,
+        nedt=str(tiny_iasi_nedt),
+        ils=str(tiny_iasi_ils),
+    )
+
+    result, _ = run_native_case("e2e", {"runner": "iasi", "values": values})
+
+    _assert_complete_result(result, results, values)
+    assert (results / "synthetic_20250323_A_px0.atm").is_file()
 
 
 @pytest.mark.parametrize(
@@ -326,7 +461,22 @@ def test_driver_table_optional_execution_branches(
     require_native,
     run_native_case,
 ):
-    """Exercise mutually exclusive output and native-option branches end to end."""
+    """Exercise mutually exclusive output branches end to end.
+
+    Parameterized cases cover text/NetCDF, precision, plotting, and convolution.
+
+    Args:
+        scenario: Name used for the case's output directory and driver.
+        updates: Input changes activating the parameterized branches.
+        expected_files: Output filenames that the run must create.
+        tmp_path: Pytest temporary-path fixture.
+        tiny_atmosphere: Synthetic atmospheric-profile fixture.
+        tiny_altitude_grid: Synthetic altitude-grid fixture.
+        tiny_xsc_file: Synthetic F11 cross-section fixture.
+        tiny_iasi_ils: Synthetic instrument-line-shape fixture.
+        require_native: Fixture helper for extension availability.
+        run_native_case: Fixture helper that isolates native execution.
+    """
     results = tmp_path / scenario
     values = _complete_input_values(
         results, tiny_atmosphere, tiny_altitude_grid, tiny_xsc_file
