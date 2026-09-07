@@ -32,6 +32,83 @@ from .RFM import rfm_py
 from . import utilities
 
 
+@dataclass(frozen=True)
+class OpticalDepthGrid:
+    """Store captured RFM optical depths in compact numerical arrays.
+
+    Differential optical depth uses shape ``(wavenumber, atmospheric layer)``
+    and C order so the layer profile needed by one DISORT call is contiguous.
+
+    Args:
+        wavenumber: Spectral grid in cm-1.
+        differential_tau: Differential optical depth with spectral axis first.
+        pressure_upper: Upper-boundary pressure for each layer in mbar.
+        pressure_lower: Lower-boundary pressure for each layer in mbar.
+        altitude_upper: Upper-boundary altitude for each layer in km.
+        altitude_lower: Lower-boundary altitude for each layer in km.
+        temperature_upper: Upper-boundary temperature for each layer in K.
+        temperature_lower: Lower-boundary temperature for each layer in K.
+    """
+
+    wavenumber: np.ndarray
+    differential_tau: np.ndarray
+    pressure_upper: np.ndarray
+    pressure_lower: np.ndarray
+    altitude_upper: np.ndarray
+    altitude_lower: np.ndarray
+    temperature_upper: np.ndarray
+    temperature_lower: np.ndarray
+
+    @property
+    def layer_count(self) -> int:
+        """Return the number of atmospheric layers.
+
+        Returns:
+            int: Size of the atmospheric-layer dimension.
+        """
+        return int(self.differential_tau.shape[1])
+
+    def to_dataframe(self, include_integrated=True):
+        """Convert the compact grid to the historical DataFrame representation.
+
+        Args:
+            include_integrated (bool): Include cumulative ``iOD_*`` columns when
+                true.
+
+        Returns:
+            pandas.DataFrame: Layer metadata and legacy spectral columns.
+        """
+        pressure_average = (self.pressure_upper + self.pressure_lower) / 2.0
+        altitude_average = (self.altitude_upper + self.altitude_lower) / 2.0
+        temperature_average = (
+            self.temperature_upper + self.temperature_lower
+        ) / 2.0
+        profile = pd.DataFrame(
+            {
+                "layer no.": np.arange(self.layer_count),
+                "p_upper (mbar)": self.pressure_upper,
+                "p_lower (mbar)": self.pressure_lower,
+                "p_avg (mbar)": pressure_average,
+                "h_upper (km)": self.altitude_upper,
+                "h_lower (km)": self.altitude_lower,
+                "h_avg (km)": altitude_average,
+                "T_upper (K)": self.temperature_upper,
+                "T_lower (K)": self.temperature_lower,
+                "T_avg (K)": temperature_average,
+            }
+        )
+        differential_names = [f"dOD_{value:.4f}" for value in self.wavenumber]
+        frames = [
+            profile,
+            pd.DataFrame(self.differential_tau.T, columns=differential_names),
+        ]
+        if include_integrated:
+            integrated_names = [f"iOD_{value:.4f}" for value in self.wavenumber]
+            integrated_tau = np.cumsum(self.differential_tau.T, axis=0)
+            frames.append(pd.DataFrame(integrated_tau, columns=integrated_names))
+        return pd.concat(frames, axis=1, join="outer")
+
+
 @dataclass
 class RunResult:
     """Encapsulates the outcome of a single RFM execution.
@@ -47,12 +124,15 @@ class RunResult:
         output_df (Any | None): Optional dataframe payload reserved for
             optical-depth capture while still allowing ``output`` to represent
             file-based artefacts.
+        optical_depth_grid (OpticalDepthGrid | None): Compact captured optical
+            depths. Top-level SRFM runners consume this field directly.
     """
 
     status: int
     removed_files: List[Path]
     output: Any | None = None
     output_df: Any | None = None
+    optical_depth_grid: OpticalDepthGrid | None = None
 
     @property
     def ok(self) -> bool:
@@ -139,6 +219,7 @@ def _run_rfm_impl(
     optical_levels: Sequence[float] | None = None,
     optical_spectrum_index: int = 1,
     optical_match_tol: float = 1e-6,
+    optical_depth_format: Literal["compact", "dataframe"] = "dataframe",
 ) -> RunResult:
     """Execute the compiled RFM model via ``rfm_py.rfm_run``.
 
@@ -168,6 +249,9 @@ def _run_rfm_impl(
             collecting captured optical depths (default ``1``).
         optical_match_tol (float): Absolute tolerance applied when matching
             requested levels to the captured profile grid (default ``1e-6`` km).
+        optical_depth_format (Literal["compact", "dataframe"]): Captured
+            optical-depth representation. The public compatibility default is the
+            historical DataFrame.
 
     Returns:
         RunResult: Status code, removed files, and optional in-memory payload.
@@ -185,6 +269,8 @@ def _run_rfm_impl(
         raise ValueError(
             f"Unsupported output_mode '{output_mode}'. Expected 'files' or 'capture'."
         )
+    if optical_depth_format not in {"compact", "dataframe"}:
+        raise ValueError("optical_depth_format must be 'compact' or 'dataframe'.")
     capture_requested = mode == "capture"
     if driver_lines is not None and driver_path is not None:
         raise ValueError("driver_lines and driver_path cannot be used together.")
@@ -329,19 +415,28 @@ def _run_rfm_impl(
 
     payload = None
     payload_df = None
+    optical_depth_grid = None
     if capture_requested:
         if optical_levels is not None:
-            payload_df = get_captured_optical_depths(
+            optical_depth_grid = get_captured_optical_depth_grid(
                 optical_levels,
                 spectrum_index=optical_spectrum_index,
                 match_tol=optical_match_tol,
             )
-            payload = payload_df
+            if optical_depth_format == "dataframe":
+                payload_df = optical_depth_grid.to_dataframe(include_integrated=True)
+                payload = payload_df
+            else:
+                payload = optical_depth_grid
         else:
             payload = {}
 
     return RunResult(
-        status=status, removed_files=removed, output=payload, output_df=payload_df
+        status=status,
+        removed_files=removed,
+        output=payload,
+        output_df=payload_df,
+        optical_depth_grid=optical_depth_grid,
     )
 
 
@@ -358,8 +453,37 @@ def run_rfm(
     optical_levels: Sequence[float] | None = None,
     optical_spectrum_index: int = 1,
     optical_match_tol: float = 1e-6,
+    optical_depth_format: Literal["compact", "dataframe"] = "dataframe",
 ) -> RunResult:
-    """Public wrapper that runs the Fortran backend in a fresh subprocess."""
+    """Run the Fortran backend in a fresh subprocess.
+
+    The subprocess boundary releases all native RFM capture storage immediately
+    when the worker exits, including on conversion failures.
+
+    Args:
+        run_id (str | None): Identifier appended to RFM output filenames.
+        clean_before (bool): Remove matching old outputs before execution.
+        directory (Path | str | None): RFM working directory.
+        patterns (Sequence[str] | None): Output globs removed before execution.
+        driver_lines (Sequence[str] | None): In-memory RFM driver contents.
+        driver_path (Path | str | None): Existing driver path, mutually exclusive
+            with ``driver_lines``.
+        output_mode (Literal["files", "capture"]): File or in-memory capture mode.
+        enable_capture (bool | None): Explicit native capture override.
+        optical_levels (Sequence[float] | None): Altitude levels for capture.
+        optical_spectrum_index (int): One-based captured spectral range.
+        optical_match_tol (float): Altitude matching tolerance in km.
+        optical_depth_format (Literal["compact", "dataframe"]): Captured optical
+            depth representation.
+
+    Returns:
+        RunResult: Status, generated payloads, and optional optical-depth data.
+
+    Raises:
+        RuntimeError: If the worker cannot run or return a result.
+        ValueError: If capture parameters are inconsistent.
+        FileNotFoundError: If a requested driver or directory does not exist.
+    """
 
     if os.environ.get("RFM_DISABLE_SUBPROCESS") == "1":
         return _run_rfm_impl(
@@ -374,6 +498,7 @@ def run_rfm(
             optical_levels=optical_levels,
             optical_spectrum_index=optical_spectrum_index,
             optical_match_tol=optical_match_tol,
+            optical_depth_format=optical_depth_format,
         )
 
     payload = {
@@ -389,6 +514,7 @@ def run_rfm(
             optical_levels=optical_levels,
             optical_spectrum_index=optical_spectrum_index,
             optical_match_tol=optical_match_tol,
+            optical_depth_format=optical_depth_format,
         ),
     }
 
@@ -456,13 +582,13 @@ def _load_driver_lines(driver_path: Path) -> list[str]:
         return [line.rstrip("\r\n") for line in handle]
 
 
-def get_captured_optical_depths(
+def get_captured_optical_depth_grid(
     levels: Sequence[float],
     *,
     spectrum_index: int = 1,
     match_tol: float = 1e-6,
-) -> pd.DataFrame:
-    """Return the optical-depth dataframe captured by the Fortran backend.
+) -> OpticalDepthGrid:
+    """Return compact optical depths captured by the Fortran backend.
 
     Args:
         levels (Sequence[float]): Altitude levels (km) defining layer bounds.
@@ -471,8 +597,8 @@ def get_captured_optical_depths(
             levels to the captured grid.
 
     Returns:
-        pandas.DataFrame: Layer metadata plus differential/integrated optical
-        depths mirroring the legacy ``*.opt`` parsing.
+        OpticalDepthGrid: Contiguous differential optical depths and the small
+        vertical-profile vectors needed by DISORT.
 
     Raises:
         ValueError: Raised when the provided levels are invalid or cannot be
@@ -506,7 +632,10 @@ def get_captured_optical_depths(
     pressures = np.array(pressures, dtype=float, copy=True)
     temperatures = np.array(temperatures, dtype=float, copy=True)
     wavenumbers = np.array(wavenumbers, dtype=float, copy=True)
-    cumulative = np.array(cumulative, dtype=float, copy=True, order="C")
+    # Avoid duplicating the full native cumulative grid when its dtype and layout
+    # are already suitable. Advanced indexing below makes the smaller selected-level
+    # buffer that is required for differencing.
+    cumulative = np.asarray(cumulative, dtype=float, order="C")
 
     if altitudes.ndim != 1 or cumulative.ndim != 2:
         raise ValueError("Unexpected dimensionality in captured optical-depth data.")
@@ -539,9 +668,16 @@ def get_captured_optical_depths(
     selected_tem = temperatures[selected_indices]
     selected_cumulative = cumulative[selected_indices, :]
 
-    layer_delta = selected_cumulative[:-1, :] - selected_cumulative[1:, :]
+    layer_delta = np.empty(
+        (selected_cumulative.shape[0] - 1, selected_cumulative.shape[1]),
+        dtype=float,
+    )
+    np.subtract(
+        selected_cumulative[:-1, :],
+        selected_cumulative[1:, :],
+        out=layer_delta,
+    )
     layer_delta = layer_delta[::-1, :]
-    integrated = np.cumsum(layer_delta, axis=0)
 
     p_upper = selected_pre[1:][::-1]
     p_lower = selected_pre[:-1][::-1]
@@ -566,26 +702,46 @@ def get_captured_optical_depths(
     if layer_delta.shape[1] != wavenumbers.size:
         raise ValueError("Optical-depth grid and wavenumber axis are inconsistent.")
 
-    dod_col_names = [f"dOD_{val:.4f}" for val in wavenumbers]
-    iod_col_names = [f"iOD_{val:.4f}" for val in wavenumbers]
+    return OpticalDepthGrid(
+        wavenumber=np.ascontiguousarray(wavenumbers),
+        differential_tau=np.ascontiguousarray(layer_delta.T),
+        pressure_upper=np.ascontiguousarray(p_upper),
+        pressure_lower=np.ascontiguousarray(p_lower),
+        altitude_upper=np.ascontiguousarray(h_upper),
+        altitude_lower=np.ascontiguousarray(h_lower),
+        temperature_upper=np.ascontiguousarray(t_upper),
+        temperature_lower=np.ascontiguousarray(t_lower),
+    )
 
-    layer_count = layer_delta.shape[0]
-    prf_df = pd.DataFrame()
-    prf_df["layer no."] = range(layer_count)
-    prf_df.loc[:, "p_upper (mbar)"] = p_upper
-    prf_df.loc[:, "p_lower (mbar)"] = p_lower
-    prf_df.loc[:, "p_avg (mbar)"] = p_avg
-    prf_df.loc[:, "h_upper (km)"] = h_upper
-    prf_df.loc[:, "h_lower (km)"] = h_lower
-    prf_df.loc[:, "h_avg (km)"] = h_avg
-    prf_df.loc[:, "T_upper (K)"] = t_upper
-    prf_df.loc[:, "T_lower (K)"] = t_lower
-    prf_df.loc[:, "T_avg (K)"] = t_avg
 
-    dod_df = pd.DataFrame(layer_delta, columns=dod_col_names)
-    iod_df = pd.DataFrame(integrated, columns=iod_col_names)
+def get_captured_optical_depths(
+    levels: Sequence[float],
+    *,
+    spectrum_index: int = 1,
+    match_tol: float = 1e-6,
+) -> pd.DataFrame:
+    """Return captured optical depths in the historical DataFrame format.
 
-    return pd.concat([prf_df, dod_df, iod_df], axis=1, join="outer")
+    This compatibility function explicitly materializes the wide differential and
+    integrated tables. New calculations should use
+    :func:`get_captured_optical_depth_grid`.
+
+    Args:
+        levels (Sequence[float]): Altitude levels in km defining layer bounds.
+        spectrum_index (int): Spectral range index, starting at one.
+        match_tol (float): Absolute altitude matching tolerance in km.
+
+    Returns:
+        pandas.DataFrame: Legacy layer metadata and dOD/iOD columns.
+
+    Raises:
+        ValueError: If levels are invalid or absent from the captured profile.
+        RuntimeError: If native capture retrieval fails.
+    """
+    grid = get_captured_optical_depth_grid(
+        levels, spectrum_index=spectrum_index, match_tol=match_tol
+    )
+    return grid.to_dataframe(include_integrated=True)
 
 
 @dataclass(frozen=True)
@@ -917,6 +1073,7 @@ def run_rfm_with_parameters(
     optical_levels: Sequence[float] | None = None,
     optical_spectrum_index: int = 1,
     optical_match_tol: float = 1e-6,
+    optical_depth_format: Literal["compact", "dataframe"] = "dataframe",
 ) -> RunResult:
     """Run RFM by constructing inputs directly from Python structures.
 
@@ -974,6 +1131,8 @@ def run_rfm_with_parameters(
             captured optical depths (default ``1``).
         optical_match_tol (float): Matching tolerance (km) applied to the
             captured profile grid (default ``1e-6``).
+        optical_depth_format (Literal["compact", "dataframe"]): Return compact
+            arrays or the historical DataFrame for optical-depth capture.
 
     Returns:
         RunResult: Summary of the execution and optional in-memory output.
@@ -1045,6 +1204,7 @@ def run_rfm_with_parameters(
         optical_levels=optical_levels,
         optical_spectrum_index=optical_spectrum_index,
         optical_match_tol=optical_match_tol,
+        optical_depth_format=optical_depth_format,
     )
 
 
@@ -1062,9 +1222,9 @@ def rfm_main(
         configuration (Mapping[str, Any] | None): Optional overrides that
             control execution, including ``driver_path``, ``generate_driver``,
             ``clean_before``, ``run_id``, ``patterns``, ``optical_spectrum_index``,
-            ``optical_match_tol``, ``output_mode``, ``capture_files_content``, and
-            ``verbose``. When supplied, ``output_mode`` must be ``"capture"`` or
-            ``"files"``.
+            ``optical_match_tol``, ``optical_depth_format``, ``output_mode``,
+            ``capture_files_content``, and ``verbose``. When supplied,
+            ``output_mode`` must be ``"capture"`` or ``"files"``.
         driver_inputs (Mapping[str, Any]): Structured representation of driver
             sections mirroring :func:`run_rfm_with_parameters`.
         levels (Sequence[float]): Altitude levels (km) used when optical-depth
@@ -1075,8 +1235,9 @@ def rfm_main(
     Returns:
         RunResult: The run status plus optional payloads. ``output`` holds the
             in-memory file map for capture runs (``None`` for file-mode runs),
-            while ``output_df`` is populated with the optical-depth dataframe
-            when ``OPT`` and ``LEV`` are active under capture mode.
+            while ``optical_depth_grid`` is populated with compact optical depths
+            when ``OPT`` and ``LEV`` are active under capture mode. ``output_df``
+            is created only when explicitly requested.
 
     Raises:
         FileNotFoundError: If the requested output directory does not exist.
@@ -1084,15 +1245,16 @@ def rfm_main(
         ValueError: If mandatory sections are missing, incompatible geometry
             inputs are provided, optical-depth capture requirements are not
             satisfied, or ``output_mode`` is invalid for the provided flags.
-        RuntimeError: If optical-depth capture is expected but a dataframe is
-            not returned.
+        RuntimeError: If optical-depth capture is expected but no compact grid
+            is returned.
 
     Notes:
         ``capture_files_content`` controls whether capture mode records generated
         file artefacts in memory while deleting them on disk. Native RFM log
         content is always sent to stdout/stderr and is not included in this
         payload. When set to ``False`` the run still suppresses file creation but
-        omits the in-memory payload, leaving only ``output_df`` when applicable.
+        omits the generated-file payload; compact optical depths remain available
+        through ``optical_depth_grid`` when applicable.
     """
 
     config = dict(configuration or {})
@@ -1103,6 +1265,7 @@ def rfm_main(
     patterns = config.get("patterns")
     optical_spectrum_index = config.get("optical_spectrum_index", 1)
     optical_match_tol = config.get("optical_match_tol", 1e-6)
+    optical_depth_format = config.get("optical_depth_format", "compact")
     verbose = config.get("verbose", True)
     capture_files_content = bool(
         config.get(
@@ -1282,6 +1445,7 @@ def rfm_main(
             output_mode=mode,
             optical_spectrum_index=optical_spectrum_index,
             optical_match_tol=optical_match_tol,
+            optical_depth_format=optical_depth_format,
         )
         if enable_capture_flag is not None:
             run_kwargs["enable_capture"] = enable_capture_flag
@@ -1316,35 +1480,34 @@ def rfm_main(
         print(f"RFM run status: {run_result.status}")
 
     if optical_capture_active:
-        status, n_levels, n_points = rfm_py.rfm_get_optical_grid_size(
-            ispc=optical_spectrum_index
-        )
+        grid = run_result.optical_depth_grid
+        if grid is None and isinstance(run_result.output, OpticalDepthGrid):
+            grid = run_result.output
+        if grid is None:
+            raise RuntimeError(
+                "Expected a compact optical-depth grid when OPT and LEV are enabled."
+            )
+        run_result.optical_depth_grid = grid
         if verbose:
             print(
-                f"Captured grid dimensions (status={status}): "
-                f"{n_levels} levels, {n_points} spectral points"
+                "Captured grid dimensions: "
+                f"{grid.layer_count + 1} levels, {grid.wavenumber.size} spectral points"
             )
-
-        df = run_result.output_df
-        if df is None and isinstance(run_result.output, pd.DataFrame):
-            df = run_result.output
-        if df is None:
-            raise RuntimeError(
-                "Expected optical-depth dataframe when OPT and LEV are enabled."
-            )
-        run_result.output_df = df
+        if optical_depth_format == "dataframe":
+            df = run_result.output_df
+            if df is None:
+                df = grid.to_dataframe(include_integrated=True)
+            run_result.output_df = df
         if verbose:
-            dod_columns = [col for col in df.columns if col.startswith("dOD_")]
-            if dod_columns:
-                sample_vector = df[dod_columns].iloc[0].to_numpy(dtype=float)
-                print(
-                    f"\nSample layer optical depth vector "
-                    f"(first layer, {sample_vector.size} points):"
-                )
-                print(np.array2string(sample_vector, threshold=10, max_line_width=120))
-            print(df)
+            sample_vector = grid.differential_tau[:, 0]
+            print(
+                f"\nSample layer optical depth vector "
+                f"(first layer, {sample_vector.size} points):"
+            )
+            print(np.array2string(sample_vector, threshold=10, max_line_width=120))
     else:
         run_result.output_df = None
+        run_result.optical_depth_grid = None
 
     if capture_requested and capture_files_content:
         payload, _ = _collect_file_payload(

@@ -141,6 +141,63 @@ def test_mie_layer_optical_depth_uses_kilometre_to_metre_conversion():
     np.testing.assert_allclose(layer.tau, [1.5, 3.0])
 
 
+def _synthetic_mie_layer():
+    """Build a small layer with deterministic coarse optical properties.
+
+    Returns:
+        MieLayer: Layer ready for interpolation-only tests.
+    """
+    return MieLayer(
+        wvls=np.array([8.0, 9.0, 10.0]),
+        beta_ext=np.array([1.0, 2.0, 3.0]),
+        ssalb=np.array([0.5, 0.6, 0.7]),
+        phase_function=np.arange(9.0).reshape(3, 3),
+        legendre_coefficient=np.array(
+            [[1.0, 0.1], [1.0, 0.2], [1.0, 0.3]]
+        ),
+    )
+
+
+def test_mie_layer_low_memory_regrid_omits_phase_and_originals():
+    """Verify explicit low-memory regridding retains no unused large arrays."""
+    mie_layer = _synthetic_mie_layer()
+    mie_layer.regrid(
+        np.array([8.5, 9.5]),
+        regrid_phase_function=False,
+        retain_original=False,
+    )
+    np.testing.assert_allclose(mie_layer.beta_ext, [1.5, 2.5])
+    np.testing.assert_allclose(mie_layer.legendre_coefficient[:, 1], [0.15, 0.25])
+    assert not hasattr(mie_layer, "phase_function")
+    assert not any(name.endswith("_old") for name in vars(mie_layer))
+
+
+def test_mie_layer_block_interpolation_preserves_coarse_data_and_order():
+    """Verify block interpolation handles descending grids without mutation."""
+    mie_layer = _synthetic_mie_layer()
+    original_wavelengths = mie_layer.wvls.copy()
+    block = mie_layer.interpolate_optical_properties(np.array([9.5, 8.5]))
+    np.testing.assert_allclose(block["beta_ext"], [2.5, 1.5])
+    np.testing.assert_allclose(block["legendre_coefficient"][:, 1], [0.25, 0.15])
+    np.testing.assert_array_equal(mie_layer.wvls, original_wavelengths)
+    assert "phase_function" not in block
+
+
+def test_mie_layer_block_interpolation_supports_single_target_point():
+    """Verify a one-point final interpolation block is valid.
+
+    A grid whose size is one greater than a multiple of the configured block size
+    must interpolate its last point without a monotonicity error.
+    """
+    mie_layer = _synthetic_mie_layer()
+
+    result = mie_layer.interpolate_optical_properties([9.5])
+
+    assert result["wavelengths"].shape == (1,)
+    assert result["beta_ext"].shape == (1,)
+    assert result["legendre_coefficient"].shape[0] == 1
+
+
 def _grey_cloud(**overrides):
     """Build a configured grey-body cloud for unit tests.
 

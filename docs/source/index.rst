@@ -22,4 +22,6 @@ please contact antonin.knizek@physics.ox.ac.uk or contact the `EODG <https://eod
    :caption: Contents:
    
    overview
+   drv
+   memory
    srfm

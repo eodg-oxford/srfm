@@ -144,6 +144,10 @@ SRFM_INPUT_SCHEMA: dict[str, FieldSpec] = {
     "plot_type": FieldSpec((str,), required=True, choices=frozenset({"rad", "bbt"})),
     "convolve_iasi": FieldSpec((bool,), required=True),
     "iasi_ils": FieldSpec(PATH_TYPES, required=True, nullable=True),
+    # Memory controls.
+    "scattering_block_size": FieldSpec(INTEGER_TYPES, default=10000),
+    "retain_phase_functions": FieldSpec((bool,), default=False),
+    "retain_outputs": FieldSpec((list, tuple, set, frozenset), nullable=True),
     # Spectral grids.
     "fin_wvnmlo": FieldSpec(NUMBER_TYPES, required=True),
     "fin_wvnmhi": FieldSpec(NUMBER_TYPES, required=True),
@@ -154,6 +158,10 @@ SRFM_INPUT_SCHEMA: dict[str, FieldSpec] = {
     "spc_units": FieldSpec(
         (str,), required=True, choices=frozenset({"cm-1", "um", "nm"})
     ),
+    # Output geometry
+    "out_fmt": FieldSpec((str,), required=True, choices=frozenset({"altitude", "tau"})),
+    "out": FieldSpec(required=True, nullable=True),
+    "out_toa": FieldSpec((bool,), required=True),
     # RFM structures.
     "rfm_config": FieldSpec(MAPPING_TYPES, required=True),
     "driver_inputs": FieldSpec(MAPPING_TYPES, required=True),
@@ -177,7 +185,6 @@ SRFM_INPUT_SCHEMA: dict[str, FieldSpec] = {
     "lamber": FieldSpec((bool,), required=True),
     "deltamplus": FieldSpec((bool,), required=True),
     "do_pseudo_sphere": FieldSpec((bool,), required=True),
-    "utau": FieldSpec(required=True),
     "disort_precision": FieldSpec(
         (str,), required=True, choices=frozenset({"single", "double"})
     ),
@@ -261,6 +268,9 @@ RFM_CONFIG_SCHEMA: dict[str, FieldSpec] = {
     "patterns": FieldSpec(nullable=True),
     "optical_spectrum_index": FieldSpec(INTEGER_TYPES),
     "optical_match_tol": FieldSpec(NUMBER_TYPES),
+    "optical_depth_format": FieldSpec(
+        (str,), choices=frozenset({"compact", "dataframe"})
+    ),
 }
 
 
@@ -716,25 +726,55 @@ def _validate_inputs(
         or not all(type(v) is bool for v in prnt)
     ):
         issues.append("prnt: must be a list containing exactly five boolean values")
-    utau = normalized.get("utau")
-    if "utau" in normalized:
-        if not _is_array_like(utau) or len(utau) == 0:
-            issues.append("utau: must be a non-empty numeric sequence")
-        elif not all(
-            isinstance(v, Real)
-            and not isinstance(v, (bool, np.bool_))
-            and np.isfinite(v)
-            and v >= 0
-            for v in utau
-        ):
-            issues.append("utau: values must be finite non-negative numbers")
+    output = normalized.get("out")
+    if "out" in normalized and output is not None:
+        if isinstance(output, Real) and not isinstance(output, (bool, np.bool_)):
+            output_values = [output]
+        elif _is_array_like(output):
+            try:
+                output_array = np.asarray(output)
+            except (TypeError, ValueError):
+                output_values = None
+            else:
+                output_values = output_array.tolist() if output_array.ndim == 1 else None
+        else:
+            output_values = None
 
-    _validate_positive(normalized, ("nmom", "maxcmu", "maxulv"), "", issues)
+        if not output_values and normalized.get("out_toa") is not True:
+            issues.append(
+                "out: must be a non-empty numeric scalar or one-dimensional sequence"
+            )
+        elif not all(
+            isinstance(value, Real)
+            and not isinstance(value, (bool, np.bool_))
+            and np.isfinite(value)
+            and value >= 0
+            for value in output_values
+        ):
+            issues.append("out: values must be finite non-negative numbers")
+        else:
+            normalized["out"] = list(output_values)
+    elif "out" in normalized and output is None:
+        if normalized.get("out_toa") is True:
+            normalized["out"] = []
+        else:
+            issues.append(
+                "out: must be specified unless out_toa is True"
+            )
+
+    _validate_positive(
+        normalized,
+        ("nmom", "maxcmu", "maxulv", "scattering_block_size"),
+        "",
+        issues,
+    )
     _validate_positive(normalized, ("maxumu", "maxphi"), "", issues, allow_zero=True)
     if normalized.get("onlyfl") is False:
         for key in ("maxumu", "maxphi"):
             if normalized.get(key) == 0:
                 issues.append(f"{key}: may be zero only when onlyfl is True")
+    if normalized.get("usrtau") is False:
+        issues.append("usrtau: must be True when output levels are specified with out")
     if isinstance(normalized.get("maxcmu"), Integral) and normalized["maxcmu"] % 2:
         issues.append("maxcmu: must be even")
     if isinstance(normalized.get("maxcmu"), Integral) and normalized["maxcmu"] < 2:
@@ -766,6 +806,26 @@ def _validate_inputs(
         normalized.get("rad") or normalized.get("bbt")
     ):
         issues.append("out_mode: rad or bbt must be enabled when writing output")
+    retained_outputs = normalized.get("retain_outputs")
+    if retained_outputs is not None:
+        allowed_outputs = {
+            "radiance",
+            "bbt",
+            "rfldir",
+            "rfldn",
+            "flup",
+            "dfdt",
+            "uavg",
+            "uu",
+            "albmed",
+            "trnmed",
+        }
+        invalid_outputs = sorted(set(retained_outputs) - allowed_outputs)
+        if invalid_outputs:
+            issues.append(
+                "retain_outputs: unknown output name(s): "
+                + ", ".join(invalid_outputs)
+            )
 
     header = normalized.get("header")
     if isinstance(header, str) and len(header) >= 127:

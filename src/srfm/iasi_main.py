@@ -29,20 +29,37 @@ import warnings
 from multiprocessing import Process, Manager
 from bisect import bisect
 import pickle
-from importlib.resources import files, as_file
 from pathlib import Path
 import importlib.util
 from .RFM import rfm_py
 from . import rfm_helper
 from .input_schema import validate_iasi_inputs
+from .main import (
+    _calculate_output_utau,
+    _create_netcdf_spectral_dimensions,
+    _interpolate_scattering_block,
+    _resolve_output_geometry,
+    _resolve_retained_outputs,
+    _write_spectral_text,
+)
 from netCDF4 import Dataset
 import json
 import copy
 
 
+def _format_iasi_plot_title(keystr, model, polar, level, azimuthal):
+    """Build the title shared by the IASI spectrum and residual plots."""
+    level_name = "altitude (km)" if model.output_format == "altitude" else "optical depth"
+    return (
+        f"{keystr}\nOutput polar angle: {model.output_polar_angles[polar]:g}°; "
+        f"{level_name}: {model.output_values[level]:g}; "
+        f"azimuthal angle: {model.output_azimuthal_angles[azimuthal]:g}°"
+    )
+
+
 @utilities.show_runtime
 def run_srfm(inp):
-    """Main function that runs srfm.
+    """Run the memory-efficient SRFM pathway for preprocessed IASI data.
 
     Optimized for IASI data.
 
@@ -52,6 +69,12 @@ def run_srfm(inp):
     Returns:
         model_SRFM (obj): Instance of forward_model.SRFM.
 
+    Raises:
+        TypeError: If ``inp`` does not provide a ``values`` mapping.
+        InputValidationError: If configured IASI inputs are invalid.
+        RuntimeError: If RFM capture or a native model calculation fails.
+        ValueError: If spectral, atmospheric, or output geometry is inconsistent.
+
     """
     if not hasattr(inp, "values"):
         raise TypeError("run_srfm expects an Inputs-like object with a values mapping.")
@@ -59,9 +82,6 @@ def run_srfm(inp):
     ########################################################################################
     # Assign some variables:
     ########################################################################################
-    with as_file(files("srfm") / "RFM") as path:
-        rfm_fldr = os.fspath(path)
-
     # Keep all run-generated files outside the installed package tree.
     os.makedirs(inp.values["results_fldr"], exist_ok=True)
 
@@ -480,36 +500,23 @@ def run_srfm(inp):
         levels=levels,
         rfm_out_fldr=inp.values["results_fldr"],
     )
-    # Store the full RunResult for debugging/metadata while keeping the legacy dataframe API.
     model_RFM.rfm_run_result = rfm_run_result
-    if rfm_run_result.output_df is None:
-        raise RuntimeError("RFM capture did not return an optical-depth dataframe.")
-    model_RFM.rfm_output = rfm_run_result.output_df.copy()
+    if rfm_run_result.optical_depth_grid is None:
+        raise RuntimeError("RFM capture did not return a compact optical-depth grid.")
+    model_RFM.rfm_output = rfm_run_result.optical_depth_grid
 
     # print current status:
     print(model_RFM.status)
 
-    # rebuild the spectral grid directly from the captured columns
-    cols = [i for i in model_RFM.rfm_output.columns if i.startswith("dOD_")]
-    if not cols:
-        raise RuntimeError(
-            "RFM output does not include any differential optical-depth columns."
-        )
-    try:
-        RFM_wvnm = np.array([float(col.split("_", 1)[1]) for col in cols], dtype=float)
-    except ValueError as exc:
-        raise RuntimeError(
-            "Failed to parse wavenumbers from RFM output columns."
-        ) from exc
+    RFM_wvnm = model_RFM.rfm_output.wavenumber
     wvls = (1.0 / RFM_wvnm) * 1e4
 
     # add output from optical properties calculation, TODO MOVE UP?
     for lyr in scat_lyrs.keys():
         scat_lyrs[lyr].add_op_calc_output()
 
-        # interpolate layer optical properties
-        scat_lyrs[lyr].regrid(wvls, track_diff=False)
-        scat_lyrs[lyr].calc_tau()
+        if not inp.values.get("retain_phase_functions", False):
+            scat_lyrs[lyr].discard_phase_function()
 
         # Prepare dict with layer parameters to be saved in the output
     layer_attrs = (
@@ -556,14 +563,21 @@ def run_srfm(inp):
     ########################################################################################
 
     # initialize DISORT model class
-    model_DISORT = forward_model.DISORT()
+    model_DISORT = forward_model.DISORT(retain_history=False)
 
     # check if number of columns and wavelengths match
-    if len(cols) != len(wvls):
+    if model_RFM.rfm_output.differential_tau.shape[0] != len(wvls):
         raise ValueError(
             f"Number of RFM and scattering wavelengths don't match "
-            f"({len(cols)} spectral columns vs {len(wvls)} scattering wavelengths)."
+            f"({model_RFM.rfm_output.differential_tau.shape[0]} optical-depth rows "
+            f"vs {len(wvls)} scattering wavelengths)."
         )
+    output_values, altitude_rows = _resolve_output_geometry(
+        inp.values["out_fmt"],
+        inp.values["out"],
+        inp.values["out_toa"],
+        model_RFM.rfm_output,
+    )
 
     # set disort_input parameters common to all loop iterations
     # these need to be set first:
@@ -580,7 +594,8 @@ def run_srfm(inp):
 
     model_DISORT.set_maxumu(inp.values["maxumu"])
     model_DISORT.set_maxphi(inp.values["maxphi"])
-    model_DISORT.set_maxulv(inp.values["maxulv"])
+    model_DISORT.set_maxulv(len(output_values))
+    effective_params["maxulv"] = len(output_values)
 
     # now the rest
     model_DISORT.set_usrang(inp.values["usrang"])
@@ -593,7 +608,6 @@ def run_srfm(inp):
     model_DISORT.set_lamber(inp.values["lamber"])
     model_DISORT.set_deltamplus(inp.values["deltamplus"])
     model_DISORT.set_do_pseudo_sphere(inp.values["do_pseudo_sphere"])
-    model_DISORT.set_utau(inp.values["utau"])
 
     model_DISORT.set_fisot(inp.values["fisot"])
     model_DISORT.set_albedo(inp.values["albedo"])
@@ -642,7 +656,7 @@ def run_srfm(inp):
     )  # interpolate to RFM_wvnm (the calculation grid)
 
     # scale with year day (different Sun-Earth distance throughout the year
-    # the original specturm is for 1 AU
+    # the original spectrum is for 1 AU
     solar_spc = utilities.scale_solar_spectrum(solar_spc, year_day)
 
     # get incoming solar beam polar angle for DISORT
@@ -672,7 +686,17 @@ def run_srfm(inp):
     model_SRFM = forward_model.SRFM()
     model_SRFM.set_wvnm(RFM_wvnm)
     model_SRFM.set_wvls(wvls)
-    model_SRFM.initialize_srfm_output_arrays_from_disort(model_DISORT)
+    requested_outputs, runtime_outputs = _resolve_retained_outputs(inp.values)
+    runtime_outputs.add("uu")
+    model_SRFM.initialize_srfm_output_arrays_from_disort(
+        model_DISORT, retain_outputs=runtime_outputs
+    )
+    model_SRFM.output_format = inp.values["out_fmt"]
+    model_SRFM.output_values = output_values
+    model_SRFM.output_polar_angles = np.asarray([iasi_out_zen_deg], dtype=float)
+    model_SRFM.output_azimuthal_angles = np.asarray(
+        [iasi_data["azi"][px]], dtype=float
+    )
 
     # track progress
     pct = [
@@ -695,8 +719,23 @@ def run_srfm(inp):
     ########################################################################################
     # set dynamic variables and run DISORT
     ########################################################################################
-    # loop over columns, dynamically set disort input variables in each loop
-    for wvl_idx, (wvnm, wvl, col) in enumerate(zip(RFM_wvnm, wvls, cols)):
+    scattering_block_size = inp.values.get("scattering_block_size", 10000)
+    scattering_block = {}
+    scattering_block_start = 0
+    skipped_scattering = {
+        layer_name: {"count": 0, "first": None, "last": None}
+        for layer_name in scat_lyrs
+    }
+    for wvl_idx, (wvnm, wvl, tau_g) in enumerate(
+        zip(RFM_wvnm, wvls, model_RFM.rfm_output.differential_tau)
+    ):
+        if scat_lyrs and wvl_idx % scattering_block_size == 0:
+            scattering_block_start = wvl_idx
+            block_stop = min(wvl_idx + scattering_block_size, len(wvls))
+            scattering_block = _interpolate_scattering_block(
+                scat_lyrs, wvls[wvl_idx:block_stop]
+            )
+        block_index = wvl_idx - scattering_block_start
 
         # track progress
         if wvnm in pct_val:
@@ -710,40 +749,44 @@ def run_srfm(inp):
         model_DISORT.set_wvnm(wvnm)
         model_DISORT.set_wvl(wvl)
 
-        # get layer optical depths from gas absorption
-        tau_g = model_RFM.rfm_output[col].to_numpy()
+        tau_g = np.asarray(tau_g, dtype=float)
 
         # layer optical depths from Rayleigh scattering
         #    tau_R = np.zeros(shape=(tau_g.shape))
         tau_R = utilities.calc_Rayleigh_opt_depths(
-            ps=model_RFM.rfm_output["p_lower (mbar)"].iloc[-1],
-            pu=model_RFM.rfm_output["p_upper (mbar)"],
-            pl=model_RFM.rfm_output["p_lower (mbar)"],
+            ps=model_RFM.rfm_output.pressure_lower[-1],
+            pu=model_RFM.rfm_output.pressure_upper,
+            pl=model_RFM.rfm_output.pressure_lower,
             l=wvnm,
         )
 
         # particle layer optical depths (from particle scattering)
         tau_p = np.zeros(shape=(len(tau_g)))
         for lyr in scat_lyrs.keys():
-            tau_p[track_lyr.index(lyr)] = scat_lyrs[lyr].tau[wvl_idx]
+            tau_p[track_lyr.index(lyr)] = scattering_block[lyr]["tau"][block_index]
 
         # particle layer single scatter albedo
         w_p = np.zeros(shape=(len(tau_g)))
         for lyr in scat_lyrs.keys():
-            w_p[track_lyr.index(lyr)] = scat_lyrs[lyr].ssalb[wvl_idx]
+            w_p[track_lyr.index(lyr)] = scattering_block[lyr]["ssalb"][block_index]
 
         dtauc_tot = utilities.calc_tot_dtauc(tau_g=tau_g, tau_R=tau_R, tau_p=tau_p)
+        dtauc_tot = np.maximum(np.asarray(dtauc_tot, dtype=float), 0.0)
 
         # truncate optical depths
         threshold_od = 1e-8  # threshold at which to truncate optical depths
-        idx = next(
-            (
-                index
-                for index, value in enumerate(list(dtauc_tot))
-                if value > threshold_od
-            ),
-            None,
+        significant_layers = np.flatnonzero(dtauc_tot > threshold_od)
+        idx = int(significant_layers[0]) if significant_layers.size else 0
+
+        utau = _calculate_output_utau(
+            inp.values["out_fmt"],
+            output_values,
+            altitude_rows,
+            dtauc_tot,
+            idx,
         )
+        model_DISORT.set_utau(utau)
+
         dtauc_tot = dtauc_tot[idx:]
         tau_g = tau_g[idx:]
         tau_R = tau_R[idx:]
@@ -783,40 +826,34 @@ def run_srfm(inp):
         # set single scatter albedo
         model_DISORT.set_ssalb(tau_g=tau_g, tau_R=tau_R, tau_p=tau_p, w_p=w_p)
 
-        # calculate phase function moments for Rayleigh and particle scattering from DISORT
-        pmom_R = model_DISORT.calc_pmom(iphas=2, prec=inp.values["disort_precision"])
-
-        # set phase function moments for particle scattering from Mie code
-        pmom_p = np.zeros(
-            (
-                model_DISORT.disort_input["maxmom"] + 1,
-                model_DISORT.disort_input["maxcly"],
-            )
-        )
+        particle_moments = {}
         for lyr in scat_lyrs.keys():
-            if scat_lyrs[lyr].tau[wvl_idx] < threshold_od:
-                print(
-                    f"""Scattering layer optical depth was < {threshold_od} and was
-                truncated from the optical depths profile. No particle scattering at this
-                 wavelength."""
-                )
+            layer_tau = scattering_block[lyr]["tau"][block_index]
+            if layer_tau < threshold_od:
+                skipped = skipped_scattering[lyr]
+                skipped["count"] += 1
+                skipped["first"] = wvnm if skipped["first"] is None else skipped["first"]
+                skipped["last"] = wvnm
             else:
-                pmom_p[
-                    : len(scat_lyrs[lyr].legendre_coefficient[wvl_idx, :]),
-                    track_lyr_local.index(lyr),
-                ] = scat_lyrs[lyr].legendre_coefficient[wvl_idx, :]
-                Legendre_precision = (
-                    1 / pmom_p[0, track_lyr_local.index(lyr)]
-                )  # unused, can be used to track expansion precision
+                coefficients = scattering_block[lyr]["legendre_coefficient"][
+                    block_index
+                ].copy()
+                Legendre_precision = 1 / coefficients[0]
                 if abs(Legendre_precision - 1) > 1e-5:
-                    raise RuntimeError(f"""Something is wrong with the phase function.
-                    The first coefficient is {pmom_p[0, track_lyr_local.index(lyr)]}, but should be 1.0.
-                    Try increasing number of quadrature points.""")
-                pmom_p[0, track_lyr_local.index(lyr)] = 1.0
+                    raise RuntimeError(
+                        "Something is wrong with the phase function. The first "
+                        f"coefficient is {coefficients[0]}, but should be 1.0. "
+                        "Try increasing number of quadrature points."
+                    )
+                coefficients[0] = 1.0
+                particle_moments[track_lyr_local.index(lyr)] = coefficients
 
-        # calculate the weighted sum of phase function moments
-        model_DISORT.set_pmom(
-            pmom_R=pmom_R, tau_R=tau_R, w_p=w_p, tau_p=tau_p, pmom_p=pmom_p
+        model_DISORT.set_mixed_pmom(
+            tau_R=tau_R,
+            w_p=w_p,
+            tau_p=tau_p,
+            particle_moments=particle_moments,
+            prec=inp.values["disort_precision"],
         )
         #    print(model_DISORT.disort_input["pmom"]).shape
 
@@ -839,14 +876,23 @@ def run_srfm(inp):
         #                              brdf_arg=[1,1.34,False,0], # wind speed, water refractive index, do_shadow
         #                              nmug=200) # number of quadrature angles
         # run disort
-        model_DISORT.run_disort(prec=inp.values["disort_precision"],adjust_maxcmu=inp.values["adjust_maxcmu"],)
+        disort_result = model_DISORT.run_disort(prec=inp.values["disort_precision"],adjust_maxcmu=inp.values["adjust_maxcmu"],)
 
         # store result in SRFM()
-        model_SRFM.store_disort_result(model_DISORT, wvl_idx)
+        model_SRFM.store_disort_result(disort_result, wvl_idx)
 
-        # print current status:m
+        # print current status
     #    print(model_DISORT.status)
     print("Main DISORT loop finished.")
+    for layer_name, skipped in skipped_scattering.items():
+        if skipped["count"]:
+            warnings.warn(
+                f"Scattering layer {layer_name!r} was below optical-depth threshold "
+                f"{threshold_od:g} at {skipped['count']} wavenumbers from "
+                f"{skipped['first']:g} to {skipped['last']:g} cm-1; particle "
+                "scattering was omitted there.",
+                stacklevel=2,
+            )
 
     # convolve final radiance spectrum with iasi instrument line shape
     model_SRFM.convolve_with_iasi(inp.values["ils"])
@@ -854,38 +900,38 @@ def run_srfm(inp):
     # interpolate resulting bbt and radiances to final grid
     model_SRFM.interp(fin_grid)
 
-    # calculate brightness temperature for the final spectrum
-    model_SRFM.calc_bbt()
+    if "bbt" in requested_outputs:
+        model_SRFM.calc_bbt()
+    if "uu" not in requested_outputs and hasattr(model_SRFM, "uu"):
+        delattr(model_SRFM, "uu")
+        model_SRFM.retained_outputs = frozenset(
+            set(model_SRFM.retained_outputs) - {"uu"}
+        )
 
     ########################################################################################
     # (optional) save spectrum to file
     ########################################################################################
     if inp.values["out_mode"] == "txt":
         if inp.values["bbt"] == True:
-            if isinstance(inp.values["bbt_out_fname"], str):
-                np.savetxt(
-                    f"{inp.values['results_fldr']}/{inp.values['bbt_out_fname']}.txt",
-                    np.column_stack((model_SRFM.wvnm, model_SRFM.bbt[:, 0, 0, 0])),
-                )
-            else:
-                np.savetxt(
-                    f"{inp.values['results_fldr']}/bbt.txt",
-                    np.column_stack((model_SRFM.wvnm, model_SRFM.bbt[:, 0, 0, 0])),
-                )
+            filename = inp.values["bbt_out_fname"] or "bbt"
+            _write_spectral_text(
+                os.path.join(inp.values["results_fldr"], f"{filename}.txt"),
+                model_SRFM.wvnm,
+                model_SRFM.bbt,
+                "Brightness temperature (K)",
+            )
+
         if inp.values["rad"] == True:
-            if isinstance(inp.values["rad_out_fname"], str):
-                np.savetxt(
-                    f"{inp.values['results_fldr']}/{inp.values['rad_out_fname']}.txt",
-                    np.column_stack((model_SRFM.wvnm, model_SRFM.uu[:, 0, 0, 0])),
-                )
-            else:
-                np.savetxt(
-                    f"{inp.values['results_fldr']}/rad.txt",
-                    np.column_stack((model_SRFM.wvnm, model_SRFM.uu[:, 0, 0, 0])),
-                )
-        else:
+            filename = inp.values["rad_out_fname"] or "rad"
+            _write_spectral_text(
+                os.path.join(inp.values["results_fldr"], f"{filename}.txt"),
+                model_SRFM.wvnm,
+                model_SRFM.uu,
+                "Radiance (W m-2 sr-1 cm)",
+            )
+
+        if not inp.values["bbt"] and not inp.values["rad"]:
             warnings.warn("driver table doesn't specify output bbt or rad.")
-            pass
 
     elif inp.values["out_mode"] == "netcdf":
         if inp.values["bbt"] == True:
@@ -911,21 +957,23 @@ def run_srfm(inp):
                 )
 
                 # --- Core Dimensions ---
-                num_wavenumbers_op = wvls.shape[0] # dimension for optical properties (on compupational grid)
-                num_wavenumbers = fin_grid.shape[0] # dimension for output spectrum (interpolated to fin_grid)
+                num_wavenumbers_op = wvls.shape[0]
                 layer_names = list(scat_lyrs.keys())
                 num_layers = len(layer_names)
 
-                nc_file.createDimension("wavenumber", num_wavenumbers)
                 nc_file.createDimension("wavenumber_op", num_wavenumbers_op)
                 nc_file.createDimension("layer", num_layers)
-                #                nc_file.createDimension("angle", num_angles)
+                spectrum_dimensions = _create_netcdf_spectral_dimensions(
+                    nc_file, model_SRFM
+                )
 
                 # --- Core Spectrum Variables ---
-                bbt = nc_file.createVariable("bbt", "f8", ("wavenumber",), zlib=True, complevel=4)
+                bbt = nc_file.createVariable(
+                    "bbt", "f8", spectrum_dimensions, zlib=True, complevel=4
+                )
                 bbt.units = "K"
                 bbt.long_name = "Brightness temperature"
-                bbt[:] = model_SRFM.bbt[:, 0, 0, 0]
+                bbt[:] = model_SRFM.bbt
 
                 # Store layer names mapping
                 var_lyr_names = nc_file.createVariable("layer_names", str, ("layer",))
@@ -939,7 +987,12 @@ def run_srfm(inp):
                 for i, ll in enumerate(layer_names):
                     lyr = scat_lyrs[ll]
 
-                    mat_tau[i, :] = lyr.tau
+                    beta_ext = lyr.interpolate_optical_properties(
+                        wvls, include_legendre=False
+                    )["beta_ext"]
+                    mat_tau[i, :] = (
+                        beta_ext * 1e3 * (lyr.alt_upp - lyr.alt_low)
+                    )
 
                 var_tau = nc_file.createVariable("tau", "f8", ("layer", "wavenumber_op"), zlib=True, complevel=4)
                 var_tau.long_name = "Optical depth per layer and wavenumber"
@@ -968,20 +1021,23 @@ def run_srfm(inp):
                 )
 
                 # --- Core Dimensions ---
-                num_wavenumbers_op = wvls.shape[0] # dimension for optical properties (on compupational grid)
-                num_wavenumbers = fin_grid.shape[0] # dimension for output spectrum (interpolated to fin_grid)
+                num_wavenumbers_op = wvls.shape[0]
                 layer_names = list(scat_lyrs.keys())
                 num_layers = len(layer_names)
 
-                nc_file.createDimension("wavenumber", num_wavenumbers)
                 nc_file.createDimension("wavenumber_op", num_wavenumbers_op)
                 nc_file.createDimension("layer", num_layers)
+                spectrum_dimensions = _create_netcdf_spectral_dimensions(
+                    nc_file, model_SRFM
+                )
 
                 # --- Core Spectrum Variables ---
-                rad = nc_file.createVariable("rad", "f8", ("wavenumber",), zlib=True, complevel=4)
+                rad = nc_file.createVariable(
+                    "rad", "f8", spectrum_dimensions, zlib=True, complevel=4
+                )
                 rad.units = "W m-2 sr-1 cm"
                 rad.long_name = "Radiance"
-                rad[:] = model_SRFM.uu[:, 0, 0, 0]
+                rad[:] = model_SRFM.uu
 
                 # Store layer names mapping
                 var_lyr_names = nc_file.createVariable("layer_names", str, ("layer",))
@@ -995,7 +1051,12 @@ def run_srfm(inp):
                 for i, ll in enumerate(layer_names):
                     lyr = scat_lyrs[ll]
 
-                    mat_tau[i, :] = lyr.tau
+                    beta_ext = lyr.interpolate_optical_properties(
+                        wvls, include_legendre=False
+                    )["beta_ext"]
+                    mat_tau[i, :] = (
+                        beta_ext * 1e3 * (lyr.alt_upp - lyr.alt_low)
+                    )
 
                 var_tau = nc_file.createVariable("tau", "f8", ("layer", "wavenumber_op"), zlib=True, complevel=4)
                 var_tau.long_name = "Optical depth per layer and wavenumber"
@@ -1005,175 +1066,63 @@ def run_srfm(inp):
         pass
 
     if inp.values["base_plots"] == True:
-        ########################################################################################
-        # (optional) create base plots
-        ########################################################################################
-        plot = False  # create a plot?
-        plot_srfm = True  # plot disort output?
-        plot_rfm = False  # plot rfm output?
-        plot_residual = False  # plot difference between rfm and diosrt?
-        y_type = (
-            "bbt"  # plot in radiances (W m-2 sr-1 cm) or brightness temperatures [K]
-        )
-        x_type = "cm-1"  # plot vs. wavenumbers [cm-1] or wavelengths [um] or [nm]
+        for polar in range(model_SRFM.bbt.shape[1]):
+            for level in range(model_SRFM.bbt.shape[2]):
+                for azimuthal in range(model_SRFM.bbt.shape[3]):
+                    suffix = f"{polar}_{level}_{azimuthal}"
+                    title = _format_iasi_plot_title(
+                        keystr, model_SRFM, polar, level, azimuthal
+                    )
+                    simulated = model_SRFM.bbt[:, polar, level, azimuthal]
 
-        if plot == True:
-            plt.figure(figsize=(11.7, 8.4))
-            plt.rcParams.update({"font.size": 12})
-            plt.cla()
-
-            # determine x label:
-            if x_type == "cm-1":
-                x_lbl = r"Wavenumbers (cm$^{-1}$)"
-            elif x_type == "um":
-                x_lbl = r"Wavelength ($\mu$m)"
-            elif x_type == "nm":
-                x_lbl = "Wavelength (nm)"
-
-            # determine y label:
-            if y_type == "bbt":
-                y_lbl = "Brightness temperature (K)"
-            elif y_type == "rad":
-                y_lbl = r"Radiance (W m$^{-2}$ sr$^{-1}$ cm)"
-
-            # plot RFM
-            if plot_rfm == True:
-                # determine x:
-                if x_type == "cm-1":
-                    x = RFM_wvnm
-                elif x_type == "um":
-                    x = wvls
-                elif x_type == "nm":
-                    x = wvls * 1e3
-
-                filename = f"{rfm_fldr}/rad_001000.asc"
-                data = rfm_functions.read_output(filename)
-                RFM_rad = data["SPC"] * 1e-5
-
-                if y_type == "bbt":
-                    RFM_bbt = utilities.convert_spectral_radiance_to_bbt(
-                        RFM_rad, RFM_wvnm
+                    plt.figure(figsize=(11.7, 8.4))
+                    plt.rcParams.update({"font.size": 12})
+                    plt.plot(
+                        model_SRFM.wvnm,
+                        simulated,
+                        label="SRFM",
+                        color="tab:blue",
                     )
                     plt.plot(
-                        x, RFM_bbt, label=f"no scattering", alpha=1, c="tab:orange"
+                        fin_grid,
+                        iasi_out_spc,
+                        label="IASI",
+                        color="tab:orange",
                     )
-                elif y_type == "rad":
+                    plt.xlabel(r"Wavenumbers (cm$^{-1}$)")
+                    plt.ylabel("Brightness temperature (K)")
+                    plt.legend()
+                    plt.title(title)
+                    plt.savefig(
+                        os.path.join(
+                            inp.values["results_fldr"],
+                            f"{keystr}_spc_vs_iasi_{suffix}.png",
+                        )
+                    )
+                    if inp.values["show_plots"] == True:
+                        plt.show()
+                    plt.close()
+
+                    plt.figure(figsize=(11.7, 8.4))
+                    plt.rcParams.update({"font.size": 12})
                     plt.plot(
-                        x, RFM_rad, label=f"no scattering", alpha=0.9, c="tab:orange"
+                        model_SRFM.wvnm,
+                        simulated - iasi_out_spc,
+                        label="SRFM - IASI",
+                        color="tab:red",
                     )
-
-            # plot SRFM
-            if plot_srfm == True:
-                # determine x:
-                if x_type == "cm-1":
-                    x = model_SRFM.wvnm
-                elif x_type == "um":
-                    x = model_SRFM.wvls
-                elif x_type == "nm":
-                    x = model_SRFM.wvls * 1e3
-
-                if y_type == "bbt":
-                    y = model_SRFM.bbt[:, 0, 0, 0]
-                elif y_type == "rad":
-                    y = model_SRFM.uu[:, 0, 0, 0]
-
-                plt.plot(x, y, label=f"scattering", c="tab:blue")
-
-            # plot residual
-            if plot_residual == True:
-                if plot_srfm != True and plot_rfm != True:
-                    print(f"Can't plot residual without data.")
-                else:
-                    plt.ion()
-                    if y_type == "bbt":
-                        plt.plot(x, y - RFM_bbt, label="residual", c="tab:green")
-                    elif y_type == "rad":
-                        plt.plot(x, y - RFM_rad, label="residual", c="tab:green")
-
-            # common
-            plt.xlabel(x_lbl)
-            plt.ylabel(y_lbl)
-
-            plt.legend()
-            plt.title(f"{keystr}")
-            #        plt.show()
-            plt.savefig(f"inp.values['results_fldr']/{keystr}_spc.png")
-            plt.close()
-
-        ########################################################################################
-        # (optional) create plots vs iasi spectra
-        ########################################################################################
-        plot = True  # create a plot?
-        plot_srfm = True  # plot srfm output?
-        plot_iasi = True  # plot iasi spectrum?
-        y_type = (
-            "bbt"  # plot in radiances (W m-2 sr-1 cm) or brightness temperatures [K]
-        )
-        x_type = "cm-1"  # plot vs. wavenumbers [cm-1] or wavelengths [um] or [nm]
-
-        if plot == True:
-            plt.figure(figsize=(11.7, 8.4))
-            plt.rcParams.update({"font.size": 12})
-            plt.cla()
-
-            x_lbl = r"Wavenumbers (cm$^{-1}$)"
-            y_lbl = "Brightness temperature (K)"
-
-            # plot SRFM
-            if plot_srfm == True:
-                x = model_SRFM.wvnm
-                y = model_SRFM.bbt[:, 0, 0, 0]
-
-                plt.plot(x, y, label=f"srfm", c="tab:blue")
-
-            # plot iasi
-            if plot_iasi == True:
-                x = fin_grid
-                y = iasi_out_spc
-
-                plt.plot(x, y, label=f"iasi", c="tab:orange")
-
-            # common
-            plt.xlabel(x_lbl)
-            plt.ylabel(y_lbl)
-
-            plt.legend()
-            plt.title(f"{keystr}")
-            #        plt.show()
-            plt.savefig(f"{inp.values['results_fldr']}/{keystr}_spc_vs_iasi.png")
-            if inp.values["show_plots"] == True:
-                plt.show()
-
-        ########################################################################################
-        # (optional) plot difference between srfm and iasi spectra
-        ########################################################################################
-        plot = True  # create a plot?
-        y_type = (
-            "bbt"  # plot in radiances (W m-2 sr-1 cm) or brightness temperatures [K]
-        )
-        x_type = "cm-1"  # plot vs. wavenumbers [cm-1] or wavelengths [um] or [nm]
-
-        if plot == True:
-            plt.figure(figsize=(11.7, 8.4))
-            plt.rcParams.update({"font.size": 12})
-            plt.cla()
-
-            x_lbl = r"Wavenumbers (cm$^{-1}$)"
-            y_lbl = "Brightness temperature (K)"
-
-            x = model_SRFM.wvnm
-            y = model_SRFM.bbt[:, 0, 0, 0] - iasi_out_spc
-
-            plt.plot(x, y, label=f"srfm - iasi", c="tab:red")
-
-            # common
-            plt.xlabel(x_lbl)
-            plt.ylabel(y_lbl)
-
-            plt.legend()
-            plt.title(f"{keystr}")
-            #        plt.show()
-            plt.savefig(f"{inp.values['results_fldr']}/{keystr}_diff.png")
-            plt.close()
+                    plt.xlabel(r"Wavenumbers (cm$^{-1}$)")
+                    plt.ylabel("Brightness-temperature difference (K)")
+                    plt.legend()
+                    plt.title(title)
+                    plt.savefig(
+                        os.path.join(
+                            inp.values["results_fldr"],
+                            f"{keystr}_diff_{suffix}.png",
+                        )
+                    )
+                    if inp.values["show_plots"] == True:
+                        plt.show()
+                    plt.close()
 
     return model_SRFM

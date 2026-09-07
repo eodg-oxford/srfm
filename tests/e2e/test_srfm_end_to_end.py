@@ -46,7 +46,10 @@ COMPLETE_RUN_INPUT_KEYS = {
     "maxumu",
     "nmom",
     "onlyfl",
+    "out",
+    "out_fmt",
     "out_mode",
+    "out_toa",
     "planck",
     "plot_type",
     "prnt",
@@ -67,7 +70,6 @@ COMPLETE_RUN_INPUT_KEYS = {
     "ttemp",
     "usrang",
     "usrtau",
-    "utau",
     "zen",
 }
 
@@ -99,6 +101,9 @@ def _complete_input_values(results, tiny_atmosphere, tiny_altitude_grid, tiny_xs
         "spc_wvnmhi": 1000.5,
         "spc_res": 0.5,
         "spc_units": "cm-1",
+        "out_fmt": "altitude",
+        "out": [0.0, 1.0],
+        "out_toa": True,
         "rfm_config": {
             "output_mode": "capture",
             "driver_path": None,
@@ -160,7 +165,6 @@ def _complete_input_values(results, tiny_atmosphere, tiny_altitude_grid, tiny_xs
         "lamber": True,
         "deltamplus": False,
         "do_pseudo_sphere": False,
-        "utau": [0.0],
         "fisot": 0.0,
         "albedo": 0.0,
         "temis": 1.0,
@@ -205,7 +209,7 @@ def _require_all_native_extensions(require_native, precision="double"):
         require_native(disort_module_d, "double-precision DISORT")
 
 
-def _assert_complete_result(result, results, values):
+def _assert_complete_result(result, results, values, num_output_levels=3):
     """Assert shared spectral and physical invariants for an E2E result.
 
     Every top-level runner is expected to return the same model dimensions.
@@ -222,12 +226,14 @@ def _assert_complete_result(result, results, values):
     )
     expected_grid = values["fin_wvnmlo"] + np.arange(n_points) * values["fin_res"]
     np.testing.assert_allclose(result["wvnm"], expected_grid)
-    assert result["uu"].shape == (n_points, 1, 1, 1)
-    assert result["bbt"].shape == (n_points, 1, 1, 1)
+    assert result["uu"].shape == (n_points, 1, num_output_levels, 1)
+    assert result["bbt"].shape == (n_points, 1, num_output_levels, 1)
     assert np.all(np.isfinite(result["uu"]))
     assert np.all(np.isfinite(result["bbt"]))
     assert np.all(result["uu"] > 0)
     assert np.all((result["bbt"] > 150) & (result["bbt"] < 350))
+    if result["output_values"] is not None:
+        np.testing.assert_allclose(result["output_values"], [0.0, 1.0, 2.0])
     assert (results / "rfm_files" / "grid.spc").is_file()
 
 
@@ -351,11 +357,29 @@ def test_complete_oxharp_pathway_with_derived_geometry(
     values = _complete_input_values(
         results, tiny_atmosphere, tiny_altitude_grid, tiny_xsc_file
     )
-    values.update(sza_cos=1.0, zen_cos=1.0, zen_sec=1.0)
+    values.update(
+        sza_cos=1.0,
+        zen_cos=1.0,
+        zen_sec=1.0,
+        out_mode="txt",
+        bbt=True,
+        rad=True,
+        base_plots=True,
+    )
 
     result, _ = run_native_case("e2e", {"runner": "oxharp", "values": values})
 
     _assert_complete_result(result, results, values)
+    for filename in (
+        "bbt.txt",
+        "rad.txt",
+        "base_plot_0_0_0.png",
+        "base_plot_0_1_0.png",
+        "base_plot_0_2_0.png",
+    ):
+        assert (results / filename).is_file()
+    assert np.loadtxt(results / "bbt.txt").shape == (9, 5)
+    assert np.loadtxt(results / "rad.txt").shape == (9, 5)
 
 
 def test_complete_iasi_pathway_with_synthetic_processed_observation(
@@ -401,12 +425,30 @@ def test_complete_iasi_pathway_with_synthetic_processed_observation(
         px=0,
         nedt=str(tiny_iasi_nedt),
         ils=str(tiny_iasi_ils),
+        out_mode="netcdf",
+        bbt=True,
+        rad=True,
+        base_plots=True,
     )
 
     result, _ = run_native_case("e2e", {"runner": "iasi", "values": values})
 
     _assert_complete_result(result, results, values)
     assert (results / "synthetic_20250323_A_px0.atm").is_file()
+    for filename in (
+        "synthetic_20250323_A_px0_spc_vs_iasi_0_0_0.png",
+        "synthetic_20250323_A_px0_spc_vs_iasi_0_1_0.png",
+        "synthetic_20250323_A_px0_spc_vs_iasi_0_2_0.png",
+        "synthetic_20250323_A_px0_diff_0_0_0.png",
+        "synthetic_20250323_A_px0_diff_0_1_0.png",
+        "synthetic_20250323_A_px0_diff_0_2_0.png",
+    ):
+        assert (results / filename).is_file()
+    with Dataset(results / "bbt.nc") as dataset:
+        assert dataset.variables["bbt"].shape == (3, 1, 3, 1)
+        np.testing.assert_allclose(dataset.variables["output_level"][:], [0, 1, 2])
+    with Dataset(results / "rad.nc") as dataset:
+        assert dataset.variables["rad"].shape == (3, 1, 3, 1)
 
 
 @pytest.mark.parametrize(
@@ -424,7 +466,13 @@ def test_complete_iasi_pathway_with_synthetic_processed_observation(
                 "base_plots": True,
                 "plot_type": "rad",
             },
-            ("bbt.txt", "single-radiance.txt", "base_plot.png"),
+            (
+                "bbt.txt",
+                "single-radiance.txt",
+                "base_plot_0_0_0.png",
+                "base_plot_0_1_0.png",
+                "base_plot_0_2_0.png",
+            ),
             id="single-txt-radiance-plot",
         ),
         pytest.param(
@@ -444,7 +492,13 @@ def test_complete_iasi_pathway_with_synthetic_processed_observation(
                 "base_plots": True,
                 "plot_type": "bbt",
             },
-            ("solar-bbt.nc", "rad.nc", "base_plot.png"),
+            (
+                "solar-bbt.nc",
+                "rad.nc",
+                "base_plot_0_0_0.png",
+                "base_plot_0_1_0.png",
+                "base_plot_0_2_0.png",
+            ),
             id="solar-iasi-netcdf-bbt-plot",
         ),
     ],
@@ -500,13 +554,21 @@ def test_driver_table_optional_execution_branches(
     if values["out_mode"] == "txt":
         bbt = np.loadtxt(results / "bbt.txt")
         radiance = np.loadtxt(results / "single-radiance.txt")
-        assert bbt.shape == radiance.shape == (3, 2)
-        np.testing.assert_allclose(bbt[:, 0], result["wvnm"])
-        np.testing.assert_allclose(radiance[:, 0], result["wvnm"])
+        assert bbt.shape == radiance.shape == (9, 5)
+        expected_wavenumbers = np.repeat(result["wvnm"], 3)
+        np.testing.assert_allclose(bbt[:, 0], expected_wavenumbers)
+        np.testing.assert_allclose(radiance[:, 0], expected_wavenumbers)
     else:
         with Dataset(results / "solar-bbt.nc") as dataset:
-            assert dataset.variables["bbt"].shape == (5,)
+            assert dataset.variables["bbt"].shape == (5, 1, 3, 1)
+            assert dataset.variables["bbt"].dimensions == (
+                "wavenumber",
+                "output_polar_angle",
+                "output_level",
+                "output_azimuthal_angle",
+            )
+            np.testing.assert_allclose(dataset.variables["output_level"][:], [0, 1, 2])
             assert np.all(np.isfinite(dataset.variables["bbt"][:]))
         with Dataset(results / "rad.nc") as dataset:
-            assert dataset.variables["rad"].shape == (5,)
+            assert dataset.variables["rad"].shape == (5, 1, 3, 1)
             assert np.all(np.isfinite(dataset.variables["rad"][:]))

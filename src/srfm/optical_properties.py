@@ -265,10 +265,12 @@ def ewp_hs(
         (wavelengths_size, angles), dtype=np.float64
     )  # 2D array for phase function
 
-    # initialize array for legendre coefficients (take care not to overlow memory)
+    # No expansion can produce more coefficients than phase quadrature points.
+    # Allocate that exact mathematical upper bound instead of sizing from available
+    # system RAM, which could reserve many gigabytes for a small calculation.
     if legendre_coefficients_flag:
-        legendre_coefficient = utils.memory_safe_np_zeros_2d(
-            constraints=[wavelengths_size], max_sec_dim=20000
+        legendre_coefficient = np.zeros(
+            (wavelengths_size, int(angles)), dtype=np.float64
         )
     else:
         legendre_coefficient = np.empty((wavelengths_size, 0), dtype=np.float64)
@@ -294,7 +296,7 @@ def ewp_hs(
 
     # truncate trailing zeros from legendre coefficient
     if legendre_coefficients_flag:
-        l_c = l_c[:, :max_lc]
+        l_c = np.ascontiguousarray(l_c[:, :max_lc])
 
     # Return the computed results
     if multiprocess == True:

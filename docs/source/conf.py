@@ -8,13 +8,18 @@
 import sys
 import os
 import re
+from pathlib import Path
+import tomllib
 import warnings
 import sphinx_rtd_theme
 
 project = 'SRFM'
 copyright = '2026, Antonin Knizek, Roy Grainger'
 author = 'Antonin Knizek, Roy Grainger'
-release = '0.0.2'
+
+with (Path(__file__).resolve().parents[2] / "pyproject.toml").open("rb") as file:
+    release = tomllib.load(file)["project"]["version"]
+version = release
 
 sys.path.insert(0, os.path.abspath('../../src'))
 

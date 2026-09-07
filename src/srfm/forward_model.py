@@ -16,6 +16,8 @@ from . import units
 import pandas as pd
 from scipy.signal import convolve
 import scipy.constants
+from scipy.interpolate import make_interp_spline
+from dataclasses import dataclass
 
 try:
     from .DISORT import disort_module_s as dms
@@ -46,6 +48,58 @@ class Fwd_model:
     def __init__(self, name=None, **parameters):
         self.name = name
         self.parameters = {}
+
+
+@dataclass(frozen=True)
+class DisortResult:
+    """Store the normalized outputs from one DISORT calculation.
+
+    The object deliberately contains only one spectral point. Long-running SRFM
+    calculations can therefore copy the values into their destination arrays without
+    retaining a dictionary entry for every wavenumber.
+
+    Args:
+        wavenumber: Central wavenumber of the calculation in cm-1.
+        wavelength: Central wavelength of the calculation in micrometres.
+        rfldir: Direct-beam flux at the requested output levels.
+        rfldn: Diffuse downward flux at the requested output levels.
+        flup: Diffuse upward flux at the requested output levels.
+        dfdt: Flux-divergence derivative at the requested output levels.
+        uavg: Mean intensity at the requested output levels.
+        uu: User-angle radiance.
+        albmed: Medium albedo.
+        trnmed: Medium transmissivity.
+    """
+
+    wavenumber: float
+    wavelength: float
+    rfldir: np.ndarray
+    rfldn: np.ndarray
+    flup: np.ndarray
+    dfdt: np.ndarray
+    uavg: np.ndarray
+    uu: np.ndarray
+    albmed: np.ndarray
+    trnmed: np.ndarray | float
+
+    def as_dict(self):
+        """Return the legacy fixed-key dictionary representation.
+
+        Returns:
+            dict: DISORT outputs using the historical public key names.
+        """
+        return {
+            "wavenumber (cm-1)": self.wavenumber,
+            "wavelength (um)": self.wavelength,
+            "rfldir": self.rfldir,
+            "rfldn": self.rfldn,
+            "flup": self.flup,
+            "dfdt": self.dfdt,
+            "uavg": self.uavg,
+            "uu": self.uu,
+            "albmed": self.albmed,
+            "trnmed": self.trnmed,
+        }
 
 
 class RFM(Fwd_model):
@@ -285,17 +339,30 @@ class RFM(Fwd_model):
 
 
 class DISORT(Fwd_model):
-    """Class that contains the DISORT forward model.
+    """Contain DISORT configuration, current output, and optional history.
 
-    Is subclass of Fwd_model.
+    Args:
+        name (str): Human-readable model name.
+        disort_fldr (path-like | None): Optional DISORT working directory.
+        disort_input (dict | None): Initial input dictionary; a fresh dictionary
+            is created when omitted.
+        disort_out (dict | None): Initial historical output dictionary; a fresh
+            dictionary is created when omitted.
+        retain_history (bool): Add every returned result to ``disort_out`` when
+            true. Low-memory spectrum runners set this to false.
+        disort_fmt_passmark (bool): Initial format-validation state.
+        disort_integrity_passmark (bool): Initial integrity-validation state.
+        status (str): Initial status text.
+        **parameters: Additional attributes assigned to the instance.
     """
 
     def __init__(
         self,
         name="DISORT",
         disort_fldr=None,
-        disort_input={},
-        disort_out={},
+        disort_input=None,
+        disort_out=None,
+        retain_history=True,
         disort_fmt_passmark=True,
         disort_integrity_passmark=True,
         status="DISORT object created.",
@@ -303,8 +370,10 @@ class DISORT(Fwd_model):
     ):
         super().__init__(name)
         self.disort_fldr = disort_fldr
-        self.disort_input = disort_input
-        self.disort_out = disort_out
+        self.disort_input = {} if disort_input is None else disort_input
+        self.disort_out = {} if disort_out is None else disort_out
+        self.retain_history = retain_history
+        self.current_output = None
         self.disort_fmt_passmark = disort_fmt_passmark
         self.disort_integrity_passmark = disort_integrity_passmark
         self.status = status
@@ -487,15 +556,23 @@ class DISORT(Fwd_model):
         Args:
             rfm (obj): Class RFM object and has attribute rfm_output.
 
+        Returns:
+            None: ``maxcly`` is updated in ``disort_input``.
+
         Raises:
             AttributeError: Raised when rfm does not have rfm_output attribute.
         """
         try:
-            self.disort_input["maxcly"] = len(rfm.rfm_output["layer no."])
-        except AttributeError:
-            print(
-                "Class RFM does not have attribute rfm_output. Make sure to set up class RFM properly first."
+            output = rfm.rfm_output
+            self.disort_input["maxcly"] = (
+                output.layer_count
+                if hasattr(output, "layer_count")
+                else len(output["layer no."])
             )
+        except (AttributeError, KeyError) as exc:
+            raise AttributeError(
+                "RFM must contain a populated rfm_output attribute."
+            ) from exc
 
     def set_maxmom(self, maxmom):
         """Assigns the value of maxmom.
@@ -674,17 +751,26 @@ class DISORT(Fwd_model):
         Args:
             rfm (obj): Class RFM object which has attribute rfm_output.
 
+        Returns:
+            None: ``temper`` is updated in ``disort_input``.
+
+        Raises:
+            AttributeError: If the RFM output has no temperature profile.
+
         """
         try:
-            self.disort_input["temper"] = rfm.rfm_output["T_upper (K)"].tolist()
-            self.disort_input["temper"].append(
-                rfm.rfm_output["T_lower (K)"].tolist()[-1]
-            )
-        except AttributeError:
-            print(
-                """Class RFM does not have attribute rfm_output. Make sure to set-up 
-                class RFM properly first."""
-            )
+            output = rfm.rfm_output
+            if hasattr(output, "temperature_upper"):
+                temperatures = output.temperature_upper.tolist()
+                temperatures.append(float(output.temperature_lower[-1]))
+            else:
+                temperatures = output["T_upper (K)"].tolist()
+                temperatures.append(output["T_lower (K)"].tolist()[-1])
+            self.disort_input["temper"] = temperatures
+        except (AttributeError, KeyError) as exc:
+            raise AttributeError(
+                "RFM must contain temperatures in rfm_output."
+            ) from exc
         return
 
     def set_wvnm_range(self, lo, hi):
@@ -821,19 +907,24 @@ class DISORT(Fwd_model):
         Args:
             rfm (obj): Class RFM object which has attribute rfm_output.
 
+        Returns:
+            None: ``h_lyr`` is updated in ``disort_input``.
+
         Raises:
             AttributeError: Raised when RFM object does not have rfm_output attribute.
         """
 
         try:
-            self.disort_input["h_lyr"] = rfm.rfm_output["h_upper (km)"].tolist()
-            self.disort_input["h_lyr"].append(
-                rfm.rfm_output["h_lower (km)"].tolist()[-1]
-            )
-        except AttributeError:
-            print(
-                "Class RFM does not have attribute rfm_output. Make sure to set-up class RFM properly first."
-            )
+            output = rfm.rfm_output
+            if hasattr(output, "altitude_upper"):
+                heights = output.altitude_upper.tolist()
+                heights.append(float(output.altitude_lower[-1]))
+            else:
+                heights = output["h_upper (km)"].tolist()
+                heights.append(output["h_lower (km)"].tolist()[-1])
+            self.disort_input["h_lyr"] = heights
+        except (AttributeError, KeyError) as exc:
+            raise AttributeError("RFM must contain heights in rfm_output.") from exc
 
     def set_rhoq(self, rhoq):
         """Assigns the value of rhoq.
@@ -921,7 +1012,7 @@ class DISORT(Fwd_model):
         self.disort_input["trnmed"] = np.zeros(self.disort_input["maxumu"])
 
     def run_disort(self, prec="double", adjust_maxcmu=True):
-        """Calls function to run disort with required precision.
+        """Run DISORT at the requested precision and return its current output.
 
         Args:
             prec (str): Determines Fortran precision to be used (single vs double).
@@ -932,14 +1023,53 @@ class DISORT(Fwd_model):
                 number of computational streams usually fixes it, so in case this
                 happens, the number of streams is automatically adjusted and DISORT run
                 again.
+
+        Returns:
+            DisortResult: Normalized outputs for the current spectral point.
+
+        Raises:
+            ValueError: If ``prec`` is neither ``"single"`` nor ``"double"``.
         """
         if prec == "double":
-            self.run_disort_double(adjust_maxcmu)
+            result = self.run_disort_double(adjust_maxcmu)
         elif prec == "single":
-            self.run_disort_single(adjust_maxcmu)
+            result = self.run_disort_single(adjust_maxcmu)
         else:
             raise ValueError("prec must be 'single' or 'double'.")
-        return
+        return result
+
+    def _record_result(self, native_result):
+        """Normalize and optionally retain one native DISORT result.
+
+        Args:
+            native_result (tuple): Values returned by the f2py DISORT wrapper.
+
+        Returns:
+            DisortResult: Structured output for the current spectral point.
+
+        Raises:
+            ValueError: If the configured wavenumber interval has zero width.
+        """
+        interval = self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
+        if interval == 0:
+            raise ValueError("DISORT wavenumber interval must have non-zero width.")
+        result = DisortResult(
+            wavenumber=self.wvnm,
+            wavelength=self.wvl,
+            rfldir=native_result[0] / interval,
+            rfldn=native_result[1] / interval,
+            flup=native_result[2] / interval,
+            dfdt=native_result[3] / interval,
+            uavg=native_result[4] / interval,
+            uu=native_result[5] / interval,
+            albmed=native_result[6],
+            trnmed=native_result[7] if len(native_result) == 8 else 0,
+        )
+        self.current_output = result
+        if self.retain_history:
+            self.disort_out[self.wvnm] = result.as_dict()
+        self.status = "DISORT run completed."
+        return result
 
     def set_wvnm(self, wvnm):
         """Sets wavenumber of the current run.
@@ -960,7 +1090,14 @@ class DISORT(Fwd_model):
         self.wvl = wvl
 
     def run_disort_single(self, adjust_maxcmu):
-        """Runs disort, single precision."""
+        """Run the single-precision DISORT wrapper.
+
+        Args:
+            adjust_maxcmu (bool): Retry small negative radiances with more streams.
+
+        Returns:
+            DisortResult: Normalized outputs for the current spectral point.
+        """
         # run DISORT
         res = dms.disort(
             maxcly=self.disort_input["maxcly"],
@@ -1123,39 +1260,17 @@ class DISORT(Fwd_model):
                     )
                     break
 
-        self.disort_out[self.wvnm] = {}
-        self.disort_out[self.wvnm]["wavenumber (cm-1)"] = self.wvnm
-        self.disort_out[self.wvnm]["wavelength (um)"] = self.wvl
-        self.disort_out[self.wvnm]["rfldir"] = res[0] / (
-            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-        )
-        self.disort_out[self.wvnm]["rfldn"] = res[1] / (
-            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-        )
-        self.disort_out[self.wvnm]["flup"] = res[2] / (
-            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-        )
-        self.disort_out[self.wvnm]["dfdt"] = res[3] / (
-            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-        )
-        self.disort_out[self.wvnm]["uavg"] = res[4] / (
-            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-        )
-        self.disort_out[self.wvnm]["uu"] = res[5] / (
-            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-        )
-        self.disort_out[self.wvnm]["albmed"] = res[6]
-        if len(res) == 8:
-            self.disort_out[self.wvnm]["trnmed"] = res[7]
-        else:
-            self.disort_out[self.wvnm]["trnmed"] = 0
-
-        self.status = "DISORT run completed."
-
-        return
+        return self._record_result(res)
 
     def run_disort_double(self, adjust_maxcmu):
-        """Runs disort, double precision."""
+        """Run the double-precision DISORT wrapper.
+
+        Args:
+            adjust_maxcmu (bool): Retry small negative radiances with more streams.
+
+        Returns:
+            DisortResult: Normalized outputs for the current spectral point.
+        """
         res = dmd.disort(
             maxcly=self.disort_input["maxcly"],
             maxmom=self.disort_input["maxmom"],
@@ -1208,36 +1323,7 @@ class DISORT(Fwd_model):
             trnmed=self.disort_input["trnmed"],
         )
 
-        self.disort_out[self.wvnm] = {}
-        self.disort_out[self.wvnm]["wavenumber (cm-1)"] = self.wvnm
-        self.disort_out[self.wvnm]["wavelength (um)"] = self.wvl
-        self.disort_out[self.wvnm]["rfldir"] = res[0] / (
-            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-        )
-        self.disort_out[self.wvnm]["rfldn"] = res[1] / (
-            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-        )
-        self.disort_out[self.wvnm]["flup"] = res[2] / (
-            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-        )
-        self.disort_out[self.wvnm]["dfdt"] = res[3] / (
-            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-        )
-        self.disort_out[self.wvnm]["uavg"] = res[4] / (
-            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-        )
-        self.disort_out[self.wvnm]["uu"] = res[5] / (
-            self.disort_input["wvnmhi"] - self.disort_input["wvnmlo"]
-        )
-        self.disort_out[self.wvnm]["albmed"] = res[6]
-        if len(res) == 8:
-            self.disort_out[self.wvnm]["trnmed"] = res[7]
-        else:
-            self.disort_out[self.wvnm]["trnmed"] = 0
-
-        self.status = "DISORT run completed."
-
-        return
+        return self._record_result(res)
 
     def calc_bbt(self):
         """Converts radiance to brightness temperature."""
@@ -1454,6 +1540,90 @@ class DISORT(Fwd_model):
         self.disort_input["pmom"] = pmom
         return
 
+    def set_mixed_pmom(
+        self,
+        tau_R,
+        w_p,
+        tau_p,
+        particle_moments=None,
+        prec="double",
+    ):
+        """Build the mixed Rayleigh-particle moments in one reusable workspace.
+
+        Rayleigh scattering has coefficients 1.0 and 0.1 at indices zero and
+        two, respectively, with all other coefficients equal to zero. Particle
+        coefficients are supplied only for layers that contain particles, avoiding
+        the two mostly redundant dense input matrices required by :meth:`set_pmom`.
+
+        Args:
+            tau_R (array-like): Rayleigh optical depth for each retained layer.
+            w_p (array-like): Particle single-scattering albedo for each layer.
+            tau_p (array-like): Particle optical depth for each retained layer.
+            particle_moments (Mapping[int, array-like] | None): Particle Legendre
+                vectors keyed by retained atmospheric-layer index.
+            prec (str): DISORT precision, either ``"single"`` or ``"double"``.
+
+        Returns:
+            numpy.ndarray: C-contiguous moment workspace passed to DISORT. The
+                bundled f2py wrapper otherwise misinterprets production-sized
+                Fortran-contiguous inputs, so its unavoidable conversion is left
+                explicit and documented.
+
+        Raises:
+            ValueError: If precision, vector lengths, or particle-layer indices are
+                invalid.
+        """
+        if prec not in {"single", "double"}:
+            raise ValueError("prec must be 'single' or 'double'.")
+        dtype = np.float32 if prec == "single" else np.float64
+        maxmom = self.disort_input["maxmom"]
+        maxcly = self.disort_input["maxcly"]
+        tau_R = np.asarray(tau_R, dtype=dtype)
+        tau_p = np.asarray(tau_p, dtype=dtype)
+        w_p = np.asarray(w_p, dtype=dtype)
+        if any(vector.shape != (maxcly,) for vector in (tau_R, tau_p, w_p)):
+            raise ValueError("tau_R, tau_p, w_p must have length maxcly")
+
+        workspace_key = (dtype, maxmom + 1, maxcly)
+        workspaces = getattr(self, "_pmom_workspaces", {})
+        pmom = workspaces.get(workspace_key)
+        if pmom is None:
+            # The bundled f2py DISORT interface interprets a directly supplied
+            # Fortran-contiguous array incorrectly for production-sized PMOM inputs.
+            # C order triggers its safe input conversion and is therefore required.
+            pmom = np.empty((maxmom + 1, maxcly), dtype=dtype, order="C")
+            workspaces[workspace_key] = pmom
+            self._pmom_workspaces = workspaces
+        pmom.fill(0)
+
+        denominator = tau_R + w_p * tau_p
+        nonzero = denominator != 0
+        pmom[0, nonzero] = tau_R[nonzero] / denominator[nonzero]
+        if maxmom >= 2:
+            pmom[2, nonzero] = 0.1 * tau_R[nonzero] / denominator[nonzero]
+
+        for layer_index, coefficients in (particle_moments or {}).items():
+            if layer_index < 0 or layer_index >= maxcly:
+                raise ValueError("Particle moment layer index is outside maxcly.")
+            if not nonzero[layer_index]:
+                continue
+            coefficient_array = np.asarray(coefficients, dtype=dtype)
+            coefficient_count = min(coefficient_array.size, maxmom + 1)
+            particle_weight = (
+                w_p[layer_index] * tau_p[layer_index] / denominator[layer_index]
+            )
+            pmom[:coefficient_count, layer_index] += (
+                particle_weight * coefficient_array[:coefficient_count]
+            )
+
+        # Avoid a one-ulp overshoot from adding separately weighted terms. DISORT
+        # requires the zeroth moment to be exactly normalized and rejects values
+        # even infinitesimally above one.
+        pmom[0, nonzero] = 1.0
+
+        self.disort_input["pmom"] = pmom
+        return pmom
+
     def calc_pmom(self, iphas, prec="double", gg=0):
         """Calculates phase function moments from disort using the getmom function.
 
@@ -1591,15 +1761,25 @@ class SRFM(Fwd_model):
         for key, val in parameters.items():
             setattr(self, key, val)
 
-    def initialize_srfm_output_arrays_from_disort(self, DISORT):
-        """Initializes srfm output arrays to which disort outputs are appended.
+    def initialize_srfm_output_arrays_from_disort(self, DISORT, retain_outputs=None):
+        """Initialize requested spectral arrays for DISORT outputs.
+
+        By default every historical output is allocated.  Passing a collection lets
+        memory-sensitive callers retain only the values that they will return, plot,
+        or write. ``"radiance"`` is accepted as an alias for ``"uu"``.
 
         Args:
             DISORT (obj): instance of srfm.forward_model.DISORT
+            retain_outputs (collection[str] | None): Output names to allocate, or
+                ``None`` to preserve the historical all-output behavior.
+
+        Returns:
+            None: Requested arrays are allocated as SRFM attributes.
 
         Raises:
             RuntimeError: Raised when the SRFM object doesn't have wavenumber or
                 wavelengths grid first.
+            ValueError: Raised when an output name is not recognized.
 
         """
         if hasattr(self, "wvnm") and self.wvnm is not None:
@@ -1609,22 +1789,49 @@ class SRFM(Fwd_model):
         else:
             raise RuntimeError("SRFM must have wvnm or wvls grids first.")
 
-        self.rfldir = np.zeros((dim, DISORT.disort_input["maxulv"]))
-        self.rfldn = np.zeros((dim, DISORT.disort_input["maxulv"]))
-        self.flup = np.zeros((dim, DISORT.disort_input["maxulv"]))
-        self.dfdt = np.zeros((dim, DISORT.disort_input["maxulv"]))
-        self.uavg = np.zeros((dim, DISORT.disort_input["maxulv"]))
+        output_names = {
+            "rfldir",
+            "rfldn",
+            "flup",
+            "dfdt",
+            "uavg",
+            "uu",
+            "albmed",
+            "trnmed",
+        }
+        if retain_outputs is None:
+            retained = output_names
+        else:
+            aliases = {"radiance": "uu"}
+            requested = {aliases.get(name, name) for name in retain_outputs}
+            requested.discard("bbt")
+            unknown = requested - output_names
+            if unknown:
+                raise ValueError(
+                    "Unknown SRFM output name(s): " + ", ".join(sorted(unknown))
+                )
+            retained = requested
 
-        self.uu = np.zeros(
-            (
+        level_shape = (dim, DISORT.disort_input["maxulv"])
+        angle_shape = (dim, DISORT.disort_input["maxumu"])
+        shapes = {
+            "rfldir": level_shape,
+            "rfldn": level_shape,
+            "flup": level_shape,
+            "dfdt": level_shape,
+            "uavg": level_shape,
+            "uu": (
                 dim,
                 DISORT.disort_input["maxumu"],
                 DISORT.disort_input["maxulv"],
                 DISORT.disort_input["maxphi"],
-            )
-        )
-        self.albmed = np.zeros((dim, DISORT.disort_input["maxumu"]))
-        self.trnmed = np.zeros((dim, DISORT.disort_input["maxumu"]))
+            ),
+            "albmed": angle_shape,
+            "trnmed": angle_shape,
+        }
+        self.retained_outputs = frozenset(retained)
+        for output_name in retained:
+            setattr(self, output_name, np.zeros(shapes[output_name]))
         return
 
     def set_wvnm(self, wvnm):
@@ -1657,7 +1864,7 @@ class SRFM(Fwd_model):
         self.wvls = wvls
         return
 
-    def store_disort_result(self, DISORT, wvl_idx):
+    def store_disort_result(self, result, wvl_idx):
         """Stores results from a single DISORT run into the SRFM object.
 
         DISORT returns results for a given wavenumber/wavelength. If the overarching
@@ -1666,23 +1873,32 @@ class SRFM(Fwd_model):
         in appropriate places (at appropriate indices).
 
         Args:
-            DISORT (obj): instance of srfm.forward_model.DISORT
+            result (DisortResult | DISORT): Structured current result. A DISORT
+                instance is also accepted for compatibility and uses its
+                ``current_output`` or retained legacy dictionary entry.
             wvl_idx (int): Values are inserted into SRFM arrays at this index. The idea
                 is that the DISORT calculation is performed at a certain wavenunmber.
                 SRFM has initialized arrays of size matching the overall wavenumber grid
                 and results from each DISORT run are inserted into the arrays at the
                 index corresponding to the respective wavenumber.
 
+        Returns:
+            None: Retained arrays are updated in place.
+
         """
-        wvnm = DISORT.wvnm
-        self.rfldir[wvl_idx] = DISORT.disort_out[wvnm]["rfldir"]
-        self.rfldn[wvl_idx] = DISORT.disort_out[wvnm]["rfldn"]
-        self.flup[wvl_idx] = DISORT.disort_out[wvnm]["flup"]
-        self.dfdt[wvl_idx] = DISORT.disort_out[wvnm]["dfdt"]
-        self.uavg[wvl_idx] = DISORT.disort_out[wvnm]["uavg"]
-        self.uu[wvl_idx] = DISORT.disort_out[wvnm]["uu"]
-        self.albmed[wvl_idx] = DISORT.disort_out[wvnm]["albmed"]
-        self.trnmed[wvl_idx] = DISORT.disort_out[wvnm]["trnmed"]
+        if isinstance(result, DISORT):
+            if result.current_output is not None:
+                result = result.current_output
+            else:
+                result = result.disort_out[result.wvnm]
+
+        for output_name in getattr(self, "retained_outputs", ()):
+            source = (
+                getattr(result, output_name)
+                if isinstance(result, DisortResult)
+                else result[output_name]
+            )
+            getattr(self, output_name)[wvl_idx] = source
         return
 
     def calc_bbt(self):
@@ -1693,19 +1909,16 @@ class SRFM(Fwd_model):
         array in shape.
 
         """
-        # strech wvnm to correct shape to be broadcastable.
-        wvnm = self.wvnm[:, np.newaxis, np.newaxis, np.newaxis]  # add new axis to wvnm
-        # to match the number of uu dimensions, 0th dimension (axis 0) are the same
+        wvnm = np.asarray(self.wvnm, dtype=float)
+        if self.uu.ndim < 1 or wvnm.ndim != 1 or wvnm.size != self.uu.shape[0]:
+            raise ValueError(
+                "The wavenumber grid must be one-dimensional and match the first "
+                "radiance dimension."
+            )
 
-        assert (
-            wvnm.shape[0] == self.uu.shape[0]
-        ), """wvnm and uu don't have the same
-        shape of the first axis???"""
-
-        uu_shape = self.uu.shape  # tuple
-
-        for num, i in enumerate(uu_shape[1:]):
-            wvnm = np.repeat(wvnm, i, axis=num + 1)
+        # Broadcast the spectral grid over every DISORT output dimension
+        # without allocating repeated copies.
+        wvnm = wvnm.reshape((wvnm.size,) + (1,) * (self.uu.ndim - 1))
 
         self.bbt = utils.convert_spectral_radiance_to_bbt(self.uu, wvnm)
         return
@@ -1726,8 +1939,11 @@ class SRFM(Fwd_model):
                 kindly provided by Anu Dudhia, in RFM format.)
 
         """
-        # save a copy of unconvolved spectrum
-        uu_unconvolved = self.uu.copy()
+        uu_unconvolved = np.asarray(self.uu)
+        if uu_unconvolved.ndim < 1 or uu_unconvolved.shape[0] != len(self.wvnm):
+            raise ValueError(
+                "The first radiance dimension must match the wavenumber grid."
+            )
 
         # read instrument line shape
         ils_x, ils_y, ils_lo, ils_hi = utils.read_ils(filename)
@@ -1744,7 +1960,7 @@ class SRFM(Fwd_model):
         lo = self.wvnm.min()
         hi = self.wvnm.max()
         res = np.round((hi - lo) / (num - 1), decimals=8)
-        # this is inadvertedly introduces a limit
+        # this inadvertently introduces a limit
         # on the minimum resolution used in the code as 1e-8 cm-1, which should be
         # enough though, and also this may not be the numerically most stable way to go
 
@@ -1760,14 +1976,14 @@ class SRFM(Fwd_model):
 
         # calculate sum of instrument line shape for normalization later
         norm = np.sum(new_y)
+        if not np.isfinite(norm) or np.isclose(norm, 0.0):
+            raise ValueError("Instrument line shape has zero or non-finite normalization.")
 
-        # determine shape of uu from DISORT (basically a set of output spectra a
-        # different optical dpeths, polar and azimuthal angles
+        # determine shape of uu from DISORT (a set of output spectra at
+        # different optical depths, polar angles, and azimuthal angles)
         uu_shape = self.uu.shape  # tuple
         nwv = uu_shape[0]  # first dimension size
-        rest = (
-            uu_shape[1] * uu_shape[2] * uu_shape[3]
-        )  # multiple of other dimension sizes for flattening,
+        rest = int(np.prod(uu_shape[1:], dtype=int))
         # rest basically gives a number of stored spectra in the variable
 
         # reshape uu (view)
@@ -1781,60 +1997,73 @@ class SRFM(Fwd_model):
         # reshape back
         self.uu = out_flat.reshape(uu_shape)
 
-        ## OLD
-        #        # determine all combinations of indices of uu
-        #        combs = []
-        #        for i in range(uu_shape[1]):
-        #            for ii in range(uu_shape[2]):
-        #                for iii in range(uu_shape[3]):
-        #                    combs.append([i, ii, iii])
-
-        #        # convolve spectra in a loop
-        #        for c in combs:
-        #            self.uu[:, c[0], c[1], c[2]] = (
-        #                convolve(uu_unconvolved[:, c[0], c[1], c[2]], new_y, mode="same") / norm
-        #            )
+        if hasattr(self, "bbt"):
+            self.calc_bbt()
 
         return
 
     def interp(self, new_wvnm):
-        """Interpolates radiances (uu) and brightness temperatures to a new grid.
+        """Interpolate every retained spectral output to a new grid.
 
         Original intended use is to interpolate the calculated and already convolved
         spectra (i.e. at a lower effective resolution) to a satellite lower resolution
         grid.
 
-        The SRFM object must contain radiances (uu). If besides radiances also contains
-        brightness temperatures (bbt), then these are interpolated as well.
-
-        Output is returned as updated attributes - new wavenumber and wavelength grids
-        as well as new radiances and brightness temperatures (if originally present).
+        All retained raw DISORT fields are interpolated consistently. If brightness
+        temperature already exists, it is recalculated from interpolated radiance
+        because that conversion is nonlinear.
 
         Args:
-            new_wvnm: new wavenumber grid to interpolate to, units [cm-1]
+            new_wvnm (array-like): New wavenumber grid in cm-1.
+
+        Returns:
+            None: Spectral arrays and coordinate grids are updated in place.
+
+        Raises:
+            ValueError: If either grid is invalid, extrapolation would be required,
+                or an output's spectral dimension is inconsistent.
 
         """
 
-        uu_shape = self.uu.shape  # tuple
-
-        new_uu_shape = list(uu_shape)
-        new_uu_shape[0] = len(new_wvnm)
-        new_uu = np.zeros(tuple(new_uu_shape))
-
-        # determine all combinations of indices of uu
-        combs = []
-        for i in range(uu_shape[1]):
-            for ii in range(uu_shape[2]):
-                for iii in range(uu_shape[3]):
-                    combs.append([i, ii, iii])
-
-        # interpolate spectra in a loop
-        for c in combs:
-            new_uu[:, c[0], c[1], c[2]] = np.interp(
-                new_wvnm, self.wvnm, self.uu[:, c[0], c[1], c[2]]
+        old_wvnm = np.asarray(self.wvnm, dtype=float)
+        new_wvnm = np.asarray(new_wvnm, dtype=float)
+        if old_wvnm.ndim != 1 or new_wvnm.ndim != 1:
+            raise ValueError("Wavenumber grids must be one-dimensional.")
+        if old_wvnm.size < 2 or not np.all(np.diff(old_wvnm) > 0):
+            raise ValueError("The source wavenumber grid must be strictly increasing.")
+        if not np.all(np.isfinite(new_wvnm)):
+            raise ValueError("The new wavenumber grid must contain only finite values.")
+        if new_wvnm.size and (
+            new_wvnm.min() < old_wvnm[0] or new_wvnm.max() > old_wvnm[-1]
+        ):
+            raise ValueError("The new wavenumber grid must lie within the source grid.")
+        spectral_outputs = set(getattr(self, "retained_outputs", ()))
+        if not spectral_outputs:
+            spectral_outputs = {
+                name
+                for name in (
+                    "rfldir",
+                    "rfldn",
+                    "flup",
+                    "dfdt",
+                    "uavg",
+                    "uu",
+                    "albmed",
+                    "trnmed",
+                )
+                if hasattr(self, name)
+            }
+        for output_name in spectral_outputs:
+            old_values = np.asarray(getattr(self, output_name))
+            if old_values.shape[0] != old_wvnm.size:
+                raise ValueError(
+                    f"The first {output_name} dimension must match the source "
+                    "wavenumber grid."
+                )
+            interpolator = make_interp_spline(
+                old_wvnm, old_values, axis=0, k=1
             )
-
-        self.uu = new_uu
+            setattr(self, output_name, interpolator(new_wvnm))
 
         # calculate new wavelengths [um]
         new_wvls = (1 / new_wvnm) * 1e4
@@ -1842,5 +2071,10 @@ class SRFM(Fwd_model):
         # assign grids to class
         self.wvnm = new_wvnm
         self.wvls = new_wvls
+
+        # Brightness temperature is nonlinear in radiance, so recalculate an
+        # existing attribute instead of interpolating it independently.
+        if hasattr(self, "bbt"):
+            self.calc_bbt()
 
         return

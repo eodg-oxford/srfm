@@ -126,6 +126,7 @@ def _e2e_case(payload):
         "wvnm": model.wvnm,
         "uu": model.uu,
         "bbt": model.bbt,
+        "output_values": getattr(model, "output_values", None),
         "input_keys": tuple(inputs.values),
     }
 

@@ -140,6 +140,25 @@ def test_python_mie_solver_validates_angle_dimensions_and_size():
         optical.mie_ewp(105001, 1.5 - 0.01j, [0])
 
 
+def test_ewp_legendre_storage_owns_quadrature_bounded_allocation():
+    """Verify compact Legendre output cannot retain an oversized base array."""
+    distribution = LogNormalDistribution(n=1, r=0.2, s=1.5)
+    result = optical.ewp_hs(
+        np.array([9.0, 10.0]),
+        "ri",
+        distribution,
+        refractive_index=1.5 - 0.01j,
+        legendre_coefficients_flag=True,
+        phase_quad_N=9,
+        radii=8,
+    )
+    coefficients = result["legendre_coefficient"]
+    assert coefficients.shape[1] <= 9
+    assert coefficients.flags.c_contiguous
+    assert coefficients.flags.owndata
+    assert coefficients.base is None
+
+
 def test_regrid_interpolates_all_optical_properties_and_preserves_shapes():
     """Verify regridding interpolates every optical property consistently.
 

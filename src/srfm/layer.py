@@ -801,88 +801,147 @@ class MieLayer(Layer):
             )
 
     @utils.show_runtime
-    def regrid(self, wvls, track_diff=False, diff_type="pct"):
-        """Linearly interpolates calculated values from ewp_hs to a new grid.
+    def regrid(
+        self,
+        wvls,
+        track_diff=False,
+        diff_type="pct",
+        regrid_phase_function=True,
+        retain_original=None,
+    ):
+        """Linearly interpolate selected optical properties to a new grid.
 
-        Instance must have  "beta_ext", "ssalb", "phase_function", and
-        "legendre_coefficient".
+        The compatibility defaults preserve the historical phase-function and
+        ``*_old`` attributes. Memory-sensitive callers can omit the full phase
+        function and original arrays explicitly.
 
         Args:
+            wvls (array-like): New wavelength grid in micrometres.
+            track_diff (bool): Calculate interpolation differences when true.
+            diff_type (str): Difference representation, ``"pct"`` or ``"abs"``.
+            regrid_phase_function (bool): Interpolate the phase function when true;
+                otherwise remove it after any requested original retention.
+            retain_original (bool | None): Retain coarse arrays as ``*_old``. ``None``
+                preserves historical behavior; difference tracking always retains them.
 
-            wvls (aray-like): new grid, units [\ :math:`\\mu`\ m]
-            track_diff (bool): If True, calculates differences arising from
-                interpolation.
         Returns:
-            old attributes now as "_old"
-            new attributes "beta_ext", "ssalb", "phase_function" and
-            optional ("legendre_coefficient")
-            difference between old and new attributes: "_diff" version of the new
-              attributes
+            None: Selected layer properties are replaced with interpolated arrays.
 
         Raises:
-            ValueError: Raised when any wavelength array is not monotonic.
-
+            ValueError: If either wavelength grid is not monotonic.
         """
-        # check if legendre coefficients are present:
-        lc_flag = hasattr(self, "legendre_coefficient")
+        if retain_original is None:
+            retain_original = True
+        retain_original = bool(retain_original or track_diff)
+        original_names = (
+            "wvls",
+            "beta_ext",
+            "ssalb",
+            "phase_function",
+            "legendre_coefficient",
+        )
+        if retain_original:
+            for attribute_name in original_names:
+                if hasattr(self, attribute_name):
+                    setattr(self, f"{attribute_name}_old", getattr(self, attribute_name))
+        else:
+            for attribute_name in original_names:
+                old_name = f"{attribute_name}_old"
+                if hasattr(self, old_name):
+                    delattr(self, old_name)
 
-        # preserve original results
-        self.wvls_old = self.wvls
-        self.beta_ext_old = self.beta_ext
-        self.ssalb_old = self.ssalb
-        self.phase_function_old = self.phase_function
-        if lc_flag == True:
-            self.legendre_coefficient_old = self.legendre_coefficient
+        interpolated = self.interpolate_optical_properties(
+            wvls, include_phase_function=regrid_phase_function or track_diff
+        )
+        self.wvls = interpolated.pop("wavelengths")
+        self.beta_ext = interpolated["beta_ext"]
+        self.ssalb = interpolated["ssalb"]
+        if "legendre_coefficient" in interpolated:
+            self.legendre_coefficient = interpolated["legendre_coefficient"]
+        if regrid_phase_function or track_diff:
+            self.phase_function = interpolated["phase_function"]
+        elif hasattr(self, "phase_function"):
+            delattr(self, "phase_function")
 
-        # check if new input wavelengths are monotonic and increasing or decreasing
-        wvls_mono = utils.monotonic(wvls)
-        if wvls_mono == 0:
-            raise ValueError("Wvls is not monotonic.")
-        elif wvls_mono == 2:
-            wvls = np.flip(wvls)
-
-        # check if existing wavelengths are monotoning and increasing or decreasing
-        cls_mono = utils.monotonic(self.wvls)
-        if cls_mono == 0:
-            raise ValueError("class wavelengths are not monotonic.???")
-        elif cls_mono == 2:
-            self.wvls = np.flip(self.wvls)
-            self.beta_ext = np.flip(self.beta_ext)
-            self.ssalb = np.flip(self.ssalb)
-            self.phase_function = np.flipud(self.phase_function)
-            if lc_flag == True:
-                self.legendre_coefficient = np.flipud(self.legendre_coefficient)
-
-        # interpolate
-        self.beta_ext = np.interp(wvls, self.wvls, self.beta_ext)
-        self.ssalb = np.interp(wvls, self.wvls, self.ssalb)
-        self.phase_function = np.array(
-            [
-                np.interp(wvls, self.wvls, self.phase_function[:, i])
-                for i in range(self.phase_function.shape[1])
-            ]
-        ).T
-        if lc_flag == True:
-            self.legendre_coefficient = np.array(
-                [
-                    np.interp(wvls, self.wvls, self.legendre_coefficient[:, i])
-                    for i in range(self.legendre_coefficient.shape[1])
-                ]
-            ).T
-        self.wvls = wvls
-
-        if wvls_mono == 2:
-            self.wvls = np.flip(self.wvls)
-            self.beta_ext = np.flip(self.beta_ext)
-            self.ssalb = np.flip(self.ssalb)
-            self.phase_function = np.flipud(self.phase_function)
-            if lc_flag == True:
-                self.legendre_coefficient = np.flipud(self.legendre_coefficient)
-
-        if track_diff == True:
+        if track_diff:
             self.track_regrid_diff(diff_type=diff_type)
 
-        return
+    def interpolate_optical_properties(
+        self, wvls, include_phase_function=False, include_legendre=True
+    ):
+        """Interpolate optical properties without modifying the coarse layer data.
+
+        This method is intended for bounded spectral blocks. It matches
+        :func:`numpy.interp` endpoint behavior and restores the requested grid order.
+
+        Args:
+            wvls (array-like): Target wavelengths in micrometres.
+            include_phase_function (bool): Include the full phase-function matrix.
+            include_legendre (bool): Include Legendre coefficients when available.
+
+        Returns:
+            dict: Interpolated wavelengths, extinction, single-scattering albedo,
+                optional Legendre coefficients, and optional phase function.
+
+        Raises:
+            ValueError: If the source or target wavelength grid is not monotonic.
+        """
+        target = np.asarray(wvls, dtype=float)
+        # A final spectral block may legitimately contain one point. There is no
+        # ordering ambiguity in that case, and numpy.interp handles it directly.
+        target_order = 1 if target.size < 2 else utils.monotonic(target)
+        source = np.asarray(self.wvls, dtype=float)
+        source_order = utils.monotonic(source)
+        if target_order == 0:
+            raise ValueError("Wvls is not monotonic.")
+        if source_order == 0:
+            raise ValueError("Layer wavelengths are not monotonic.")
+
+        interpolation_target = target[::-1] if target_order == 2 else target
+        interpolation_source = source[::-1] if source_order == 2 else source
+
+        def interpolate(values):
+            values = np.asarray(values)
+            ordered_values = values[::-1] if source_order == 2 else values
+            if ordered_values.ndim == 1:
+                output = np.interp(
+                    interpolation_target, interpolation_source, ordered_values
+                )
+            else:
+                output = np.empty(
+                    (interpolation_target.size, ordered_values.shape[1]), dtype=float
+                )
+                for column_index in range(ordered_values.shape[1]):
+                    output[:, column_index] = np.interp(
+                        interpolation_target,
+                        interpolation_source,
+                        ordered_values[:, column_index],
+                    )
+            return output[::-1] if target_order == 2 else output
+
+        result = {
+            "wavelengths": target.copy(),
+            "beta_ext": interpolate(self.beta_ext),
+            "ssalb": interpolate(self.ssalb),
+        }
+        if include_legendre and hasattr(self, "legendre_coefficient"):
+            result["legendre_coefficient"] = interpolate(
+                self.legendre_coefficient
+            )
+        if include_phase_function:
+            if not hasattr(self, "phase_function"):
+                raise ValueError("The phase function was deliberately not retained.")
+            result["phase_function"] = interpolate(self.phase_function)
+        return result
+
+    def discard_phase_function(self):
+        """Release the coarse phase function after its moments have been calculated.
+
+        Returns:
+            None: The layer no longer has a ``phase_function`` attribute.
+        """
+        if hasattr(self, "phase_function"):
+            delattr(self, "phase_function")
 
     def track_regrid_diff(self, diff_type="pct"):
         """Calculates the difference before and after interpolation.

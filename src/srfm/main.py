@@ -26,9 +26,326 @@ import json
 import copy
 
 
+def _resolve_output_geometry(output_format, requested, include_toa, rfm_output):
+    """Resolve requested output values and altitude rows before DISORT setup.
+
+    Args:
+        output_format (str): ``"altitude"`` or direct optical-depth ``"tau"``.
+        requested (array-like): Requested altitude or optical-depth values.
+        include_toa (bool): Append the top-of-atmosphere output when true.
+        rfm_output (OpticalDepthGrid | pandas.DataFrame): Atmospheric profile.
+
+    Returns:
+        tuple[numpy.ndarray, list[int | None] | None]: Resolved values and the
+        corresponding altitude-row indices.
+
+    Raises:
+        ValueError: If an altitude lies outside the atmospheric grid.
+    """
+    output_values = list(requested)
+    altitude_rows = None
+
+    if output_format == "altitude":
+        if hasattr(rfm_output, "altitude_lower"):
+            lower_altitudes = np.asarray(rfm_output.altitude_lower, dtype=float)
+            upper_altitudes = np.asarray(rfm_output.altitude_upper, dtype=float)
+        else:
+            lower_altitudes = rfm_output["h_lower (km)"].to_numpy(dtype=float)
+            upper_altitudes = rfm_output["h_upper (km)"].to_numpy(dtype=float)
+        toa_altitude = float(upper_altitudes.max())
+        bottom_altitude = float(lower_altitudes.min())
+        if any(
+            altitude < bottom_altitude or altitude > toa_altitude
+            for altitude in output_values
+        ):
+            raise ValueError(
+                "Requested output altitudes must lie within the atmospheric grid "
+                f"({bottom_altitude:g} to {toa_altitude:g} km)."
+            )
+        altitude_rows = []
+        matched_altitudes = []
+        for altitude in output_values:
+            if np.isclose(altitude, toa_altitude):
+                altitude_rows.append(None)
+                matched_altitudes.append(toa_altitude)
+            else:
+                row = int(np.abs(lower_altitudes - altitude).argmin())
+                altitude_rows.append(row)
+                matched_altitudes.append(float(lower_altitudes[row]))
+        output_values = matched_altitudes
+        if include_toa and None not in altitude_rows:
+            altitude_rows.append(None)
+            output_values.append(toa_altitude)
+    elif include_toa and not np.any(np.isclose(output_values, 0.0)):
+        output_values.append(0.0)
+
+    return np.asarray(output_values, dtype=float), altitude_rows
+
+
+def _resolve_retained_outputs(values):
+    """Derive the requested and temporary SRFM output arrays.
+
+    Args:
+        values (Mapping): Validated SRFM input values.
+
+    Returns:
+        tuple[set[str], set[str]]: Publicly retained semantic names and raw DISORT
+        arrays required while the calculation is running.
+
+    Raises:
+        ValueError: If the retention collection contains an unsupported name.
+    """
+    aliases = {"radiance": "uu"}
+    raw_names = {
+        "rfldir",
+        "rfldn",
+        "flup",
+        "dfdt",
+        "uavg",
+        "uu",
+        "albmed",
+        "trnmed",
+    }
+    configured = values.get("retain_outputs")
+    if configured is None:
+        requested = set(raw_names) | {"bbt"}
+    else:
+        requested = {aliases.get(name, name) for name in configured}
+        if values.get("rad"):
+            requested.add("uu")
+        if values.get("bbt"):
+            requested.add("bbt")
+        if values.get("base_plots"):
+            requested.add("bbt" if values.get("plot_type") == "bbt" else "uu")
+    unknown = requested - raw_names - {"bbt"}
+    if unknown:
+        raise ValueError("Unknown retained output name(s): " + ", ".join(sorted(unknown)))
+    runtime = requested & raw_names
+    if "bbt" in requested or values.get("convolve_iasi"):
+        runtime.add("uu")
+    return requested, runtime
+
+
+def _interpolate_scattering_block(scattering_layers, wavelengths):
+    """Interpolate every particle layer for one bounded spectral block.
+
+    Args:
+        scattering_layers (Mapping[str, MieLayer]): Coarse-grid particle layers.
+        wavelengths (array-like): Wavelengths for the current block.
+
+    Returns:
+        dict[str, dict[str, numpy.ndarray]]: Extinction, optical depth, albedo,
+        and Legendre coefficients for each named layer.
+    """
+    block = {}
+    for layer_name, scattering_layer in scattering_layers.items():
+        properties = scattering_layer.interpolate_optical_properties(wavelengths)
+        properties["tau"] = (
+            properties["beta_ext"]
+            * 1e3
+            * (scattering_layer.alt_upp - scattering_layer.alt_low)
+        )
+        block[layer_name] = properties
+    return block
+
+
+def _calculate_output_utau(
+    output_format,
+    output_values,
+    altitude_rows,
+    layer_optical_depths,
+    first_retained_layer,
+):
+    """Convert configured output levels to the optical depths used by DISORT.
+
+    Args:
+        output_format (str): ``"altitude"`` or direct optical-depth ``"tau"``.
+        output_values (array-like): Resolved altitude or optical-depth outputs.
+        altitude_rows (sequence[int | None] | None): Atmospheric rows matching
+            altitude outputs, with ``None`` representing top of atmosphere.
+        layer_optical_depths (array-like): Top-to-bottom total layer depths.
+        first_retained_layer (int): Index of the first non-truncated layer.
+
+    Returns:
+        list[float]: Optical depths measured from the retained atmospheric top.
+
+    Raises:
+        ValueError: If a requested output lies below the retained atmosphere.
+    """
+    layer_optical_depths = np.asarray(layer_optical_depths, dtype=float)
+    retained = layer_optical_depths[first_retained_layer:]
+
+    if output_format == "tau":
+        utau = np.asarray(output_values, dtype=float).copy()
+    else:
+        cumulative = np.cumsum(layer_optical_depths)
+        discarded = float(layer_optical_depths[:first_retained_layer].sum())
+        utau = np.asarray(
+            [
+                0.0 if row is None else max(float(cumulative[row]) - discarded, 0.0)
+                for row in altitude_rows
+            ]
+        )
+
+    total_optical_depth = float(retained.sum())
+    tolerance = max(1e-12, abs(total_optical_depth) * 1e-10)
+    if np.any(utau > total_optical_depth + tolerance):
+        raise ValueError(
+            "Requested output optical depth exceeds the atmospheric optical depth "
+            f"({total_optical_depth:g}) at this wavenumber."
+        )
+    return np.minimum(utau, total_optical_depth).tolist()
+
+
+def _write_spectral_text(filename, wavenumbers, values, value_name):
+    """Write every spectrum in a four-dimensional SRFM output array.
+
+    Args:
+        filename (path-like): Destination text file.
+        wavenumbers (array-like): Spectral coordinate in cm-1.
+        values (array-like): Values ordered as spectral, polar, level, azimuth.
+        value_name (str): Descriptive column heading.
+
+    Returns:
+        None: The formatted spectra are written to disk.
+
+    Raises:
+        ValueError: If the value array does not have the expected shape.
+    """
+    values = np.asarray(values)
+    if values.ndim != 4 or values.shape[0] != len(wavenumbers):
+        raise ValueError("Text output requires an array shaped (spectral, polar, level, azimuth).")
+
+    _, num_polar, num_levels, num_azimuthal = values.shape
+    spectra_per_wavenumber = num_polar * num_levels * num_azimuthal
+    polar, level, azimuthal = np.indices(
+        (num_polar, num_levels, num_azimuthal)
+    )
+    indices = (polar.ravel(), level.ravel(), azimuthal.ravel())
+
+    with open(filename, "w", encoding="utf-8") as output_file:
+        output_file.write(
+            "# Wavenumber (cm-1), polar angle index, output level index, "
+            f"azimuthal angle index, {value_name}\n"
+        )
+        for start in range(0, values.shape[0], 10_000):
+            end = min(start + 10_000, values.shape[0])
+            block_size = end - start
+            block = np.column_stack(
+                (
+                    np.repeat(wavenumbers[start:end], spectra_per_wavenumber),
+                    np.tile(indices[0], block_size),
+                    np.tile(indices[1], block_size),
+                    np.tile(indices[2], block_size),
+                    values[start:end].reshape(-1),
+                )
+            )
+            np.savetxt(output_file, block, fmt=["%.4f", "%d", "%d", "%d", "%.8e"])
+
+
+def _create_netcdf_spectral_dimensions(nc_file, model):
+    """Create dimensions and coordinates shared by radiance and BBT output.
+
+    Args:
+        nc_file (netCDF4.Dataset): Open output dataset.
+        model (SRFM): Model containing geometry and spectral coordinates.
+
+    Returns:
+        tuple[str, str, str, str]: NetCDF dimension names in native output order.
+    """
+    values = model.uu if hasattr(model, "uu") else model.bbt
+    num_wavenumbers, num_polar, num_levels, num_azimuthal = values.shape
+    nc_file.createDimension("wavenumber", num_wavenumbers)
+    nc_file.createDimension("output_polar_angle", num_polar)
+    nc_file.createDimension("output_level", num_levels)
+    nc_file.createDimension("output_azimuthal_angle", num_azimuthal)
+
+    wavenumber = nc_file.createVariable("wavenumber", "f8", ("wavenumber",))
+    wavenumber.units = "cm-1"
+    wavenumber.long_name = "Wavenumber"
+    wavenumber[:] = model.wvnm
+
+    output_level = nc_file.createVariable("output_level", "f8", ("output_level",))
+    output_level[:] = model.output_values
+    if model.output_format == "altitude":
+        output_level.units = "km"
+        output_level.long_name = "Matched output altitude"
+    else:
+        output_level.units = "1"
+        output_level.long_name = "Output optical depth"
+
+    polar_index = nc_file.createVariable(
+        "output_polar_angle_index", "i4", ("output_polar_angle",)
+    )
+    polar_index.long_name = "Index of output polar angle"
+    polar_index[:] = np.arange(num_polar)
+
+    azimuthal_index = nc_file.createVariable(
+        "output_azimuthal_angle_index", "i4", ("output_azimuthal_angle",)
+    )
+    azimuthal_index.long_name = "Index of output azimuthal angle"
+    azimuthal_index[:] = np.arange(num_azimuthal)
+
+    return (
+        "wavenumber",
+        "output_polar_angle",
+        "output_level",
+        "output_azimuthal_angle",
+    )
+
+
+def _plot_spectral_outputs(
+    model, results_folder, plot_type, show_plots, filename_prefix="base_plot"
+):
+    """Plot every polar-angle, output-level, and azimuthal-angle spectrum."""
+    if plot_type == "bbt":
+        values = model.bbt
+        y_label = "Brightness temperature (K)"
+    elif plot_type == "rad":
+        values = model.uu
+        y_label = r"Radiance (W m$^{-2}$ sr$^{-1}$ cm)"
+    else:
+        raise ValueError("Plot type not recognized. Please use 'bbt' or 'rad'.")
+
+    level_name = (
+        "altitude (km)" if model.output_format == "altitude" else "optical depth"
+    )
+    for polar in range(values.shape[1]):
+        for level in range(values.shape[2]):
+            for azimuthal in range(values.shape[3]):
+                plt.figure(figsize=(11.7, 8.4))
+                plt.rcParams.update({"font.size": 12})
+                plt.plot(
+                    model.wvnm,
+                    values[:, polar, level, azimuthal],
+                    label="SRFM",
+                    color="tab:blue",
+                )
+                plt.xlabel(r"Wavenumbers (cm$^{-1}$)")
+                plt.ylabel(y_label)
+                plt.title(
+                    f"Output polar angle: {model.output_polar_angles[polar]:g}°\n"
+                    f"Output {level_name}: {model.output_values[level]:g}\n"
+                    f"Output azimuthal angle: {model.output_azimuthal_angles[azimuthal]:g}°"
+                )
+                plt.legend()
+                filename = (
+                    f"{filename_prefix}_{polar}_{level}_{azimuthal}.png"
+                )
+                plt.savefig(os.path.join(results_folder, filename))
+                if show_plots:
+                    plt.ion()
+                    plt.show()
+                else:
+                    plt.close()
+
+
 @utilities.show_runtime
 def run_srfm(inp):
-    """Main function that runs srfm.
+    """Run the generic scattering reference forward model.
+
+    RFM optical depths are consumed in a compact spectral-first array and particle
+    properties are interpolated in bounded blocks before individual DISORT calls.
 
     Generic srfm  run.
 
@@ -37,6 +354,12 @@ def run_srfm(inp):
 
     Returns:
         model_SRFM (obj): Instance of forward_model.SRFM.
+
+    Raises:
+        TypeError: If ``inp`` does not provide a ``values`` mapping.
+        InputValidationError: If configured inputs are invalid.
+        RuntimeError: If RFM capture or a native model calculation fails.
+        ValueError: If spectral, atmospheric, or output geometry is inconsistent.
 
     """
     if not hasattr(inp, "values"):
@@ -126,10 +449,8 @@ def run_srfm(inp):
     # add output from optical properties calculation
     for lyr in scat_lyrs.keys():
         scat_lyrs[lyr].add_op_calc_output()
-
-        # interpolate layer optical properties
-        scat_lyrs[lyr].regrid(wvls, track_diff=False)
-        scat_lyrs[lyr].calc_tau()
+        if not inp.values.get("retain_phase_functions", False):
+            scat_lyrs[lyr].discard_phase_function()
 
     # Prepare dict with layer parameters to be saved in the output
     layer_attrs = (
@@ -320,28 +641,17 @@ def run_srfm(inp):
         levels=levels,
         rfm_out_fldr=inp.values["results_fldr"],
     )
-    # Store the full RunResult for debugging/metadata while keeping the legacy dataframe API.
+    # Keep only compact numerical optical-depth data on the main path.
     model_RFM.rfm_run_result = rfm_run_result
-    if rfm_run_result.output_df is None:
-        raise RuntimeError("RFM capture did not return an optical-depth dataframe.")
-    model_RFM.rfm_output = rfm_run_result.output_df.copy()
+    if rfm_run_result.optical_depth_grid is None:
+        raise RuntimeError("RFM capture did not return a compact optical-depth grid.")
+    model_RFM.rfm_output = rfm_run_result.optical_depth_grid
 
     # print current status:
     model_RFM.status = "RFM completed"
     print(model_RFM.status)
 
-    # rebuild the spectral grid directly from the captured columns
-    cols = [i for i in model_RFM.rfm_output.columns if i.startswith("dOD_")]
-    if not cols:
-        raise RuntimeError(
-            "RFM output does not include any differential optical-depth columns."
-        )
-    try:
-        RFM_wvnm = np.array([float(col.split("_", 1)[1]) for col in cols], dtype=float)
-    except ValueError as exc:
-        raise RuntimeError(
-            "Failed to parse wavenumbers from RFM output columns."
-        ) from exc
+    RFM_wvnm = model_RFM.rfm_output.wavenumber
     wvls = (1.0 / RFM_wvnm) * 1e4
 
     ########################################################################################
@@ -349,14 +659,21 @@ def run_srfm(inp):
     ########################################################################################
 
     # initialize DISORT model class
-    model_DISORT = forward_model.DISORT()
+    model_DISORT = forward_model.DISORT(retain_history=False)
 
     # check if number of columns and wavelengths match
-    if len(cols) != len(wvls):
+    if model_RFM.rfm_output.differential_tau.shape[0] != len(wvls):
         raise ValueError(
             f"Number of RFM and scattering wavelengths don't match "
-            f"({len(cols)} spectral columns vs {len(wvls)} scattering wavelengths)."
+            f"({model_RFM.rfm_output.differential_tau.shape[0]} optical-depth rows "
+            f"vs {len(wvls)} scattering wavelengths)."
         )
+    output_values, altitude_rows = _resolve_output_geometry(
+        inp.values["out_fmt"],
+        inp.values["out"],
+        inp.values["out_toa"],
+        model_RFM.rfm_output,
+    )
 
     # set disort_input parameters common to all loop iterations
     # these need to be set first:
@@ -373,7 +690,10 @@ def run_srfm(inp):
 
     model_DISORT.set_maxumu(inp.values["maxumu"])
     model_DISORT.set_maxphi(inp.values["maxphi"])
-    model_DISORT.set_maxulv(inp.values["maxulv"])
+    # maxulv must match the resolved output geometry. The driver-table value is
+    # retained for compatibility with other runners but is derived here.
+    model_DISORT.set_maxulv(len(output_values))
+    effective_params["maxulv"] = len(output_values)
 
     # now the rest
     model_DISORT.set_usrang(inp.values["usrang"])
@@ -386,7 +706,6 @@ def run_srfm(inp):
     model_DISORT.set_lamber(inp.values["lamber"])
     model_DISORT.set_deltamplus(inp.values["deltamplus"])
     model_DISORT.set_do_pseudo_sphere(inp.values["do_pseudo_sphere"])
-    model_DISORT.set_utau(inp.values["utau"])
 
     model_DISORT.set_fisot(inp.values["fisot"])
     model_DISORT.set_albedo(inp.values["albedo"])
@@ -435,7 +754,7 @@ def run_srfm(inp):
         )  # interpolate to RFM_wvnm (the calculation grid)
 
         # scale with year day (different Sun-Earth distance throughout the year
-        # the original specturm is for 1 AU
+        # the original spectrum is for 1 AU
         solar_spc = utilities.scale_solar_spectrum(solar_spc, year_day)
 
         # get incoming solar beam polar angle for DISORT
@@ -470,7 +789,14 @@ def run_srfm(inp):
     model_SRFM = forward_model.SRFM()
     model_SRFM.set_wvnm(RFM_wvnm)
     model_SRFM.set_wvls(wvls)
-    model_SRFM.initialize_srfm_output_arrays_from_disort(model_DISORT)
+    requested_outputs, runtime_outputs = _resolve_retained_outputs(inp.values)
+    model_SRFM.initialize_srfm_output_arrays_from_disort(
+        model_DISORT, retain_outputs=runtime_outputs
+    )
+    model_SRFM.output_format = inp.values["out_fmt"]
+    model_SRFM.output_values = output_values
+    model_SRFM.output_polar_angles = np.asarray([inp.values["zen"]], dtype=float)
+    model_SRFM.output_azimuthal_angles = np.asarray([inp.values["azi"]], dtype=float)
 
     # track progress
     pct = [
@@ -493,8 +819,23 @@ def run_srfm(inp):
     ########################################################################################
     # set dynamic variables and run DISORT
     ########################################################################################
-    # loop over columns, dynamically set disort input variables in each loop
-    for wvl_idx, (wvnm, wvl, col) in enumerate(zip(RFM_wvnm, wvls, cols)):
+    scattering_block_size = inp.values.get("scattering_block_size", 10000)
+    scattering_block = {}
+    scattering_block_start = 0
+    skipped_scattering = {
+        layer_name: {"count": 0, "first": None, "last": None}
+        for layer_name in scat_lyrs
+    }
+    for wvl_idx, (wvnm, wvl, tau_g) in enumerate(
+        zip(RFM_wvnm, wvls, model_RFM.rfm_output.differential_tau)
+    ):
+        if scat_lyrs and wvl_idx % scattering_block_size == 0:
+            scattering_block_start = wvl_idx
+            block_stop = min(wvl_idx + scattering_block_size, len(wvls))
+            scattering_block = _interpolate_scattering_block(
+                scat_lyrs, wvls[wvl_idx:block_stop]
+            )
+        block_index = wvl_idx - scattering_block_start
 
         # track progress
         if wvnm in pct_val:
@@ -508,40 +849,44 @@ def run_srfm(inp):
         model_DISORT.set_wvnm(wvnm)
         model_DISORT.set_wvl(wvl)
 
-        # get layer optical depths from gas absorption
-        tau_g = model_RFM.rfm_output[col].to_numpy()
+        tau_g = np.asarray(tau_g, dtype=float)
 
         # layer optical depths from Rayleigh scattering
         #    tau_R = np.zeros(shape=(tau_g.shape))
         tau_R = utilities.calc_Rayleigh_opt_depths(
-            ps=model_RFM.rfm_output["p_lower (mbar)"].iloc[-1],
-            pu=model_RFM.rfm_output["p_upper (mbar)"],
-            pl=model_RFM.rfm_output["p_lower (mbar)"],
+            ps=model_RFM.rfm_output.pressure_lower[-1],
+            pu=model_RFM.rfm_output.pressure_upper,
+            pl=model_RFM.rfm_output.pressure_lower,
             l=wvnm,
         )
 
         # particle layer optical depths (from particle scattering)
         tau_p = np.zeros(shape=(len(tau_g)))
         for lyr in scat_lyrs.keys():
-            tau_p[track_lyr.index(lyr)] = scat_lyrs[lyr].tau[wvl_idx]
+            tau_p[track_lyr.index(lyr)] = scattering_block[lyr]["tau"][block_index]
 
         # particle layer single scatter albedo
         w_p = np.zeros(shape=(len(tau_g)))
         for lyr in scat_lyrs.keys():
-            w_p[track_lyr.index(lyr)] = scat_lyrs[lyr].ssalb[wvl_idx]
+            w_p[track_lyr.index(lyr)] = scattering_block[lyr]["ssalb"][block_index]
 
         dtauc_tot = utilities.calc_tot_dtauc(tau_g=tau_g, tau_R=tau_R, tau_p=tau_p)
+        dtauc_tot = np.maximum(np.asarray(dtauc_tot, dtype=float), 0.0)
 
         # truncate optical depths
         threshold_od = 1e-8  # threshold at which to truncate optical depths
-        idx = next(
-            (
-                index
-                for index, value in enumerate(list(dtauc_tot))
-                if value > threshold_od
-            ),
-            None,
+        significant_layers = np.flatnonzero(dtauc_tot > threshold_od)
+        idx = int(significant_layers[0]) if significant_layers.size else 0
+
+        utau = _calculate_output_utau(
+            inp.values["out_fmt"],
+            output_values,
+            altitude_rows,
+            dtauc_tot,
+            idx,
         )
+        model_DISORT.set_utau(utau)
+
         dtauc_tot = dtauc_tot[idx:]
         tau_g = tau_g[idx:]
         tau_R = tau_R[idx:]
@@ -582,40 +927,34 @@ def run_srfm(inp):
         # set single scatter albedo
         model_DISORT.set_ssalb(tau_g=tau_g, tau_R=tau_R, tau_p=tau_p, w_p=w_p)
 
-        # calculate phase function moments for Rayleigh and particle scattering from DISORT
-        pmom_R = model_DISORT.calc_pmom(iphas=2, prec=inp.values["disort_precision"])
-
-        # set phase function moments for particle scattering from Mie code
-        pmom_p = np.zeros(
-            (
-                model_DISORT.disort_input["maxmom"] + 1,
-                model_DISORT.disort_input["maxcly"],
-            )
-        )
+        particle_moments = {}
         for lyr in scat_lyrs.keys():
-            if scat_lyrs[lyr].tau[wvl_idx] < threshold_od:
-                print(
-                    f"""Scattering layer optical depth was < {threshold_od} and was
-                truncated from the optical depths profile. No particle scattering at this
-                 wavelength."""
-                )
+            layer_tau = scattering_block[lyr]["tau"][block_index]
+            if layer_tau < threshold_od:
+                skipped = skipped_scattering[lyr]
+                skipped["count"] += 1
+                skipped["first"] = wvnm if skipped["first"] is None else skipped["first"]
+                skipped["last"] = wvnm
             else:
-                pmom_p[
-                    : len(scat_lyrs[lyr].legendre_coefficient[wvl_idx, :]),
-                    track_lyr_local.index(lyr),
-                ] = scat_lyrs[lyr].legendre_coefficient[wvl_idx, :]
-                Legendre_precision = (
-                    1 / pmom_p[0, track_lyr_local.index(lyr)]
-                )  # unused, can be used to track expansion precision
+                coefficients = scattering_block[lyr]["legendre_coefficient"][
+                    block_index
+                ].copy()
+                Legendre_precision = 1 / coefficients[0]
                 if abs(Legendre_precision - 1) > 1e-5:
-                    raise RuntimeError(f"""Something is wrong with the phase function.
-                    The first coefficient is {pmom_p[0, track_lyr_local.index(lyr)]}, but should be 1.0.
-                    Try increasing number of quadrature points.""")
-                pmom_p[0, track_lyr_local.index(lyr)] = 1.0
+                    raise RuntimeError(
+                        "Something is wrong with the phase function. The first "
+                        f"coefficient is {coefficients[0]}, but should be 1.0. "
+                        "Try increasing number of quadrature points."
+                    )
+                coefficients[0] = 1.0
+                particle_moments[track_lyr_local.index(lyr)] = coefficients
 
-        # calculate the weighted sum of phase function moments
-        model_DISORT.set_pmom(
-            pmom_R=pmom_R, tau_R=tau_R, w_p=w_p, tau_p=tau_p, pmom_p=pmom_p
+        model_DISORT.set_mixed_pmom(
+            tau_R=tau_R,
+            w_p=w_p,
+            tau_p=tau_p,
+            particle_moments=particle_moments,
+            prec=inp.values["disort_precision"],
         )
         #    print(model_DISORT.disort_input["pmom"]).shape
 
@@ -633,7 +972,7 @@ def run_srfm(inp):
         #        model_DISORT.test_disort_input_format()
         #        model_DISORT.test_disort_input_integrity()
         # These tests are currently disabled, pending review. It turns out they test
-        # inputs, inlc. arrays, element by element, taking about 25% of the total
+        # inputs, including arrays, element by element, taking about 25% of the total
         # runtime.
         # TODO: options:
         # 1. Remove the tests, potentially unsafe, or rather may be less explanatory
@@ -652,17 +991,25 @@ def run_srfm(inp):
         #                              brdf_arg=[1,1.34,False,0], # wind speed, water refractive index, do_shadow
         #                              nmug=200) # number of quadrature angles
         # run disort
-        model_DISORT.run_disort(
+        disort_result = model_DISORT.run_disort(
             prec=inp.values["disort_precision"],
             adjust_maxcmu=inp.values["adjust_maxcmu"],
         )
 
-        # store result in SRFM()
-        model_SRFM.store_disort_result(model_DISORT, wvl_idx)
+        model_SRFM.store_disort_result(disort_result, wvl_idx)
 
-        # print current status:m
+        # print current status
     #    print(model_DISORT.status)
     print("Main DISORT loop finished.")
+    for layer_name, skipped in skipped_scattering.items():
+        if skipped["count"]:
+            warnings.warn(
+                f"Scattering layer {layer_name!r} was below optical-depth threshold "
+                f"{threshold_od:g} at {skipped['count']} wavenumbers from "
+                f"{skipped['first']:g} to {skipped['last']:g} cm-1; particle "
+                "scattering was omitted there.",
+                stacklevel=2,
+            )
 
     # convolve final radiance spectrum with iasi instrument line shape
     if inp.values["convolve_iasi"] == True:
@@ -671,38 +1018,38 @@ def run_srfm(inp):
     # interpolate resulting bbt and radiances to final grid
     model_SRFM.interp(fin_grid)
 
-    # calculate brightness temperature for the final spectrum
-    model_SRFM.calc_bbt()
+    if "bbt" in requested_outputs:
+        model_SRFM.calc_bbt()
+    if "uu" not in requested_outputs and hasattr(model_SRFM, "uu"):
+        delattr(model_SRFM, "uu")
+        model_SRFM.retained_outputs = frozenset(
+            set(model_SRFM.retained_outputs) - {"uu"}
+        )
 
     ########################################################################################
     # (optional) save spectrum to file(s)
     ########################################################################################
     if inp.values["out_mode"] == "txt":
         if inp.values["bbt"] == True:
-            if isinstance(inp.values["bbt_out_fname"], str):
-                np.savetxt(
-                    f"{inp.values['results_fldr']}/{inp.values['bbt_out_fname']}.txt",
-                    np.column_stack((model_SRFM.wvnm, model_SRFM.bbt[:, 0, 0, 0])),
-                )
-            else:
-                np.savetxt(
-                    f"{inp.values['results_fldr']}/bbt.txt",
-                    np.column_stack((model_SRFM.wvnm, model_SRFM.bbt[:, 0, 0, 0])),
-                )
+            filename = inp.values["bbt_out_fname"] or "bbt"
+            _write_spectral_text(
+                os.path.join(inp.values["results_fldr"], f"{filename}.txt"),
+                model_SRFM.wvnm,
+                model_SRFM.bbt,
+                "Brightness temperature (K)",
+            )
+
         if inp.values["rad"] == True:
-            if isinstance(inp.values["rad_out_fname"], str):
-                np.savetxt(
-                    f"{inp.values['results_fldr']}/{inp.values['rad_out_fname']}.txt",
-                    np.column_stack((model_SRFM.wvnm, model_SRFM.uu[:, 0, 0, 0])),
-                )
-            else:
-                np.savetxt(
-                    f"{inp.values['results_fldr']}/rad.txt",
-                    np.column_stack((model_SRFM.wvnm, model_SRFM.uu[:, 0, 0, 0])),
-                )
-        else:
+            filename = inp.values["rad_out_fname"] or "rad"
+            _write_spectral_text(
+                os.path.join(inp.values["results_fldr"], f"{filename}.txt"),
+                model_SRFM.wvnm,
+                model_SRFM.uu,
+                "Radiance (W m-2 sr-1 cm)",
+            )
+
+        if not inp.values["bbt"] and not inp.values["rad"]:
             warnings.warn("driver table doesn't specify output bbt or rad.")
-            pass
 
     elif inp.values["out_mode"] == "netcdf":
         if inp.values["bbt"] == True:
@@ -728,21 +1075,24 @@ def run_srfm(inp):
                     )
 
                 # --- Core Dimensions ---
-                num_wavenumbers_op = wvls.shape[0] # dimension for optical properties (on compupational grid)
-                num_wavenumbers = fin_grid.shape[0] # dimension for output spectrum (interpolated to fin_grid)
-                layer_names = list(scat_lyrs.keys())
-                num_layers = len(layer_names)
+                # dimension for optical properties on the computational grid
+                num_wavenumbers_op = wvls.shape[0]
+                layer_names = list(scat_lyrs.keys()) # names of scattering layers
+                num_layers = len(layer_names) # number of scattering layers
 
-                nc_file.createDimension("wavenumber", num_wavenumbers)
                 nc_file.createDimension("wavenumber_op", num_wavenumbers_op)
                 nc_file.createDimension("layer", num_layers)
-#                nc_file.createDimension("angle", num_angles)
+                spectrum_dimensions = _create_netcdf_spectral_dimensions(
+                    nc_file, model_SRFM
+                )
 
                 # --- Core Spectrum Variables ---
-                bbt = nc_file.createVariable("bbt", "f8", ("wavenumber",), zlib=True, complevel=4)
+                bbt = nc_file.createVariable(
+                    "bbt", "f8", spectrum_dimensions, zlib=True, complevel=4
+                )
                 bbt.units = "K"
                 bbt.long_name = "Brightness temperature"
-                bbt[:] = model_SRFM.bbt[:, 0, 0, 0]
+                bbt[:] = model_SRFM.bbt
 
                 # Store layer names mapping
                 var_lyr_names = nc_file.createVariable("layer_names", str, ("layer",))
@@ -757,7 +1107,12 @@ def run_srfm(inp):
                 for i, ll in enumerate(layer_names):
                     lyr = scat_lyrs[ll]
 
-                    mat_tau[i, :] = lyr.tau
+                    beta_ext = lyr.interpolate_optical_properties(
+                        wvls, include_legendre=False
+                    )["beta_ext"]
+                    mat_tau[i, :] = (
+                        beta_ext * 1e3 * (lyr.alt_upp - lyr.alt_low)
+                    )
 
                 var_tau = nc_file.createVariable("tau", "f8", ("layer", "wavenumber_op"), zlib=True, complevel=4)
                 var_tau.long_name = "Optical depth per layer and wavenumber"
@@ -786,20 +1141,24 @@ def run_srfm(inp):
                     )
 
                 # --- Core Dimensions ---
-                num_wavenumbers_op = wvls.shape[0] # dimension for optical properties (on compupational grid)
-                num_wavenumbers = fin_grid.shape[0] # dimension for output spectrum (interpolated to fin_grid)
+                # dimension for optical properties on the computational grid
+                num_wavenumbers_op = wvls.shape[0]
                 layer_names = list(scat_lyrs.keys())
                 num_layers = len(layer_names)
-                
-                nc_file.createDimension("wavenumber", num_wavenumbers)
+
                 nc_file.createDimension("wavenumber_op", num_wavenumbers_op)
                 nc_file.createDimension("layer", num_layers)
+                spectrum_dimensions = _create_netcdf_spectral_dimensions(
+                    nc_file, model_SRFM
+                )
 
                 # --- Core Spectrum Variables ---
-                rad = nc_file.createVariable("rad", "f8", ("wavenumber",), zlib=True, complevel=4)
+                rad = nc_file.createVariable(
+                    "rad", "f8", spectrum_dimensions, zlib=True, complevel=4
+                )
                 rad.units = "W m-2 sr-1 cm"
                 rad.long_name = "Radiance"
-                rad[:] = model_SRFM.uu[:, 0, 0, 0]
+                rad[:] = model_SRFM.uu
 
                 # Store layer names mapping
                 var_lyr_names = nc_file.createVariable("layer_names", str, ("layer",))
@@ -813,8 +1172,13 @@ def run_srfm(inp):
                 for i, ll in enumerate(layer_names):
                     lyr = scat_lyrs[ll]                    
 
-                    mat_tau[i, :] = lyr.tau
-                    
+                    beta_ext = lyr.interpolate_optical_properties(
+                        wvls, include_legendre=False
+                    )["beta_ext"]
+                    mat_tau[i, :] = (
+                        beta_ext * 1e3 * (lyr.alt_upp - lyr.alt_low)
+                    )
+
                 var_tau = nc_file.createVariable("tau", "f8", ("layer", "wavenumber_op"), zlib=True, complevel=4)
                 var_tau.long_name = "Optical depth per layer and wavenumber"
                 var_tau[:] = mat_tau
@@ -823,58 +1187,11 @@ def run_srfm(inp):
         pass
 
     if inp.values["base_plots"] == True:
-        ########################################################################################
-        # (optional) create base plots
-        ########################################################################################
-        y_type = inp.values["plot_type"]
-        if not y_type == "rad" and not y_type == "bbt":
-            raise ValueError("Plot type not recognized. Please use 'bbt' of 'rad'.")
-        x_type = "cm-1"  # plot vs. wavenumbers [cm-1] or wavelengths [um] or [nm]
-
-        plt.figure(figsize=(11.7, 8.4))
-        plt.rcParams.update({"font.size": 12})
-        plt.cla()
-
-        # determine x label:
-        if x_type == "cm-1":
-            x_lbl = r"Wavenumbers (cm$^{-1}$)"
-        elif x_type == "um":
-            x_lbl = r"Wavelength ($\mu$m)"
-        elif x_type == "nm":
-            x_lbl = "Wavelength (nm)"
-
-        # determine y label:
-        if y_type == "bbt":
-            y_lbl = "Brightness temperature (K)"
-        elif y_type == "rad":
-            y_lbl = r"Radiance (W m$^{-2}$ sr$^{-1}$ cm)"
-
-        # determine x:
-        if x_type == "cm-1":
-            x = model_SRFM.wvnm
-        elif x_type == "um":
-            x = model_SRFM.wvls
-        elif x_type == "nm":
-            x = model_SRFM.wvls * 1e3
-
-        # determine y:
-        if y_type == "bbt":
-            y = model_SRFM.bbt[:, 0, 0, 0]
-        elif y_type == "rad":
-            y = model_SRFM.uu[:, 0, 0, 0]
-
-        plt.plot(x, y, label=f"SRFM", c="tab:blue")
-
-        # common
-        plt.xlabel(x_lbl)
-        plt.ylabel(y_lbl)
-
-        plt.legend()
-        plt.savefig(f"{inp.values['results_fldr']}/base_plot.png")
-        if inp.values["show_plots"] == True:
-            plt.ion()
-            plt.show()
-        else:
-            plt.close()
+        _plot_spectral_outputs(
+            model_SRFM,
+            inp.values["results_fldr"],
+            inp.values["plot_type"],
+            inp.values["show_plots"],
+        )
 
     return model_SRFM

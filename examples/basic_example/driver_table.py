@@ -26,7 +26,11 @@ inputs = {
     "rad_out_fname": None,  # manually set radiances output filename
     "bbt_out_fname": None,  # manually set bbt output filename
     "plot_type": "bbt",  # plot rad or bbt
-    # insturment line shape (ILS)
+    # Memory policy: retain only values used by this driver after the run.
+    "retain_outputs": ("bbt",),
+    "scattering_block_size": 10000,
+    "retain_phase_functions": False,
+    # instrument line shape (ILS)
     "convolve_iasi": False,  # if True, convolves spectrum with IASI ILS below
     "iasi_ils": os.path.join(ABS_PATH, "iasi.ils"),  # (optional) path to ILS
     # file
@@ -38,6 +42,10 @@ inputs = {
     "spc_wvnmlo": SPC_WVNMLO,
     "spc_wvnmhi": SPC_WVNMHI,
     "spc_units": SPC_UNITS,
+    ## Output geometry
+    "out_fmt": "altitude",  # "altitude" (km) or "tau" (optical depth)
+    "out": [10, 15, 20],  # output altitudes; a number or one-dimensional sequence
+    "out_toa": True,  # also return output at the top of the atmosphere
     ## RFM configuration:
     # RFM global config
     "rfm_config": {
@@ -98,12 +106,12 @@ inputs = {
     "fisot": 0.0,  # isotropic illumination at the top of the atmosphere
     "albedo": 0.0,  # bottom boundary albedo
     "temis": 1.0,  # top boundary emissivity
-    "earth_radius": 6371.0,  # Earth radius (km0
+    "earth_radius": 6371.0,  # Earth radius (km)
     "nmom": 17,  # number of phase function moments
     "maxcmu": 16,  # number of computational streams
     "maxumu": 1,  # number of user output polar angles
     "maxphi": 1,  # number of user azimuth angles
-    "maxulv": 1,  # number of user optical depths
+    "maxulv": 1,  # legacy value; run_srfm derives this from out and out_toa
     "usrang": True,  # return output at user angles?
     "usrtau": True,  # return output at user optical depths?
     "ibcnd": 0,  # boundary conditions
@@ -112,10 +120,9 @@ inputs = {
     "planck": True,  # include internal Planck function?
     "lamber": True,  # Lambertian reflector surface
     "deltamplus": True,  # Delta-M+ approximation to phase functions
-    "do_pseudo_sphere": False,  # bent surface?
-    "utau": [0.0],  # user optical depths for output
+    "do_pseudo_sphere": False,  # spherical correction
     "disort_precision": "double",  # Fortran precision
-    "header": "NO HEADER",  # header for terminal printing, "NO HEADER" == supressed.
+    "header": "NO HEADER",  # header for terminal printing; "NO HEADER" suppresses it
     "adjust_maxcmu": False,  # if DISORT output intensity is negative, rerun with more streams
     ## Scattering configuration
     # scattering layers are named and are as keys in this dict, refer to docs for

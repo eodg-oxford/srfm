@@ -414,6 +414,24 @@ def test_captured_optical_depths_transform_cumulative_levels_to_layers(monkeypat
     np.testing.assert_allclose(result["h_avg (km)"], [1.5, 0.5])
 
 
+def test_compact_optical_depth_grid_is_spectral_first_and_contiguous(monkeypatch):
+    """Verify compact capture avoids integrated columns and supports row access.
+
+    Args:
+        monkeypatch: Pytest fixture replacing captured native arrays.
+    """
+    monkeypatch.setattr(rfm_helper, "rfm_py", _FakeRfm())
+    with pytest.warns(UserWarning, match="Temperature step"):
+        grid = rfm_helper.get_captured_optical_depth_grid([0, 1, 2])
+    assert isinstance(grid, rfm_helper.OpticalDepthGrid)
+    assert grid.differential_tau.shape == (2, 2)
+    assert grid.differential_tau.flags.c_contiguous
+    assert grid.differential_tau.flags.owndata
+    np.testing.assert_allclose(grid.differential_tau[0], [0.2, 0.1])
+    np.testing.assert_allclose(grid.altitude_upper, [2.0, 1.0])
+    assert not hasattr(grid, "integrated_tau")
+
+
 def test_captured_optical_depths_report_missing_level(monkeypatch):
     """Verify captured depths report requested levels that are absent.
 

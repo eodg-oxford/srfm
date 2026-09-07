@@ -72,6 +72,28 @@ def test_existing_basic_driver_validates_without_changing_its_structure(basic_va
     } == original_layer_fields
 
 
+@pytest.mark.parametrize("empty_out", [None, [], np.array([]), ()])
+def test_empty_out_is_allowed_when_out_toa_supplies_the_only_level(
+    basic_values, empty_out
+):
+    """Allow an empty explicit output list when TOA output is requested."""
+    basic_values["out"] = empty_out
+    basic_values["out_toa"] = True
+
+    validated = validate_srfm_inputs(basic_values)
+
+    assert validated["out"] == []
+
+
+def test_empty_out_requires_out_toa(basic_values):
+    """Reject an empty explicit output list when TOA output is disabled."""
+    basic_values["out"] = []
+    basic_values["out_toa"] = False
+
+    with pytest.raises(InputValidationError, match="out: must be a non-empty"):
+        validate_srfm_inputs(basic_values)
+
+
 def test_complete_driver_is_validated_automatically_when_read():
     """Verify complete driver tables are validated during loading.
 
@@ -98,6 +120,7 @@ def test_schema_covers_every_rfm_driver_field():
         "optical_levels",
         "optical_spectrum_index",
         "optical_match_tol",
+        "optical_depth_format",
     }
     helper_parameters = set(
         inspect.signature(rfm_helper.run_rfm_with_parameters).parameters
@@ -179,6 +202,18 @@ def test_runner_schemas_require_the_inputs_each_runner_consumes(basic_values):
     assert OXHARP_INPUT_SCHEMA["zen_cos"].required
     assert not IASI_INPUT_SCHEMA["zen"].required
     assert IASI_INPUT_SCHEMA["ils"].required
+    assert OXHARP_INPUT_SCHEMA["out"].required
+    assert IASI_INPUT_SCHEMA["out"].required
+    assert "utau" not in OXHARP_INPUT_SCHEMA
+    assert "utau" not in IASI_INPUT_SCHEMA
+
+    oxharp_values["usrtau"] = False
+    with pytest.raises(InputValidationError, match="usrtau: must be True"):
+        validate_oxharp_inputs(oxharp_values)
+
+    iasi_values["usrtau"] = False
+    with pytest.raises(InputValidationError, match="usrtau: must be True"):
+        validate_iasi_inputs(iasi_values)
 
 
 def test_oxharp_solar_geometry_is_required_only_for_solar_runs(basic_values):
@@ -347,8 +382,8 @@ def test_run_srfm_rejects_file_only_rfm_mode_before_execution(basic_values):
         validate_srfm_inputs(basic_values)
 
 
-def test_numpy_levels_and_utau_are_valid_existing_input_forms(basic_values):
-    """Verify NumPy arrays remain valid for levels and optical depths.
+def test_numpy_levels_and_output_values_are_valid_input_forms(basic_values):
+    """Verify NumPy arrays remain valid for levels and output values.
 
     Existing programmatic callers commonly use arrays instead of Python lists.
 
@@ -356,10 +391,29 @@ def test_numpy_levels_and_utau_are_valid_existing_input_forms(basic_values):
         basic_values: Complete generic input mapping loaded from the example.
     """
     basic_values["levels"] = np.array([0.0, 1.0, 2.0])
-    basic_values["utau"] = np.array([0.0, 0.5])
+    basic_values["out"] = np.array([0.0, 0.5])
     validated = validate_srfm_inputs(basic_values)
     np.testing.assert_array_equal(validated["levels"], [0.0, 1.0, 2.0])
-    np.testing.assert_array_equal(validated["utau"], [0.0, 0.5])
+    assert validated["out"] == [0.0, 0.5]
+
+
+@pytest.mark.parametrize("output", [[], [[1.0]], [1.0, np.nan], -1.0, True, "1"])
+def test_output_geometry_rejects_malformed_values(basic_values, output):
+    """Verify output levels are finite, non-negative numeric scalars or vectors."""
+    basic_values["out"] = output
+    basic_values["out_toa"] = False
+
+    with pytest.raises(InputValidationError, match="out:"):
+        validate_srfm_inputs(basic_values)
+
+
+def test_scalar_output_geometry_is_normalized_to_a_list(basic_values):
+    """Verify a single altitude can be supplied without wrapping it in a list."""
+    basic_values["out"] = 12.5
+
+    validated = validate_srfm_inputs(basic_values)
+
+    assert validated["out"] == [12.5]
 
 
 def test_flux_only_disort_allows_zero_user_angle_dimensions(basic_values):
@@ -388,6 +442,7 @@ def test_flux_only_disort_allows_zero_user_angle_dimensions(basic_values):
         ({"spc_wvnmlo": 900, "spc_wvnmhi": 800}, "spc_wvnmlo"),
         ({"convolve_iasi": True, "iasi_ils": None}, "iasi_ils"),
         ({"out_mode": "txt", "rad": False, "bbt": False}, "out_mode"),
+        ({"usrtau": False}, "usrtau: must be True"),
         ({"date": (2025, 2, 29)}, "date: day is out of range"),
         ({"header": "x" * 127}, "header: must contain fewer"),
     ],
