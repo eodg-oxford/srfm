@@ -13,13 +13,18 @@ Output retention
 Set ``retain_outputs`` to the values needed after the run. For example, a
 brightness-temperature-only calculation uses::
 
-   "rad": False,
-   "bbt": True,
    "retain_outputs": ("bbt",),
 
 Radiance is retained temporarily because brightness temperature and IASI
-convolution require it, then released when it was not requested. Omitting
-``retain_outputs`` preserves all historical SRFM result arrays.
+convolution require it, then released when it was not requested.
+
+With NetCDF output, explicitly retained values are saved together in one file,
+named ``srfm.nc`` by default. For example,
+``"retain_outputs": ("bbt", "flup")`` writes
+``flup(wavenumber, output_level)`` alongside BBT. A raw result such as
+``"retain_outputs": ("rfldn",)`` is also valid without BBT or radiance.
+User-angle radiance uses all four spectral geometry dimensions, while
+``albmed`` and ``trnmed`` use ``(wavenumber, output_polar_angle)``.
 
 Compatibility interfaces
 ------------------------

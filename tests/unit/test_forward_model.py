@@ -38,7 +38,7 @@ def test_srfm_selective_output_allocation_and_storage():
     model = SRFM()
     model.wvnm = np.array([1000.0, 1001.0])
     model.initialize_srfm_output_arrays_from_disort(
-        disort, retain_outputs={"radiance", "flup"}
+        disort, retain_outputs={"rad", "flup"}
     )
     assert hasattr(model, "uu")
     assert hasattr(model, "flup")

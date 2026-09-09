@@ -9,7 +9,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "SRFM"
-version = "1.2.0"
+version = "1.2.1"
 authors = [
   { name="Antonin Knizek", email="antonin.knizek@physics.ox.ac.uk" },
   { name="Roy Grainger", email="don.grainger@physics.ox.ac.uk"}
@@ -83,6 +83,7 @@ include = [
     "src/srfm/RFM/source/*.f90",
     "src/srfm/RFM/rfm_files/*",
     "tools/*.py",
+    "examples"
 ]
 exclude = [
     "src/srfm/**/*.so",
@@ -97,9 +98,9 @@ exclude = [
 
 [tool.pytest.ini_options]
 testpaths = [
-    "tests/unit",
-    "tests/integration",
-    "tests/e2e",
+    "/tests/unit",
+    "/tests/integration",
+    "/tests/e2e",
 ]
 markers = [
     "unit: fast, deterministic tests isolated from native executables",

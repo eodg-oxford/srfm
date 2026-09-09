@@ -441,7 +441,7 @@ def test_flux_only_disort_allows_zero_user_angle_dimensions(basic_values):
         ({"fin_res": np.nan}, "fin_res: must be finite"),
         ({"spc_wvnmlo": 900, "spc_wvnmhi": 800}, "spc_wvnmlo"),
         ({"convolve_iasi": True, "iasi_ils": None}, "iasi_ils"),
-        ({"out_mode": "txt", "rad": False, "bbt": False}, "out_mode"),
+        ({"out_mode": "txt", "retain_outputs": ("flup",)}, "out_mode"),
         ({"usrtau": False}, "usrtau: must be True"),
         ({"date": (2025, 2, 29)}, "date: day is out of range"),
         ({"header": "x" * 127}, "header: must contain fewer"),
@@ -460,6 +460,58 @@ def test_cross_field_validation(basic_values, updates, problem):
     basic_values.update(updates)
     with pytest.raises(InputValidationError, match=problem):
         validate_srfm_inputs(basic_values)
+
+
+def test_retain_outputs_is_required_and_replaces_bbt_rad_switches(basic_values):
+    """The output selection has one mandatory source of truth."""
+    basic_values.pop("retain_outputs")
+    with pytest.raises(InputValidationError) as caught:
+        validate_srfm_inputs(basic_values)
+    assert "retain_outputs: required field is missing" in caught.value.issues
+
+    basic_values["retain_outputs"] = ("bbt",)
+    basic_values["bbt"] = True
+    basic_values["rad"] = False
+    basic_values["plot_type"] = "bbt"
+    with pytest.raises(InputValidationError) as caught:
+        validate_srfm_inputs(basic_values)
+    assert "bbt: unknown field" in caught.value.issues
+    assert "rad: unknown field" in caught.value.issues
+    assert "plot_type: unknown field" in caught.value.issues
+    assert not {"bbt", "rad", "plot_type"}.intersection(SRFM_INPUT_SCHEMA)
+
+
+@pytest.mark.parametrize("radiance_name", ["rad", "radiance", "uu"])
+def test_all_radiance_retention_aliases_are_accepted(basic_values, radiance_name):
+    """Every supported radiance spelling can select file output."""
+    basic_values["retain_outputs"] = (radiance_name,)
+    basic_values["out_mode"] = "netcdf"
+
+    validate_srfm_inputs(basic_values)
+
+
+def test_netcdf_accepts_raw_retained_output_without_primary_spectrum(basic_values):
+    """A raw DISORT result may be the only selected NetCDF output."""
+    basic_values["out_mode"] = "netcdf"
+    basic_values["retain_outputs"] = ("rfldn",)
+
+    validate_srfm_inputs(basic_values)
+
+
+@pytest.mark.parametrize(
+    ("include_filename", "filename"),
+    [(False, None), (True, None), (True, "custom-output.nc")],
+)
+def test_generic_netcdf_filename_is_optional(
+    basic_values, include_filename, filename
+):
+    """The generic filename may be omitted, null, or a custom string."""
+    if include_filename:
+        basic_values["out_fname"] = filename
+
+    validated = validate_srfm_inputs(basic_values)
+
+    assert validated.get("out_fname") == filename
 
 
 def test_scattering_layer_errors_identify_layer_and_field(basic_values):

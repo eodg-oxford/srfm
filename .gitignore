@@ -4,4 +4,7 @@
 # Ignores all __pycache__ folders
 __pycache__/
 
-
+# Generated documentation and example output
+docs/source/auto_examples/
+docs/source/sg_execution_times.rst
+examples/basic_example/results/

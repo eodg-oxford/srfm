@@ -11,6 +11,7 @@ import re
 from pathlib import Path
 import tomllib
 import warnings
+from zipfile import ZIP_DEFLATED, ZipFile
 import sphinx_rtd_theme
 
 project = 'SRFM'
@@ -31,12 +32,30 @@ extensions = ["sphinx.ext.napoleon",
               "sphinx.ext.autodoc",
               "sphinx.ext.apidoc",
               "sphinx.ext.todo",
+              "sphinx_gallery.gen_gallery",
               "sphinx_rtd_theme"
               ]
 
 templates_path = ['_templates']
 exclude_patterns = []
 napoleon_custom_sections = [('Returns', 'params_style')]
+
+sphinx_gallery_conf = {
+    "examples_dirs": "../../examples",
+    "gallery_dirs": "auto_examples",
+    "filename_pattern": r"run_srfm\.py",
+    "ignore_pattern": r"driver_table\.py",
+    # The complete example requires external HITRAN and cross-section data that
+    # are not available to Read the Docs. It is exercised separately and the
+    # gallery uses a verified, precomputed result.
+    "plot_gallery": "False",
+    "copyfile_regex": (
+        r"driver_table\.py$|.*\.(?:atm|ils|txt|png)$"
+    ),
+    "download_all_examples": False,
+    "notebook_extensions": set(),
+    "remove_config_comments": True,
+}
 
 warnings.filterwarnings("ignore", category=SyntaxWarning)
 
@@ -142,6 +161,31 @@ def _cleanup_docstring(_app, _what, _name, _obj, _options, lines):
     lines[:] = separated
 
 
+_BASIC_EXAMPLE_FILES = (
+    "README.rst",
+    "run_srfm.py",
+    "driver_table.py",
+    "day.atm",
+    "hgt_std.atm",
+    "iasi.ils",
+    "iasi_nedt.txt",
+)
+
+
+def _build_basic_example_bundle(app):
+    """Create the complete multi-file example download in the HTML output."""
+    repo_root = Path(__file__).resolve().parents[2]
+    example_dir = repo_root / "examples" / "basic_example"
+    download_dir = Path(app.outdir) / "_downloads"
+    download_dir.mkdir(parents=True, exist_ok=True)
+    bundle = download_dir / "basic_example.zip"
+
+    with ZipFile(bundle, "w", compression=ZIP_DEFLATED) as archive:
+        for filename in _BASIC_EXAMPLE_FILES:
+            source = example_dir / filename
+            archive.write(source, Path("basic_example") / filename)
+
+
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -157,3 +201,4 @@ html_theme_options = {
 
 def setup(app):
     app.connect("autodoc-process-docstring", _cleanup_docstring, priority=1000)
+    app.connect("builder-inited", _build_basic_example_bundle)

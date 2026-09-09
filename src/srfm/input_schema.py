@@ -137,17 +137,13 @@ SRFM_INPUT_SCHEMA: dict[str, FieldSpec] = {
         (str,), required=True, nullable=True, choices=frozenset({"txt", "netcdf"})
     ),
     "show_plots": FieldSpec((bool,), required=True),
-    "rad": FieldSpec((bool,), required=True),
-    "bbt": FieldSpec((bool,), required=True),
-    "rad_out_fname": FieldSpec((str,), required=True, nullable=True),
-    "bbt_out_fname": FieldSpec((str,), required=True, nullable=True),
-    "plot_type": FieldSpec((str,), required=True, choices=frozenset({"rad", "bbt"})),
+    "out_fname": FieldSpec((str,), nullable=True),
     "convolve_iasi": FieldSpec((bool,), required=True),
     "iasi_ils": FieldSpec(PATH_TYPES, required=True, nullable=True),
     # Memory controls.
     "scattering_block_size": FieldSpec(INTEGER_TYPES, default=10000),
     "retain_phase_functions": FieldSpec((bool,), default=False),
-    "retain_outputs": FieldSpec((list, tuple, set, frozenset), nullable=True),
+    "retain_outputs": FieldSpec((list, tuple, set, frozenset), required=True),
     # Spectral grids.
     "fin_wvnmlo": FieldSpec(NUMBER_TYPES, required=True),
     "fin_wvnmhi": FieldSpec(NUMBER_TYPES, required=True),
@@ -211,7 +207,6 @@ OXHARP_INPUT_SCHEMA: dict[str, FieldSpec] = {
     "plot_profiles": FieldSpec((bool,)),
     "base_plots": FieldSpec((bool,)),
     "show_plots": FieldSpec((bool,)),
-    "plot_type": FieldSpec((str,), choices=frozenset({"rad", "bbt"})),
     "sza": FieldSpec(NUMBER_TYPES),
     "saa": FieldSpec(NUMBER_TYPES),
     "zen": FieldSpec(NUMBER_TYPES),
@@ -248,7 +243,6 @@ IASI_INPUT_SCHEMA: dict[str, FieldSpec] = {
     "nedt": FieldSpec(PATH_TYPES, required=True),
     "convolve_iasi": FieldSpec((bool,)),
     "iasi_ils": FieldSpec(PATH_TYPES, nullable=True),
-    "plot_type": FieldSpec((str,), choices=frozenset({"rad", "bbt"})),
     "sun": FieldSpec((bool,)),
     "sza": FieldSpec(NUMBER_TYPES),
     "saa": FieldSpec(NUMBER_TYPES),
@@ -802,13 +796,10 @@ def _validate_inputs(
         and not normalized.get("iasi_ils")
     ):
         issues.append("iasi_ils: required when convolve_iasi is True")
-    if normalized.get("out_mode") in {"txt", "netcdf"} and not (
-        normalized.get("rad") or normalized.get("bbt")
-    ):
-        issues.append("out_mode: rad or bbt must be enabled when writing output")
     retained_outputs = normalized.get("retain_outputs")
-    if retained_outputs is not None:
+    if isinstance(retained_outputs, (list, tuple, set, frozenset)):
         allowed_outputs = {
+            "rad",
             "radiance",
             "bbt",
             "rfldir",
@@ -820,11 +811,29 @@ def _validate_inputs(
             "albmed",
             "trnmed",
         }
-        invalid_outputs = sorted(set(retained_outputs) - allowed_outputs)
+        invalid_outputs = sorted(
+            {
+                repr(name)
+                for name in retained_outputs
+                if not isinstance(name, str) or name not in allowed_outputs
+            }
+        )
         if invalid_outputs:
             issues.append(
                 "retain_outputs: unknown output name(s): "
                 + ", ".join(invalid_outputs)
+            )
+        selected_outputs = {
+            "uu" if name in {"rad", "radiance"} else name
+            for name in retained_outputs
+            if isinstance(name, str) and name in allowed_outputs
+        }
+        if normalized.get("out_mode") == "txt" and not (
+            {"bbt", "uu"} & selected_outputs
+        ):
+            issues.append(
+                "out_mode: retain_outputs must include bbt or radiance "
+                "when writing text output"
             )
 
     header = normalized.get("header")

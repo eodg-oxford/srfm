@@ -1,16 +1,26 @@
 Driver table
 ============
 
-As explained above, the SRFM is a package which can be executed as a standard 
-radiative transfer model with a driver table.
-This section describes all variables present in the driver table. 
-The driver table is a Python file containing an ``inputs`` dictionary.  The
-example at ``examples/basic_example/driver_table.py`` also defines named grid
-constants for readability; the parameters below are the values passed to SRFM.
-Paths may be strings or :class:`os.PathLike` objects unless noted otherwise.
+SRFM can be executed as a standard radiative transfer model with a driver
+table. This page is the complete parameter reference; the
+:doc:`worked example <auto_examples/basic_example/run_srfm>` shows these
+parameters together in an executable calculation.
 
-General output
---------------
+The driver table is a Python file containing an ``inputs`` dictionary. Fields
+marked **optional** may be omitted, in which case SRFM uses the stated default
+or derives the value from the atmosphere. Other fields are required by
+``main.run_srfm``. The example driver also defines named grid constants for
+readability; the parameters below are the values passed to SRFM. Paths may be
+strings or :class:`os.PathLike` objects unless noted otherwise.
+
+General run and output
+----------------------
+
+* ``date`` (**optional** :class:`datetime.datetime` or three-item ``tuple``):
+  UTC calculation date, or ``(year, month, day)``. It determines the
+  Sun--Earth distance correction when solar illumination is enabled. If
+  omitted, SRFM uses 23 March 2025, representing approximately the mean
+  Sun--Earth distance.
 
 * ``base_plots`` (``bool``): Create one output spectrum plot for every polar
   angle, output level, and azimuthal angle. Permitted values: ``True`` or
@@ -21,31 +31,31 @@ General output
   saving them. Permitted values: ``True`` or ``False``.
 * ``results_fldr`` (path-like): Directory in which SRFM writes RFM products,
   spectra, and plots.
-* ``rad`` (``bool``): Save radiance output when file output is enabled.
-  Permitted values: ``True`` or ``False``.
-* ``bbt`` (``bool``): Save brightness-temperature output when file output is
-  enabled. Permitted values: ``True`` or ``False``.
-* ``rad_out_fname`` (``str`` or ``None``): Radiance filename stem. ``None``
-  selects ``rad``.
-* ``bbt_out_fname`` (``str`` or ``None``): Brightness-temperature filename
-  stem. ``None`` selects ``bbt``.
-* ``plot_type`` (``str``): Quantity shown in base plots. Permitted values:
-  ``"rad"`` or ``"bbt"``.
+* ``out_fname`` (**optional** ``str`` or ``None``): Filename for the single
+  NetCDF output file. Omitting it or setting it to ``None`` selects
+  ``srfm.nc``. The value is used as supplied, including its extension, and
+  applies only when ``out_mode`` is ``"netcdf"``.
 * ``convolve_iasi`` (``bool``): Convolve every output radiance spectrum with
   the IASI instrument line shape. Permitted values: ``True`` or ``False``.
 * ``iasi_ils`` (path-like or ``None``): RFM-format IASI instrument-line-shape
   file; required when ``convolve_iasi`` is ``True``.
-* ``retain_outputs`` (sequence of ``str`` or ``None``): Full-grid values kept
-  on the returned model. Supported names are ``"radiance"``/``"uu"``,
+* ``retain_outputs`` (required sequence of ``str``): Full-grid values kept on
+  the returned model. Supported names are ``"rad"``/``"radiance"``/``"uu"``,
   ``"bbt"``, ``"rfldir"``, ``"rfldn"``, ``"flup"``, ``"dfdt"``,
-  ``"uavg"``, ``"albmed"``, and ``"trnmed"``. Values needed for a requested
-  file or plot are retained automatically. Omitting the parameter preserves
-  the historical all-output behavior.
-* ``scattering_block_size`` (``int``): Positive number of spectral points for
-  which particle properties are interpolated at once. The default is 10,000.
-* ``retain_phase_functions`` (``bool``): Keep coarse particle phase functions
-  after Legendre expansion for inspection. The default is ``False`` in the
-  runners.
+  ``"uavg"``, ``"albmed"``, and ``"trnmed"``. In NetCDF mode, the single
+  output file contains exactly these requested SRFM result variables together
+  with their coordinates and the standard scattering-layer metadata. Raw
+  DISORT results such as ``"rfldn"`` can be written without retaining BBT or
+  radiance. Text mode requires retained BBT or radiance and writes them to
+  ``bbt.txt`` and ``rad.txt`` respectively. When ``base_plots`` is true, all
+  retained BBT and radiance outputs are plotted; if neither is retained, SRFM
+  warns and creates no base plots.
+* ``scattering_block_size`` (**optional** ``int``): Positive number of spectral
+  points for which particle properties are interpolated at once. The default
+  is 10,000.
+* ``retain_phase_functions`` (**optional** ``bool``): Keep coarse particle
+  phase functions after Legendre expansion for inspection. The default is
+  ``False``.
 
 Spectral grids
 --------------
@@ -75,6 +85,15 @@ Output geometry
   atmospheric level boundary. Values retain their supplied order.
 * ``out_toa`` (``bool``): Add top-of-atmosphere output unless it is already in
   ``out``. Permitted values: ``True`` or ``False``.
+
+Atmospheric calculation levels
+------------------------------
+
+* ``levels`` (**optional** one-dimensional sequence): Strictly increasing
+  atmospheric calculation levels in kilometres. Supply at least two finite
+  numeric values. If omitted, SRFM uses its built-in standard level grid.
+  Scattering-layer boundaries are inserted into the effective grid
+  automatically.
 
 RFM execution configuration
 ---------------------------
@@ -129,8 +148,9 @@ DISORT configuration
   Permitted range: 0 to 1.
 * ``temis`` (``int`` or ``float``): Boundary emissivity used by DISORT.
   Permitted range: 0 to 1.
-* ``earth_radius`` (``int`` or ``float``): Positive Earth radius in kilometres,
-  used by the pseudo-spherical correction.
+* ``earth_radius`` (**optional** ``int`` or ``float``): Positive Earth radius
+  in kilometres, used by the pseudo-spherical correction. The default is
+  6371 km.
 * ``nmom`` (``int``): Requested number of phase-function moments. SRFM raises
   it when a scattering layer or stream count requires more moments.
 * ``maxcmu`` (``int``): Positive, even number of DISORT computational streams;
@@ -161,16 +181,22 @@ DISORT configuration
   correction. Permitted values: ``True`` or ``False``.
 * ``disort_precision`` (``str``): Compiled DISORT implementation to call.
   Permitted values: ``"single"`` or ``"double"``.
-* ``header`` (``str``): Header sent to DISORT terminal output. ``"NO HEADER"``
-  suppresses the header; fewer than 127 characters are permitted.
+* ``header`` (**optional** ``str``): Header sent to DISORT terminal output.
+  ``"NO HEADER"`` suppresses the header and is the default; fewer than 127
+  characters are permitted.
 * ``adjust_maxcmu`` (``bool``): Retry with more streams when Delta-M+ produces
   a small negative intensity. Permitted values: ``True`` or ``False``.
+* ``btemp`` (**optional** ``int`` or ``float``): Bottom-boundary temperature in
+  kelvin. If omitted, SRFM derives it from the lowest atmospheric temperature.
+* ``ttemp`` (**optional** ``int`` or ``float``): Top-boundary temperature in
+  kelvin. If omitted, SRFM derives it from the highest atmospheric temperature.
 
 Scattering-layer configuration
 ------------------------------
 
-``scat_lyrs_inputs`` is a dictionary keyed by unique layer name. Each value is
-a dictionary with the parameters below. The same fields apply to the example's
+``scat_lyrs_inputs`` is an **optional** dictionary keyed by unique layer name.
+Omit it for a clear-sky calculation. Each value is a dictionary with the
+parameters below. The same fields apply to the example's
 ``Sulphuric_acid_1``, ``Ash_1``, and ``Water_cloud_1`` layers.
 
 * ``name`` (``str``): Layer name, normally identical to its dictionary key.

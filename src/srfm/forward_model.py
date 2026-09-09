@@ -1766,7 +1766,8 @@ class SRFM(Fwd_model):
 
         By default every historical output is allocated.  Passing a collection lets
         memory-sensitive callers retain only the values that they will return, plot,
-        or write. ``"radiance"`` is accepted as an alias for ``"uu"``.
+        or write. ``"rad"`` and ``"radiance"`` are accepted as aliases for
+        ``"uu"``.
 
         Args:
             DISORT (obj): instance of srfm.forward_model.DISORT
@@ -1802,7 +1803,7 @@ class SRFM(Fwd_model):
         if retain_outputs is None:
             retained = output_names
         else:
-            aliases = {"radiance": "uu"}
+            aliases = {"rad": "uu", "radiance": "uu"}
             requested = {aliases.get(name, name) for name in retain_outputs}
             requested.discard("bbt")
             unknown = requested - output_names

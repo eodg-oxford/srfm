@@ -1,12 +1,17 @@
 import os
-from srfm import *
+from pathlib import Path
 
-# Define common grids and helper variables
-ABS_PATH = os.getcwd()
+from srfm import rfm_helper
 
-# grid for final result, units cm-1
-FIN_WVNMLO = 720.0  # min
-FIN_WVNMHI = 800.0  # max
+EXAMPLE_DIR = Path(__file__).resolve().parent
+HITRAN_FILE = Path(
+    os.environ.get("SRFM_HITRAN_FILE", "PATH_TO_HITRAN_FILE")
+).expanduser()
+XSC_DIR = Path(os.environ.get("SRFM_XSC_DIR", "PATH_TO_XSC_DIR")).expanduser()
+
+# Final output grid, in cm-1
+FIN_WVNMLO = 850.0  # min
+FIN_WVNMHI = 1000.0  # max
 FIN_RES = 0.25  # resolution
 
 # Computational grid
@@ -17,22 +22,22 @@ SPC_UNITS = "cm-1"  # units (cm-1, nm, um)
 
 inputs = {
     ## General
+    # Every optional input consumed by main.run_srfm is shown explicitly in
+    # this example. Optional fields may be removed to use their documented
+    # defaults or the corresponding automatically derived value.
+    "date": (2019, 7, 1),  # optional: UTC date used for Sun-Earth distance
     "base_plots": True,  # plot output spectrum
     "out_mode": "netcdf",  # file format to save output to, netcdf, txt or None
+    "out_fname": None,  # optional: NetCDF filename; None uses "srfm.nc"
     "show_plots": False,  # show plots on screen
-    "results_fldr": os.path.join(ABS_PATH, "results"),  # where to save results
-    "rad": False,  # True - save radiances
-    "bbt": True,  # True - save brightness temperatures
-    "rad_out_fname": None,  # manually set radiances output filename
-    "bbt_out_fname": None,  # manually set bbt output filename
-    "plot_type": "bbt",  # plot rad or bbt
-    # Memory policy: retain only values used by this driver after the run.
+    "results_fldr": str(EXAMPLE_DIR / "results"),  # where to save results
+    # Retained values are saved to srfm.nc; retained bbt/rad are also plotted.
     "retain_outputs": ("bbt",),
-    "scattering_block_size": 10000,
-    "retain_phase_functions": False,
+    "scattering_block_size": 10000,  # optional: interpolation block size
+    "retain_phase_functions": False,  # optional: retain large phase arrays
     # instrument line shape (ILS)
     "convolve_iasi": False,  # if True, convolves spectrum with IASI ILS below
-    "iasi_ils": os.path.join(ABS_PATH, "iasi.ils"),  # (optional) path to ILS
+    "iasi_ils": str(EXAMPLE_DIR / "iasi.ils"),  # optional path to ILS
     # file
     ## Grids
     "fin_wvnmlo": FIN_WVNMLO,
@@ -44,7 +49,7 @@ inputs = {
     "spc_units": SPC_UNITS,
     ## Output geometry
     "out_fmt": "altitude",  # "altitude" (km) or "tau" (optical depth)
-    "out": [10, 15, 20],  # output altitudes; a number or one-dimensional sequence
+    "out": [15, 20],  # output altitudes; a number or one-dimensional sequence
     "out_toa": True,  # also return output at the top of the atmosphere
     ## RFM configuration:
     # RFM global config
@@ -64,6 +69,8 @@ inputs = {
         flags=("OPT", "NAD", "SFC", "PRF", "LEV", "DBL", "CHI", "MIX"),
         spectral=[rfm_helper.SpectralRange(SPC_WVNMLO, SPC_WVNMHI, SPC_RES)],
         gases=(
+            "N2",
+            "O2",
             "CO2",
             "O3",
             "H2O",
@@ -93,20 +100,28 @@ inputs = {
             "SO2",
         ),
         atmosphere=(
-            os.path.join(ABS_PATH, "hgt_std.atm"), 
-            os.path.join(
-                ABS_PATH, "day.atm"
-            ),  # make sure that the actual profiles are the second item in this tuple
+            str(EXAMPLE_DIR / "hgt_std.atm"),
+            str(EXAMPLE_DIR / "day.atm"),
+            # Keep the actual profile as the second item in this tuple.
             # TODO change the reliance on positions
         ),
-        hit=("PATH TO HITBIN FILE",),
-        xsc=("PATH TO XSC FOLDER",),
+        hit=(str(HITRAN_FILE),),
+        xsc=(str(XSC_DIR / "*.xsc"),),
     ),
+    # Optional internal calculation levels (km); omit to use the standard grid.
+    "levels": [
+        0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0,
+        10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 17.0, 18.0,
+        19.0, 20.0, 21.0, 22.0, 23.0, 24.0, 25.0, 27.5, 30.0,
+        32.5, 35.0, 37.5, 40.0, 42.5, 45.0, 47.5, 50.0, 55.0,
+        60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0,
+        105.0, 110.0, 115.0, 120.0,
+    ],
     ## DISORT configuration
     "fisot": 0.0,  # isotropic illumination at the top of the atmosphere
     "albedo": 0.0,  # bottom boundary albedo
     "temis": 1.0,  # top boundary emissivity
-    "earth_radius": 6371.0,  # Earth radius (km)
+    "earth_radius": 6371.0,  # optional: Earth radius (km); defaults to 6371
     "nmom": 17,  # number of phase function moments
     "maxcmu": 16,  # number of computational streams
     "maxumu": 1,  # number of user output polar angles
@@ -122,11 +137,14 @@ inputs = {
     "deltamplus": True,  # Delta-M+ approximation to phase functions
     "do_pseudo_sphere": False,  # spherical correction
     "disort_precision": "double",  # Fortran precision
-    "header": "NO HEADER",  # header for terminal printing; "NO HEADER" suppresses it
+    "header": "NO HEADER",  # optional: DISORT terminal header
     "adjust_maxcmu": False,  # if DISORT output intensity is negative, rerun with more streams
+    "btemp": 300.0,  # optional: lower-boundary temperature (K)
+    "ttemp": 295.0,  # optional: upper-boundary temperature (K)
     ## Scattering configuration
     # scattering layers are named and are as keys in this dict, refer to docs for
     # specific parameters
+    # This entire mapping is optional; omit it for a clear-sky calculation.
     "scat_lyrs_inputs": {
         "Sulphuric_acid_1": {
             "name": "Sulphuric_acid_1",
@@ -218,6 +236,6 @@ inputs = {
     "sza": 0,  # solar zenith angle, 0-180, 0 for directly overhead, >90 for night (not included)
     "saa": 0,  # solar azimuth angle, 0-360
     ## Angles
-    "zen": 0,  # satellite zenith angle, 0-180, 0 for directly overhead, >90 for night (not included)
-    "azi": 0,  # satellite azimuth angle, 0-360
+    "zen": 40,  # satellite zenith angle, 0-180
+    "azi": 50,  # satellite azimuth angle, 0-360
 }

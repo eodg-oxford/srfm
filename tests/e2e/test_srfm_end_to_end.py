@@ -21,8 +21,6 @@ COMPLETE_RUN_INPUT_KEYS = {
     "albedo",
     "azi",
     "base_plots",
-    "bbt",
-    "bbt_out_fname",
     "btemp",
     "convolve_iasi",
     "date",
@@ -51,10 +49,8 @@ COMPLETE_RUN_INPUT_KEYS = {
     "out_mode",
     "out_toa",
     "planck",
-    "plot_type",
     "prnt",
-    "rad",
-    "rad_out_fname",
+    "retain_outputs",
     "results_fldr",
     "rfm_config",
     "saa",
@@ -182,13 +178,9 @@ def _complete_input_values(results, tiny_atmosphere, tiny_altitude_grid, tiny_xs
         "convolve_iasi": False,
         "iasi_ils": None,
         "out_mode": None,
-        "rad": False,
-        "bbt": False,
-        "rad_out_fname": None,
-        "bbt_out_fname": None,
+        "retain_outputs": ("bbt", "rad"),
         "base_plots": False,
         "show_plots": False,
-        "plot_type": "bbt",
     }
 
 
@@ -226,12 +218,22 @@ def _assert_complete_result(result, results, values, num_output_levels=3):
     )
     expected_grid = values["fin_wvnmlo"] + np.arange(n_points) * values["fin_res"]
     np.testing.assert_allclose(result["wvnm"], expected_grid)
-    assert result["uu"].shape == (n_points, 1, num_output_levels, 1)
-    assert result["bbt"].shape == (n_points, 1, num_output_levels, 1)
-    assert np.all(np.isfinite(result["uu"]))
-    assert np.all(np.isfinite(result["bbt"]))
-    assert np.all(result["uu"] > 0)
-    assert np.all((result["bbt"] > 150) & (result["bbt"] < 350))
+    retained = {
+        "uu" if name in {"rad", "radiance"} else name
+        for name in values["retain_outputs"]
+    }
+    if "uu" in retained:
+        assert result["uu"].shape == (n_points, 1, num_output_levels, 1)
+        assert np.all(np.isfinite(result["uu"]))
+        assert np.all(result["uu"] > 0)
+    else:
+        assert result["uu"] is None
+    if "bbt" in retained:
+        assert result["bbt"].shape == (n_points, 1, num_output_levels, 1)
+        assert np.all(np.isfinite(result["bbt"]))
+        assert np.all((result["bbt"] > 150) & (result["bbt"] < 350))
+    else:
+        assert result["bbt"] is None
     if result["output_values"] is not None:
         np.testing.assert_allclose(result["output_values"], [0.0, 1.0, 2.0])
     assert (results / "rfm_files" / "grid.spc").is_file()
@@ -331,6 +333,45 @@ def test_complete_driver_table_is_read_and_executed(
     assert not list(results.glob("rfm.log*"))
 
 
+def test_netcdf_supports_a_raw_retained_output_without_bbt_or_radiance(
+    tmp_path,
+    tiny_atmosphere,
+    tiny_altitude_grid,
+    tiny_xsc_file,
+    require_native,
+    run_native_case,
+):
+    """Write one raw DISORT output to the default generic NetCDF file."""
+    _require_all_native_extensions(require_native)
+    results = tmp_path / "raw-output-results"
+    values = _complete_input_values(
+        results, tiny_atmosphere, tiny_altitude_grid, tiny_xsc_file
+    )
+    values.update(out_mode="netcdf", retain_outputs=("rfldn",))
+
+    result, _ = run_native_case("e2e", {"values": values})
+
+    _assert_complete_result(result, results, values)
+    with Dataset(results / "srfm.nc") as dataset:
+        result_names = {
+            "rfldir",
+            "rfldn",
+            "flup",
+            "dfdt",
+            "uavg",
+            "uu",
+            "albmed",
+            "trnmed",
+            "bbt",
+        }
+        assert result_names.intersection(dataset.variables) == {"rfldn"}
+        assert dataset.variables["rfldn"].dimensions == (
+            "wavenumber",
+            "output_level",
+        )
+        assert dataset.variables["rfldn"].shape == (3, 3)
+
+
 def test_complete_oxharp_pathway_with_derived_geometry(
     tmp_path,
     tiny_atmosphere,
@@ -361,25 +402,33 @@ def test_complete_oxharp_pathway_with_derived_geometry(
         sza_cos=1.0,
         zen_cos=1.0,
         zen_sec=1.0,
-        out_mode="txt",
-        bbt=True,
-        rad=True,
+        out_mode="netcdf",
         base_plots=True,
+        retain_outputs=("bbt", "uu", "flup"),
     )
 
     result, _ = run_native_case("e2e", {"runner": "oxharp", "values": values})
 
     _assert_complete_result(result, results, values)
     for filename in (
-        "bbt.txt",
-        "rad.txt",
-        "base_plot_0_0_0.png",
-        "base_plot_0_1_0.png",
-        "base_plot_0_2_0.png",
+        "srfm.nc",
+        "base_plot_bbt_0_0_0.png",
+        "base_plot_bbt_0_1_0.png",
+        "base_plot_bbt_0_2_0.png",
+        "base_plot_rad_0_0_0.png",
+        "base_plot_rad_0_1_0.png",
+        "base_plot_rad_0_2_0.png",
     ):
         assert (results / filename).is_file()
-    assert np.loadtxt(results / "bbt.txt").shape == (9, 5)
-    assert np.loadtxt(results / "rad.txt").shape == (9, 5)
+    with Dataset(results / "srfm.nc") as dataset:
+        assert dataset.variables["bbt"].shape == (3, 1, 3, 1)
+        assert dataset.variables["uu"].shape == (3, 1, 3, 1)
+        assert dataset.variables["flup"].dimensions == (
+            "wavenumber",
+            "output_level",
+        )
+        assert dataset.variables["flup"].shape == (3, 3)
+        np.testing.assert_allclose(dataset.variables["flup"][:], result["flup"])
 
 
 def test_complete_iasi_pathway_with_synthetic_processed_observation(
@@ -426,9 +475,8 @@ def test_complete_iasi_pathway_with_synthetic_processed_observation(
         nedt=str(tiny_iasi_nedt),
         ils=str(tiny_iasi_ils),
         out_mode="netcdf",
-        bbt=True,
-        rad=True,
         base_plots=True,
+        retain_outputs=("bbt", "uu", "flup"),
     )
 
     result, _ = run_native_case("e2e", {"runner": "iasi", "values": values})
@@ -442,13 +490,17 @@ def test_complete_iasi_pathway_with_synthetic_processed_observation(
         "synthetic_20250323_A_px0_diff_0_0_0.png",
         "synthetic_20250323_A_px0_diff_0_1_0.png",
         "synthetic_20250323_A_px0_diff_0_2_0.png",
+        "synthetic_20250323_A_px0_rad_0_0_0.png",
+        "synthetic_20250323_A_px0_rad_0_1_0.png",
+        "synthetic_20250323_A_px0_rad_0_2_0.png",
     ):
         assert (results / filename).is_file()
-    with Dataset(results / "bbt.nc") as dataset:
+    with Dataset(results / "srfm.nc") as dataset:
         assert dataset.variables["bbt"].shape == (3, 1, 3, 1)
+        assert dataset.variables["uu"].shape == (3, 1, 3, 1)
+        assert dataset.variables["flup"].shape == (3, 3)
+        np.testing.assert_allclose(dataset.variables["flup"][:], result["flup"])
         np.testing.assert_allclose(dataset.variables["output_level"][:], [0, 1, 2])
-    with Dataset(results / "rad.nc") as dataset:
-        assert dataset.variables["rad"].shape == (3, 1, 3, 1)
 
 
 @pytest.mark.parametrize(
@@ -459,16 +511,11 @@ def test_complete_iasi_pathway_with_synthetic_processed_observation(
             {
                 "disort_precision": "single",
                 "out_mode": "txt",
-                "bbt": True,
-                "rad": True,
-                "bbt_out_fname": None,
-                "rad_out_fname": "single-radiance",
                 "base_plots": True,
-                "plot_type": "rad",
+                "retain_outputs": ("rad",),
             },
             (
-                "bbt.txt",
-                "single-radiance.txt",
+                "rad.txt",
                 "base_plot_0_0_0.png",
                 "base_plot_0_1_0.png",
                 "base_plot_0_2_0.png",
@@ -485,19 +532,18 @@ def test_complete_iasi_pathway_with_synthetic_processed_observation(
                 "saa": 45.0,
                 "convolve_iasi": True,
                 "out_mode": "netcdf",
-                "bbt": True,
-                "rad": True,
-                "bbt_out_fname": "solar-bbt",
-                "rad_out_fname": None,
+                "out_fname": "solar-output.nc",
                 "base_plots": True,
-                "plot_type": "bbt",
+                "retain_outputs": ("bbt", "uu", "flup"),
             },
             (
-                "solar-bbt.nc",
-                "rad.nc",
-                "base_plot_0_0_0.png",
-                "base_plot_0_1_0.png",
-                "base_plot_0_2_0.png",
+                "solar-output.nc",
+                "base_plot_bbt_0_0_0.png",
+                "base_plot_bbt_0_1_0.png",
+                "base_plot_bbt_0_2_0.png",
+                "base_plot_rad_0_0_0.png",
+                "base_plot_rad_0_1_0.png",
+                "base_plot_rad_0_2_0.png",
             ),
             id="solar-iasi-netcdf-bbt-plot",
         ),
@@ -552,14 +598,13 @@ def test_driver_table_optional_execution_branches(
         assert path.stat().st_size > 0
 
     if values["out_mode"] == "txt":
-        bbt = np.loadtxt(results / "bbt.txt")
-        radiance = np.loadtxt(results / "single-radiance.txt")
-        assert bbt.shape == radiance.shape == (9, 5)
+        radiance = np.loadtxt(results / "rad.txt")
+        assert not (results / "bbt.txt").exists()
+        assert radiance.shape == (9, 5)
         expected_wavenumbers = np.repeat(result["wvnm"], 3)
-        np.testing.assert_allclose(bbt[:, 0], expected_wavenumbers)
         np.testing.assert_allclose(radiance[:, 0], expected_wavenumbers)
     else:
-        with Dataset(results / "solar-bbt.nc") as dataset:
+        with Dataset(results / "solar-output.nc") as dataset:
             assert dataset.variables["bbt"].shape == (5, 1, 3, 1)
             assert dataset.variables["bbt"].dimensions == (
                 "wavenumber",
@@ -569,6 +614,12 @@ def test_driver_table_optional_execution_branches(
             )
             np.testing.assert_allclose(dataset.variables["output_level"][:], [0, 1, 2])
             assert np.all(np.isfinite(dataset.variables["bbt"][:]))
-        with Dataset(results / "rad.nc") as dataset:
-            assert dataset.variables["rad"].shape == (5, 1, 3, 1)
-            assert np.all(np.isfinite(dataset.variables["rad"][:]))
+            assert dataset.variables["flup"].dimensions == (
+                "wavenumber",
+                "output_level",
+            )
+            assert dataset.variables["flup"].shape == (5, 3)
+            assert np.all(np.isfinite(dataset.variables["flup"][:]))
+            np.testing.assert_allclose(dataset.variables["flup"][:], result["flup"])
+            assert dataset.variables["uu"].shape == (5, 1, 3, 1)
+            assert np.all(np.isfinite(dataset.variables["uu"][:]))

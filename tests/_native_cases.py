@@ -124,8 +124,9 @@ def _e2e_case(payload):
     model = run_srfm(inputs)
     return {
         "wvnm": model.wvnm,
-        "uu": model.uu,
-        "bbt": model.bbt,
+        "uu": getattr(model, "uu", None),
+        "bbt": getattr(model, "bbt", None),
+        "flup": getattr(model, "flup", None),
         "output_values": getattr(model, "output_values", None),
         "input_keys": tuple(inputs.values),
     }

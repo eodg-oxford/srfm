@@ -95,7 +95,7 @@ def _resolve_retained_outputs(values):
     Raises:
         ValueError: If the retention collection contains an unsupported name.
     """
-    aliases = {"radiance": "uu"}
+    aliases = {"rad": "uu", "radiance": "uu"}
     raw_names = {
         "rfldir",
         "rfldn",
@@ -106,17 +106,8 @@ def _resolve_retained_outputs(values):
         "albmed",
         "trnmed",
     }
-    configured = values.get("retain_outputs")
-    if configured is None:
-        requested = set(raw_names) | {"bbt"}
-    else:
-        requested = {aliases.get(name, name) for name in configured}
-        if values.get("rad"):
-            requested.add("uu")
-        if values.get("bbt"):
-            requested.add("bbt")
-        if values.get("base_plots"):
-            requested.add("bbt" if values.get("plot_type") == "bbt" else "uu")
+    configured = values["retain_outputs"]
+    requested = {aliases.get(name, name) for name in configured}
     unknown = requested - raw_names - {"bbt"}
     if unknown:
         raise ValueError("Unknown retained output name(s): " + ", ".join(sorted(unknown)))
@@ -244,7 +235,7 @@ def _write_spectral_text(filename, wavenumbers, values, value_name):
 
 
 def _create_netcdf_spectral_dimensions(nc_file, model):
-    """Create dimensions and coordinates shared by radiance and BBT output.
+    """Create dimensions and coordinates shared by retained SRFM outputs.
 
     Args:
         nc_file (netCDF4.Dataset): Open output dataset.
@@ -253,8 +244,10 @@ def _create_netcdf_spectral_dimensions(nc_file, model):
     Returns:
         tuple[str, str, str, str]: NetCDF dimension names in native output order.
     """
-    values = model.uu if hasattr(model, "uu") else model.bbt
-    num_wavenumbers, num_polar, num_levels, num_azimuthal = values.shape
+    num_wavenumbers = len(model.wvnm)
+    num_polar = len(model.output_polar_angles)
+    num_levels = len(model.output_values)
+    num_azimuthal = len(model.output_azimuthal_angles)
     nc_file.createDimension("wavenumber", num_wavenumbers)
     nc_file.createDimension("output_polar_angle", num_polar)
     nc_file.createDimension("output_level", num_levels)
@@ -294,14 +287,166 @@ def _create_netcdf_spectral_dimensions(nc_file, model):
     )
 
 
+def _write_retained_netcdf_outputs(nc_file, model, retained_outputs):
+    """Write explicitly retained SRFM outputs to an open NetCDF dataset.
+
+    The SRFM arrays use three native DISORT layouts: output-level fields,
+    output-polar-angle fields, and the full user-angle radiance field.  The
+    shared NetCDF dimensions must already have been created by
+    :func:`_create_netcdf_spectral_dimensions`.
+
+    Args:
+        nc_file (netCDF4.Dataset): Open output dataset.
+        model (SRFM): Model containing the retained arrays.
+        retained_outputs (collection[str] | None): Values explicitly selected
+            by the user. ``"rad"`` and ``"radiance"`` are treated as aliases
+            for ``"uu"``.
+
+    Returns:
+        None: Selected arrays are written as compressed NetCDF variables.
+
+    Raises:
+        RuntimeError: If a selected array is absent from the model.
+        ValueError: If a selected name or array shape is unsupported.
+    """
+    if retained_outputs is None:
+        return
+
+    spectrum_dimensions = (
+        "wavenumber",
+        "output_polar_angle",
+        "output_level",
+        "output_azimuthal_angle",
+    )
+    level_dimensions = ("wavenumber", "output_level")
+    polar_dimensions = ("wavenumber", "output_polar_angle")
+    output_metadata = {
+        "rfldir": (level_dimensions, "Direct-beam downward flux"),
+        "rfldn": (level_dimensions, "Diffuse downward flux"),
+        "flup": (level_dimensions, "Diffuse upward flux"),
+        "dfdt": (level_dimensions, "Flux-divergence derivative"),
+        "uavg": (level_dimensions, "Mean intensity"),
+        "uu": (spectrum_dimensions, "User-angle radiance"),
+        "albmed": (polar_dimensions, "Medium albedo"),
+        "trnmed": (polar_dimensions, "Medium transmissivity"),
+        "bbt": (spectrum_dimensions, "Brightness temperature"),
+    }
+
+    aliases = {"rad": "uu", "radiance": "uu"}
+    selected = {aliases.get(name, name) for name in retained_outputs}
+    unknown = selected - output_metadata.keys()
+    if unknown:
+        raise ValueError(
+            "Unknown retained NetCDF output name(s): "
+            + ", ".join(sorted(unknown))
+        )
+
+    for output_name in sorted(selected):
+        if not hasattr(model, output_name):
+            raise RuntimeError(
+                f"Retained output {output_name!r} is not available on the SRFM model."
+            )
+
+        dimensions, long_name = output_metadata[output_name]
+        values = np.asarray(getattr(model, output_name))
+        expected_shape = tuple(len(nc_file.dimensions[name]) for name in dimensions)
+        if values.shape != expected_shape:
+            raise ValueError(
+                f"Retained output {output_name!r} has shape {values.shape}, "
+                f"but dimensions {dimensions} require {expected_shape}."
+            )
+
+        variable = nc_file.createVariable(
+            output_name, "f8", dimensions, zlib=True, complevel=4
+        )
+        variable.long_name = long_name
+        if output_name == "bbt":
+            variable.units = "K"
+        elif output_name == "uu":
+            variable.units = "W m-2 sr-1 cm"
+        variable[:] = values
+
+
+def _write_srfm_netcdf(
+    filename,
+    model,
+    retained_outputs,
+    effective_params,
+    wavelengths,
+    scattering_layers,
+):
+    """Write one complete SRFM NetCDF file.
+
+    The file contains every explicitly retained SRFM result, shared output
+    coordinates, and the existing scattering-layer optical-depth metadata.
+
+    Args:
+        filename (path-like): Destination NetCDF filename.
+        model (SRFM): Completed model containing retained result arrays.
+        retained_outputs (collection[str]): User-selected result names.
+        effective_params (Mapping): Effective validated run configuration.
+        wavelengths (array-like): Computational wavelength grid.
+        scattering_layers (Mapping[str, MieLayer]): Configured scattering layers.
+
+    Returns:
+        None: The NetCDF file is written and closed.
+    """
+    wavelengths = np.asarray(wavelengths)
+    layer_names = list(scattering_layers)
+    serialized_params = copy.deepcopy(effective_params)
+    serialized_params["driver_inputs"]["spectral"] = str(
+        serialized_params["driver_inputs"]["spectral"]
+    )
+
+    with Dataset(filename, "w", format="NETCDF4") as nc_file:
+        nc_file.description = "SRFM output."
+        nc_file.history = (
+            f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
+        )
+        nc_file.srfm_params = json.dumps(
+            serialized_params,
+            default=utilities.json_handler,
+        )
+
+        nc_file.createDimension("wavenumber_op", wavelengths.size)
+        nc_file.createDimension("layer", len(layer_names))
+        _create_netcdf_spectral_dimensions(nc_file, model)
+        _write_retained_netcdf_outputs(nc_file, model, retained_outputs)
+
+        layer_variable = nc_file.createVariable("layer_names", str, ("layer",))
+        layer_variable[:] = np.asarray(layer_names, dtype=object)
+
+        optical_depth = np.zeros((len(layer_names), wavelengths.size))
+        for index, layer_name in enumerate(layer_names):
+            scattering_layer = scattering_layers[layer_name]
+            beta_ext = scattering_layer.interpolate_optical_properties(
+                wavelengths, include_legendre=False
+            )["beta_ext"]
+            optical_depth[index, :] = (
+                beta_ext
+                * 1e3
+                * (scattering_layer.alt_upp - scattering_layer.alt_low)
+            )
+
+        tau = nc_file.createVariable(
+            "tau",
+            "f8",
+            ("layer", "wavenumber_op"),
+            zlib=True,
+            complevel=4,
+        )
+        tau.long_name = "Optical depth per layer and wavenumber"
+        tau[:] = optical_depth
+
+
 def _plot_spectral_outputs(
-    model, results_folder, plot_type, show_plots, filename_prefix="base_plot"
+    model, results_folder, output_name, show_plots, filename_prefix="base_plot"
 ):
     """Plot every polar-angle, output-level, and azimuthal-angle spectrum."""
-    if plot_type == "bbt":
+    if output_name == "bbt":
         values = model.bbt
         y_label = "Brightness temperature (K)"
-    elif plot_type == "rad":
+    elif output_name == "rad":
         values = model.uu
         y_label = r"Radiance (W m$^{-2}$ sr$^{-1}$ cm)"
     else:
@@ -338,6 +483,47 @@ def _plot_spectral_outputs(
                     plt.show()
                 else:
                     plt.close()
+
+
+def _plot_retained_spectral_outputs(
+    model, results_folder, retained_outputs, show_plots
+):
+    """Create base plots for every retained primary spectral output.
+
+    When both brightness temperature and radiance are retained, the output
+    name is included in each filename so the two plot sets cannot overwrite
+    one another.
+    """
+    selected = {
+        "uu" if name in {"rad", "radiance"} else name
+        for name in retained_outputs
+    }
+    plot_outputs = [
+        output_name
+        for output_name, retained_name in (("bbt", "bbt"), ("rad", "uu"))
+        if retained_name in selected
+    ]
+    if not plot_outputs:
+        warnings.warn(
+            "base_plots is True, but retain_outputs contains neither bbt nor "
+            "radiance; no base plots were created.",
+            stacklevel=2,
+        )
+        return
+
+    for output_name in plot_outputs:
+        filename_prefix = (
+            "base_plot"
+            if len(plot_outputs) == 1
+            else f"base_plot_{output_name}"
+        )
+        _plot_spectral_outputs(
+            model,
+            results_folder,
+            output_name,
+            show_plots,
+            filename_prefix=filename_prefix,
+        )
 
 
 @utilities.show_runtime
@@ -1030,167 +1216,43 @@ def run_srfm(inp):
     # (optional) save spectrum to file(s)
     ########################################################################################
     if inp.values["out_mode"] == "txt":
-        if inp.values["bbt"] == True:
-            filename = inp.values["bbt_out_fname"] or "bbt"
+        if "bbt" in requested_outputs:
             _write_spectral_text(
-                os.path.join(inp.values["results_fldr"], f"{filename}.txt"),
+                os.path.join(inp.values["results_fldr"], "bbt.txt"),
                 model_SRFM.wvnm,
                 model_SRFM.bbt,
                 "Brightness temperature (K)",
             )
 
-        if inp.values["rad"] == True:
-            filename = inp.values["rad_out_fname"] or "rad"
+        if "uu" in requested_outputs:
             _write_spectral_text(
-                os.path.join(inp.values["results_fldr"], f"{filename}.txt"),
+                os.path.join(inp.values["results_fldr"], "rad.txt"),
                 model_SRFM.wvnm,
                 model_SRFM.uu,
                 "Radiance (W m-2 sr-1 cm)",
             )
 
-        if not inp.values["bbt"] and not inp.values["rad"]:
-            warnings.warn("driver table doesn't specify output bbt or rad.")
-
     elif inp.values["out_mode"] == "netcdf":
-        if inp.values["bbt"] == True:
-            if isinstance(inp.values["bbt_out_fname"], str):
-                out_nm = (
-                    f"{inp.values['results_fldr']}/{inp.values['bbt_out_fname']}.nc"
-                )
-            else:
-                out_nm = f"{inp.values['results_fldr']}/bbt.nc"
-            
-            with Dataset(out_nm, "w", format="NETCDF4") as nc_file:
-                # --- File Global Attributes ---
-                nc_file.description = "SRFM output."
-                nc_file.history = f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
-                
-                effective_params["driver_inputs"]["spectral"] = str(
-                    effective_params["driver_inputs"]["spectral"]
-                )
-                
-                nc_file.srfm_params = json.dumps(
-                    effective_params,
-                    default=utilities.json_handler,
-                    )
-
-                # --- Core Dimensions ---
-                # dimension for optical properties on the computational grid
-                num_wavenumbers_op = wvls.shape[0]
-                layer_names = list(scat_lyrs.keys()) # names of scattering layers
-                num_layers = len(layer_names) # number of scattering layers
-
-                nc_file.createDimension("wavenumber_op", num_wavenumbers_op)
-                nc_file.createDimension("layer", num_layers)
-                spectrum_dimensions = _create_netcdf_spectral_dimensions(
-                    nc_file, model_SRFM
-                )
-
-                # --- Core Spectrum Variables ---
-                bbt = nc_file.createVariable(
-                    "bbt", "f8", spectrum_dimensions, zlib=True, complevel=4
-                )
-                bbt.units = "K"
-                bbt.long_name = "Brightness temperature"
-                bbt[:] = model_SRFM.bbt
-
-                # Store layer names mapping
-                var_lyr_names = nc_file.createVariable("layer_names", str, ("layer",))
-                var_lyr_names[:] = np.array(layer_names, dtype=object)
-
-                # --- Pre-allocate Matrices ---
-                grid_shape = (num_layers, num_wavenumbers_op)
-
-                mat_tau = np.zeros(grid_shape)
-
-                # --- Populate Matrices ---
-                for i, ll in enumerate(layer_names):
-                    lyr = scat_lyrs[ll]
-
-                    beta_ext = lyr.interpolate_optical_properties(
-                        wvls, include_legendre=False
-                    )["beta_ext"]
-                    mat_tau[i, :] = (
-                        beta_ext * 1e3 * (lyr.alt_upp - lyr.alt_low)
-                    )
-
-                var_tau = nc_file.createVariable("tau", "f8", ("layer", "wavenumber_op"), zlib=True, complevel=4)
-                var_tau.long_name = "Optical depth per layer and wavenumber"
-                var_tau[:] = mat_tau
-
-        if inp.values["rad"] == True:
-            if isinstance(inp.values["rad_out_fname"], str):
-                out_nm = (
-                    f"{inp.values['results_fldr']}/{inp.values['rad_out_fname']}.nc"
-                )
-            else:
-                out_nm = f"{inp.values['results_fldr']}/rad.nc"
-
-            with Dataset(out_nm, "w", format="NETCDF4") as nc_file:
-                # --- File Global Attributes ---
-                nc_file.description = "SRFM output."
-                nc_file.history = f"Created {datetime.datetime.now().strftime('%Y-%m-%d')}"
-                
-                effective_params["driver_inputs"]["spectral"] = str(
-                    effective_params["driver_inputs"]["spectral"]
-                )
-                
-                nc_file.srfm_params = json.dumps(
-                    effective_params,
-                    default=utilities.json_handler,
-                    )
-
-                # --- Core Dimensions ---
-                # dimension for optical properties on the computational grid
-                num_wavenumbers_op = wvls.shape[0]
-                layer_names = list(scat_lyrs.keys())
-                num_layers = len(layer_names)
-
-                nc_file.createDimension("wavenumber_op", num_wavenumbers_op)
-                nc_file.createDimension("layer", num_layers)
-                spectrum_dimensions = _create_netcdf_spectral_dimensions(
-                    nc_file, model_SRFM
-                )
-
-                # --- Core Spectrum Variables ---
-                rad = nc_file.createVariable(
-                    "rad", "f8", spectrum_dimensions, zlib=True, complevel=4
-                )
-                rad.units = "W m-2 sr-1 cm"
-                rad.long_name = "Radiance"
-                rad[:] = model_SRFM.uu
-
-                # Store layer names mapping
-                var_lyr_names = nc_file.createVariable("layer_names", str, ("layer",))
-                var_lyr_names[:] = np.array(layer_names, dtype=object)
-
-                # --- Pre-allocate Matrices ---
-                grid_shape = (num_layers, num_wavenumbers_op)
-                mat_tau = np.zeros(grid_shape)
-                
-                # --- Populate Matrices ---
-                for i, ll in enumerate(layer_names):
-                    lyr = scat_lyrs[ll]                    
-
-                    beta_ext = lyr.interpolate_optical_properties(
-                        wvls, include_legendre=False
-                    )["beta_ext"]
-                    mat_tau[i, :] = (
-                        beta_ext * 1e3 * (lyr.alt_upp - lyr.alt_low)
-                    )
-
-                var_tau = nc_file.createVariable("tau", "f8", ("layer", "wavenumber_op"), zlib=True, complevel=4)
-                var_tau.long_name = "Optical depth per layer and wavenumber"
-                var_tau[:] = mat_tau
+        out_nm = os.path.join(
+            inp.values["results_fldr"], inp.values.get("out_fname") or "srfm.nc"
+        )
+        _write_srfm_netcdf(
+            out_nm,
+            model_SRFM,
+            inp.values["retain_outputs"],
+            effective_params,
+            wvls,
+            scat_lyrs,
+        )
 
     elif inp.values["out_mode"] == None:
         pass
 
     if inp.values["base_plots"] == True:
-        _plot_spectral_outputs(
+        _plot_retained_spectral_outputs(
             model_SRFM,
             inp.values["results_fldr"],
-            inp.values["plot_type"],
+            inp.values["retain_outputs"],
             inp.values["show_plots"],
         )
 

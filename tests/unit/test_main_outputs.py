@@ -11,8 +11,12 @@ from srfm.forward_model import SRFM
 from srfm.main import (
     _calculate_output_utau,
     _create_netcdf_spectral_dimensions,
+    _plot_retained_spectral_outputs,
     _plot_spectral_outputs,
     _resolve_output_geometry,
+    _resolve_retained_outputs,
+    _write_retained_netcdf_outputs,
+    _write_srfm_netcdf,
     _write_spectral_text,
 )
 from srfm.iasi_main import _format_iasi_plot_title
@@ -93,6 +97,8 @@ def test_netcdf_dimensions_follow_native_disort_axis_order(tmp_path):
     model.uu = np.zeros((2, 2, 3, 4))
     model.output_format = "altitude"
     model.output_values = np.array([1.0, 2.0, 3.0])
+    model.output_polar_angles = np.array([10.0, 20.0])
+    model.output_azimuthal_angles = np.array([0.0, 90.0, 180.0, 270.0])
     filename = tmp_path / "spectra.nc"
 
     with Dataset(filename, "w") as dataset:
@@ -110,6 +116,141 @@ def test_netcdf_dimensions_follow_native_disort_axis_order(tmp_path):
         assert dataset.variables["rad"].shape == (2, 2, 3, 4)
         np.testing.assert_allclose(dataset.variables["output_level"][:], [1.0, 2.0, 3.0])
         assert dataset.variables["output_level"].units == "km"
+
+
+def test_retained_outputs_are_written_with_native_netcdf_dimensions(tmp_path):
+    """Explicitly retained DISORT fields use their matching spectral axes."""
+    model = SRFM()
+    model.wvnm = np.array([900.0, 901.0])
+    model.output_format = "altitude"
+    model.output_values = np.array([1.0, 2.0, 3.0])
+    model.output_polar_angles = np.array([10.0, 20.0])
+    model.output_azimuthal_angles = np.array([0.0, 90.0, 180.0, 270.0])
+    model.uu = np.arange(48.0).reshape(2, 2, 3, 4)
+    model.flup = np.arange(6.0).reshape(2, 3)
+    model.albmed = np.arange(4.0).reshape(2, 2)
+    filename = tmp_path / "retained.nc"
+
+    with Dataset(filename, "w") as dataset:
+        _create_netcdf_spectral_dimensions(dataset, model)
+        _write_retained_netcdf_outputs(
+            dataset, model, {"flup", "albmed", "radiance"}
+        )
+
+    with Dataset(filename) as dataset:
+        assert dataset.variables["flup"].dimensions == (
+            "wavenumber",
+            "output_level",
+        )
+        assert dataset.variables["albmed"].dimensions == (
+            "wavenumber",
+            "output_polar_angle",
+        )
+        assert dataset.variables["uu"].dimensions == (
+            "wavenumber",
+            "output_polar_angle",
+            "output_level",
+            "output_azimuthal_angle",
+        )
+        np.testing.assert_allclose(dataset.variables["flup"][:], model.flup)
+        np.testing.assert_allclose(dataset.variables["albmed"][:], model.albmed)
+        np.testing.assert_allclose(dataset.variables["uu"][:], model.uu)
+
+
+def test_unspecified_retained_outputs_do_not_change_netcdf_contents(tmp_path):
+    """The historical default retention does not silently enlarge output files."""
+    model = SRFM()
+    model.wvnm = np.array([900.0])
+    model.uu = np.zeros((1, 1, 1, 1))
+    model.flup = np.ones((1, 1))
+    model.output_format = "tau"
+    model.output_values = np.array([0.0])
+    model.output_polar_angles = np.array([0.0])
+    model.output_azimuthal_angles = np.array([0.0])
+    filename = tmp_path / "default.nc"
+
+    with Dataset(filename, "w") as dataset:
+        _create_netcdf_spectral_dimensions(dataset, model)
+        _write_retained_netcdf_outputs(dataset, model, None)
+
+    with Dataset(filename) as dataset:
+        assert "flup" not in dataset.variables
+
+
+def test_complete_netcdf_writer_supports_raw_output_without_radiance_or_bbt(
+    tmp_path,
+):
+    """A raw retained DISORT field can be the only result in the generic file."""
+    model = SRFM()
+    model.wvnm = np.array([900.0, 901.0])
+    model.output_format = "altitude"
+    model.output_values = np.array([1.0, 2.0, 3.0])
+    model.output_polar_angles = np.array([0.0])
+    model.output_azimuthal_angles = np.array([0.0])
+    model.rfldn = np.arange(6.0).reshape(2, 3)
+    filename = tmp_path / "raw-only.nc"
+
+    _write_srfm_netcdf(
+        filename,
+        model,
+        ("rfldn",),
+        {"driver_inputs": {"spectral": (900.0, 901.0)}},
+        np.array([10.0, 11.0]),
+        {},
+    )
+
+    with Dataset(filename) as dataset:
+        result_names = {
+            "rfldir",
+            "rfldn",
+            "flup",
+            "dfdt",
+            "uavg",
+            "uu",
+            "albmed",
+            "trnmed",
+            "bbt",
+        }
+        assert result_names.intersection(dataset.variables) == {"rfldn"}
+        assert dataset.variables["rfldn"].dimensions == (
+            "wavenumber",
+            "output_level",
+        )
+        np.testing.assert_allclose(dataset.variables["rfldn"][:], model.rfldn)
+
+
+def test_retained_output_selection_accepts_every_radiance_alias():
+    """The removed rad boolean is replaced by equivalent retention aliases."""
+    for alias in ("rad", "radiance", "uu"):
+        requested, runtime = _resolve_retained_outputs(
+            {
+                "retain_outputs": ("bbt", alias, "flup"),
+                "convolve_iasi": False,
+            }
+        )
+        assert requested == {"bbt", "uu", "flup"}
+        assert runtime == {"uu", "flup"}
+
+
+def test_base_plots_include_every_retained_primary_output(tmp_path):
+    """Retaining both BBT and radiance creates two non-overwriting plot sets."""
+    model = SRFM()
+    with patch("srfm.main._plot_spectral_outputs") as plot:
+        _plot_retained_spectral_outputs(
+            model, tmp_path, ("bbt", "radiance"), False
+        )
+
+    assert [call.args[2] for call in plot.call_args_list] == ["bbt", "rad"]
+    assert [call.kwargs["filename_prefix"] for call in plot.call_args_list] == [
+        "base_plot_bbt",
+        "base_plot_rad",
+    ]
+
+
+def test_base_plots_warn_when_no_primary_output_is_retained(tmp_path):
+    """Flux-only retention cannot create a BBT or radiance base plot."""
+    with pytest.warns(UserWarning, match="no base plots were created"):
+        _plot_retained_spectral_outputs(SRFM(), tmp_path, ("flup",), False)
 
 
 def test_spectral_plot_titles_use_angles_but_filenames_use_indices(tmp_path):
