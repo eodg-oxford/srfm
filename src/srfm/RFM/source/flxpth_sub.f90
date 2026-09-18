@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE FLXPTH
 !
 ! VERSION
+!   07OCT25 AD Checked.
 !   20SEP21 AD Replace ADDCLC with ICLPTH. Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !

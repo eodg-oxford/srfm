@@ -1,7 +1,7 @@
 MODULE RFMCON_DAT
 !
 ! VERSION
-!   27JAN24 AD Checked.
+!   17JAN26 AD Checked.
 !   01MAY17 AD Original. Checked
 !
 ! DESCRIPTION

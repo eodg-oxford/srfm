@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE CHISHP ( DWNO, ABSORP )
 !
 ! VERSION
-!   20APR23 AD Checked.
+!   28MAR26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

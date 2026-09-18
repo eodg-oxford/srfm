@@ -3,7 +3,8 @@ CONTAINS
 SUBROUTINE SFCLEV ( PARAM, VALUE, FAIL, ERRMSG )
 !
 ! VERSION
-!   13MAR23 AD Bug#38: Reset all TAN(:)%IAT GE IATSFC, not just TAN(:)%SFC. Checked.
+!   21FEB26 AD Checked.
+!   13MAR23 AD Bug#38: Reset all TAN(:)%IAT GE IATSFC, not just TAN(:)%SFC.
 !   29MAR21 AD Bug#28: Use ATMLEV rather than ADDATM to insert level
 !   05AUG19 AD Check new surface is not above observer level. Checked.
 !   05APR19 AD Change condition for resetting TAN%IAT

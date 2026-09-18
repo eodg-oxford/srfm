@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE DRVSFC ( LUNDRV, FAIL, ERRMSG )
 !
 ! VERSION
-!   22MAY24 AD Checked.
+!   28APR26 AD Checked.
 !   29APR21 AD Allow for being called with ZEN flag for upward viewing
 !   12APR19 AD Ensure changing surface level also adjusts TEMREL. Checked.
 !   05MAR19 AD Add RFLSFC parameter. 

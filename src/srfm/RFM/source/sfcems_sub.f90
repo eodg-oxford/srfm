@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SFCEMS ( EMSSTR, FAIL, ERRMSG )
 !
 ! VERSION
-!   22DEC23 AD Checked.
+!   17DEC25 AD Checked.
 !   21JUN17 AD F90 adpated from sfcfil.for. Checked.
 !
 ! DESCRIPTION

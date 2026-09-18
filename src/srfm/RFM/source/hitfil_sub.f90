@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE HITFIL ( NAMHIT, TYPHIT, WNOREQ, IDMREQ, FAIL, ERRMSG )
 !
 ! VERSION
-!   13AUG24 AD Checked.
+!   07AUG26 AD Checked.
 !   11AUG23 AD Adpapted for multiple files
 !   30MAY23 AD Renamed from OPNHIT and simplified structure.
 !   29JAN20 AD Open all forms of HITRAN data file. Checked.

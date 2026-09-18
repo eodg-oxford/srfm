@@ -1,7 +1,7 @@
 ! Copyright (C) 1998-2017 University of Oxford
 !
 ! This source code is licensed under the GNU General Public License (GPL),
-! Version 3.  See the file COPYING for more details.
+! Version 3.  See the file LICENSE for more details.
 
 
 !     General purpose Mie scattering routine for single particles reworked into f90
@@ -174,4 +174,3 @@
       End Do
   Return
  end 
-

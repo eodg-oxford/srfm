@@ -1,7 +1,7 @@
 MODULE GASCOM_DAT
 !
 ! VERSION
-!   03OCT24 AD Checked.
+!   01OCT25 AD Checked.
 !   18APR22 AD Add IAIGAS. Checked.
 !   24JUN19 AD Add %CIA. Checked.
 !   01JUN17 AD F90 version. Checked.

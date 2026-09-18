@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SPCFIL ( NAMSPC, FAIL, ERRMSG )
 !
 ! VERSION
-!   27JUN24 AD Checked.
+!   28MAY26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

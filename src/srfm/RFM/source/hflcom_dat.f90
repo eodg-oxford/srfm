@@ -1,7 +1,7 @@
 MODULE HFLCOM_DAT
 !
 ! VERSION
-!   10AUG24 AD Checked.
+!   04AUG26 AD Checked.
 !   11AUG23 AD Rewritten again
 !   23MAY23 AD Extensive modifications
 !   29JAN20 AD Add BASHFL, BINHFL, NFPHFL, LSTFWD, LSTLIN. Checked.

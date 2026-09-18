@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE INTGRA ( PSI, FLG, LININT, PRF )
 !
 ! VERSION
-!   07SEP24 AD Checked.
+!   07SEP25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

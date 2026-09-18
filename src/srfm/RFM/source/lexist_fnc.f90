@@ -3,7 +3,7 @@ CONTAINS
 LOGICAL FUNCTION LEXIST ( FILNAM )
 !
 ! VERSION
-!   12DEC23 AD Checked.
+!   05DEC25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

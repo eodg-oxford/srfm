@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE TABWRT ( FAIL, ERRMSG )
 !
 ! VERSION
+!   05JUN26 AD Checked.
 !   25JUN24 AD Bug#46. Use PTH%AMT to scale path amount.
 !   04JUL23 AD Checked.
 !   13OCT17 AD F90 conversion of wrttab.for. Checked.

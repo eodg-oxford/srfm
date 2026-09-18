@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE CIAFIL ( NAMCIA, FAIL, ERRMSG )
 !
 ! VERSION
-!   29JUL24 AD Checked.
+!   01JUL26 AD Checked.
 !   24JUN19 AD Add ADDAIR if 'Air' specified as broad.gas. Set GAS%CIA. Checked
 !   01MAY17 AD F90 conversion. Tested
 !

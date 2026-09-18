@@ -1,49 +1,26 @@
 PROGRAM RFM
 !
 ! VERSION (update VIDHDR)
-!   23SEP24 AD v5.21_23SEP Bug#48, modified TANCNV, CHKLIM
-!   04JUL24 AD v5.21_24JUL Bug#46, modified TABPTH, TABWRT, ICLPTH
-!   21JUN24 AD v5.21_21JUN Change CIACHK to warning messages
-!   15APR24 AD v5.21_15APR Bug#45, modified DRVGAS
-!   16FEB24 AD v5.21_16FEB Bug#44, modified NXTPRF
-!   18DEC23 AD v5.21_18DEC Bug#42, modified JACPTH; Bug#43 RFMSPC, SPCFIN
-!   24AUG23 AD v5.21_24AUG Bug#41, modified ATMINI
-!   11AUG23 AD v5.21_11AUG Multiple HITRAN files. Remove DRVNAM.
-!   30JUN23 AD v5.20_30JUN Bug#40, modified CHKABS.
-!   22MAY23 AD v5.20_22MAY Bug#39, modified INIHFL.
-!   20APR23 AD v5.20_20APR New HITRAN 20 molecules and TIPS data
-!   15MAR23 AD v5.13_15MAR Change from MT_CKD v3.2 to v4.1 continuum
-!   13MAR23 AD v5.13_13MAR Bug#38
-!   19JAN23 AD v5.13_19JAN Bug#37
-!   27SEP22 AD v5.12_27SEP Bugs#32-36
-!   07MAR22 AD v5.12_07MAR Bug#31
-!   03DEC21 AD v5.12_03DEC Speed up Jacobians
-!   29APR21 AD v5.11_29APR Bug#29, 30.
-!   02APR21 AD v5.11_02APR Bug#27 - new ATMGRD
-!   19MAR21 AD v5.10_29MAR Bug#28 - new SFCLEV
-!   25MAR21 AD v5.10_25MAR Extend handling of incl/excl profiles in *ATM files
-!   19MAR21 AD v5.10_19MAR Add messages to log file from *ATM section
-!   23MAY20 AD v5.10_23MAY Avoid NaN for low wno. in Planck fn.
-!   25APR20 AD v5.10_25APR Fix bug in HITTYP
-!   09MAR20 AD v5.10_09MAR Bug#26, revised MOLIDX
-!   03MAR20 AD v5.10_03MAR Modified SPCRAD for NADir viewing OPT,TRA calc.
-!   19FEB20 AD v5.10_19FEB Bug#24,#25, revised .xsc file handling
-!   29JAN20 AD v5.10_29JAN Revised HITRAN file handling
-!   20SEP19 AD v5.10_20SEP Bug#23
-!   16AUG19 AD v5.10_16AUG Allow for .atm file qualifiers
-!   05AUG19 AD v5.10_05AUG Allow for *OBS to specify pressure level 
-!   01JUL19 AD v5.10_01JUL Bug#22
-!   24JUN19 AD v5.10_24JUN Revised CIA data handling
-!   07JUN19 AD v5.10_07JUN Bug#21
-!   03JUN19 AD v5.10_03JUN Extended isolst
-!   04APR19 AD v5.10_04APR Bug#20
-!   28MAR19 AD v5.10_28MAR Bug#19
-!   25MAR19 AD v5.10_25MAR - allows 'UNITS= ...' in *TAN/*LEN section
-!   12MAR19 AD v5.10_12MAR - allow wavenumber for refractivity. Bug#18
-!   05MAR19 AD v5.10_05MAR 
+!   01SEP26 AD v5.40 Official release
+!   26AUG26 AD v5.31 Official release
+!   18AUG26 AD v5.30_18AUG Bug#58, modified ATMLEV.
+!   29MAY26 AD v5.30_29MAY Bug#57, modified FLXATM.
+!   15MAY26 AD v5.30_15MAY Bug#56, modified FLXATM.
+!   01MAY26 AD v5.30_01MAY Bug#55, modified ADDATM.
+!   24APR26 AD v5.30_24APR Bug#52-54. Allow vib index file.
+!   18AUG25 AD v5.30_18AUG Bug#51, modified REACIA,CIAPTH,TABPTH,CIACOM
+!   01AUG25 AD v5.30_01AUG New test version
+!   17APR25 AD v5.22_17APR Bug#50, modified ADJUST,QTNTE,SPCFIN,SPCWID
+!   02DEC24 AD v5.21 Official release
+!   20APR23 AD v5.20
+!   15MAR23 AD v5.13
+!   03DEC21 AD v5.12 
+!   29APR21 AD v5.11
+!   23MAY20 AD v5.10
+!   09MAR20 AD v5.03
 !   01FEB19 AD v5.02
 !   01JUN18 AD v5.01
-!   29JAN18 AD v5.00 F90 version. Tested.
+!   29JAN18 AD v5.00 F90 version. 
 !
 ! DESCRIPTION
 !   Reference Forward Model
@@ -81,7 +58,7 @@ PROGRAM RFM
 !
 ! EXECUTABLE CODE -------------------------------------------------------------
 !
-  VIDHDR = '5.21_23SEP'
+  VIDHDR = '5.40'
   LOGMSG = 'R-RFM: Running RFM v' // VIDHDR    
   WRITE ( *, '(A)' ) LOGMSG
 !

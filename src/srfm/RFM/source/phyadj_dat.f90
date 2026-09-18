@@ -1,7 +1,7 @@
 MODULE PHYADJ_DAT
 !
 ! VERSION
-!   12MAY24 AD Checked.
+!   19APR26 AD Checked.
 !   12MAR19 AD Add WNORFR. Checked.
 !   01MAY17 AD F90 conversion of phycom.inc. Checked.
 !

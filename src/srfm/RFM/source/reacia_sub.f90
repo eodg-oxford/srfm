@@ -3,6 +3,8 @@ CONTAINS
 SUBROUTINE REACIA ( LUNCIA, ID1, ID2, NPT, TEM, WNL, WNU, FAIL, ERRMSG )
 !
 ! VERSION
+!   16AUG26 AD Checked.
+!   18AUG25 AD Simplified: remove CIA%IGG, IGGCIA, IDDCIA
 !   30AUG24 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 ! 
@@ -40,12 +42,9 @@ SUBROUTINE REACIA ( LUNCIA, ID1, ID2, NPT, TEM, WNL, WNU, FAIL, ERRMSG )
     REAL(R8), PARAMETER :: DAVOG2 = DBLE ( AVOG )**2 ! (Avog.no)^2
 !
 ! LOCAL VARIABLES
-    INTEGER(I4) :: IGG  ! Counter for different molec-molec combinations
     INTEGER(I4) :: IOS  ! Saved value of IOSTAT for error messages
     INTEGER(I4) :: IPT  ! Counter for points within tabulation
     REAL(R8)    :: DCIA ! Abs.coefficient [cm^5/molec^2] read from .cia file
-    INTEGER(I4),  ALLOCATABLE :: IDDSAV(:,:) ! Saved IDDCIA during reallocation
-    INTEGER(I4),  ALLOCATABLE :: IGGSAV(:,:) ! Saved IGGCIA during reallocation
     TYPE(CIATYP), ALLOCATABLE :: CIASAV(:)   ! Saved CIA during reallocation
 !
 ! EXECUTABLE CODE -------------------------------------------------------------
@@ -68,29 +67,6 @@ SUBROUTINE REACIA ( LUNCIA, ID1, ID2, NPT, TEM, WNL, WNU, FAIL, ERRMSG )
     READ ( LUNCIA, *, IOSTAT=IOS, ERR=900 ) CIA(NCIA)%WNO(IPT), DCIA
     CIA(NCIA)%ABS(IPT)  = MAX ( 0.0, SNGL ( DCIA * DAVOG2 ) ) 
   END DO
-!
-  CIA(NCIA)%IGG = 0
-  DO IGG = 1, NGGCIA
-    IF ( IGGCIA(1,IGG) .EQ. CIA(NCIA)%IG1 .AND. &
-         IGGCIA(2,IGG) .EQ. CIA(NCIA)%IG2         ) THEN
-      CIA(NCIA)%IGG = IGG
-      EXIT
-    END IF
-  END DO
-  IF ( CIA(NCIA)%IGG .EQ. 0 ) THEN
-    IF ( ALLOCATED ( IGGCIA ) ) THEN
-      CALL MOVE_ALLOC ( IGGCIA, IGGSAV )
-      CALL MOVE_ALLOC ( IDDCIA, IDDSAV )
-    END IF
-    NGGCIA = NGGCIA + 1
-    ALLOCATE ( IGGCIA(2,NGGCIA), IDDCIA(2,NGGCIA) )
-    IF ( ALLOCATED ( IGGSAV ) ) THEN
-      IGGCIA(:,1:NGGCIA-1) = IGGSAV
-      IDDCIA(:,1:NGGCIA-1) = IDDSAV
-    END IF
-    IGGCIA(:,NGGCIA) = (/ CIA(NCIA)%IG1, CIA(NCIA)%IG2 /)
-    IDDCIA(:,NGGCIA) = (/ CIA(NCIA)%ID1, CIA(NCIA)%ID2 /)
-  END IF
 !
 900 CONTINUE
   FAIL = IOS .NE. 0

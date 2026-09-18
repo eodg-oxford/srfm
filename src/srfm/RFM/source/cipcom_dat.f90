@@ -1,7 +1,7 @@
 MODULE CIPCOM_DAT
 !
 ! VERSION
-!   21JUL24 AD Checked.
+!   24JUN26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

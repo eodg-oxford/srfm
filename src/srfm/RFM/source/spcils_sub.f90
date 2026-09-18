@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE SPCILS ( ISPC ) 
 !
 ! VERSION
+!   07MAR26 AD Checked.
 !   07MAR22 AD Bug#31 Average cooling rate spectra as well
 !   30NOV18 AD Bug#12 Set IRRFUL = .FALSE. after convolution. Checked.
 !   01MAY17 AD F90 conversion. Checked.

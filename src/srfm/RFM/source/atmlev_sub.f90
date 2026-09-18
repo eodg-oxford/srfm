@@ -3,7 +3,8 @@ CONTAINS
 SUBROUTINE ATMLEV ( LEV, USEHGT, IDXATM )
 !
 ! VERSION
-!   25SEP24 AD Checked.
+!   18AUG26 AD Bug#58: ensure LNPATM profile defined. 
+!   26SEP25 AD Checked.
 !   02AUG20 AD Correction: use GRDLEV rather than LEV for IDXATM,DELGRD
 !   05AUG19 AD Add USEHGT argument, allow for pressure as well as altitude.
 !   01MAY17 AD F90 conversion. Checked.
@@ -65,6 +66,10 @@ SUBROUTINE ATMLEV ( LEV, USEHGT, IDXATM )
     GRDATM => HGTATM
     GRDLEV = LEV
   ELSE 
+    IF ( .NOT. ALLOCATED ( LNPATM )  ) THEN   ! Bug#58
+      ALLOCATE ( LNPATM(NATM) ) 
+      LNPATM = LOG ( PREATM )     
+    END IF
     GRDATM => LNPATM     ! LnP should be already set, doesn't require ATMAUX
     GRDLEV = LOG(LEV)
   END IF

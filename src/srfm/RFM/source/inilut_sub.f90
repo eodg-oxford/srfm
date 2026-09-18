@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE INILUT ( ISPC, FAIL, ERRMSG )
 !
 ! VERSION
-!   08JUN24 AD Checked.
+!   10MAY26 AD Checked.
 !   20DEC17 AD F90 conversion of spclut.for. Checked.
 !
 ! DESCRIPTION

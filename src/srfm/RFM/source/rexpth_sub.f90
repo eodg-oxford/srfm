@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE REXPTH 
 !
 ! VERSION
-!   22SEP24 AD Checked.
+!   23SEP25 AD Checked.
 !   01MAY17 AD F90 original. Checked.
 ! 
 ! DESCRIPTION    

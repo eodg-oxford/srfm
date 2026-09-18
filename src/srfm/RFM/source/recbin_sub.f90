@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE RECBIN ( LUNHIT, HIT, USEIDM, IFP, EOF, FAIL, ERRMSG ) 
 !
 ! VERSION
-!   23AUG24 AD Checked.
+!   25AUG26 AD Checked.
 !   11AUG23 AD Add arguments
 !   31MAY23 AD Simplified version of HITREC for binary file only.
 !

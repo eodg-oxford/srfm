@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE INISVD ( ISPC, FAIL, ERRMSG )
 !
 ! VERSION
-!   07JUN24 AD Checked.
+!   09MAY26 AD Checked.
 !   20DEC17 AD Adapted from INILUT. Checked.
 !
 ! DESCRIPTION

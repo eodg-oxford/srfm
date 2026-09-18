@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE DRVNTE ( LUNDRV, FAIL, ERRMSG )
 !
 ! VERSION
-!   20SEP24 AD Checked.
+!   23SEP25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

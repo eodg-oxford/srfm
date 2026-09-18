@@ -3,7 +3,7 @@ CONTAINS
 INTEGER(I4) FUNCTION IDXPAR ( HITFLD )
 !
 ! VERSION
-!   16AUG24 AD Checked.
+!   11AUG26 AD Checked.
 !   11AUG23 AD Use SETCOM instead of HDBCOM for IPAR_* values
 !   30MAY23 AD Original.
 !

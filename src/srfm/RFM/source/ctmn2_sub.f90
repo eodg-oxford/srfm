@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE CTMN2 ( ILBL ) 
 !
 ! VERSION
-!   15APR23 AD Checked.
+!   22MAR26 AD Checked.
 !   16NOV17 AD F90 conversion. Checked.
 ! 
 ! DESCRIPTION    

@@ -3,7 +3,7 @@ CONTAINS
 FUNCTION BBFWGT ( XTAN0, XTAN1, CHI )
 !
 ! VERSION
-!   03NOV23 AD Checked.
+!   27OCT25 AD Checked.
 !   01MAY17 AD F90 conversion of subroutine bbfopt.for. Checked.
 !
 ! DESCRIPTION

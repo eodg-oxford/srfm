@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SPCLAB ( LABEL, FAIL, ERRMSG )
 !
 ! VERSION
-!   17NOV23 AD Checked.
+!   10NOV25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

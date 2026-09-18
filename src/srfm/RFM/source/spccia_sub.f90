@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SPCCIA
 !
 ! VERSION
-!   31AUG24 AD Checked.
+!   31AUG26 AD Checked.
 !   01MAY17 AD F90 conversion of part of rfmcia.for. Checked.
 ! 
 ! DESCRIPTION    

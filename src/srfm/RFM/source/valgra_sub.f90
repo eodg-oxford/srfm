@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE VALGRA ( HGT, PSI, TEM, PRE, DNS, VMR )
 !
 ! VERSION
-!   10JAN24 AD Checked.
+!   03JAN26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

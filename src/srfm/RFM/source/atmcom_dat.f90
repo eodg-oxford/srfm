@@ -1,7 +1,8 @@
 MODULE ATMCOM_DAT
 !
 ! VERSION
-!   01OCT24 AD Checked.
+!   04JUL26 AD Checked.
+!   01AUG25 AD Remove ICOATM,ITNATM,NCOATM,WCOATM
 !   18APR22 AD Add IAIVMR. Checked.
 !   28JUN18 AD Bug#9 Initialise NATM=0 to indicate 'not yet defined'
 !   21JUN17 AD Add IATSFC, FIXPRE, SETHGT, LEVATM
@@ -28,8 +29,8 @@ MODULE ATMCOM_DAT
     LOGICAL     :: SETHGT = .FALSE. ! T = Altitude profile set
     LOGICAL     :: SETPRE = .FALSE. ! T = Pressure profile set
     LOGICAL     :: SETTEM = .FALSE. ! T = Temperature profile set
-    INTEGER(I4) :: IATSFC = 1       ! Index of surface level
     INTEGER(I4) :: IAIVMR           ! Index of air profile
+    INTEGER(I4) :: IATSFC = 1       ! Index of surface level
     INTEGER(I4) :: IAXVMR           ! Index of aerosol extinction profile
     INTEGER(I4) :: NATM = 0         ! No. atmospheric layers for profiles
     INTEGER(I4) :: NVIB             ! No. diff. Vibrational temp profiles
@@ -41,9 +42,7 @@ MODULE ATMCOM_DAT
     LOGICAL,     ALLOCATABLE :: LINVMR(:)   ! T = linear interpolation with alt
     LOGICAL,     ALLOCATABLE :: NTEVMR(:)   ! T = non-LTE species
     LOGICAL,     ALLOCATABLE :: SETVMR(:)   ! T = VMR profiles set
-    INTEGER(I4), ALLOCATABLE :: ICOATM(:,:) ! Indices for cooling rates
-    INTEGER(I4), ALLOCATABLE :: ITNATM(:)   ! Indices of Flux ouput levels, or 0
-    INTEGER(I4), ALLOCATABLE :: NCOATM(:)   ! No.cooling rate indices
+!
     REAL(R4),    ALLOCATABLE :: DNSATM(:)   ! Number Density [/cm^3]
     REAL(R4),    ALLOCATABLE :: DSHATM(:)   ! Density Scale Height [km]
     REAL(R4),    ALLOCATABLE :: EXTATM(:)   ! Extinction profile [km-1]
@@ -59,7 +58,6 @@ MODULE ATMCOM_DAT
     REAL(R4),    ALLOCATABLE :: VIBATM(:,:) ! [NATM,NVIB] Vib Temp profiles [K]
     REAL(R4),    ALLOCATABLE :: VMRATM(:,:) ! [NATM,NVMR] VMR profiles [ppmv]
     REAL(R4),    POINTER     :: LEVATM(:)   ! Profile levels (hgt or lnp)   
-    REAL(R8),    ALLOCATABLE :: WCOATM(:,:) ! Weights for cooling rates
     CHARACTER(LENATM), ALLOCATABLE :: NAMVMR(:) ! Names of VMR profiles
 !
 CONTAINS
@@ -68,9 +66,6 @@ CONTAINS
     IF ( ALLOCATED ( LINVMR ) )    DEALLOCATE ( LINVMR )
     IF ( ALLOCATED ( NTEVMR ) )    DEALLOCATE ( NTEVMR )
     IF ( ALLOCATED ( SETVMR ) )    DEALLOCATE ( SETVMR )
-    IF ( ALLOCATED ( ICOATM ) )    DEALLOCATE ( ICOATM )
-    IF ( ALLOCATED ( ITNATM ) )    DEALLOCATE ( ITNATM )
-    IF ( ALLOCATED ( NCOATM ) )    DEALLOCATE ( NCOATM )
     IF ( ALLOCATED ( DNSATM ) )    DEALLOCATE ( DNSATM )
     IF ( ALLOCATED ( DSHATM ) )    DEALLOCATE ( DSHATM )
     IF ( ALLOCATED ( EXTATM ) )    DEALLOCATE ( EXTATM )
@@ -84,7 +79,6 @@ CONTAINS
     IF ( ALLOCATED ( VIBATM ) )    DEALLOCATE ( VIBATM )
     IF ( ALLOCATED ( VMRATM ) )    DEALLOCATE ( VMRATM )
     IF ( ASSOCIATED ( LEVATM ) )   NULLIFY ( LEVATM )
-    IF ( ALLOCATED ( WCOATM ) )    DEALLOCATE ( WCOATM )
     IF ( ALLOCATED ( NAMVMR ) )    DEALLOCATE ( NAMVMR )
 
     FIXPRE = .FALSE.

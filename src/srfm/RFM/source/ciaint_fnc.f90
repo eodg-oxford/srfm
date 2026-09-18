@@ -3,7 +3,7 @@ CONTAINS
 FUNCTION CIAINT ( ID1, ID2, TEM, NWNO, WNOLST )
 !
 ! VERSION
-!   24JUL24 AD Checked.
+!   26JUN26 AD Checked.
 !   01MAY17 AD F90 conversion of intcia.for. Checked.
 !
 ! DESCRIPTION

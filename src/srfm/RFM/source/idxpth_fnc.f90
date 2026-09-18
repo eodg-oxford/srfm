@@ -3,6 +3,7 @@ CONTAINS
 INTEGER(I4) FUNCTION IDXPTH ( ITAN, IATM, IGAS, IDIR )
 !
 ! VERSION
+!   28OCT25 AD Checked.
 !   06OCT21 AD Store paths to save time. Checked.
 !   05MAR19 AD Add TANCOM and use TAN%ITN if no path found for ITAN
 !   01MAY17 AD F90 conversion. Checked.

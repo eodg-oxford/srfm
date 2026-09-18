@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE LUTTAB ( LUNLUT, NAMLUT, BINFIL, ILUT, NDP, NDT, FAIL, ERRMSG )
 !
 ! VERSION
-!   30MAY24 AD Checked.
+!   01MAY26 AD Checked.
 !   28MAR19 AD Bug#19: Also set LUT%WNL, LUT%WNU. Add GHZ2CM. Checked.
 !   01JUL17 AD F90 conversion. Checked.
 !

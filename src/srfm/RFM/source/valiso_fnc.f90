@@ -3,7 +3,7 @@ CONTAINS
 LOGICAL FUNCTION VALISO ( IGAS, ISO ) 
 !
 ! VERSION
-!   08NOV23 AD Checked.
+!   01NOV25 AD Checked.
 !   03MAY18 AD Bug#3 SAVE WRNLST array. Checked.
 !   01MAY17 AD Original.
 !

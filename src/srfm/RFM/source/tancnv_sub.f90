@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE TANCNV ( MODE, ITAN )
 !
 ! VERSION
+!   25SEP25 AD Checked.
 !   23SEP24 AD Bug#48 Ignore surface intercept if upwards-viewing
 !   05AUG19 AD Change ALTOBS to HGTOBS. Checked.
 !   01MAY17 AD F90 conversion. Checked.

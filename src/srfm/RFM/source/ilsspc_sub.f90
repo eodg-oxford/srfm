@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE ILSSPC ( FAIL, ERRMSG )
 !
 ! VERSION
-!   15NOV23 AD Checked.
+!   08NOV25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

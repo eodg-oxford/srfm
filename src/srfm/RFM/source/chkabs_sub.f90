@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE CHKABS ( FAIL, ERRMSG )
 !
 ! VERSION
-!   25JUN24 AD Checked.
+!   26MAY26 AD Checked.
 !   30JUN23 AD Bug#40 Check if GAS%CIA is set TRUE as well.
 !   20DEC17 AD F90 conversion of abschk.for. Checked.
 !

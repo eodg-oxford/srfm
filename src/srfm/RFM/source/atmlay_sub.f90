@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE ATMLAY ( GRDLEV, PREGRD ) 
 !
 ! VERSION
-!   21DEC23 AD Checked.
+!   16DEC25 AD Checked.
 !   21JUN17 AD Allow for pressure grid as well as height grid. Checked.
 !   01MAY17 AD F90 conversion. Tested.
 !
@@ -58,4 +58,3 @@ SUBROUTINE ATMLAY ( GRDLEV, PREGRD )
 !
 END SUBROUTINE ATMLAY
 END MODULE ATMLAY_SUB
-

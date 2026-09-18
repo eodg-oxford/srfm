@@ -1,7 +1,7 @@
 MODULE H2OC25_DAT
 !
 ! VERSION
-!   05FEB24 AD Checked.
+!   25JAN26 AD Checked.
 !   02NOV18 AD Renamed from H2OMTC to H2OC25
 !   01MAY17 AD F90 conversion. Checked.
 !
@@ -21,7 +21,7 @@ MODULE H2OC25_DAT
   SAVE
 !
 ! GLOBAL CONSTANTS
-    INTEGER(I4), PARAMETER :: NWNO = 2001   ! No.Wno. steps for H2O Ctm. data
+    INTEGER(I4), PARAMETER :: NWNO   = 2001 ! No.Wno. steps for H2O Ctm. data
     REAL(R4),    PARAMETER :: DELWNO = 10.0 ! Wno increment [cm-1]
     REAL(R4),    PARAMETER :: WNOLOW = 0.0  ! Lower Wno [cm-1]
 !

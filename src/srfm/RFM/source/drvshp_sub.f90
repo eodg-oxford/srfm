@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE DRVSHP ( LUNDRV, FAIL, ERRMSG )
 !
 ! VERSION
-!   23DEC23 AD Checked.
+!   23DEC24 AD Checked.
 !   01JUN17 AD F90 conversion of inpshp.for. Checked.
 !
 ! DESCRIPTION
@@ -23,7 +23,7 @@ SUBROUTINE DRVSHP ( LUNDRV, FAIL, ERRMSG )
 ! SUBROUTINES
     USE NXTREC_SUB ! Load next record from input file
     USE SHPGAS_SUB ! Set lineshape for molecule
-    USE TXTFLD_SUB ! Identify start and end points of text field
+    USE TXTFLD_SUB ! Identify start and end points of text field in record
     USE UPCASE_FNC ! Convert text string to upper case
     USE WRTLOG_SUB ! Write text message to log file
 !

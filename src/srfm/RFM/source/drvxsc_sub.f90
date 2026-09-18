@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE DRVXSC ( LUNDRV, FAIL, ERRMSG )
 !
 ! VERSION
-!   23NOV23 AD Checked.
+!   16NOV25 AD Checked.
 !   01MAY17 AD F90 conversion of inpxsc.for. Tested.
 !
 ! DESCRIPTION

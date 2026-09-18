@@ -3,7 +3,7 @@ CONTAINS
 FUNCTION SRCBFX ( ITAN, IATM, IDIR, WNOFIN, OPTLAY, SRCLAY, PSI )
 !
 ! VERSION
-!   05NOV23 AD Checked.
+!   29OCT25 AD Checked.
 !   01MAY17 AD F90 original, adapted from parts of radtra.for. Checked.
 !
 ! DESCRIPTION

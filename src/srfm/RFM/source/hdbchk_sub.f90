@@ -23,7 +23,7 @@ SUBROUTINE HDBCHK ( LUNHIT, HDB, FAIL, ERRMSG )
     USE IDXSET_FNC ! Return index of line parameter set
     USE LENREC_FNC ! Determine length of next record in file
     USE LOCASE_FNC ! Convert text string to lower case
-    USE TXTFLD_SUB ! Identify start and end points of text field
+    USE TXTFLD_SUB ! Identify start and end points of text field in record
     USE TXTPAR_FNC ! Return text string describing HITRAN database line parameter
     USE WRTLOG_SUB ! Write text message to log file
 !

@@ -146,6 +146,28 @@ def test_rfm_flag_schema_matches_fortran_driver_parser():
     assert rfm_helper.FLAG_CODES is RFM_FLAG_CODES
 
 
+def test_rfm_section_catalog_matches_fortran_driver_dispatch():
+    """Verify the Python catalogue covers every native driver section."""
+    source = (
+        REPO_ROOT / "src" / "srfm" / "RFM" / "source" / "rfmdrv_sub.f90"
+    ).read_text(encoding="utf-8")
+    case_bodies = re.findall(r"CASE\s*\(([^)]*)\)", source)
+    native_sections = {
+        key
+        for body in case_bodies
+        for key in re.findall(r"'(\*[A-Z]{3})'", body)
+    }
+    native_sections.remove("*END")
+    catalog_sections = {
+        key
+        for section in rfm_helper.DRIVER_SECTIONS
+        for key in (section.key, *section.aliases)
+    }
+
+    assert native_sections
+    assert catalog_sections == native_sections
+
+
 def test_deprecated_cia_flag_remains_accepted_by_schema(basic_values):
     """Verify the bundled RFM's deprecated CIA flag remains accepted.
 
@@ -540,12 +562,57 @@ def test_scattering_layer_errors_identify_layer_and_field(basic_values):
     )
 
 
+def test_grey_body_layer_is_accepted_by_every_runner_schema(basic_values):
+    """The shared GreyBody contract is available to all three entry points."""
+    generic = validate_srfm_inputs(basic_values)
+
+    oxharp_values = deepcopy(basic_values)
+    oxharp_values.update(sza_cos=1.0, zen_cos=1.0, zen_sec=1.0)
+    oxharp = validate_oxharp_inputs(oxharp_values)
+
+    iasi_values = deepcopy(basic_values)
+    iasi_values.update(
+        plot_profiles=False,
+        iasi_spc_fldr="/synthetic",
+        iasi_fl="scene_20250323_A.pkl",
+        px=0,
+        nedt="synthetic-nedt.txt",
+        ils="synthetic.ils",
+    )
+    iasi = validate_iasi_inputs(iasi_values)
+
+    assert generic["gbc_lyrs_inputs"]["GBC_1"]["inp_tau"] == 1e4
+    assert oxharp["gbc_lyrs_inputs"] == generic["gbc_lyrs_inputs"]
+    assert iasi["gbc_lyrs_inputs"] == generic["gbc_lyrs_inputs"]
+
+
+@pytest.mark.parametrize(
+    ("updates", "problem"),
+    [
+        ({"emis": 1.1}, "emis: must be between 0 and 1"),
+        ({"inp_tau": -1}, "inp_tau: must be non-negative"),
+        ({"thick": 0.001}, "thick: must be at least 0.002 km"),
+        ({"unexpected": 1}, "unexpected: unknown field"),
+        ({"name": "different"}, "name: must match"),
+    ],
+)
+def test_grey_body_layer_errors_identify_layer_and_field(
+    basic_values, updates, problem
+):
+    """Malformed GreyBody inputs fail with their complete dotted paths."""
+    basic_values["gbc_lyrs_inputs"]["GBC_1"].update(updates)
+
+    with pytest.raises(InputValidationError, match=problem):
+        validate_srfm_inputs(basic_values)
+
+
 @pytest.mark.parametrize(
     ("updates", "problem"),
     [
         ({"dist_type": "gaussian"}, "gaussian is recognized but not implemented"),
         ({"rho": "water"}, "named density must be pumice, glass, mineral, or rock"),
         ({"center_alt": "high", "thick": []}, "center_alt: expected Real"),
+        ({"name": "different"}, "name: must match the containing layer name"),
     ],
 )
 def test_layer_validation_rejects_unsupported_or_malformed_values(

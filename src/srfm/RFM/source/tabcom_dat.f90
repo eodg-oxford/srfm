@@ -1,7 +1,7 @@
 MODULE TABCOM_DAT
 !
 ! VERSION
-!   10JUN24 AD Checked.
+!   12MAY26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

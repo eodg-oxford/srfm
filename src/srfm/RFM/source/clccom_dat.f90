@@ -1,7 +1,7 @@
 MODULE CLCCOM_DAT
 !
 ! VERSION
-!   26JAN24 AD Checked.
+!   16JAN26 AD Checked.
 !   01MAY17 AD F90 version. Checked.
 !
 ! DESCRIPTION

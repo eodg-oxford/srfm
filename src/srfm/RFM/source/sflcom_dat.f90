@@ -1,7 +1,7 @@
 MODULE SFLCOM_DAT
 !
 ! VERSION
-!   11JUN24 AD Checked.
+!   13MAY26 AD Checked.
 !   19DEC17 AD Adapted from LFLCOM. Checked.
 !
 ! DESCRIPTION

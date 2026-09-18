@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE PARFIL ( LUNHIT, NAMHIT, WNOREQ, IDMREQ, USEFIL, IDMFIL, FAIL, ERRMSG )
 !
 ! VERSION
-!   22AUG24 AD Checked.
+!   24AUG26 AD Checked.
 !   11AUG23 AD Changed arguments
 !   19MAY23 AD Original. Based on part of OPNHIT.
 !

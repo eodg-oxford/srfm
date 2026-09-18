@@ -1,8 +1,10 @@
 MODULE SPCWRT_SUB
 CONTAINS
-SUBROUTINE SPCWRT ( NAMTMP, TYP, ISPC, ITAN, IJAC, ILEV, NPT, IRREG, &
-                    WNO, SPC, FAIL, ERRMSG )
+SUBROUTINE SPCWRT ( NAMTMP, TYP, NPT, IRREG, WNO, SPC, FAIL, ERRMSG, &
+                    IJAC, ILEV, ISPC, ITAN, JTAN )
 ! VERSION
+!   25JUL26 AD Checked.
+!   01AUG25 AD Change arguments.
 !   02MAR23 AD Checked.
 !   01MAY17 AD F90 original. Checked.
 !
@@ -27,16 +29,17 @@ SUBROUTINE SPCWRT ( NAMTMP, TYP, ISPC, ITAN, IJAC, ILEV, NPT, IRREG, &
 ! ARGUMENTS
     CHARACTER(*),  INTENT(IN)  :: NAMTMP ! Filename template
     CHARACTER(*),  INTENT(IN)  :: TYP    ! Type of spectrum 'ABS','COO',etc
-    INTEGER(I4),   INTENT(IN)  :: ISPC   ! Spectral range index
-    INTEGER(I4),   INTENT(IN)  :: ITAN   ! Index of output tan.path
-    INTEGER(I4),   INTENT(IN)  :: IJAC   ! Index of Jacobian, or 0
-    INTEGER(I4),   INTENT(IN)  :: ILEV   ! Index of output level, or 0
     INTEGER(I4),   INTENT(IN)  :: NPT    ! No. points to be written
     LOGICAL,       INTENT(IN)  :: IRREG  ! T=irreg grid, F=regular grid
     REAL(R8),      INTENT(IN)  :: WNO(:) ! Spectral axis [cm-1]
     REAL(R8),      INTENT(IN)  :: SPC(:) ! Output spectrum
     LOGICAL,       INTENT(OUT) :: FAIL   ! Set TRUE if a fatal error occurs
     CHARACTER(80), INTENT(OUT) :: ERRMSG ! Error message written if FAIL is TRUE
+    INTEGER(I4),   INTENT(IN)  :: IJAC   ! Index of Jacobian, or 0
+    INTEGER(I4),   INTENT(IN)  :: ILEV   ! Index of output level, or 0
+    INTEGER(I4),   INTENT(IN)  :: ISPC   ! Spectral range index
+    INTEGER(I4),   INTENT(IN)  :: ITAN   ! Index of output tan.path
+    INTEGER(I4),   INTENT(IN)  :: JTAN   ! Secondary tangent path index
 !
 ! EXECUTABLE CODE -------------------------------------------------------------
 !
@@ -46,11 +49,22 @@ SUBROUTINE SPCWRT ( NAMTMP, TYP, ISPC, ITAN, IJAC, ILEV, NPT, IRREG, &
     RETURN
   END IF
 !
-  CALL OPNOUT ( LUNTMP, NAMTMP, FAIL, ERRMSG, &
-                ISPC=ISPC, ITAN=ITAN, IJAC=IJAC, ILEV=ILEV )
+  IF ( IJAC .GT. 0 ) THEN
+    CALL OPNOUT ( LUNTMP, NAMTMP, FAIL, ERRMSG, &
+                  ISPC=ISPC, ITAN=ITAN, IJAC=IJAC )
+  ELSE IF ( ILEV .GT. 0 ) THEN
+    CALL OPNOUT ( LUNTMP, NAMTMP, FAIL, ERRMSG, &
+                  ISPC=ISPC, ITAN=ITAN, ILEV=ILEV )
+  ELSE IF ( JTAN .GT. 0 ) THEN
+    CALL OPNOUT ( LUNTMP, NAMTMP, FAIL, ERRMSG, &
+                  ISPC=ISPC, ITAN=ITAN, JTAN=JTAN )
+  ELSE
+    CALL OPNOUT ( LUNTMP, NAMTMP, FAIL, ERRMSG, ISPC=ISPC, ITAN=ITAN )
+  END IF
   IF ( FAIL ) RETURN
 !
-  CALL WRTHDR ( LUNTMP, TYP, IJAC, ILEV, ISPC, ITAN, FAIL, ERRMSG )
+  CALL WRTHDR ( LUNTMP, TYP, FAIL, ERRMSG, &
+                IJAC=IJAC, ILEV=ILEV, ISPC=ISPC, ITAN=ITAN, JTAN=JTAN )
   IF ( FAIL ) RETURN
 !
   CALL WRTSPC ( LUNTMP, NPT, IRREG, WNO, SPC, FAIL, ERRMSG )

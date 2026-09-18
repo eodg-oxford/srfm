@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE RAYGRA ( HGTINI, PSIINI, ZENINI, IFIN, S,  HGTFIN, PSIFIN, ZENFIN )
 !
 ! VERSION
-!   03JUN24 AD Checked.
+!   05MAY26 AD Checked.
 !   04APR19 AD Bug#20: Ensure any surface grazing ray avoids surface. Checked.
 !   01MAY17 AD F90 conversion. Checked
 !

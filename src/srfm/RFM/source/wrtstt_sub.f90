@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE WRTSTT ( ISPC, FAIL, ERRMSG )
 !
 ! VERSION
-!   02APR23 AD Checked.
+!   13MAR26 AD Checked.
 !   08NOV17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

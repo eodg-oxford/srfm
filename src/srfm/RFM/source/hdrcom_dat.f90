@@ -1,7 +1,7 @@
 MODULE HDRCOM_DAT
 !
 ! VERSION
-!   17DEC23 AD Checked.
+!   10DEC25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

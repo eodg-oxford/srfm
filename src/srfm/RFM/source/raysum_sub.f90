@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE RAYSUM ( NVMR, ZBOT, DSBOT, ZTOP, DSTOP, TCG, PCG, ECG, AMT, LEN )
 !
 ! VERSION
-!   23MAY24 AD Checked.
+!   29APR26 AD Checked.
 !   29APR21 AD Bug#29 - correct WGT2 for v.thin sub-layer
 !   01MAY17 AD F90 conversion. Checked.
 !

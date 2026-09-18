@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE DRVREJ ( LUNDRV, FAIL, ERRMSG )
 !
 ! VERSION
-!   13JUL24 AD Checked.
+!   16JUN26 AD Checked.
 !   01MAY17 AD F90 original. Checked.
 !
 ! DESCRIPTION

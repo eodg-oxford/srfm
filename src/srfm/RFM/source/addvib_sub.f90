@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE ADDVIB
 !
 ! VERSION
-!   28DEC23 AD Checked.
+!   20DEC25 AD Checked.
 !   01MAY17 AD F90 Original. Checked.
 !
 ! DESCRIPTION

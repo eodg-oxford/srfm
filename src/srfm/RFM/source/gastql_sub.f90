@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE GASTQL ( QALSTR, FAIL, ERRMSG )
 !
 ! VERSION
-!   28AUG24 AD Checked.
+!   29AUG26 AD Checked.
 !   24JUN19 AD Remove CIA flag. Checked.
 !   01MAY17 AD F90 conversion of gasctm.for. Checked.
 !

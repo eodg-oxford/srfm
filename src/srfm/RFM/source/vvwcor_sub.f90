@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE VVWCOR ( DWNO, K )
 !
 ! VERSION
-!   13MAY24 AD Checked.
+!   20APR26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

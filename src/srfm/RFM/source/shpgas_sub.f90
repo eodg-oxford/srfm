@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SHPGAS ( ISHP, GASNAM, FAIL, ERRMSG )
 !
 ! VERSION
-!   27NOV23 AD Checked.
+!   20NOV25 AD Checked.
 !   31MAY18 AD Bug#8: Allow CHI shape to replace MIX shape. Checked.
 !   01MAY17 AD F90 conversion of part of inpshp.for. Tested.
 !

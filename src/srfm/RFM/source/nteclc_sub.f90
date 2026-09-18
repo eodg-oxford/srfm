@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE NTECLC ( PRE, TEM, GAMMA, ANLTE, CNLTE, SQ )
 !
 ! VERSION
-!   22OCT23 AD Checked.
+!   12OCT25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

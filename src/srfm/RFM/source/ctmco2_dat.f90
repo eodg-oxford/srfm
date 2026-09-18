@@ -1,7 +1,7 @@
 MODULE CTMCO2_DAT
 !
 ! VERSION
-!   01SEP24 AD Checked.
+!   01SEP26 AD Checked.
 !   01MAY17 AD F90 conversion of co2dat.inc. Checked.
 ! 
 ! DESCRIPTION    

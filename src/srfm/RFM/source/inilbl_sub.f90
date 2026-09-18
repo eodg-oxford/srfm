@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE INILBL
 !
 ! VERSION
-!   20AUG24 AD Checked.
+!   20AUG26 AD Checked.
 !   11AUG23 AD Allow for multiple HITRAN files
 !   22MAY22 AD Change HFLCOM variable name USEIDG to USEIDM
 !   01MAY17 AD F90 original. Checked.

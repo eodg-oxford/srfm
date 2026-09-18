@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SPCINI ( ISPC, MWID, FAIL, ERRMSG ) 
 !
 ! VERSION
-!   15JUL24 AD Checked.
+!   15JUL25 AD Checked.
 !   23MAY20 AD Ensure WN1WID is not negative. Checked.
 !   20DEC17 AD F90 version. Checked.
 !

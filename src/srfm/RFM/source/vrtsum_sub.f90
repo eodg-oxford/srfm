@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE VRTSUM ( IVMR, IATM, TEM, PRE, PPA, AMT, LEN ) 
 !
 ! VERSION
-!   05JAN23 AD Checked.
+!   30DEC25 AD Checked.
 !   01MAY17 AD F90 conversion of rfmnad.for. Checked.
 !
 ! DESCRIPTION

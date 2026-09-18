@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE INIBIN ( LUNHIT, WNOREQ, IFP, FAIL, ERRMSG )
 !
 ! VERSION
-!   19AUG24 AD Checked.
+!   13AUG26 AD Checked.
 !   11AUG23 AD Add IFP argument, remove BINCOM.
 !   22MAY23 AD Original. Taken from part of INIHFL.
 !

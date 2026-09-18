@@ -5,6 +5,7 @@ CONTAINS
 SUBROUTINE ATMFIL ( NAMATM, FAIL, ERRMSG )
 !
 ! VERSION
+!   12APR25 AD Checked.
 !   18MAR21 AD Add more log messages. Checked.
 !   16AUG19 AD Add ATMQAL. Checked.
 !   21JUN17 AD Read in entire profile, allow for PRE or HGT grids.
@@ -32,7 +33,7 @@ SUBROUTINE ATMFIL ( NAMATM, FAIL, ERRMSG )
     USE C9REAL_GEN ! Write real number as C*9 string
     USE CHKPRF_SUB ! Check atmospheric profile on input
     USE NXTPRF_SUB ! Get next profile from .atm file
-    USE OPNFIL_SUB ! Open ASCII input file, and skip/Log any initial comments.
+    USE OPNFIL_SUB ! Open input file
     USE WRTLOG_SUB ! Write text message to log file
 !
   IMPLICIT NONE

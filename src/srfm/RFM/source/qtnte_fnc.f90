@@ -3,7 +3,10 @@ CONTAINS
 REAL(R4) FUNCTION QTNTE ( IDXMOL, IDXISO, TEM, QVNTE )
 !
 ! VERSION
-!   10NOV23 AD Checked.
+!   02APR26 AD Checked.
+!   17APR25 AD Bug#50 Correct indexing for NO,NO2 and OH, and exit with
+!                     QTFCT result if IDXMOL not listed
+!   04NOV24 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION
@@ -330,19 +333,20 @@ REAL(R4) FUNCTION QTNTE ( IDXMOL, IDXISO, TEM, QVNTE )
 ! EXECUTABLE CODE -------------------------------------------------------------
 !
   SELECT CASE ( IDXMOL ) 
-  CASE ( 1 ) ; ISPE = IDXISO       ! H2O
+  CASE ( 1 )  ; ISPE = IDXISO       ! H2O
   CASE ( 2 ) 
     ISPE = 6 + IDXISO              ! CO2
     IF ( IDXISO .EQ. 9 ) ISPE = 13 ! No data for 838, so duplicate 828
-  CASE ( 3 ) ; ISPE = 14 + IDXISO  ! O3
-  CASE ( 4 ) ; ISPE = 19 + IDXISO  ! N2O
-  CASE ( 5 ) ; ISPE = 24 + IDXISO  ! CO
-  CASE ( 6 ) ; ISPE = 30 + IDXISO  ! CH4
-  CASE ( 7 ) ; ISPE = 33 + IDXISO  ! NO
-  CASE ( 8 ) ; ISPE = 36 + IDXISO  ! NO2
-  CASE ( 9 ) ; ISPE = 37 + IDXISO  ! OH
+  CASE ( 3 )  ; ISPE = 14 + IDXISO  ! O3
+  CASE ( 4 )  ; ISPE = 19 + IDXISO  ! N2O
+  CASE ( 5 )  ; ISPE = 24 + IDXISO  ! CO
+  CASE ( 6 )  ; ISPE = 30 + IDXISO  ! CH4
+  CASE ( 8 )  ; ISPE = 33 + IDXISO  ! NO
+  CASE ( 10 ) ; ISPE = 36 + IDXISO  ! NO2
+  CASE ( 13 ) ; ISPE = 37 + IDXISO  ! OH
   CASE DEFAULT
     QTNTE = QTFCT ( IDXMOL, IDXISO, TEM )
+    RETURN
   END SELECT
 !
   TEMPTH = DBLE ( TEM )

@@ -1,7 +1,7 @@
 MODULE QALCOM_DAT
 !
 ! VERSION
-!   16APR23 AD Checked.
+!   23MAR26 AD Checked.
 !   17NOV17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

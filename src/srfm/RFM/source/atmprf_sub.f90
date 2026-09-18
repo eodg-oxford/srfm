@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE ATMPRF ( LABEL, LEVPRF, VALPRF, USEPRF, FAIL, ERRMSG )
 !
 ! VERSION
-!   11APR23 AD Checked.
+!   20MAR26 AD Checked.
 !   19MAR21 AD Add log message if VMR profiles updated.
 !   17JAN18 AD Original. Checked.
 !

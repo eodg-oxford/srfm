@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE VRTPTH 
 !
 ! VERSION
+!   05OCT25 AD Checked.
 !   20SEP21 AD Use ICLPTH instead of ADDCLC. Checked.
 !   05MAR19 AD Use single set of paths for all ray directions. Checked.
 !   02MAY18 AD Bug#2 - correct SECANG if user-specified elevation angle

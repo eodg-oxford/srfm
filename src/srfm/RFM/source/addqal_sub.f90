@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE ADDQAL ( IDXMOL, ISOLST, ILS, IUS )
 !
 ! VERSION
-!   26JUN24 AD Checked.
+!   27MAY26 AD Checked.
 !   01MAY17 AD F90 original. Checked.
 !
 ! DESCRIPTION

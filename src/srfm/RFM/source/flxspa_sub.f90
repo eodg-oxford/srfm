@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE FLXSPA ( WNO, RQAD ) 
 !
 ! VERSION
-!   13SEP24 AD Checked.
+!   10SEP25 AD Checked.
 !   01MAY17 AD F90 original. Checked.
 !
 ! DESCRIPTION

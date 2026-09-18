@@ -1,7 +1,7 @@
 MODULE GFLCOM_DAT
 !
 ! VERSION
-!   29OCT23 AD Checked.
+!   19OCT25 AD Checked.
 !   01MAY17 AD F90 Conversion. Checked.
 !
 ! DESCRIPTION

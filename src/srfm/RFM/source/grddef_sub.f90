@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE GRDDEF ( NAMDEF, FAIL, ERRMSG )
 !
 ! VERSION
-!   13NOV23 AD Checked.
+!   07NOV25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

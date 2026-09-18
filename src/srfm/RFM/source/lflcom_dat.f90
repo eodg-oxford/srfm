@@ -1,7 +1,7 @@
 MODULE LFLCOM_DAT
 !
 ! VERSION
-!   15JUN24 AD Checked.
+!   16MAY26 AD Checked.
 !   19DEC17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

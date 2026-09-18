@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE RFMSPC ( ISPC, FAIL, ERRMSG ) 
 !
 ! VERSION
+!   12DEC25 AD Checked.
 !   18DEC23 AD Bug#43 - Pass NEWSPC rather than IWID to SPCFIN
 !   24JUN19 AD Remove CIAFLG - always call SPCCIA. Checked.
 !   03MAR19 AD Bug#17 - Add NOGRID argument to SPCGRD

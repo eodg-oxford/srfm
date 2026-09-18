@@ -3,6 +3,7 @@ CONTAINS
 LOGICAL FUNCTION NEWPTH ( PTB, ORG, JDX )
 !
 ! VERSION
+!   21DEC25 AD Checked.
 !   03DEC21 AD Only check criterion which matches Jacobian type. Checked.
 !   06OCT21 AD Original.
 !

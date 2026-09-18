@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE DRVDIM ( LUNDRV, FAIL, ERRMSG )
 !
 ! VERSION
-!   25OCT23 AD Checked.
+!   15OCT25 AD Checked.
 !   01MAY17 AD F90 conversion. Tested.
 !
 ! DESCRIPTION

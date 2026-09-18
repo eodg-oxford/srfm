@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE DRVFOV ( LUNDRV, FAIL, ERRMSG )
 !
 ! VERSION
-!   10FEB24 AD Checked.
+!   29JAN26 AD Checked.
 !   01MAY17 AD F90 conversion of inpfov.for. Tested.
 !
 ! DESCRIPTION

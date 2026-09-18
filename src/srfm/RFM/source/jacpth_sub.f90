@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE JACPTH
 !
 ! VERSION
+!   13DEC25 AD Checked.
 !   01NOV23 AD Bug#42 Only add Calc.tan paths for surface jacobians
 !   03DEC21 AD Rearrange logic around adding new paths. Checked.
 !   05MAR19 AD Split LIMPTH into LIMPTH and GRAPTH. Add JACSKY. Checked.
@@ -12,7 +13,7 @@ SUBROUTINE JACPTH
 !   01MAY17 AD F90 conversion of rfmptb.for. Checked.
 !
 ! DESCRIPTION
-!   Set up list of pertubations required for RFM Jacobian calc
+!   Set Jacobian paths
 !   Called once by RFMPTH if JAC option enabled.
 !
 ! VARIABLE KINDS

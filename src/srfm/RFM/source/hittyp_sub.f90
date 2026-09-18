@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE HITTYP ( NAMHIT, TYPHIT, FAIL, ERRMSG )
 !
 ! VERSION
-!   15AUG24 AD Checked.
+!   10AUG26 AD Checked.
 !   11AUG23 AD Remove LUNHIT argument, open with LUNTMP
 !              Allow for qualifiers appended to filename
 !   30MAY23 AD Simplified to three types. Add LUNHIT, TYPHIT arguments.

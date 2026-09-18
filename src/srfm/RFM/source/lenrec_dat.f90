@@ -1,7 +1,7 @@
 MODULE LENREC_DAT
 !
 ! VERSION
-!   16DEC23 AD Checked.
+!   09DEC25 AD Checked.
 !   01MAY17 AD Original. Checked.
 !
 ! DESCRIPTION

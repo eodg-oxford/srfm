@@ -1,7 +1,7 @@
 MODULE GRACOM_DAT
 !
 ! VERSION
-!   15JAN24 AD Checked.
+!   08JAN26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

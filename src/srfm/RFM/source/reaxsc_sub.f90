@@ -4,6 +4,7 @@ SUBROUTINE REAXSC ( LUNXSC, RFMFMT, MOLEC1, WNLSPC, WNUSPC, &
                     NODATA, FAIL, ERRMSG )
 !
 ! VERSION
+!   18FEB26 AD Checked.
 !   19FEB20 AD Rewritten to load data into XFLCOM. Checked.
 !   08FEB19 AD Bug#16: Extract no.triangles NTRI from TRIANG.
 !   01MAY17 AD F90 conversion. Checked.

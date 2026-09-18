@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE CHKNAM ( FAIL, ERRMSG )
 !
 ! VERSION
-!   25MAR23 AD Checked.
+!   09MAR26 AD Checked.
 !   08NOV17 AD F90 original. Checked.
 !
 ! DESCRIPTION

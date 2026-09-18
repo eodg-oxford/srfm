@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE DIMPCG 
 !
 ! VERSION
-!   19OCT23 AD Checked.
+!   10OCT25 AD Checked.
 !   01MAY17 AD F90 conversion of part of dimpre.for. Tested
 !
 ! DESCRIPTION

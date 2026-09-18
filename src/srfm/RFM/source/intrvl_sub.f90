@@ -3,7 +3,7 @@ CONTAINS
 PURE SUBROUTINE INTRVL ( XTAB, X, IX, DX, LOGINT )
 !
 ! VERSION
-!   31DEC23 AD Checked.
+!   23DEC25 AD Checked.
 !   01JUL17 AD Original. Checked.
 ! 
 ! DESCRIPTION    

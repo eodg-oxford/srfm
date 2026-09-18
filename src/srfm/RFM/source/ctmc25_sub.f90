@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE CTMC25 ( ILBL ) 
 !     
 ! VERSION
-!   14SEP24 AD Checked.
+!   13SEP25 AD Checked.
 !   22JUL19 AD Rearrange to C11 = SNGL(...) to avoid compilation warnings. Checked.
 !   02NOV18 AD Renamed from CTMH2O to CTMC25.
 !   16NOV17 AD F90 conversion

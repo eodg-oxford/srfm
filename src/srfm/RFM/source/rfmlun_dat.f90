@@ -1,14 +1,14 @@
 MODULE RFMLUN_DAT
 !
 ! VERSION
-!   25AUG24 AD Checked.
+!   26AUG26 AD Checked.
 !   11AUG23 AD Remove LUNHIT, and renumber LUNTMP from 4 to 3
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION
 !   Logical Unit Numbers of RFM files.
 !   RFMLUN_RESET closes transient units and rewinds LUNNXT so the shared
-!   library can be re-entered safely.
+!   library can be re-entered safely, including after driver-input failures.
 !
 ! VARIABLE KINDS
     USE KIND_DAT 
@@ -30,6 +30,8 @@ CONTAINS
   SUBROUTINE RFMLUN_RESET()
     LOGICAL :: IS_OPEN
 
+    INQUIRE ( UNIT=LUNDRV, OPENED=IS_OPEN )
+    IF ( IS_OPEN ) CLOSE ( UNIT=LUNDRV )
     INQUIRE ( UNIT=LUNTMP, OPENED=IS_OPEN )
     IF ( IS_OPEN ) CLOSE ( UNIT=LUNTMP )
     LUNNXT = 10

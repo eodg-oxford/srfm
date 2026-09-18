@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE INIHDB ( LUNHIT, WNOREQ, WNOFMT, FAIL, ERRMSG ) 
 !
 ! VERSION
-!   19AUG24 AD Checked.
+!   18AUG26 AD Checked.
 !   11AUG23 AD Pass WNOFMT as argument.
 !   30MAY23 AD Original. 
 !

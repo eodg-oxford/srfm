@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE FOVFIL ( NAMFOV, FAIL, ERRMSG )
 !
 ! VERSION
-!   09NOV23 AD Checked.
+!   02NOV25 AD Checked.
 !   04MAY18 AD Bug#4 - read into local array ALT rather than FOV%ALT directly
 !   26FEB18 AD F90 conversion. Tested.
 !

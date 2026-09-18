@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE GASCHK ( GASSTR, NOTGAS, FAIL, ERRMSG )
 !
 ! VERSION
-!   03SEP24 AD Checked.
+!   03SEP26 AD Checked.
 !   01JUL19 AD Bug#22 Reset IDXISO=0 if interpreting hdo or ch3d. Checked.
 !   23JUN17 AD Add ADDNEW argument to CHKGAS. Checked.
 !   01MAY17 AD F90 conversion

@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE ATMGRA
 !
 ! VERSION
-!   05DEC23 AD Checked.
+!   28NOV25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

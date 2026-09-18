@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE RFMDRV ( FAIL, ERRMSG )
 !
 ! VERSION
+!   01AUG25 AD Separate modules for *TAN variations *HGT, *LEN, *SEC
 !   22JUN24 AD Checked.
 !   26JUN23 AD Remove DRVNAM - use DRVOUT instead
 !   20DEC17 AD F90 conversion of rfminp.for. Tested.
@@ -25,10 +26,12 @@ SUBROUTINE RFMDRV ( FAIL, ERRMSG )
     USE DRVGAS_SUB ! Read RFM driver table *GAS section
     USE DRVGRD_SUB ! Read RFM driver table *GRD section
     USE DRVHDR_SUB ! Read RFM driver table *HDR section
+    USE DRVHGT_SUB ! Read RFM driver table *HGT section
     USE DRVHIT_SUB ! Read RFM driver table *HIT section
     USE DRVILS_SUB ! Read RFM driver table *ILS section
     USE DRVJAC_SUB ! Read RFM driver table *JAC section
     USE DRVKEY_SUB ! Check section key from driver table
+    USE DRVLEN_SUB ! Read RFM driver table *LEN section
     USE DRVLEV_SUB ! Read RFM driver table *LEV section
     USE DRVLUT_SUB ! Read RFM driver table *LUT section
     USE DRVNTE_SUB ! Read RFM driver table *NTE section
@@ -36,6 +39,7 @@ SUBROUTINE RFMDRV ( FAIL, ERRMSG )
     USE DRVOUT_SUB ! Read RFM driver table *OUT section
     USE DRVPHY_SUB ! Read RFM driver table *PHY section
     USE DRVREJ_SUB ! Read RFM driver table *REJ section
+    USE DRVSEC_SUB ! Read RFM driver table *SEC section
     USE DRVSFC_SUB ! Read RFM driver table *SFC section
     USE DRVSHP_SUB ! Read RFM driver table *SHP section
     USE DRVSKP_SUB ! Skip RFM driver table section
@@ -65,13 +69,18 @@ SUBROUTINE RFMDRV ( FAIL, ERRMSG )
     CALL DRVKEY ( LUNDRV, KEY, FAIL, ERRMSG ) 
     IF ( FAIL ) RETURN
     SELECT CASE ( KEY ) 
-! Mandatory sections, in sequence (*TAN or *DIM for #6)
+! Mandatory sections #1-#5, in sequence 
     CASE ('*HDR') ; CALL DRVHDR ( LUNDRV, FAIL, ERRMSG )
     CASE ('*FLG') ; CALL DRVFLG ( LUNDRV, FAIL, ERRMSG )
     CASE ('*SPC') ; CALL DRVSPC ( LUNDRV, FAIL, ERRMSG )
     CASE ('*GAS') ; CALL DRVGAS ( LUNDRV, FAIL, ERRMSG )
     CASE ('*ATM') ; CALL DRVATM ( LUNDRV, FAIL, ERRMSG )
-    CASE ('*TAN') ; CALL DRVTAN ( LUNDRV, FAIL, ERRMSG )
+! Mandatory Section#6 *TAN or variants
+    CASE ('*HGT') ; CALL DRVHGT ( LUNDRV, FAIL, ERRMSG )
+    CASE ('*LEN') ; CALL DRVLEN ( LUNDRV, FAIL, ERRMSG )
+    CASE ('*SEC') ; CALL DRVSEC ( LUNDRV, FAIL, ERRMSG )
+    CASE ('*TAN', '*ELE', '*GEO') 
+                    CALL DRVTAN ( LUNDRV, KEY, FAIL, ERRMSG )
     CASE ('*DIM') ; CALL DRVDIM ( LUNDRV, FAIL, ERRMSG )
 ! Optional sections
     CASE ('*CIA') ; CALL DRVCIA ( LUNDRV, FAIL, ERRMSG )

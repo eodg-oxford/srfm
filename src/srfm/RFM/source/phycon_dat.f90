@@ -1,7 +1,7 @@
 MODULE PHYCON_DAT
 !
 ! VERSION
-!   17JAN24 AD Checked.
+!   10JAN26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

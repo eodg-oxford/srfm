@@ -1,7 +1,7 @@
 MODULE FOVCOM_DAT
 !
 ! VERSION
-!   01FEB24 AD Checked.
+!   22JAN26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION
@@ -9,6 +9,7 @@ MODULE FOVCOM_DAT
 !   Loaded by FOVFIL.
 !   This can either be as relative tangent altitudes or elevation angles.
 !   Default NFOV=1 for nadir viewing where no FOV function specified
+!   although NFOV>1 is also used to model cloudy fractions of FOV.
 !
 ! VARIABLE KINDS
     USE KIND_DAT

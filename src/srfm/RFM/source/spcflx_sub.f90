@@ -3,6 +3,8 @@ CONTAINS
 SUBROUTINE SPCFLX 
 !
 ! VERSION
+!   23JUL26 AD Checked.
+!   01AUG25 AD Add 0 arguments to FLXATM.
 !   04MAY24 AD Checked.
 !   05MAR19 AD Simplify by using FLXATM. Checked.
 !   01JUN17 AD F90 conversion of rfmflx.for. Checked.
@@ -44,7 +46,7 @@ SUBROUTINE SPCFLX
   END DO
 !
 ! Downward path - not required if NADFLG and non-reflecting surface
-  IF ( RFLSFC .OR. .NOT. NADFLG ) CALL FLXATM ( .TRUE., RQAD )
+  IF ( RFLSFC .OR. .NOT. NADFLG ) CALL FLXATM ( .TRUE., RQAD, 0, 0 )
 !
   IF ( ZENFLG ) RETURN   ! only consider downwelling radiances
 !
@@ -52,7 +54,7 @@ SUBROUTINE SPCFLX
   CALL FLXSFC ( WNOFIN, WQAD, RQAD ) 
 !
 ! Upward path
-  CALL FLXATM ( .FALSE., RQAD )
+  CALL FLXATM ( .FALSE., RQAD, 0, 0 )
 !
   IF ( MTXFLG ) THEN
     IF ( ABSFLG .OR. TRAFLG ) CALL TRAMTX

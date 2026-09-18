@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE PTHCLC 
 !
 ! VERSION
+!   09OCT25 AD Checked.
 !   20SEP21 AD Replace ADDCLC by ICLPTH. Checked.
 !   01MAY17 AD F90 conversion of rfmsca.for. Checked.
 !
@@ -70,4 +71,3 @@ SUBROUTINE PTHCLC
 !
 END SUBROUTINE PTHCLC
 END MODULE PTHCLC_SUB
-

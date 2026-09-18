@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SPCWNG ( IWID )
 !
 ! VERSION
-!   04SEP24 AD Checked
+!   04SEP25 AD Checked
 !   01MAY17 AD F90 conversion of rfmwng.for. Checked.
 !
 ! DESCRIPTION    

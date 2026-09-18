@@ -18,10 +18,14 @@ def test_public_version_comes_from_distribution_metadata():
     assert srfm.version == srfm.__version__
 
 
-def test_release_metadata_is_version_1_2_0():
-    """Verify the source metadata identifies the 1.2.0 release."""
-    project_file = Path(__file__).resolve().parents[2] / "pyproject.toml"
-    with project_file.open("rb") as handle:
+def test_release_metadata_and_license_file_use_gpl_v3():
+    """Verify distributions declare and include the project-wide GPL terms."""
+    repository = Path(__file__).resolve().parents[2]
+    with (repository / "pyproject.toml").open("rb") as handle:
         metadata = tomllib.load(handle)
 
-    assert metadata["project"]["version"] == "1.2.0"
+    assert metadata["project"]["license"] == "GPL-3.0-only"
+    assert "LICENSE" in metadata["project"]["license-files"]
+    license_text = (repository / "LICENSE").read_text(encoding="utf-8")
+    assert "GNU GENERAL PUBLIC LICENSE" in license_text
+    assert "Version 3, 29 June 2007" in license_text

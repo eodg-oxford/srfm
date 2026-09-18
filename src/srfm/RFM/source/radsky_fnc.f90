@@ -3,7 +3,7 @@ CONTAINS
 FUNCTION RADSKY ( ISKTAN, RADTOA ) 
 !
 ! VERSION
-!   02MAY24 AD Checked.
+!   11APR26 AD Checked.
 !   05MAR19 AD Original. Checked.
 !
 ! DESCRIPTION

@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE CHKPRF ( TYP, PROFIL, FAIL, ERRMSG )
 !
 ! VERSION
-!   05SEP24 AD Checked.
+!   05SEP25 AD Checked.
 !   01MAY17 AD F90 conversion. Tested.
 !
 ! DESCRIPTION

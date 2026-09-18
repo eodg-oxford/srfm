@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE ATMQAL ( FILATM, NQAL, QALPRF, FAIL, ERRMSG )
 !
 ! VERSION
+!   18OCT25 AD Checked.
 !   16AUG19 AD Original. Adapted from MORSE module. Checked.
 !
 ! DESCRIPTION

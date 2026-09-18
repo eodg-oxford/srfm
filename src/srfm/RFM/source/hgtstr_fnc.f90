@@ -1,9 +1,12 @@
+
 MODULE HGTSTR_FNC
 CONTAINS
-CHARACTER(LENTAN) PURE FUNCTION HGTSTR ( HGT ) 
+CHARACTER(LENHGT) PURE FUNCTION HGTSTR ( HGT ) 
 !
 ! VERSION
-!   22JAN24 AD Checked.
+!   15JUL26 AD Checked.
+!   01AUG25 AD Use LENHGT instead of LENTAN.
+!   22JAN25 AD Checked.
 !   12OCT18 AD Bug#10: fix problem with overflow for large -ve angles
 !   01MAY17 AD F90 orginal. Checked.
 !
@@ -18,7 +21,7 @@ CHARACTER(LENTAN) PURE FUNCTION HGTSTR ( HGT )
     USE KIND_DAT
 !
 ! GLOBAL DATA
-    USE TANCOM_DAT, ONLY:LENTAN ! Length of tan.ht. info part of filename
+    USE LENHGT_DAT ! Max length of height component of RFM output filenames
 !
   IMPLICIT NONE
 !

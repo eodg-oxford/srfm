@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE LUTDEF ( NAMDEF, FAIL, ERRMSG )
 !
 ! VERSION
-!   21JUN24 AD Checked.
+!   22MAY26 AD Checked.
 !   20DEC17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

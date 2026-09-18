@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SPCXSC ( IWID ) 
 !
 ! VERSION
-!   06APR24 AD Checked.
+!   17MAR26 AD Checked.
 !   08FEB19 AD Bug#16: Add NTRI argument to TRIINT. Checked.
 !   01MAY17 AD F90 conversion of rfmxsc.for. Checked.
 !

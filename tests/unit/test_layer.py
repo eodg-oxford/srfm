@@ -238,6 +238,8 @@ def test_grey_body_cloud_complete_python_calculation():
     assert (cloud.alt_low, cloud.alt_upp) == (4.5, 5.5)
     np.testing.assert_allclose(cloud.wvnm, [1000, 1001, 1002])
     np.testing.assert_allclose(cloud.tau, [0.4, 0.4, 0.4])
+    assert isinstance(cloud.tau, np.ndarray)
+    assert cloud.tau.dtype == np.dtype(float)
 
 
 @pytest.mark.parametrize("emissivity", [-0.1, 1.1])
@@ -262,5 +264,41 @@ def test_grey_body_regrid_preserves_constant_optical_depth():
     """
     cloud = _grey_cloud()
     cloud.calculate_op()
-    cloud.regrid(np.array([10.0, 10.005, 10.01]))
+    cloud.regrid(
+        np.array([10.0, 10.005, 10.01]),
+        retain_original=False,
+    )
     np.testing.assert_allclose(cloud.tau, 0.4)
+    assert not hasattr(cloud, "wvls_old")
+    assert not hasattr(cloud, "tau_old")
+
+
+def test_grey_body_interpolation_preserves_source_and_target_order():
+    """Grey-body block interpolation must not mutate its coarse calculation."""
+    cloud = _grey_cloud()
+    cloud.calculate_op()
+    source_wavelengths = cloud.wvls.copy()
+    source_tau = cloud.tau.copy()
+
+    interpolated = cloud.interpolate_optical_depth([10.0, 9.995, 9.99])
+
+    np.testing.assert_allclose(interpolated, 0.4)
+    np.testing.assert_array_equal(cloud.wvls, source_wavelengths)
+    np.testing.assert_array_equal(cloud.tau, source_tau)
+
+
+@pytest.mark.parametrize(
+    ("updates", "problem"),
+    [
+        ({"inp_tau": -0.1}, "Optical depth"),
+        ({"res": 0}, "greater than zero"),
+        ({"spec_units": "metres"}, "Spec_units"),
+    ],
+)
+def test_grey_body_cloud_rejects_invalid_optical_inputs(updates, problem):
+    """Direct class use enforces the same physical constraints as the schema."""
+    cloud = _grey_cloud(**updates)
+    cloud.calc_layer_extent()
+
+    with pytest.raises(ValueError, match=problem):
+        cloud.test_input_values()

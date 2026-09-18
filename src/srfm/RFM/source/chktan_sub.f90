@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE CHKTAN ( FAIL, ERRMSG )
 !
 ! VERSION
-!   26FEB23 AD Checked.
+!   09FEB26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

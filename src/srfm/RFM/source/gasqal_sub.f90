@@ -3,7 +3,8 @@ CONTAINS
 SUBROUTINE GASQAL ( QALSTR, FAIL, ERRMSG )
 !
 ! VERSION
-!   23FEB23 AD Checked.
+!   24APR26 AD Bug#54: Ensure NISO defined if vib.levs come first
+!   08FEB26 AD Checked.
 !   03OCT17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION
@@ -69,6 +70,7 @@ SUBROUTINE GASQAL ( QALSTR, FAIL, ERRMSG )
   LASBND = .TRUE. 
   IDXMOL = GAS(NGAS)%IDM
   NISMAX = GAS(NGAS)%NIS
+  NISO   = NISMAX   ! Initially assume all isotopes selected
 !
   IF ( NISMAX .EQ. 0 ) THEN
     FAIL = .TRUE.

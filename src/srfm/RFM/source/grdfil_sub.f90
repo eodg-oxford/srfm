@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE GRDFIL ( NAMGRD, FAIL, ERRMSG )
 !
 ! VERSION
-!   14NOV23 AD Checked.
+!   07NOV25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

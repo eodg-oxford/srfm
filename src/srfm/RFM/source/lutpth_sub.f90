@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE LUTPTH ( ILUT, IGAS, NLKP )
 !
 ! VERSION
-!   19JUN24 AD Checked.
+!   20MAY26 AD Checked.
 !   04OCT17 AD F90 conversion. Checked.
 ! 
 ! DESCRIPTION    

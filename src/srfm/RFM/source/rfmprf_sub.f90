@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE RFMPRF ( FAIL, ERRMSG )
 !
 ! VERSION
-!   01APR23 AD Checked.
+!   12MAR26 AD Checked.
 !   08NOV17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

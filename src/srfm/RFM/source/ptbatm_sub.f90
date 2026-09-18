@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE PTBATM ( IJAC )
 !
 ! VERSION
+!   11NOV25 AD Checked.
 !   20SEP19 AD Bug#23: Call PTBPRF with linear ptb for aerosol. Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !

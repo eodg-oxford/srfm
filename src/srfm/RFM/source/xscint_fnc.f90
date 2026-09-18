@@ -3,7 +3,7 @@ CONTAINS
 FUNCTION XSCINT ( IXSC, IXT, NWNO, WNOLST ) 
 !
 ! VERSION
-!   24JUN24 AD Checked.
+!   25MAY26 AD Checked.
 !   01MAY17 AD F90 version. Checked.
 ! 
 ! DESCRIPTION    

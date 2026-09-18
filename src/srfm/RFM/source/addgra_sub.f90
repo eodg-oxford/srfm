@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE ADDGRA
 !
 ! VERSION
-!   16SEP24 AD Checked.
+!   16SEP25 AD Checked.
 !   01MAY17 AD F90 conversion of newpsi.for. Checked.
 !
 ! DESCRIPTION

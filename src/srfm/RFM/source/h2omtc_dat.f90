@@ -1,7 +1,7 @@
 MODULE H2OMTC_DAT
 !
 ! VERSION
-!   06FEB24 AD Checked.
+!   25JAN26 AD Checked.
 !   02NOV18 AD  Renamed from H2OMT3 to H2OMTC, incorporated into distributed RFM
 !   25MAY18 KPS bug fx 260 K self values
 !   18MAY18 KPS Update to included MT_CKD3.2 values

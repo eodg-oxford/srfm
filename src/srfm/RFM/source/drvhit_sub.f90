@@ -3,7 +3,8 @@ CONTAINS
 SUBROUTINE DRVHIT ( LUNDRV, FAIL, ERRMSG )
 !
 ! VERSION 
-!   06AUG24 AD Checked.
+!   24APR26 AD Add VIBFIL.
+!   03AUG25 AD Checked.
 !   11AUG23 AD Tested.
 !   19JUN23 AD Allow for multiple files. Remove LUNHIT.
 !   22MAY23 AD Allow for PARAM=VALUE construction 
@@ -28,6 +29,7 @@ SUBROUTINE DRVHIT ( LUNDRV, FAIL, ERRMSG )
     USE HITTYP_SUB ! Identify type of HITRAN data file
     USE NXTFLD_SUB ! Load next field from section of driver file
     USE PARFLD_SUB ! Extract Parameter=Value string from record
+    USE VIBFIL_SUB ! Read Vibrational Level Index file
     USE WRTLOG_SUB ! Write text message to log file
 !
   IMPLICIT NONE
@@ -63,7 +65,8 @@ SUBROUTINE DRVHIT ( LUNDRV, FAIL, ERRMSG )
     IF ( GOTPAR ) THEN
       IF ( TYPHIT .NE. 'BINFIL' .AND. &
            TYPHIT .NE. 'HDBFIL' .AND. &
-           TYPHIT .NE. 'PARFIL'         ) THEN
+           TYPHIT .NE. 'PARFIL' .AND. &
+           TYPHIT .NE. 'VIBFIL'         ) THEN
         FAIL = .TRUE.
         ERRMSG = 'F-DRVHIT: Unrecognised HITRAN file type: ' // TYPHIT
         RETURN
@@ -76,12 +79,18 @@ SUBROUTINE DRVHIT ( LUNDRV, FAIL, ERRMSG )
       IF ( FAIL ) RETURN
     END IF
 !
+! Open vibrational index file and load contents
+    IF ( TYPHIT .EQ. 'VIBFIL' ) THEN
+      CALL VIBFIL ( NAMHIT, FAIL, ERRMSG )
+    ELSE      
 ! Open HITRAN file and check contents
-    CALL HITFIL ( NAMHIT, TYPHIT, WNOREQ, IDMREQ, FAIL, ERRMSG ) 
+      CALL HITFIL ( NAMHIT, TYPHIT, WNOREQ, IDMREQ, FAIL, ERRMSG ) 
+    END IF
     IF ( FAIL ) RETURN
 !
   END DO
 !
+! Check molecule assignments for HITRAN files
   CALL HITCHK
 !
   IF ( NHFL .EQ. 0 ) &

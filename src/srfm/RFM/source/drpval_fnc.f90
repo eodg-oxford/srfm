@@ -3,7 +3,7 @@ CONTAINS
 REAL(R4) PURE FUNCTION DRPVAL ( HGT, PSI )
 !
 ! VERSION
-!   14JAN24 AD Checked.
+!   07JAN26 AD Checked.
 !   01MAY17 AD F90 original. Checked.
 !
 ! DESCRIPTION

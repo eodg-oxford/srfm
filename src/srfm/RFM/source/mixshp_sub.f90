@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE MIXSHP ( DWNO, ABSORP )
 !
 ! VERSION
-!   08MAY24 AD Checked.
+!   15APR26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE SPCRAD 
 !
 ! VERSION
+!   04OCT25 AD Checked.
 !   03MAR20 AD Reset OPT=0 at surface for nadir-viewing. Checked.
 !   05MAR19 AD Add RADSKY for Diffuse surface reflection.
 !              Change arguments for RADLAY

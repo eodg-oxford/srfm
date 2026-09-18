@@ -225,3 +225,8 @@ equivalent information may be found in the docstrings within the code.
 ## References
 The package paper has been published at:
 **INSERT LINK**
+
+## License
+
+SRFM is distributed under the GNU General Public License, version 3 only.
+See [LICENSE](LICENSE) for the complete terms.

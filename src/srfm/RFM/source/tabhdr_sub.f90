@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE TABHDR ( LUN, IGAS, FAIL, ERRMSG )
 !
 ! VERSION
-!   30OCT23 AD Checked.
+!   20OCT25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

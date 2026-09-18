@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE ADDGFL ( NAMGRD, TYP, WMN, WMX, IGFL ) 
 !
 ! VERSION
-!   26OCT23 AD Checked.
+!   16OCT25 AD Checked.
 !   01MAY17 AD F90 original. Checked.
 !
 ! DESCRIPTION

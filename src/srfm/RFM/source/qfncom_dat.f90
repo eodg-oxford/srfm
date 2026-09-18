@@ -1,7 +1,7 @@
 MODULE QFNCOM_DAT
 !
 ! VERSION
-!   29JAN24 AD Checked.
+!   19JAN26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

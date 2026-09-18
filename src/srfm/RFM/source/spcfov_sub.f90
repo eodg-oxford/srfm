@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE SPCFOV 
 !
 ! VERSION
+!   17FEB26 AD Checked.
 !   19FEB20 AD Bug#25: Set TRA=0 before adding convolutions. Checked
 !   30MAY18 AD Bug#7: rewritten and simplified
 !   02MAY18 AD Bug#1.

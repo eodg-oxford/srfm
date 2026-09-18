@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SPCGRD ( IWID, NOGRID )
 !
 ! VERSION
-!   14APR24 AD Checked.
+!   24MAR26 AD Checked.
 !   03MAR19 AD Bug#17: Add NOGRID argument. Checked.
 !   01MAY17 AD F90 conversion of F77 module RFMGRD. Checked.
 !

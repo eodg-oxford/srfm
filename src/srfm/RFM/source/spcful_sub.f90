@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SPCFUL ( ISPC, FAIL, ERRMSG ) 
 !
 ! VERSION
-!   12JUL24 AD Checked.
+!   15JUN26 AD Checked.
 !   07JUN19 AD Bug#21 Adjust WNRFUL to match irreg.grid. Checked.
 !   01MAY17 AD F90 version. Checked.
 !

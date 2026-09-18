@@ -9,7 +9,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "SRFM"
-version = "1.2.1"
+version = "1.2.2"
 authors = [
   { name="Antonin Knizek", email="antonin.knizek@physics.ox.ac.uk" },
   { name="Roy Grainger", email="don.grainger@physics.ox.ac.uk"}
@@ -26,8 +26,8 @@ classifiers = [
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
 ]
-license = "MIT"
-license-files = ["LICEN[CS]E*"]
+license = "GPL-3.0-only"
+license-files = ["LICENSE", "COPYING*"]
 dependencies = [
     "numpy",
     "pandas",
@@ -98,9 +98,9 @@ exclude = [
 
 [tool.pytest.ini_options]
 testpaths = [
-    "/tests/unit",
-    "/tests/integration",
-    "/tests/e2e",
+    "tests/unit",
+    "tests/integration",
+    "tests/e2e",
 ]
 markers = [
     "unit: fast, deterministic tests isolated from native executables",

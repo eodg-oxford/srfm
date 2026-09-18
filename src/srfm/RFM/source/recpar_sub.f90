@@ -3,7 +3,8 @@ CONTAINS
 SUBROUTINE RECPAR ( LUNHIT, HIT, USEIDM, WNOMAX, EOF, FAIL, ERRMSG ) 
 !
 ! VERSION
-!   24AUG24 AD Checked.
+!   24APR26 AD Also read GQL, GQU. Add IDXVIB
+!   25AUG25 AD Checked.
 !   11AUG23 AD Pass data via arguments.
 !   31MAY23 AD Original. Simplified from HITREC
 !
@@ -18,9 +19,12 @@ SUBROUTINE RECPAR ( LUNHIT, HIT, USEIDM, WNOMAX, EOF, FAIL, ERRMSG )
     USE KIND_DAT
 !
 ! GLOBAL DATA
-    USE HITCOM_DAT, ONLY: HITTYP ! HITRAN line data structure
+    USE HITCOM_DAT, ONLY: HITTYP, USEVIB ! HITRAN line data structure
     USE IDXCON_DAT, ONLY: IDXH2O ! RFM/HITRAN index for H2O
     USE PHYCON_DAT, ONLY: AVOG   ! Avogradro's number [kmol/cm2]
+!
+! SUBROUTINES
+    USE IDXVIB_FNC ! Index in VIBCOM of vibrational level index
 !
   IMPLICIT NONE
 !
@@ -35,15 +39,17 @@ SUBROUTINE RECPAR ( LUNHIT, HIT, USEIDM, WNOMAX, EOF, FAIL, ERRMSG )
 !
 ! LOCAL CONSTANTS
     CHARACTER(*), PARAMETER :: HITFMT = &
-      '( I2, Z1, F12.6, F10.3, E10.3, F5.2, F5.2, F10.4, F4.1, F8.5 )'
+      '( I2, Z1, F12.6, F10.3, E10.3, F5.2, F5.2, F10.4, F4.1, F8.5, 2A15 )'
     INTEGER(I4), PARAMETER :: FIXIDI(0:15) = &
               (/ 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16 /)
 !
 ! LOCAL VARIABLES
-    INTEGER(I4) :: IDI    ! Isotope ID read from .par file
-    INTEGER(I4) :: IOS    ! Saved value of IOSTAT for error messages
-    REAL(R4)    :: TPROB  ! Transition probability [Debyes2] (dummy)
-    REAL(R8)    :: DSTR   ! Original HITRAN linestrength
+    INTEGER(I4)   :: IDI   ! Isotope ID read from .par file
+    INTEGER(I4)   :: IOS   ! Saved value of IOSTAT for error messages
+    REAL(R4)      :: TPROB ! Transition probability [Debyes2] (dummy)
+    REAL(R8)      :: DSTR  ! Original HITRAN linestrength
+    CHARACTER(15) :: GQL   ! Lower Vib level ID string 
+    CHARACTER(15) :: GQU   ! Upper Vib level ID string
 !
 ! EXECUTABLE CODE -------------------------------------------------------------
 !
@@ -52,7 +58,8 @@ SUBROUTINE RECPAR ( LUNHIT, HIT, USEIDM, WNOMAX, EOF, FAIL, ERRMSG )
 !
   DO         ! Continue reading until a record with a required molecule found
     READ ( LUNHIT, HITFMT, IOSTAT=IOS, ERR=900, END=800 ) HIT%IDM, IDI, &
-          HIT%WNO, DSTR, TPROB, HIT%HWA, HIT%HWS, HIT%ELS, HIT%TCA, HIT%PSA
+          HIT%WNO, DSTR, TPROB, HIT%HWA, HIT%HWS, HIT%ELS, HIT%TCA, HIT%PSA, &
+          GQU, GQL
     IF ( HIT%WNO .GT. WNOMAX ) GOTO 800 ! no more records within required range
     IF ( USEIDM(HIT%IDM) ) THEN 
       HIT%STR = SNGL ( DSTR * AVOG ) ! Scale intensity by Avogadro
@@ -64,6 +71,10 @@ SUBROUTINE RECPAR ( LUNHIT, HIT, USEIDM, WNOMAX, EOF, FAIL, ERRMSG )
         ELSE
           HIT%HWS = HIT%HWA
         END IF 
+      END IF
+      IF ( USEVIB ) THEN     ! Vib Level ID string to indices
+        HIT%IUS = IDXVIB ( HIT%IDM, GQU )
+        HIT%ILS = IDXVIB ( HIT%IDM, GQL )
       END IF
       RETURN                         ! found record with a required molecule
     END IF

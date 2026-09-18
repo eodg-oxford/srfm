@@ -3,6 +3,8 @@ CONTAINS
 SUBROUTINE TRAMTX 
 !
 ! VERSION
+!   28JUL26 AD Checked.
+!   01AUG25 AD Remove LEVCOM_DAT. Calculate KTAN,LTAN locally
 !   05MAY24 AD Checked.
 !   05MAR19 AD Remove FLXEFN. Checked.
 !   01MAY17 AD F90 conversion of part of rfmflx.for. Checked.
@@ -16,7 +18,6 @@ SUBROUTINE TRAMTX
 !
 ! GLOBAL DATA
     USE FULCOM_DAT ! Full grid data
-    USE LEVCOM_DAT ! Intermediate output levels
     USE QADCOM_DAT ! Gaussian quadrature data
     USE FINCOM_DAT, ONLY: NFIN ! No. of fine mesh grid points
     USE PHYCON_DAT, ONLY: PI
@@ -25,26 +26,26 @@ SUBROUTINE TRAMTX
   IMPLICIT NONE
 !
 ! LOCAL VARIABLES
-    INTEGER(I4) :: ILEV   ! Counter for output levels
     INTEGER(I4) :: IQAD   ! Counter for quadrature points
     INTEGER(I4) :: ITAN   ! Counter for output levels
-    INTEGER(I4) :: JTAN   ! Index of ray path for matrix element
-    INTEGER(I4) :: KTAN   ! Index of ray path for transpose matrix element
+    INTEGER(I4) :: JTAN   ! Secondary counter for output levels
+    INTEGER(I4) :: KTAN   ! Index of ray path for matrix element
+    INTEGER(I4) :: LTAN   ! Index of ray path for transpose matrix element
     REAL(R8)    :: OPT(NFIN)        ! Cumulative optical path
     REAL(R8)    :: TQAD(NFIN,NQAD)  ! Transmittances for quadrature paths
 !       
 ! EXECUTABLE CODE -------------------------------------------------------------
 !
   DO ITAN = 1, NTAN
-    DO ILEV = ITAN, NLEV
-      JTAN = ITNLEV(ITAN,ILEV) 
-      OPT = OPTFUL(IFUL1:IFUL2,ITAN) - OPTFUL(IFUL1:IFUL2,ILEV) 
+    DO JTAN = ITAN, NTAN
+      KTAN = NTAN + (ITAN-1)*NTAN + JTAN
+      OPT = OPTFUL(IFUL1:IFUL2,JTAN) - OPTFUL(IFUL1:IFUL2,ITAN) 
       DO IQAD = 1, NQAD
         TQAD(:,IQAD) = EXP ( - ABS ( OPT ) / XQAD(IQAD) ) / PI
       END DO
-      TRAFUL(IFUL1:IFUL2,JTAN) = MATMUL ( TQAD, WQAD ) 
-      KTAN = ITNLEV(ILEV,ITAN)
-      TRAFUL(IFUL1:IFUL2,KTAN) = TRAFUL(IFUL1:IFUL2,JTAN) 
+      TRAFUL(IFUL1:IFUL2,KTAN) = MATMUL ( TQAD, WQAD ) 
+      LTAN = NTAN + (JTAN-1)*NTAN + ITAN
+      TRAFUL(IFUL1:IFUL2,LTAN) = TRAFUL(IFUL1:IFUL2,KTAN) 
     END DO
   END DO
 !

@@ -3,6 +3,8 @@ CONTAINS
 SUBROUTINE ADJUST ( TEM, PRE, PPA, AMT, ANTE, CNTE )
 !
 ! VERSION
+!   01APR26 AD Checked.
+!   17APR25 AD Bug#50 Change ANTE, CNTE to D.P.
 !   04AUG24 AD Checked.
 !   11AUG23 AD Allow for different line parameter sets   
 !   31MAY23 AD Allow for HITRAN database entries
@@ -53,8 +55,8 @@ SUBROUTINE ADJUST ( TEM, PRE, PPA, AMT, ANTE, CNTE )
     REAL(R4), INTENT(IN)  :: PRE  ! Path pressure [atm]
     REAL(R4), INTENT(IN)  :: PPA  ! Path partial pressure [atm]
     REAL(R4), INTENT(IN)  :: AMT  ! Path amount [kmol/cm2]
-    REAL(R4), INTENT(OUT) :: ANTE ! Non-lte factor for k abs
-    REAL(R4), INTENT(OUT) :: CNTE ! Non-lte factor for c abs
+    REAL(R8), INTENT(OUT) :: ANTE ! Non-lte factor for k abs
+    REAL(R8), INTENT(OUT) :: CNTE ! Non-lte factor for c abs
 !
 ! LOCAL CONSTANTS
     REAL(R4), PARAMETER :: R2 = 2.0 * LOG(2.0) * RGAS ! 2ln2 k N = 11526.3
@@ -67,8 +69,6 @@ SUBROUTINE ADJUST ( TEM, PRE, PPA, AMT, ANTE, CNTE )
     INTEGER(I4) :: ISET   ! Index for line parameter sets  
     REAL(R4)    :: SQ     ! Ratio of tps@296K/tps@path_temp
     REAL(R4)    :: TFACT  ! TEMREF/TEM - temperature scale factor
-    REAL(R8)    :: ANLTE  ! Non-LTE Correction factor for k absorption
-    REAL(R8)    :: CNLTE  ! Non-LTE Correction factor for c absorption
     REAL(R8)    :: GAMMA  ! exp ( -hcv/kT )
     REAL(R8)    :: GAMREF ! exp ( -hcv/kT_ref )
     REAL(R8)    :: SB     ! exp( -hcE_l/kT_path ) / exp( -hcE_l/kT_ref )
@@ -136,11 +136,11 @@ SUBROUTINE ADJUST ( TEM, PRE, PPA, AMT, ANTE, CNTE )
   SQ = 1.0                       
   IF ( HIT%IUV .NE. 0 .OR. HIT%ILV .NE. 0 ) THEN
 !    IF ( PTH(IPTH)%IVJ .GT. 0 ) CALL PTBVIB ( PTH(IPTH)%IVJ, .TRUE. ) 
-    CALL NTECLC ( PRE, TEM, GAMMA, ANLTE, CNLTE, SQ )
+    CALL NTECLC ( PRE, TEM, GAMMA, ANTE, CNTE, SQ )
 !    IF ( PTH(IPTH)%IVJ .GT. 0 ) CALL PTBVIB ( PTH(IPTH)%IVJ, .FALSE. ) 
   ELSE
-    ANLTE = 1.0D0
-    CNLTE = 1.0D0       
+    ANTE = 1.0D0
+    CNTE = 1.0D0       
     SQ = QTFCT ( HIT%IDM, HIT%IDI, TEM )
   ENDIF
 !
@@ -148,8 +148,6 @@ SUBROUTINE ADJUST ( TEM, PRE, PPA, AMT, ANTE, CNTE )
 ! so combine all factors together before converting to SNGL in the hope that it
 ! will be small enough to fit into STRADJ
   STRADJ = SNGL ( AMT * HIT%STR * SB * SE * SQ )   ! Bug#112
-  ANTE = SNGL ( ANLTE )
-  CNTE = SNGL ( CNLTE )
 !
 END SUBROUTINE ADJUST
 END MODULE ADJUST_SUB

@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE CTMCO2 ( ILBL ) 
 !
 ! VERSION
-!   01SEP24 AD Checked. 
+!   01SEP26 AD Checked. 
 !   16NOV17 AD F90 conversion. Checked.
 ! 
 ! DESCRIPTION    

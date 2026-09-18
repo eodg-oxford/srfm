@@ -3,7 +3,7 @@ CONTAINS
 FUNCTION CHICO2 ( TEM, PRE, PPA, WNOADJ, DWNO )
 !
 ! VERSION
-!   12FEB24 AD Checked.
+!   31JAN26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

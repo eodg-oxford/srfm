@@ -3,7 +3,7 @@ CONTAINS
 INTEGER(I4) PURE FUNCTION IDGOLD ( IDGNEW )
 !
 ! VERSION
-!   08MAR23 AD Checked.
+!   16FEB26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

@@ -3,7 +3,7 @@ CONTAINS
 LOGICAL PURE FUNCTION USEMOL  ( IDXMOL )
 !
 ! VERSION
-!   06SEP24 AD Checked.
+!   06SEP25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

@@ -3,7 +3,7 @@ CONTAINS
 PURE FUNCTION BRIGHT ( RAD, WNOLST )
 !
 ! VERSION
-!   01MAR23 AD Checked.
+!   12FEB26 AD Checked.
 !   01MAY17 AD F90 original. Checked.
 !
 ! DESCRIPTION

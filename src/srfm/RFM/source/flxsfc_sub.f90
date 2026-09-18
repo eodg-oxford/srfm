@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE FLXSFC ( WNO, WQAD, RQAD )
 !
 ! VERSION
-!   21SEP24 AD Checked.
+!   23SEP25 AD Checked.
 !   01MAY17 AD F90 conversion of rfmflx.for. Checked.
 !
 ! DESCRIPTION

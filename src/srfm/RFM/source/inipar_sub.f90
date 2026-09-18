@@ -3,7 +3,8 @@ CONTAINS
 SUBROUTINE INIPAR ( LUNHIT, WNOREQ, FAIL, ERRMSG ) 
 !
 ! VERSION
-!   21AUG24 AD Checked.
+!   24APR26 AD Bug#53. Simplified: always start with REWIND.
+!   22AUG25 AD Checked.
 !   11AUG23 AD Original. Simplified from HITREC
 !
 ! DESCRIPTION
@@ -30,17 +31,8 @@ SUBROUTINE INIPAR ( LUNHIT, WNOREQ, FAIL, ERRMSG )
 !
   FAIL = .FALSE.
 !
-! Ensure WNO is defined if currently at end-of-file
-  WNO = WNOREQ * 2.0
-!
-! Only require wavenumber from HITRAN .par file records
-  READ ( LUNHIT, '(3X,F12.6)', ERR=900, END=700, IOSTAT=IOS ) WNO
-!
-700 CONTINUE
-  IF ( WNO .GT. WNOREQ ) THEN
-    REWIND ( LUNHIT, ERR=900, IOSTAT=IOS )
-    WNO = -1.0D0
-  END IF
+  REWIND ( LUNHIT, ERR=900, IOSTAT=IOS )
+  WNO = -1.0D0
 !
   DO WHILE ( WNO .LT. WNOREQ )
     READ ( LUNHIT, '(3X,F12.6)', ERR=900, END=800, IOSTAT=IOS ) WNO

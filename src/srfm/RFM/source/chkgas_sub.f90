@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE CHKGAS ( INPSTR, IDXMOL, IDXISO, IDXVIB, FAIL, ERRMSG, ADDNEW )
 !
 ! VERSION
-!   03SEP24 AD Checked.
+!   03SEP26 AD Checked.
 !   01JUL19 AD Bug#22 Increase length of LSTR by +3. Checked.
 !   05OCT17 AD F90 conversion.Checked.
 !

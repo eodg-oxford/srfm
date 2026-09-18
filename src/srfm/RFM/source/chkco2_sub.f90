@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE CHKCO2
 !
 ! VERSION
-!   18JUL24 AD Checked.
+!   21JUN26 AD Checked.
 !   01MAY17 AD F90 original. Tested.
 !
 ! DESCRIPTION

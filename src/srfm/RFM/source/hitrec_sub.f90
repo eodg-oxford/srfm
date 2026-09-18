@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE HITREC ( HIT, EOF, FAIL, ERRMSG ) 
 !
 ! VERSION
-!   14AUG24 Checked.
+!   05AUG26 Checked.
 !   11AUG23 Rewritten
 !
 ! DESCRIPTION
@@ -19,7 +19,7 @@ SUBROUTINE HITREC ( HIT, EOF, FAIL, ERRMSG )
     USE KIND_DAT
 !
 ! GLOBAL DATA
-    USE HFLCOM_DAT ! HITRAN line file general data
+    USE HFLCOM_DAT ! HITRAN file data
     USE HITCOM_DAT, ONLY: HITTYP ! HITRAN line data structure
 !
 ! SUBROUTINES

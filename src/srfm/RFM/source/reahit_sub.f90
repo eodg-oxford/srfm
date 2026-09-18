@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE REAHIT ( EOF, FAIL, ERRMSG ) 
 !
 ! VERSION
-!   23AUG24 AD Checked.
+!   25AUG26 AD Checked.
 !   11AUG23 AD Use single HITREC to read data
 !   23MAY23 AD Different read subroutines depending on HITRAN data type
 !   29JAN20 AD Use HITREC to read from all types of HITRAN input files. Checked

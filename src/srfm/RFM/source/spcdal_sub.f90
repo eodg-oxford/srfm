@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SPCDAL 
 !
 ! VERSION
-!   04JUL24 AD Checked.
+!   03JUN26 AD Checked.
 !   01MAY17 AD F90 original. Checked.
 !
 ! DESCRIPTION

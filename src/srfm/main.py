@@ -140,6 +140,72 @@ def _interpolate_scattering_block(scattering_layers, wavelengths):
     return block
 
 
+_GREY_BODY_LAYER_ATTRIBUTES = (
+    "name",
+    "low_spc",
+    "upp_spc",
+    "spec_units",
+    "res",
+    "center_alt",
+    "thick",
+    "alt_low",
+    "alt_upp",
+    "emis",
+    "inp_tau",
+)
+
+
+def _prepare_grey_body_layers(values):
+    """Construct and calculate every configured grey-body cloud layer.
+
+    Args:
+        values (Mapping): Validated runner input mapping.
+
+    Returns:
+        dict[str, GreyBodyCloud]: Calculated layers keyed by their configured names.
+    """
+    grey_body_layers = {}
+    for layer_name, layer_inputs in values.get("gbc_lyrs_inputs", {}).items():
+        grey_body_layer = layer.GreyBodyCloud()
+        grey_body_layer.set_input_from_dict(dict(layer_inputs))
+        grey_body_layer.calculate_op()
+        grey_body_layers[layer_name] = grey_body_layer
+    return grey_body_layers
+
+
+def _grey_body_effective_parameters(grey_body_layers):
+    """Return serializable effective inputs, including calculated layer bounds."""
+    return {
+        layer_name: {
+            attribute: getattr(grey_body_layer, attribute)
+            for attribute in _GREY_BODY_LAYER_ATTRIBUTES
+            if hasattr(grey_body_layer, attribute)
+        }
+        for layer_name, grey_body_layer in grey_body_layers.items()
+    }
+
+
+def _interpolate_grey_body_optical_depths(grey_body_layers, wavelengths):
+    """Interpolate non-scattering cloud depths onto the actual RFM grid."""
+    return {
+        layer_name: grey_body_layer.interpolate_optical_depth(wavelengths)
+        for layer_name, grey_body_layer in grey_body_layers.items()
+    }
+
+
+def _add_grey_body_optical_depth(
+    gas_optical_depth,
+    tracked_layers,
+    grey_body_optical_depths,
+    spectral_index,
+):
+    """Add grey-body absorption to a copy of one RFM optical-depth row."""
+    combined = np.asarray(gas_optical_depth, dtype=float).copy()
+    for layer_name, optical_depth in grey_body_optical_depths.items():
+        combined[tracked_layers.index(layer_name)] += optical_depth[spectral_index]
+    return combined
+
+
 def _calculate_output_utau(
     output_format,
     output_values,
@@ -679,6 +745,12 @@ def run_srfm(inp):
     }
 
     ########################################################################################
+    # Define non-scattering grey-body cloud layers.
+    ########################################################################################
+    gbc_lyrs = _prepare_grey_body_layers(inp.values)
+    effective_params["gbc_lyrs_inputs"] = _grey_body_effective_parameters(gbc_lyrs)
+
+    ########################################################################################
     # prepare atmospheric layer structure
     ########################################################################################
 
@@ -744,6 +816,11 @@ def run_srfm(inp):
     for lyr in scat_lyrs:
         levels, track_lev = utilities.add_lyr_from_Layer(
             lev=levels, track_lev=track_lev, new_lyr=scat_lyrs[lyr]
+        )
+
+    for lyr in gbc_lyrs:
+        levels, track_lev = utilities.add_lyr_from_Layer(
+            lev=levels, track_lev=track_lev, new_lyr=gbc_lyrs[lyr]
         )
 
     # convert the tracking levels array to a tracking layers array
@@ -839,6 +916,9 @@ def run_srfm(inp):
 
     RFM_wvnm = model_RFM.rfm_output.wavenumber
     wvls = (1.0 / RFM_wvnm) * 1e4
+    grey_body_optical_depths = _interpolate_grey_body_optical_depths(
+        gbc_lyrs, wvls
+    )
 
     ########################################################################################
     # prepare DISORT common variables
@@ -1035,7 +1115,12 @@ def run_srfm(inp):
         model_DISORT.set_wvnm(wvnm)
         model_DISORT.set_wvl(wvl)
 
-        tau_g = np.asarray(tau_g, dtype=float)
+        tau_g = _add_grey_body_optical_depth(
+            tau_g,
+            track_lyr,
+            grey_body_optical_depths,
+            wvl_idx,
+        )
 
         # layer optical depths from Rayleigh scattering
         #    tau_R = np.zeros(shape=(tau_g.shape))

@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SVDLIM ( NLREQ, NL )
 !
 ! VERSION
-!   30JUN24 AD Checked.
+!   30MAY26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

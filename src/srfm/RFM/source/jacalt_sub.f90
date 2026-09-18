@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE JACALT ( JDX, TGT, FINISH, ALT, FAIL, ERRMSG, ITAN )
 !
 ! VERSION
-!   27SEP24 AD Checked.
+!   29SEP25 AD Checked.
 !   05AUG19 AD Add USEHGT argument for ATMLEV. Check SETHGT. Checked.
 !   14JAN19 AD Add TRIM( ) around TGT in error message
 !   01MAY17 AD F90 conversion of part of jacchk.for. Checked.

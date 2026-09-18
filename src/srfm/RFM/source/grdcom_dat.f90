@@ -1,7 +1,7 @@
 MODULE GRDCOM_DAT
 !
 ! VERSION
-!   27FEB23 AD Checked.
+!   10FEB26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

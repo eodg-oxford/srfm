@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE TRIINT ( XO, YO, N, X, Y, NTRI, IDXTRI, IFIT, WFIT, XFIT, YFIT ) 
 !
 ! VERSION
-!   05APR24 AD Checked.
+!   16MAR26 AD Checked.
 !   08FEB19 AD Bug#16 Add NTRI argument
 !   01MAY17 AD F90 conversion. Checked.
 !

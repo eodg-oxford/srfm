@@ -3,12 +3,12 @@ CONTAINS
 SUBROUTINE ADDVMR ( IVMR ) 
 !
 ! VERSION
-!   21NOV23 AD Checked.
+!   14NOV25 AD Checked.
 !   01MAY17 AD Original. Checked.
 !
 ! DESCRIPTION
 !   Add extra VMR profile to ATMCOM
-!   Called by ATMPRF, JACISO
+!   General purpose module.
 !   Assumes GAS(NGAS) contains info on new molecule
 !   If argument IVMR is present this copies existing profiles from IVMR into
 !   new profiles (eg if separating out an isotope, but keep the same VMR 

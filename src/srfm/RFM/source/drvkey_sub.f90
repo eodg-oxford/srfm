@@ -8,7 +8,7 @@ MODULE DRVKEY_SUB
   PRIVATE
 !
   INTEGER(I4),  PARAMETER :: MAXKEY = 30 ! >Max no different *KEY values
-  INTEGER(I4),  PARAMETER :: NREQ   = 6  ! No. of reqd *KEY values
+  INTEGER(I4),  PARAMETER :: NREQ = 6    ! No. of reqd *KEY values
   CHARACTER(4), PARAMETER :: REQLST(NREQ) = &
       (/ '*HDR', '*FLG', '*SPC', '*GAS', '*ATM', '*TAN' /)
 !
@@ -22,25 +22,24 @@ CONTAINS
 SUBROUTINE DRVKEY ( LUNDRV, KEY, FAIL, ERRMSG ) 
 !
 ! VERSION
+!   10JUL26 AD Checked.
+!   01AUG25 AD Simplify and return actual specific key for *TAN variants
 !   04JUL24 AD Change *LEV to *HGT when used for *TAN with flux calcs.
 !   24JUN19 AD Remove CIA flag. Checked.
 !   19DEC17 AD F90 version. Checked.
 !
 ! DESCRIPTION
-!   Check section key from driver table.
-!   Called by RFMDRV for each driver table section.
-!   DRVKEY_RESET clears the cached sequence so the validator can be reused.
+!   Check section key from driver table
+!   Called by RFMDRV for each driver table section
 !   First 6 keys are mandatory and checked for correct sequence, others are
 !   checked against flags. KEY set to key value (eg '*HDR') if useful, or
 !   to 'skip' if section not required. 
 !   On final call, with LUNDRV = -1, list of keys found compared with list of
 !   required keys.
 !
-! VARIABLE KINDS
 ! GLOBAL DATA
     USE FLGCOM_DAT ! Option flags
     USE LENREC_DAT ! Max length of input text record
-    USE TANCOM_DAT, ONLY: USRELE, USRGEO ! User-specified elev. or geom.tan.hts
 !
 ! SUBROUTINES
     USE UPCASE_FNC ! Convert text string to upper case
@@ -54,7 +53,6 @@ SUBROUTINE DRVKEY ( LUNDRV, KEY, FAIL, ERRMSG )
     LOGICAL,       INTENT(OUT) :: FAIL   ! Set TRUE if a fatal error is detected
     CHARACTER(80), INTENT(OUT) :: ERRMSG ! Error message written if FAIL is TRUE
 !
-! LOCAL CONSTANTS
 ! LOCAL VARIABLES
     LOGICAL           :: USEKEY   ! T=Use this section, F=ignore
     INTEGER(I4)       :: IOS      ! Saved value of IOSTAT
@@ -103,48 +101,64 @@ SUBROUTINE DRVKEY ( LUNDRV, KEY, FAIL, ERRMSG )
   KEY_COUNT = KEY_COUNT + 1
   KEY = UPCASE ( RECORD(1:4) )
 !
-! Convert valid alternatives to *TAN key
-  IF ( KEY_COUNT .EQ. 6 ) THEN 
-    IF ( TABFLG ) THEN
-      IF ( KEY .EQ. '*DIM' ) KEY = '*TAN'          ! temporarily
-    ELSE IF ( HOMFLG ) THEN
-      IF ( KEY .EQ. '*LEN' ) KEY = '*TAN' 
-    ELSE IF ( FLXFLG ) THEN
-      IF ( KEY .EQ. '*LEV' .OR. &                  ! old value, or
-           KEY .EQ. '*HGT'      ) KEY = '*TAN'     ! new value
-    ELSE IF ( NADFLG .OR. ZENFLG ) THEN            ! & not FLXFLG 
-      IF ( KEY .EQ. '*SEC' ) KEY = '*TAN'
-      IF ( KEY .EQ. '*ELE' ) THEN
-        USRELE = .TRUE.
-        KEY = '*TAN'
-      END IF
-    ELSE                                           ! limb-viewing assumed
-      IF ( KEY .EQ. '*ELE' ) THEN
-        USRELE = .TRUE.
-        KEY = '*TAN'
-      ELSE IF ( KEY .EQ. '*GEO' ) THEN
-        USRGEO = .TRUE.
-        KEY = '*TAN'
-      END IF
-    END IF
-    IF ( USRELE .AND. .NOT. OBSFLG ) THEN 
-      FAIL = .TRUE.
-      ERRMSG = 'F-DRVKEY: *ELE section only valid with OBS flag'
-      RETURN
-    END IF
-  END IF   
-!
-  IF ( KEY_COUNT .LE. NREQ ) THEN         ! mandatory sections
-    IF ( KEY .NE. REQLST(KEY_COUNT) ) THEN
-      FAIL = .TRUE.
+! Check mandatory keys 1:5
+  IF ( KEY_COUNT .LE. 5 ) THEN
+    FAIL = KEY .NE. REQLST(KEY_COUNT) 
+    IF ( FAIL ) THEN
       ERRMSG = 'F-DRVKEY: Expected ' // REQLST(KEY_COUNT) // &
                ' but found ' // KEY // ' section in driver file.'
       RETURN
     END IF
-  END IF      
 !
-! If creating .tab output files, use *DIM for section header
-  IF ( KEY_COUNT .EQ. 6 .AND. TABFLG ) KEY = '*DIM'
+! Convert valid alternatives to *TAN key
+  ELSE IF ( KEY_COUNT .EQ. 6 ) THEN 
+    IF ( TABFLG ) THEN
+      IF ( KEY .EQ. '*TAN' ) KEY = '*DIM'
+      FAIL =  KEY .NE. '*DIM' 
+      IF ( FAIL ) THEN
+        ERRMSG = 'F-DRVKEY: Expected *DIM or *TAN but found ' // &
+                 KEY // ' section in driver file.'
+        RETURN
+      END IF
+    ELSE IF ( HOMFLG ) THEN
+      IF ( KEY .EQ. '*TAN' ) KEY = '*LEN'
+      FAIL = KEY .NE. '*LEN'
+      IF ( FAIL ) THEN
+        ERRMSG = 'F-DRVKEY: Expected *LEN or *TAN but found ' // &
+                 KEY // ' section in driver file.'
+        RETURN
+      END IF
+    ELSE IF ( FLXFLG ) THEN             ! *LEV is pre v5.21 
+      IF ( KEY .EQ. '*LEV' .OR. KEY .EQ. '*TAN' ) KEY = '*HGT'
+      FAIL = KEY .NE. '*HGT' 
+      IF ( FAIL ) THEN
+        ERRMSG = 'F-DRVKEY: Expected *HGT, *LEV or *TAN but found ' // &
+                 KEY // ' section in driver file.'
+        RETURN
+      END IF
+    ELSE IF ( NADFLG .OR. ZENFLG ) THEN            ! & not FLXFLG 
+      IF ( KEY .EQ. '*TAN' ) KEY = '*SEC'
+      FAIL = KEY .NE. '*SEC' 
+      IF ( FAIL ) THEN
+        ERRMSG = 'F-DRVKEY: Expected *SEC or *TAN but found ' // &
+                 KEY // ' section in driver file.'
+        RETURN
+      END IF
+    ELSE 
+      FAIL =  KEY .NE. '*TAN' .AND. &
+              KEY .NE. '*ELE' .AND. KEY .NE. '*GEO'
+      IF ( FAIL ) THEN
+        ERRMSG = 'F-DRVKEY: Expected *TAN, *ELE or *GEO but found ' // &
+                 KEY // ' section in driver file.'
+        RETURN
+      END IF
+      FAIL = KEY .EQ. '*ELE' .AND. .NOT. OBSFLG
+      IF ( FAIL ) THEN
+        ERRMSG = 'F-DRVKEY: *ELE section only valid with OBS flag'
+        RETURN
+      END IF
+    END IF
+  END IF   
 !
 ! Check for repeated key
   IF ( ANY ( KEY_HISTORY .EQ. KEY ) ) THEN

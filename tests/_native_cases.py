@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 import pickle
 import sys
+import tempfile
 import traceback
 
 import numpy as np
@@ -92,6 +93,55 @@ def _mie_case(payload):
     )
 
 
+def _rfm_flag_matrix_case(payload):
+    """Exercise many RFM ``*FLG`` configurations in one native process.
+
+    Every deliberately incomplete driver stops immediately after flag parsing.
+    This isolates the option parser and its compatibility rules from external
+    HITRAN, CIA, LUT, SVD, FOV, and instrument files.  Reusing the process also
+    verifies that the f2py wrapper resets Fortran units and flag state after a
+    rejected configuration.
+
+    Args:
+        payload: Mapping whose ``cases`` value contains ``id`` and ``flags``.
+
+    Returns:
+        Mapping from case identifier to native status and complete RFM log.
+    """
+    from srfm.RFM import rfm_py
+
+    if rfm_py is None:
+        raise RuntimeError("RFM extension is unavailable")
+
+    results = {}
+    original = Path.cwd()
+    with tempfile.TemporaryDirectory(prefix="srfm-rfm-flags-") as directory:
+        root = Path(directory)
+        try:
+            # RFM writes its diagnostic log in the process working directory.
+            # The child-process boundary makes this process-global operation safe.
+            import os
+
+            os.chdir(root)
+            for case in payload["cases"]:
+                flags = tuple(case["flags"])
+                driver_lines = (
+                    "*HDR",
+                    f"  pytest RFM flag configuration {case['id']}",
+                    "*FLG",
+                    "  " + " ".join(flags),
+                    "*END",
+                )
+                status = int(rfm_py.rfm_run(driver_lines=driver_lines))
+                log_path = root / "rfm.log"
+                log = log_path.read_text(encoding="utf-8", errors="replace")
+                log_path.unlink()
+                results[case["id"]] = {"status": status, "log": log}
+        finally:
+            os.chdir(original)
+    return results
+
+
 def _e2e_case(payload):
     """Run one complete SRFM pathway with the selected top-level runner.
 
@@ -135,6 +185,7 @@ def _e2e_case(payload):
 CASES = {
     "disort": _disort_case,
     "mie": _mie_case,
+    "rfm_flag_matrix": _rfm_flag_matrix_case,
     "e2e": _e2e_case,
 }
 

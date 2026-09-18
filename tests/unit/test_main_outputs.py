@@ -9,10 +9,14 @@ from unittest.mock import patch
 
 from srfm.forward_model import SRFM
 from srfm.main import (
+    _add_grey_body_optical_depth,
     _calculate_output_utau,
     _create_netcdf_spectral_dimensions,
+    _grey_body_effective_parameters,
+    _interpolate_grey_body_optical_depths,
     _plot_retained_spectral_outputs,
     _plot_spectral_outputs,
+    _prepare_grey_body_layers,
     _resolve_output_geometry,
     _resolve_retained_outputs,
     _write_retained_netcdf_outputs,
@@ -47,6 +51,41 @@ def test_altitudes_resolve_to_lower_boundaries_and_total_optical_depth(optical_p
     np.testing.assert_allclose(values, [1.0, 3.0])
     assert rows == [1, None]
     np.testing.assert_allclose(utau, [0.3, 0.0])
+
+
+def test_grey_body_helpers_prepare_regrid_and_add_absorption():
+    """Runner helpers add regridded GreyBody depth without mutating RFM data."""
+    values = {
+        "gbc_lyrs_inputs": {
+            "cloud": {
+                "name": "cloud",
+                "low_spc": 1000.0,
+                "upp_spc": 1002.0,
+                "res": 1.0,
+                "spec_units": "cm-1",
+                "center_alt": 1.5,
+                "thick": 0.2,
+                "alt_upp": None,
+                "alt_low": None,
+                "emis": 0.8,
+                "inp_tau": 0.4,
+            }
+        }
+    }
+    layers = _prepare_grey_body_layers(values)
+    depths = _interpolate_grey_body_optical_depths(layers, [10.0, 9.99])
+    gas_depth = np.array([0.1, 0.2, 0.3])
+
+    combined = _add_grey_body_optical_depth(
+        gas_depth,
+        [None, "cloud", None],
+        depths,
+        spectral_index=1,
+    )
+
+    np.testing.assert_allclose(combined, [0.1, 0.6, 0.3])
+    np.testing.assert_allclose(gas_depth, [0.1, 0.2, 0.3])
+    assert _grey_body_effective_parameters(layers)["cloud"]["alt_low"] == 1.4
 
 
 def test_altitude_optical_depth_accounts_for_truncated_top_layers(optical_profile):

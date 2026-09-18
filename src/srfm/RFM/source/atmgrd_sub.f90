@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE ATMGRD ( LABEL, NLEV, PROFIL, PREGRD, FAIL, ERRMSG )
 !
 ! VERSION
+!   07APR26 AD Checked.
 !   02APR21 AD Bug#27 Check that Hgt grid used with GRA flag. Checked.
 !   21JUN17 AD Original. Checked. 
 !

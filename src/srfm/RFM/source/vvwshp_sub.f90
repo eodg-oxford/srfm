@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE VVWSHP ( DWNO, K )
 !
 ! VERSION
-!   14MAY24 AD Checked.
+!   21APR26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

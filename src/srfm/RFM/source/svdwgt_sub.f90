@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SVDWGT ( FINISH, IGAS, NLNP, LNP1, DLNP, NTEM, TEM1, DTEM, &
                     PRE, TEM, IDXLKP, WGTLKP )
 ! VERSION
-!   02JAN24 AD Checked.
+!   26DEC25 AD Checked.
 !   01JUL17 AD F90 conversion of part of svdpth.for. Checked.
 ! 
 ! DESCRIPTION    

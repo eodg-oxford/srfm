@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE INIHIT ( WNOREQ, WNOUPP, FAIL, ERRMSG )
 !
 ! VERSION
-!   20AUG24 AD Checked.
+!   19AUG26 AD Checked.
 !   11AUG23 AD Restructured for multiple files.
 !   22MAY23 AD Original. Replaces INIHFL.
 !

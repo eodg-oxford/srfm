@@ -1,7 +1,8 @@
 MODULE INTERP_GEN
 !
 ! VERSION
-!   05SEP24 AD Checked.
+!   22FEB26 AD Checked.
+!   06FEB25 AD Add INTERP_RD
 !   06SEP21 AD Add INTERP_RRS
 !   01MAY17 AD Original. Checked.
 !
@@ -15,11 +16,19 @@ MODULE INTERP_GEN
 !   If LOGINT is set TRUE, interpolation is linear in ln(YTAB). 
 !   If XTAB is a single element, output is replicated YTAB value.
 !
+! VARIANTS
+!                 XTAB  YTAB  Result
+!   INTERP_RR      R4    R4     R4
+!   INTERP_RRS     R4    R4     R4(scalar)
+!   INTERP_DD      R8    R8     R8
+!   INTERP_DR      R8    R4     R4
+!   INTERP_RD      R4    R8     R8
+!
 ! VARIABLE KINDS
     USE KIND_DAT
 !
 INTERFACE INTERP
-  MODULE PROCEDURE INTERP_RR, INTERP_RRS, INTERP_DD, INTERP_DR
+  MODULE PROCEDURE INTERP_RR, INTERP_RRS, INTERP_DD, INTERP_DR, INTERP_RD
 END INTERFACE
 
 CONTAINS
@@ -196,6 +205,50 @@ PURE FUNCTION INTERP_DR ( XTAB, XINT, YTAB, LOGINT, EXTRAP )
   END DO
 !
 END FUNCTION INTERP_DR
+
+PURE FUNCTION INTERP_RD ( XTAB, XINT, YTAB, LOGINT, EXTRAP )
+!
+! SUBROUTINES 
+    USE VAL1DI_GEN ! Interpolate value from 1D array
+!
+  IMPLICIT NONE
+!
+! ARGUMENTS
+    REAL(R4), INTENT(IN) :: XTAB(:) ! List of tabulated coordinates
+    REAL(R4), INTENT(IN) :: XINT(:) ! List of interpolation coordinates
+    REAL(R8), INTENT(IN) :: YTAB(:) ! List of tabulated data values at XTAB
+    LOGICAL, OPTIONAL, &
+              INTENT(IN) :: LOGINT  ! TRUE=interpolate linearly in Log(YTAB)
+    LOGICAL, OPTIONAL, &
+              INTENT(IN) :: EXTRAP  ! TRUE=extrapolate beyond ends of XTAB
+!
+! FUNCTION TYPE
+    REAL(R8) :: INTERP_RD ( SIZE(XINT) ) ! Function returns array size of XINT 
+!
+! LOCAL VARIABLES
+    LOGICAL     :: LINT ! T=Log interpolation, F=linear interpolation
+    LOGICAL     :: LEXT ! T=extrapolation, F=no extrapolation
+    INTEGER(I4) :: I    ! Counter for interpolated points
+!
+! EXECUTABLE CODE -------------------------------------------------------------
+!
+  IF ( PRESENT ( LOGINT ) ) THEN
+    LINT = LOGINT
+  ELSE
+    LINT = .FALSE.
+  END IF
+!
+  IF ( PRESENT ( EXTRAP ) ) THEN
+    LEXT = EXTRAP
+  ELSE
+    LEXT = .FALSE.
+  END IF
+!
+  DO I = 1, SIZE ( XINT ) 
+    INTERP_RD(I) = VAL1DI ( XTAB, XINT(I), YTAB, LINT, LEXT ) 
+  END DO
+!
+END FUNCTION INTERP_RD
 
 END MODULE INTERP_GEN
 

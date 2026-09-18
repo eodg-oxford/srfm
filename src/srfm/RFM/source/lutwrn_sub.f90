@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE LUTWRN ( IGAS, NTOT, NP1LIM, NP2LIM, NT1LIM, NT2LIM, NQ1LIM, NQ2LIM )
 !
 ! VERSION
-!   06JUN24 AD Checked.
+!   06MAY26 AD Checked.
 !   01MAY17 AD F90 conversion of part of lutpth.for. Checked.
 ! 
 ! DESCRIPTION    

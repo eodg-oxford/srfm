@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SETIFP ( LUNHIT, IREC, IFP, FAIL, ERRMSG )
 !
 ! VERSION
-!   26AUG24 AD Checked.
+!   27AUG26 AD Checked.
 !   11AUG23 AD Add IFP as argument. Remove RECBIN.
 !   23MAY23 AD Original. Was part of INIHFL.
 !

@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE DRVOUT ( LUNDRV, FAIL, ERRMSG )
 !
 ! VERSION
+!   25NOV25 AD Checked.
 !   12OCT20 AD Truncate TYPFIL from C4 to C3 for log file message. Checked.
 !   08NOV17 AD Original. Checked.
 !

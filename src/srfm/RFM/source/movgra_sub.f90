@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE MOVGRA ( IPSI, JPSI )
 !
 ! VERSION
-!   19SEP24 AD Checked.
+!   22SEP25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

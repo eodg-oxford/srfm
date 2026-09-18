@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE VALATM ( HGT, TEM, PRE, DNS, VMR )
 !
 ! VERSION
-!   11JAN24 AD Checked.
+!   04JAN26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

@@ -1,7 +1,7 @@
 MODULE OBSCOM_DAT
 !
 ! VERSION
-!   06OCT24 AD Checked.
+!   03OCT25 AD Checked.
 !   05AUG19 AD Change ALTOBS to HGTOBS. Add PREOBS. Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !

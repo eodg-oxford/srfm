@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE DRVPHY ( LUNDRV, FAIL, ERRMSG )
 !
 ! VERSION
-!   28AUG24 AD Checked.
+!   29AUG26 AD Checked.
 !   24JUN19 AD Remove ATMAUX (called later by DRVCHK instead). Checked.
 !   12MAR19 AD Add WNOREF, GHZREF.
 !   12MAR19 AD Bug#18 Call ATMAUX.

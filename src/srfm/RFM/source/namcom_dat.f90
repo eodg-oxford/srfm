@@ -1,7 +1,7 @@
 MODULE NAMCOM_DAT
 !
 ! VERSION
-!   24MAR23 AD Checked.
+!   08MAR26 AD Checked.
 !   08NOV17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

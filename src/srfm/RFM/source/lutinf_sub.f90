@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE LUTINF ( LUNLUT, NAMLUT, BINFIL, IDXMOL, IDXISO, V1, V2, &
                     FAIL, ERRMSG )
 ! VERSION
-!   18JUN24 AD Checked.
+!   19MAY26 AD Checked.
 !   20DEC17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

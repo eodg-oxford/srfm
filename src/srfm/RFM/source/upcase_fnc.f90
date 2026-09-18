@@ -3,7 +3,7 @@ CONTAINS
 PURE FUNCTION UPCASE ( INPSTR )
 !
 ! VERSION
-!   15DEC23 AD Checked.
+!   08DEC25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

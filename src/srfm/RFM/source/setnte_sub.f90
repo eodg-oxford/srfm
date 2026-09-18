@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SETNTE
 !
 ! VERSION
-!   08SEP24 AD Checked.
+!   08SEP25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

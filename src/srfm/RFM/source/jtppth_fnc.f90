@@ -3,7 +3,7 @@ CONTAINS
 LOGICAL FUNCTION JTPPTH ( IPTH, IJAC ) 
 !
 ! VERSION
-!   28NOV23 AD Checked.
+!   21NOV25 AD Checked.
 !   31MAY18 AD Ensure JTAN=0 is handled. Checked.
 !   01MAY17 AD F90 version. Checked.
 !

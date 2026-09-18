@@ -1,7 +1,7 @@
 MODULE SHPCON_DAT
 !
 ! VERSION
-!   08FEB24 AD Checked.
+!   27JAN26 AD Checked.
 !   01MAY17 AD F90 version. Checked.
 !
 ! DESCRIPTION

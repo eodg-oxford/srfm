@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE SAVXSC ( IGAS )
 !
 ! VERSION
+!   19FEB26 AD Checked.
 !   19FEB20 AD Original. Based on part of old REAXSC. Checked.
 ! 
 ! DESCRIPTION    

@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE RADLEV ( ITAN, IATM, IDIR ) 
 !
 ! VERSION
-!   07JAN24 AD Checked.
+!   01JAN26 AD Checked.
 !   01JUL17 AD F90 version. Checked.
 !
 ! DESCRIPTION

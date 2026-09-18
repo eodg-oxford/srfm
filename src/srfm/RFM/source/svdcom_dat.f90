@@ -1,7 +1,7 @@
 MODULE SVDCOM_DAT
 !
 ! VERSION
-!   09JUN24 AD Checked.
+!   11MAY26 AD Checked.
 !   01MAY17 AD F90 version. Checked.
 !
 ! DESCRIPTION

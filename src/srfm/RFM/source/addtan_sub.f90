@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE ADDTAN ( ITAN, CLCTAN )
 !
 ! VERSION
-!   26NOV23 AD Checked.
+!   19NOV25 AD Checked.
 !   31MAY17 AD Ensure %ITN always defined. Checked.
 !   01MAY17 AD F90 original. Checked.
 !

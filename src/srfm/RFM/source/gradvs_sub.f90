@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE GRADVS ( P, R, T, DPDS, DRDS, DTDS )
 !
 ! VERSION
-!   13JAN24 AD Checked.
+!   06JAN26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

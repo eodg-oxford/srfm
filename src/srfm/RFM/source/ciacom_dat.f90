@@ -1,7 +1,9 @@
 MODULE CIACOM_DAT
 !
 ! VERSION
-!   22JUL24 AD Checked.
+!   14AUG26 AD Checked.
+!   18AUG25 AD Remove %IGG, IGGCIA, IDDCIA
+!   22JUL25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION
@@ -20,7 +22,6 @@ MODULE CIACOM_DAT
     INTEGER(I4) :: ID2 ! RFM/HITRAN index of molec#2
     INTEGER(I4) :: IG1 ! GASCOM index of molec#1
     INTEGER(I4) :: IG2 ! GASCOM index of molec#2
-    INTEGER(I4) :: IGG ! Index in IGGCIA for molec#1,#2 combination
     INTEGER(I4) :: NPT ! No.Abs.Coeff values within each CIA dataset
     REAL(R4)    :: TEM ! Temperature [K] of each dataset
     REAL(R8)    :: WNL ! Lower Wno [cm-1] of each CIA table
@@ -32,8 +33,5 @@ MODULE CIACOM_DAT
   TYPE(CIATYP), ALLOCATABLE :: CIA(:)
 !
   INTEGER(I4) :: NCIA = 0   ! No. of CIA tables stored
-  INTEGER(I4) :: NGGCIA = 0 ! No. different molec-molec combinations
-  INTEGER(I4), ALLOCATABLE :: IGGCIA(:,:)  ! IG1,IG2 values of each combination
-  INTEGER(I4), ALLOCATABLE :: IDDCIA(:,:)  ! ID1,ID2 values of each combination
 !
 END MODULE CIACOM_DAT

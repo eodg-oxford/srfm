@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE ATMAUX 
 !
 ! VERSION
-!   11MAY24 AD Checked.
+!   18APR26 AD Checked.
 !   12MAR19 AD Allow for WNORFR. Checked.
 !   30DEC17 AD F90 version. Checked.
 !

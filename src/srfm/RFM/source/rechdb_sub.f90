@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE RECHDB ( LUNHIT, HIT, USEIDM, WNOMAX, HDB, EOF, FAIL, ERRMSG ) 
 !
 ! VERSION
-!   24AUG24 AD Checked.
+!   26AUG26 AD Checked.
 !   11AUG23 AD Pass data via arguments
 !   31MAY23 AD Original. 
 !

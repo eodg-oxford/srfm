@@ -1,7 +1,7 @@
 MODULE REJCOM_DAT
 !
 ! VERSION
-!   11JUL24 AD Checked.
+!   14JUN26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

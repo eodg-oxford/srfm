@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE ATMINI ( LEVGRD, PREGRD )
 !
 ! VERSION
-!   02SEP24 AD Checked.
+!   02SEP26 AD Checked.
 !   24AUG23 AD Bug#41: Allocate EXTATM
 !   18APR22 AD Add IAIVMR and initialise for air
 !   02DEC19 AD Correction: set LINVMR=T for aerosol. Checked.

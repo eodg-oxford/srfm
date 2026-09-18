@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE CIACHK ( ID1, ID2, TEM, WNL, WNU, FAIL, ERRMSG )
 !
 ! VERSION
+!   23MAY26 AD Checked.
 !   21JUN24 AD Change combination with continua to warning rather than fatal    
 !   24JUN19 AD Check CO2-CO2 not used with CO2 continuum, similarly H2O,N2,O2
 !              Also check Air is unique broadener in spectral range. Checked.

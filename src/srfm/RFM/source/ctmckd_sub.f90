@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE CTMCKD ( ILBL ) 
 !
 ! VERSION
-!   15SEP24 AD Checked.
+!   14SEP25 AD Checked.
 !   22JUL19 AD Rearrange to C11 = SNGL(...) to avoid compilation warnings. Checked.
 !   16NOV17 AD F90 conversion. Checked.
 ! 

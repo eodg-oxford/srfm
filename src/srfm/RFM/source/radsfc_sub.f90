@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE RADSFC ( OPT, RAD, JDX )
 !
 ! VERSION
-!   08JAN24 AD Checked.
+!   02JAN26 AD Checked.
 !   01JUL17 AD F90 Original. Checked.
 !
 ! DESCRIPTION

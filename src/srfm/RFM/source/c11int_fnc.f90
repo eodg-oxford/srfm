@@ -3,7 +3,7 @@ CONTAINS
 CHARACTER(11) PURE FUNCTION C11INT ( INUM ) 
 !
 ! VERSION
-!   25JAN24 Checked.
+!   15JAN26 Checked.
 !   01MAY17 Original. Checked.
 !
 ! DESCRIPTION

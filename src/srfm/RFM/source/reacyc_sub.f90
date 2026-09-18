@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE REACYC ( WNOMIN, WNOMAX, FAIL, ERRMSG )
 !
 ! VERSION
-!   22AUG24 AD Checked.
+!   24AUG26 AD Checked.
 !   11AUG23 AD Remove BINCOM_DAT.
 !   23MAY23 AD Remove WNOHFL. Reposition REAHIT at end of loop.
 !   01MAY17 AD F90 conversion. Checked.

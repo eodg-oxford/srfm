@@ -1,7 +1,7 @@
 MODULE PTHCOM_DAT
 !
 ! VERSION
-!   24JAN24 AD Checked.   
+!   14JAN26 AD Checked.   
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

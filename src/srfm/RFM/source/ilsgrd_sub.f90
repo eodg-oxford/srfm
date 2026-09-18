@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE ILSGRD ( IFNOUT, IP1ILS, IP2ILS, FNCILS, IGRD1, IGRD2, FNCIRR ) 
 !
 ! VERSION
+!   13JAN26 AD Checked.
 !   19JAN23 AD Bug#37: Revise Logical Error#5. Checked.
 !   19APR22 AD Bug#34: Allow for all contrib.grid points above irreg grid.
 !   01MAY17 AD F90 original. Checked.

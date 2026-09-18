@@ -1,7 +1,7 @@
 MODULE WIDCOM_DAT
 !
 ! VERSION
-!   09APR23 AD Checked.
+!   18MAR26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE DRVATM ( LUNDRV, FAIL, ERRMSG )
 !
 ! VERSION
-!   02AUG24 AD Checked.
+!   31JUL26 AD Checked.
 !   24JUN19 AD Remove ATMAIR, ATMAUX. Checked.
 !   21JUN17 AD Add ATMPAR
 !   01MAY17 AD F90 conversion of original module INPATM. Checked.

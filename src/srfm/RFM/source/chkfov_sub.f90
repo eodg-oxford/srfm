@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE CHKFOV ( FAIL, ERRMSG )
 !
 ! VERSION
-!   28SEP24 AD Checked.
+!   29SEP25 AD Checked.
 !   28MAR22 AD Possible bug fixes. Checked.
 !   03DEC21 AD Change log message and slightly rearrange logic.
 !   27MAR21 AD Checked.

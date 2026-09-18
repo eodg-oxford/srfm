@@ -1,7 +1,7 @@
 MODULE C9REAL_GEN
 !
 ! VERSION
-!   11FEB24 AD Checked.
+!   30JAN26 AD Checked.
 !   01MAY17 AD F90 conversion of c9flt.for. Checked.
 !
 ! DESCRIPTION

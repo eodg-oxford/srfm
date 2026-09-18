@@ -1,7 +1,7 @@
 MODULE XSCCOM_DAT
 !
 ! VERSION
-!   04APR24 AD Checked.
+!   15MAR26 AD Checked.
 !   08FEB19 AD Add NTRI.
 !   01MAY17 AD F90 version. Checked.
 !

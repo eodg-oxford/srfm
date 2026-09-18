@@ -3,7 +3,7 @@ CONTAINS
 PURE FUNCTION PLANCK ( TEM, WNOLST )
 !
 ! VERSION
-!   16JUL24 AD Checked.
+!   19JUN26 AD Checked.
 !   23MAY20 AD Check for small Wavenumber limit - WNOMIN. Checked.
 !   01MAY17 AD F90 conversion of F77 subroutine. Checked.
 !

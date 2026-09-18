@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE DRVSPC ( LUNDRV, FAIL, ERRMSG )
 !
 ! VERSION
-!   22NOV23 AD Checked.
+!   15NOV25 AD Checked.
 !   01MAY17 AD F90 conversion of inpspc.for. Checked.
 !
 ! DESCRIPTION

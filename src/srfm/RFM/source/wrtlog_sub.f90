@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE WRTLOG ( MESSGE, LACCUM )
 !
 ! VERSION
-!   17MAY24 AD Checked.
+!   23APR26 AD Checked.
 !   22NOV17 AD Temporary fix avoiding allocatable character strings
 !   01MAY17 AD F90 conversion of rfmlog.for. Tested.
 !

@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE DRVOBS ( LUNDRV, FAIL, ERRMSG )
 !
 ! VERSION
-!   04OCT24 AD Checked.
+!   02OCT25 AD Checked.
 !   27SEP22 AD Bug#36: Add check for unrecognised PARAM
 !   05AUG19 AD Rewritten for PARAM=VALUE fields. Allow PREOBS. Checked.
 !   01MAY17 AD F90 conversion. Checked.

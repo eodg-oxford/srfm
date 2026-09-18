@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SUB25W ( ABSORP )
 !
 ! VERSION
-!   09MAY24 AD Checked.
+!   16APR26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

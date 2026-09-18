@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SPCJAC 
 !
 ! VERSION
-!   25NOV23 AD Checked.
+!   18NOV25 AD Checked.
 !   30MAY18 AD Bug#7 Only subtract for TAN%CLC is TRUE. Checked.
 !   01MAY17 AD F90 conversion of rfmjac.for. Checked.
 !

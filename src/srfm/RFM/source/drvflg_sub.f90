@@ -13,6 +13,10 @@ CONTAINS
 SUBROUTINE DRVFLG ( LUNDRV, FAIL, ERRMSG )
 !
 ! VERSION
+!   01SEP26 AD Add C41FLG, C4CFLG
+!   08JUL26 AD Checked.
+!   01AUG25 AD Add INIQAD. Disallow FOV+LEV flags.
+!   11MAR25 AD Remove LUN flag. Checked.
 !   15MAR23 AD Add C32 flag.
 !   29APR21 AD Allow SFC+ZEN flags
 !   24JUN19 AD Remove CIA flag. Checked.
@@ -28,6 +32,7 @@ SUBROUTINE DRVFLG ( LUNDRV, FAIL, ERRMSG )
     USE FLGCOM_DAT ! Option flags
 !
 ! SUBROUTINES
+    USE INIQAD_SUB ! Initialise Gaussian quadrature for flux calculations
     USE NXTFLD_SUB ! Load next field from section of driver file
     USE UPCASE_FNC ! Convert text string to upper case
     USE WRTLOG_SUB ! Write text message to log file
@@ -81,6 +86,8 @@ SUBROUTINE DRVFLG ( LUNDRV, FAIL, ERRMSG )
       CASE ( 'BFX' ) ; BFXFLG = .TRUE.
       CASE ( 'BIN' ) ; BINFLG = .TRUE.
       CASE ( 'C32' ) ; C32FLG = .TRUE.
+      CASE ( 'C41' ) ; C41FLG = .TRUE.
+      CASE ( 'C4C' ) ; C4CFLG = .TRUE.
       CASE ( 'CHI' ) ; CHIFLG = .TRUE.
       CASE ( 'CIA' ) ; CALL WRTLOG ( 'W-DRVFLG: CIA flag no longer required' )
       CASE ( 'CLC' ) ; CLCFLG = .TRUE.
@@ -104,7 +111,6 @@ SUBROUTINE DRVFLG ( LUNDRV, FAIL, ERRMSG )
       CASE ( 'LEV' ) ; LEVFLG = .TRUE.
       CASE ( 'LIN' ) ; LINFLG = .TRUE.
       CASE ( 'LOS' ) ; LOSFLG = .TRUE.
-      CASE ( 'LUN' ) ; LUNFLG = .TRUE.   ! not used in F90
       CASE ( 'LUT' ) ; LUTFLG = .TRUE.
       CASE ( 'MIX' ) ; MIXFLG = .TRUE.
       CASE ( 'MTX' ) ; MTXFLG = .TRUE.
@@ -139,8 +145,6 @@ SUBROUTINE DRVFLG ( LUNDRV, FAIL, ERRMSG )
 !
   CALL WRTLOG ( '', .FALSE. )
 !
-  IF ( LUNFLG ) CALL WRTLOG ( 'W-DRVFLG: LUN flag redundant in RFM v5' )
-! 
 ! Check for inconsistent flag combinations
   FAIL = .TRUE.
   IF ( ABSFLG .AND. TABFLG ) THEN
@@ -160,6 +164,14 @@ SUBROUTINE DRVFLG ( LUNDRV, FAIL, ERRMSG )
     ERRMSG = 'F-DRVFLG: BFX and NTE flags are incompatible'
   ELSE IF ( BFXFLG .AND. TABFLG ) THEN
     ERRMSG = 'F-DRVFLG: BFX and TAB flags are incompatible'
+!
+  ELSE IF ( C32FLG .AND. C41FLG ) THEN
+    ERRMSG = 'F-DRVFLG: C32 and C41 flags are incompatible'
+  ELSE IF ( C32FLG .AND. C4CFLG ) THEN
+    ERRMSG = 'F-DRVFLG: C32 and C4C flags are incompatible'
+!
+  ELSE IF ( C41FLG .AND. C4CFLG ) THEN
+    ERRMSG = 'F-DRVFLG: C41 and C4C flags are incompatible'
 !
   ELSE IF ( CLCFLG .AND. FLXFLG ) THEN
     ERRMSG = 'F-DRVFLG: CLC and FLX flags are incompatible'
@@ -201,6 +213,8 @@ SUBROUTINE DRVFLG ( LUNDRV, FAIL, ERRMSG )
 !
   ELSE IF ( FOVFLG .AND. HOMFLG ) THEN
     ERRMSG = 'F-DRVFLG: FOV and HOM flags are incompatible'
+  ELSE IF ( FOVFLG .AND. LEVFLG ) THEN
+    ERRMSG = 'F-DRVFLG: FOV and LEV flags are incompatible'
   ELSE IF ( FOVFLG .AND. NADFLG ) THEN
     ERRMSG = 'F-DRVFLG: FOV and NAD flags are incompatible'
   ELSE IF ( FOVFLG .AND. OPTFLG ) THEN
@@ -313,6 +327,10 @@ SUBROUTINE DRVFLG ( LUNDRV, FAIL, ERRMSG )
     ERRMSG = 'F-DRVFLG: BFX flag also requires BBT, RAD or RJT flags'
   ELSE IF ( C32FLG .AND. .NOT. CTMFLG ) THEN
     ERRMSG = 'F-DRVFLG: C32 flag also requires CTM flag'
+  ELSE IF ( C41FLG .AND. .NOT. CTMFLG ) THEN
+    ERRMSG = 'F-DRVFLG: C41 flag also requires CTM flag'
+  ELSE IF ( C4CFLG .AND. .NOT. CTMFLG ) THEN
+    ERRMSG = 'F-DRVFLG: C4C flag also requires CTM flag'
   ELSE IF ( COOFLG .AND. .NOT. FLXFLG ) THEN
     ERRMSG = 'F-DRVFLG: COO flag also requires FLX flag'
   ELSE IF ( FINFLG .AND. .NOT. ( ILSFLG .OR. AVGFLG ) ) THEN
@@ -323,6 +341,8 @@ SUBROUTINE DRVFLG ( LUNDRV, FAIL, ERRMSG )
   ELSE IF ( FLXFLG .AND. TRAFLG .AND. .NOT. MTXFLG &
             .AND. .NOT. ( NADFLG .OR. ZENFLG ) ) THEN
     ERRMSG = 'F-DRVFLG: TRA+FLX-MTX flags also requires ZEN or NAD'
+  ELSE IF ( MTXFLG .AND. RADFLG .AND. .NOT. SFCFLG ) THEN
+    ERRMSG = 'F-DRVFLG: MTX+RAD flags also requires SFC flag'
   ELSE IF ( FLXFLG .AND. .NOT. ZENFLG .AND. .NOT. SFCFLG ) THEN
     ERRMSG = 'F-DRVFLG: FLX-ZEN flags also require SFC flag'
   ELSE IF ( FVZFLG .AND. .NOT. FOVFLG ) THEN
@@ -333,14 +353,20 @@ SUBROUTINE DRVFLG ( LUNDRV, FAIL, ERRMSG )
     ERRMSG = 'F-DRVFLG: JTP flag also requires JAC flag'
   ELSE IF ( MTXFLG .AND. .NOT. FLXFLG ) THEN
     ERRMSG = 'F-DRVFLG: MTX flag also requires FLX flag'
-  ELSE IF ( MTXFLG .AND. RADFLG .AND. .NOT. SFCFLG ) THEN
-    ERRMSG = 'F-DRVFLG: MTX+RAD flags also requires SFC flag'
   ELSE IF ( NADFLG .AND. .NOT. SFCFLG ) THEN
     ERRMSG = 'F-DRVFLG: NAD flag also requires SFC flag'
   ELSE IF ( VRTFLG .AND. .NOT. FLXFLG ) THEN
     ERRMSG = 'F-DRVFLG: VRT flag also requires FLX flag'
   ELSE
     FAIL = .FALSE.
+  END IF
+! 
+  IF ( FLXFLG ) THEN
+    IF ( VRTFLG ) THEN
+      CALL INIQAD ( 0 ) 
+    ELSE
+      CALL INIQAD ( )
+    END IF
   END IF
 !
 END SUBROUTINE DRVFLG

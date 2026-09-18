@@ -16,6 +16,10 @@ belonging to the Earth Observation Data Group and the University of Oxford.
 For more info, comments or to leave feedback, 
 please contact antonin.knizek@physics.ox.ac.uk or contact the `EODG <https://eodg.atm.ox.ac.uk/eodg/>`_ group.
 
+DISCLAIMER: Development of parts of this package was assisted by AI. I have used codex CLI to optimize the main
+calculation routine (having written it myself first) and create routines for writing out files and checking input 
+parameter formats.
+
 
 .. toctree::
    :maxdepth: 2

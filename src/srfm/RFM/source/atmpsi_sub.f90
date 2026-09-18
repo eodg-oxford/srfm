@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE ATMPSI ( NAMATM, FAIL, ERRMSG )
 !
 ! VERSION
+!   17OCT25 AD Checked.
 !   16AUG19 AD Allow for multiple qualifiers. Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !

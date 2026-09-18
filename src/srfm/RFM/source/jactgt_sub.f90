@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE JACTGT ( TARGET, JDX, FAIL, ERRMSG )
 !
 ! VERSION
-!   14JUL24 AD Checked.
+!   17JUN26 AD Checked.
 !   01MAY17 AD F90 conversion of part of jacchk.for. Checked.
 !
 ! DESCRIPTION

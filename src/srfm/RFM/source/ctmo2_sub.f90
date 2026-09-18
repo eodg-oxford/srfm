@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE CTMO2 ( ILBL ) 
 !
 ! VERSION
-!   13APR23 AD Checked.
+!   21MAR26 AD Checked.
 !   16NOV17 AD F90 conversion. Checked.
 ! 
 ! DESCRIPTION    

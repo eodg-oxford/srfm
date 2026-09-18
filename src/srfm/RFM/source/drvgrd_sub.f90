@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE DRVGRD ( LUNDRV, FAIL, ERRMSG )
 !
 ! VERSION
-!   20NOV23 AD Checked.
+!   13NOV25 AD Checked.
 !   01MAY17 AD F90 conversion of inpgrd.for. Checked.
 !
 ! DESCRIPTION

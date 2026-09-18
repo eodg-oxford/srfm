@@ -1,7 +1,7 @@
 MODULE LUTCOM_DAT
 !
 ! VERSION
-!   23JUN24 AD Checked.
+!   24MAY26 AD Checked.
 !   28MAR19 AD Bug#19 Add %WNL, %WNU. Checked.
 !   01MAY17 AD F90 version. Checked.
 !

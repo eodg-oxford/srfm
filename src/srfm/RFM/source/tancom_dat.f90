@@ -1,6 +1,9 @@
 MODULE TANCOM_DAT
 !
 ! VERSION
+!   26JUL26 AD Checked.
+!   01AUG25 AD Initialise LIMTAN = .FALSE.
+!              Use external LENHGT rather than local LENTAN.
 !   25MAY24 AD Checked
 !   25MAR19 AD Add UNITAN, USRUNI. Checked.
 !   05MAR19 AD Add TAN%SEC, TAN%SKY, TAN%ISK
@@ -18,12 +21,12 @@ MODULE TANCOM_DAT
 ! VARIABLE KINDS
     USE KIND_DAT
 !
+! GLOBAL DATA
+    USE LENHGT_DAT ! Max length of height component of RFM output filenames
+!
   IMPLICIT NONE
   SAVE
   PUBLIC :: TANCOM_RESET
-!
-! GLOBAL CONSTANTS
-    INTEGER, PARAMETER :: LENTAN = 6 ! Max length of tan.ht string in filenames
 !
   TYPE :: TANTYP
     LOGICAL     :: CLC ! T = Radiance.calc reqd for Tan.Hgt
@@ -40,7 +43,7 @@ MODULE TANCOM_DAT
     REAL(R4)    :: SEC ! Sec(zenith angle) for p/p atmospheres
     REAL(R4)    :: USR ! Tan.path values from Drv.Table
     REAL(R8)    :: SZN ! Sin(Zenith angle) at 'tangent point'/obs/surface
-    CHARACTER(LENTAN) :: STR ! Strings for filenames
+    CHARACTER(LENHGT) :: STR ! Strings for filenames
   END TYPE TANTYP
 !
 ! GLOBAL VARIABLES
@@ -48,7 +51,7 @@ MODULE TANCOM_DAT
 !
     LOGICAL      :: USRELE = .FALSE. ! T=USRTAN are elevation angles
     LOGICAL      :: USRGEO = .FALSE. ! T=USRTAN are Geom.Tan.points.
-    LOGICAL      :: LIMTAN        ! T=limb-viewing geom., F=plane or homog.path
+    LOGICAL      :: LIMTAN = .FALSE. ! T=limb-viewing geom., F=plane or homog.path
     INTEGER(I4)  :: MTAN          ! No. ray paths reqd for calculation
     INTEGER(I4)  :: NTAN          ! No. nominal tan pts for output
     REAL(R4)     :: UNITAN = 1.0  ! Scale factor if units not km

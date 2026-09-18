@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE XSCFIL ( NAMXSC, FAIL, ERRMSG )
 !
 ! VERSION
+!   23FEB26 AD Checked.
 !   19FEB20 AD Simplified logic. Checked.
 !   17JAN18 AD BACKSPACE rather than REWIND in case RFM format has comment recs
 !   20NOV17 AD should really check that .xsc file has correct format at first

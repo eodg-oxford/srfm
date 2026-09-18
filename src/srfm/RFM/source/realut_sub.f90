@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE REALUT ( ILUT, WNO, ZERABS, TAB, FAIL, ERRMSG )
 !
 ! VERSION
-!   31MAY24 AD Checked.
+!   02MAY26 AD Checked.
 !   28MAR19 AD Bug#19: Check for WNO outside TAB data range. Checked.
 !   01MAY17 AD F90 conversion. Checked.
 ! 

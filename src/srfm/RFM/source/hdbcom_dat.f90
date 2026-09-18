@@ -1,7 +1,7 @@
 MODULE HDBCOM_DAT
 !
 ! VERSION
-!   08AUG24 AD Checked
+!   02AUG26 AD Checked
 !   11AUG23 AD Change HDB to structure
 !   30MAY23 AD Original.
 !
@@ -23,7 +23,6 @@ MODULE HDBCOM_DAT
     INTEGER(I4)   :: IST    ! Index of line parameter set
     INTEGER(I4)   :: LEN    ! Length of record in HITRAN database file
     INTEGER(I4)   :: NFD    ! No. useful fields in database file
-!    INTEGER(I4)   :: NPR    ! No. useful parameters in database file
     CHARACTER(14) :: IDMFMT ! Format string for reading IDM from database file
     CHARACTER(14) :: WNOFMT ! Format string for reading WNO from database file
     INTEGER(I4), POINTER :: IPR(:)  ! IPAR associated with each field

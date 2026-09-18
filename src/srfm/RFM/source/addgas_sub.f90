@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE ADDGAS ( IDXMOL, IDXISO, NEWGAS )
 !
 ! VERSION
-!   29SEP24 AD Checked.
+!   30SEP25 AD Checked.
 !   18APR22 AD Set IAIGAS. Checked.
 !   24JUN19 AD Add %CIA. Checked.
 !   07NOV17 AD F90 Original. Based on gaschk.for. Checked.

@@ -1,7 +1,7 @@
 MODULE SETCOM_DAT
 !
 ! VERSION
-!   25AUG24 AD Checked.
+!   27AUG26 AD Checked.
 !   11AUG23 AD Original.
 !
 ! DESCRIPTION

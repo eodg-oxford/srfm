@@ -1,9 +1,9 @@
- MODULE SPCINT_SUB
+MODULE SPCINT_SUB
 CONTAINS
 SUBROUTINE SPCINT
 !
 ! VERSION
-!   07DEC23 AD Checked.
+!   30NOV25 AD Checked.
 !   01MAY17 AD F90 conversion of rfmint.for. Checked.
 !
 ! DESCRIPTION

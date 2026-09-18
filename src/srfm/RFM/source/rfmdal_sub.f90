@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE RFMDAL 
 !
 ! VERSION
-!   21MAR23 AD Checked.
+!   05MAR26 AD Checked.
 !   01MAY17 AD F90 original. Checked.
 !
 ! DESCRIPTION

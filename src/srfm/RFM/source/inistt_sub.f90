@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE INISTT ( ISPC ) 
 !
 ! VERSION
-!   01NOV23 AD Checked.
+!   25OCT25 AD Checked.
 !   01MAY17 AD F90 version. Checked.
 !
 ! DESCRIPTION

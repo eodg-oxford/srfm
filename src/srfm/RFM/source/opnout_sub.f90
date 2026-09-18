@@ -1,8 +1,11 @@
 MODULE OPNOUT_SUB
 CONTAINS
-SUBROUTINE OPNOUT ( LUN, NAMTMP, FAIL, ERRMSG, IGAS, IJAC, ILEV, ISPC, ITAN )
+SUBROUTINE OPNOUT ( LUN, NAMTMP, FAIL, ERRMSG, &
+                    IGAS, IJAC, ILEV, ISPC, ITAN, JTAN )
 !
 ! VERSION
+!   21JUL26 AD Checked.
+!   01AUG25 AD Convert MAKNAM from subroutine to function.
 !   27MAR23 AD Checked.
 !   08NOV17 AD F90 conversion. Checked.
 !
@@ -18,36 +21,35 @@ SUBROUTINE OPNOUT ( LUN, NAMTMP, FAIL, ERRMSG, IGAS, IJAC, ILEV, ISPC, ITAN )
     USE NAMCOM_DAT, ONLY: DIRNAM, LENNAM ! output dir & Max length of filename
 !
 ! SUBROUTINES
-    USE MAKNAM_SUB ! Construct filename for RFM output files
+    USE MAKNAM_FNC ! Construct filename for RFM output files
     USE WRTLOG_SUB ! Write text message to log file
 !
   IMPLICIT NONE
 !
 ! ARGUMENTS
-    INTEGER(I4),           INTENT(IN)  :: LUN    ! Next available LUN
-    CHARACTER(*),          INTENT(IN)  :: NAMTMP ! Filename template
-    LOGICAL,               INTENT(OUT) :: FAIL   ! TRUE if a fatal error occurs
-    CHARACTER(80),         INTENT(OUT) :: ERRMSG ! Error message if FAIL is TRUE
+    INTEGER(I4),   INTENT(IN)  :: LUN    ! Next available LUN
+    CHARACTER(*),  INTENT(IN)  :: NAMTMP ! Filename template
+    LOGICAL,       INTENT(OUT) :: FAIL   ! TRUE if a fatal error occurs
+    CHARACTER(80), INTENT(OUT) :: ERRMSG ! Error message if FAIL is TRUE
     INTEGER(I4), OPTIONAL, INTENT(IN)  :: IGAS   ! Absorber index
     INTEGER(I4), OPTIONAL, INTENT(IN)  :: IJAC   ! Jacobian index 
     INTEGER(I4), OPTIONAL, INTENT(IN)  :: ILEV   ! Level index 
     INTEGER(I4), OPTIONAL, INTENT(IN)  :: ISPC   ! Spectral range index 
     INTEGER(I4), OPTIONAL, INTENT(IN)  :: ITAN   ! Tangent path index
+    INTEGER(I4), OPTIONAL, INTENT(IN)  :: JTAN   ! Secondary ray path index   
 !
 ! LOCAL VARIABLES
-    INTEGER(I4)         :: IOS    ! Value of IOSTAT on OPEN
-    CHARACTER(11)       :: FORSTR ! Value for FORM keyword in OPEN statement
-    CHARACTER(2*LENNAM) :: NAMOUT ! Name of file actually opened, incl.RUNID
-    CHARACTER(7)        :: STASTR ! Value for STATUS keyword in OPEN statement
+    INTEGER(I4)   :: IOS    ! Value of IOSTAT on OPEN
+    CHARACTER(11) :: FORSTR ! Value for FORM keyword in OPEN statement
+    CHARACTER(7)  :: STASTR ! Value for STATUS keyword in OPEN statement
+    CHARACTER(:), ALLOCATABLE &
+                  :: NAMOUT ! Name of file actually opened, incl.RUNID
 !
 ! EXECUTABLE CODE -------------------------------------------------------------
 !
-  IF ( PRESENT ( IGAS ) ) THEN            ! .tab file
-    CALL MAKNAM ( NAMTMP, NAMOUT, IGAS=IGAS, ISPC=ISPC )
-  ELSE                                    ! spectral file
-    CALL MAKNAM ( NAMTMP, NAMOUT, ISPC=ISPC, ITAN=ITAN, IJAC=IJAC, ILEV=ILEV )
-  END IF
-!
+  NAMOUT =  MAKNAM ( NAMTMP, IGAS=IGAS, IJAC=IJAC, ILEV=ILEV, ISPC=ISPC, &
+                     ITAN=ITAN, JTAN=JTAN )
+! 
   NAMOUT = TRIM ( DIRNAM ) // TRIM ( NAMOUT ) 
   CALL WRTLOG ( 'I-OPNOUT: Opening output file: ' // NAMOUT ) 
 !
@@ -70,4 +72,3 @@ SUBROUTINE OPNOUT ( LUN, NAMTMP, FAIL, ERRMSG, IGAS, IJAC, ILEV, ISPC, ITAN )
 !
 END SUBROUTINE OPNOUT
 END MODULE OPNOUT_SUB
-

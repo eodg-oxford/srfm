@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE ADDPTH ( PTHNEW, PTH, JDX )
 !
 ! VERSION
+!   22DEC25 AD Checked.
 !   03DEC21 AD Further modifications. Checked.
 !   20SEP21 AD Rewritten/redefined
 !

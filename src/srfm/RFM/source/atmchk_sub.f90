@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE ATMCHK ( FAIL, ERRMSG )
 !
 ! VERSION
-!   30SEP24 AD Checked.
+!   30SEP25 AD Checked.
 !   18APR22 AD Bug#33 Add check for IAIVMR. Checked.
 !   21JUN17 AD Also check *HGT profile loaded. Checked.
 !   01MAY17 AD F90 conversion. Checked.

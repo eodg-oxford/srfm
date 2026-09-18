@@ -3,6 +3,8 @@ CONTAINS
 SUBROUTINE TABPTH 
 !
 ! VERSION
+!   17AUG26 AD Checked.
+!   18AUG25 AD Bug#51: Ensure PTH%IAT is initialised 
 !   25JUN24 AD Bug#46: Write path data to PTHCOM rather than CLCCOM
 !   01JUL23 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
@@ -21,7 +23,7 @@ SUBROUTINE TABPTH
     USE PHYCON_DAT, ONLY: ATMB ! Std Atmos. Pressure [mb]
 !
 ! SUBROUTINES
-   USE ICLPTH_FNC ! Index of corresponding (new) calculated path
+    USE ICLPTH_FNC ! Index of corresponding (new) calculated path
 !
   IMPLICIT NONE
 !
@@ -58,7 +60,8 @@ SUBROUTINE TABPTH
           PTH(IPTH)%PPA = VMR * PRE * QAXTAB(IQTAB) * 0.01  ! 0.01 for %
           PTH(IPTH)%AMT = 1.0E-4 ! 10^-4 kmol/cm^2 = 1 kmol/m^2 in output
           PTH(IPTH)%ICL = ICLPTH ( PTH(IPTH), .TRUE. ) 
-! The following are not used, but ensure sensibly defined for PTH flag output
+! The following may be used by IDXPTH, and sensibly defined for PTH flag output
+          PTH(IPTH)%IAT = 1   
           PTH(IPTH)%ITN = 1   
           PTH(IPTH)%IDR = 1   
           PTH(IPTH)%PSI = 0.0

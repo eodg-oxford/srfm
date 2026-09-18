@@ -3,7 +3,7 @@ CONTAINS
 FUNCTION REFRAC ( PRE, TEM, WNO )
 !
 ! VERSION
-!   31JAN24 AD Checked.
+!   21JAN26 AD Checked.
 !   01MAY17 AD F90 version. Checked.
 !
 ! DESCRIPTION

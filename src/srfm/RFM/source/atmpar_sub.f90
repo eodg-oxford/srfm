@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE ATMPAR ( PARAM, VALUE, FAIL, ERRMSG )
 !
 ! VERSION
-!   01NOV19 AD Checked.
+!   29NOV25 AD Checked.
 !   28JUN18 AD Bug#9 - ensure ATM arrays initialised with HOM flag
 !   21JUN17 AD Original.
 !

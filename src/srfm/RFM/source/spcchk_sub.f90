@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SPCCHK ( FAIL, ERRMSG )
 !
 ! VERSION
-!   17MAR23 AD Checked.
+!   02MAR26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

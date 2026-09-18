@@ -3,8 +3,10 @@ CONTAINS
 SUBROUTINE CTMH2O ( ILBL ) 
 !     
 ! VERSION
+!   01SEP26 AD Updated to use MT_CKD v4.3 Continuum
+!   27FEB26 AD Checked.
 !   15MAR23 AD Rewritten/simplified for MT_CKD v4.1 continuum. Checked.
-!   22JUL19 AD Rearrange to C11 = SNGL(...) to avoid compilation warnings. Checked.
+!   22JUL19 AD Rearrange to C11 = SNGL(...) to avoid compilation warnings. 
 !   31JAN19 AD Fix Bug#15 - indexing of ABSWID with ILBL instead of ICLC
 !   02NOV18 AD Incorporated into distributed version of RFM
 !              Correct XX evaluation for indexing XFCREV
@@ -16,12 +18,12 @@ SUBROUTINE CTMH2O ( ILBL )
   
 ! 
 ! DESCRIPTION    
-!   H2O continuum MT_CKD v4.1
+!   H2O continuum MT_CKD v4.3
 !   Called by SPCCTM for each path containing H2O if CTM flag enabled.
 !   Calculate H2O continuum absorption across entire widemesh grid.
 !
-!   This version uses the MT_CKD v4.1 continuum, previous version of this 
-!   subroutine using the MT_CKD v3.2 continuum is now renamed CTMC32.
+!   This version uses the MT_CKD v4.3 continuum, previous version of this 
+!   subroutine using the MT_CKD v4.1.1 continuum is now renamed CTMC41.
 !     
 ! REFERENCES
 !   http://rtweb.aer.com/
@@ -42,14 +44,22 @@ SUBROUTINE CTMH2O ( ILBL )
 !   The MT_CKD_4.1 has temperature dependence for self-broadening via an 
 !   array of coefficients. No fudge factors. Remove 1e-20 scaling.
 !
+!   The MT_CKD_4.3 has changes to H2O foreign continuum in windows > 4000 cm-1 
+!   based on studies by Campargue group (Jul 2023), 
+!   Also an alternative set of foreign coefficients "closure" which differs 
+!   slightly in the 600-1390cm-1 range.
+!   The MT_CKD_4.2 has changes to self, foreign, and self T-dependence in IR 
+!   window (590-1400 cm-1) derived from AERI (Mlawer/Mascio/Turner).
+
 !
 ! VARIABLE KINDS
     USE KIND_DAT
 !
 ! GLOBAL DATA
     USE CLCCOM_DAT ! Calculated path segments
-    USE H2OCTM_DAT ! MT_CKD H2O continuum data
+    USE H2OCTM_DAT ! MT_CKD v4.1 H2O Continuum data
     USE WIDCOM_DAT ! Widemesh data
+    USE FLGCOM_DAT, ONLY: C4CFLG
     USE PHYCON_DAT, ONLY: ATMB, AVOG, C2
 !
 ! SUBROUTINES
@@ -90,7 +100,11 @@ SUBROUTINE CTMH2O ( ILBL )
 !
 ! Interpolate in wavenumber 
     CWSLF = LKPIDX ( XW, H2OSLF )
-    CWFRN = LKPIDX ( XW, H2OFRN )
+    IF ( C4CFLG ) THEN
+      CWFRN = LKPIDX ( XW, H2OFRN )
+    ELSE
+      CWFRN = LKPIDX ( XW, H2OCLO )
+    END IF
     TCOEFF = LKPIDX ( XW, TCOSLF )
 !
 ! Temperature adjustment to self-broadening

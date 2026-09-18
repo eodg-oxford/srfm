@@ -1,7 +1,7 @@
 MODULE ADJCOM_DAT
 !
 ! VERSION
-!   26DEC23 AD Checked.
+!   18DEC25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

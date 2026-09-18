@@ -1,7 +1,7 @@
 MODULE STTCOM_DAT
 !
 ! VERSION
-!   03MAR23 AD Checked.
+!   13FEB26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

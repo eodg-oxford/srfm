@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE HOMPTH 
 !
 ! VERSION
+!   08OCT25 AD Checked.
 !   20SEP21 AD Replace ADDCLC with ICLPTH. Checked.
 !   05MAR19 AD Reduce to single TAN path. Checked.
 !   01MAY17 AD F90 conversion. Checked.

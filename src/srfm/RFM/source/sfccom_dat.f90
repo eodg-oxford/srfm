@@ -1,7 +1,7 @@
 MODULE SFCCOM_DAT
 !
 ! VERSION
-!   03MAY24 AD Checked.
+!   12APR26 AD Checked.
 !   05MAR19 AD Add DIFSFC. Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !

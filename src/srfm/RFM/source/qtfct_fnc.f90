@@ -3,7 +3,7 @@ CONTAINS
 REAL(R4) FUNCTION QTFCT ( IDGAS, ISO, TEM )
 !
 ! VERSION
-!   17JUL24 AD Checked.
+!   20JUN26 AD Checked.
 !   22JAN18 AD Adapted for new (HITRAN2016) structure of TIPS data. 
 !   01MAY17 AD F90 conversion, originally a subroutine. Checked.
 !

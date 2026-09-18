@@ -1,12 +1,12 @@
 MODULE QADCOM_DAT
 !
 ! VERSION
-!   11DEC23 AD Checked.
+!   04DEC25 AD Checked.
 !   01JUN17 AD F90 original. Checked.
 !
 ! DESCRIPTION
 !   Gaussian quadrature data
-!   Loaded in INIQAD, GAUQAD.
+!   Loaded in INIQAD.
 !   If VRTFLG is set, ie no hemispherical integration, then default values are 
 !   altered.
 !
@@ -15,6 +15,7 @@ MODULE QADCOM_DAT
 !
   IMPLICIT NONE
   SAVE
+  PUBLIC :: QADCOM_RESET
 !
 ! GLOBAL VARIABLES
     INTEGER(I4) :: NQAD = 4   ! Default No.pts for Gaussian quadrature
@@ -22,4 +23,13 @@ MODULE QADCOM_DAT
     REAL(R8), ALLOCATABLE :: XQAD(:) ! cosine(angle) for quadrature
     REAL(R8), ALLOCATABLE :: WQAD(:) ! quadrature weights
 !
+CONTAINS
+
+  SUBROUTINE QADCOM_RESET()
+    IF ( ALLOCATED ( XQAD ) ) DEALLOCATE ( XQAD )
+    IF ( ALLOCATED ( WQAD ) ) DEALLOCATE ( WQAD )
+    NQAD   = 4
+    RPIQAD = 0.0_R8
+  END SUBROUTINE QADCOM_RESET
+
 END MODULE QADCOM_DAT

@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE DRVSKP ( LUNDRV, FAIL, ERRMSG )
 !
 ! VERSION
-!   02NOV23 AD Checked.
+!   26OCT25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

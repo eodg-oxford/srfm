@@ -3,6 +3,9 @@ CONTAINS
 SUBROUTINE SPCFIN ( NEWSPC, FAIL, ERRMSG )
 !
 ! VERSION
+!   03APR26 AD Checked.
+!   17APR25 AD Bug#50 Change ANTE, CNTE to D.P.
+!   16DEC24 AD Checked.
 !   18DEC23 AD Bug#43 Change IWID argument to NEWSPC
 !   11AUG23 AD Change INIHFL to INIHIT and add WNUWID argument
 !   01MAY17 AD F90 conversion of F77 module RFMFIN. Checked.
@@ -35,14 +38,14 @@ SUBROUTINE SPCFIN ( NEWSPC, FAIL, ERRMSG )
     CHARACTER(80), INTENT(OUT)   :: ERRMSG ! Error message if FAIL is TRUE
 !
 ! LOCAL VARIABLES
-    INTEGER(I4) :: ICLC   ! Counter for calc paths
-    INTEGER(I4) :: ICYC   ! Cyclic buffer index
-    INTEGER(I4) :: IGAS   ! Absorber counter
-    INTEGER(I4) :: ILIN   ! Line counter
-    INTEGER(I4) :: ISHP   ! Lineshape code for gas in path
-    LOGICAL     :: SUBWNG ! T = Subtract abs.coeff at 25cm-1
-    REAL(R4)    :: ANTE   ! Non-lte factor for k abs
-    REAL(R4)    :: CNTE   ! Non-lte factor for c abs
+    LOGICAL     :: SUBWNG       ! T = Subtract abs.coeff at 25cm-1
+    INTEGER(I4) :: ICLC         ! Counter for calc paths
+    INTEGER(I4) :: ICYC         ! Cyclic buffer index
+    INTEGER(I4) :: IGAS         ! Absorber counter
+    INTEGER(I4) :: ILIN         ! Line counter
+    INTEGER(I4) :: ISHP         ! Lineshape code for gas in path
+    REAL(R8)    :: ANTE         ! Non-lte factor for k abs
+    REAL(R8)    :: CNTE         ! Non-lte factor for c abs
     REAL(R4)    :: ABSLIN(NFIN) ! Single line absorption for current path
 !
 ! EXECUTABLE CODE -------------------------------------------------------------
@@ -83,8 +86,10 @@ SUBROUTINE SPCFIN ( NEWSPC, FAIL, ERRMSG )
 !
 ! NB without non-LTE, ANTE=CNTE=1
       IF ( GAS(IGAS)%NTE ) THEN
-        ABSFIN(1:NFIN,ICLC) = ABSFIN(1:NFIN,ICLC) + ANTE * ABSLIN 
-        CNTFIN(1:NFIN,ICLC) = CNTFIN(1:NFIN,ICLC) + CNTE * ABSLIN
+        ABSFIN(1:NFIN,ICLC) = ABSFIN(1:NFIN,ICLC) + &
+            SNGL ( ANTE * DBLE(ABSLIN) ) 
+        CNTFIN(1:NFIN,ICLC) = CNTFIN(1:NFIN,ICLC) + &
+            SNGL ( CNTE * DBLE(ABSLIN) )
       ELSE
         ABSFIN(1:NFIN,ICLC) = ABSFIN(1:NFIN,ICLC) + ABSLIN
       END IF

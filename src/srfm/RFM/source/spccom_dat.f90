@@ -1,7 +1,7 @@
 MODULE SPCCOM_DAT
 !
 ! VERSION
-!   15MAR23 AD Checked.
+!   01MAR26 AD Checked.
 !   01MAY17 AD F90 Conversion. Checked.
 !
 ! DESCRIPTION

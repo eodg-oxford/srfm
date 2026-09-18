@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE HITCHK 
 !
 ! VERSION
-!   12AUG24 AD Checked.
+!   06AUG26 AD Checked.
 !   11AUG23 AD Rewritten and redefined.
 !   30MAY23 AD Renamed from OPNHIT and simplified structure.
 !   29JAN20 AD Open all forms of HITRAN data file. Checked.

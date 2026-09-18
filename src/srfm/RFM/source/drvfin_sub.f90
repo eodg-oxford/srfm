@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE DRVFIN ( LUNDRV, FAIL, ERRMSG )
 !
 ! VERSION
-!   19NOV23 AD Checked.
+!   12NOV25 AD Checked.
 !   01MAY17 AD F90 conversion of inpfin.for. Tested.
 !
 ! DESCRIPTION

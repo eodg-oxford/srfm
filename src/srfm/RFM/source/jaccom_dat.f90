@@ -1,7 +1,7 @@
 MODULE JACCOM_DAT
 !
 ! VERSION
-!   28JAN24 AD Checked.
+!   18JAN26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

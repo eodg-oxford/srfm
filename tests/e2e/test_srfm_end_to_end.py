@@ -33,6 +33,7 @@ COMPLETE_RUN_INPUT_KEYS = {
     "fin_wvnmhi",
     "fin_wvnmlo",
     "fisot",
+    "gbc_lyrs_inputs",
     "header",
     "iasi_ils",
     "ibcnd",
@@ -145,6 +146,21 @@ def _complete_input_values(results, tiny_atmosphere, tiny_altitude_grid, tiny_xs
                 "leg_coeffs": True,
                 "leg_coeffs_type": "normalised",
                 "multiprocess": False,
+            }
+        },
+        "gbc_lyrs_inputs": {
+            "synthetic_grey_body": {
+                "name": "synthetic_grey_body",
+                "low_spc": 999.5,
+                "upp_spc": 1000.5,
+                "res": 0.5,
+                "spec_units": "cm-1",
+                "center_alt": 1.5,
+                "thick": 0.2,
+                "alt_upp": None,
+                "alt_low": None,
+                "emis": 1.0,
+                "inp_tau": 0.3,
             }
         },
         "nmom": 8,

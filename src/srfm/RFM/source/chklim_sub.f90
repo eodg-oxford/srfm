@@ -3,7 +3,8 @@ CONTAINS
 SUBROUTINE CHKLIM ( ITAN, ELETAN, GEOTAN, FAIL, ERRMSG )
 !
 ! VERSION
-!   23SEP34 AD Bug#48 Ignore surface intercept if upwards-viewing
+!   25SEP25 AD Checked. 
+!   23SEP24 AD Bug#48 Ignore surface intercept if upwards-viewing
 !   24MAY24 AD Checked.
 !   05AUG19 AD Change ALTOBS to HGTOBS   
 !   01MAY17 AD F90 conversion. Tested.

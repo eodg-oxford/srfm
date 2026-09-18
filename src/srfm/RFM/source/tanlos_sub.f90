@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE TANLOS 
 !
 ! VERSION
-!   31MAR24 AD Checked.
+!   11MAR26 AD Checked.
 !   04FEB19 AD Original. Checked.
 !
 ! DESCRIPTION

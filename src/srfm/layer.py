@@ -8,6 +8,8 @@ Used to contain scattering information for a single layer.
 - Date: 26 Mar 2025
 """
 
+from numbers import Real
+
 import numpy as np
 from . import optical_properties as op
 from . import utilities as utils
@@ -1111,14 +1113,12 @@ class GreyBodyCloud(Layer):
 
     Todo:
         The emissivity is a stub, the attribute isn't implemented anywhere. For the time
-        being then, the GreBodyCloud is effectively a black body emitter.
+        being then, the GreyBodyCloud is effectively a black body emitter.
 
     """
 
     def __init__(self, name=None, emis=1, **parameters):
-        super().__init__(name)
-        for key, val in parameters.items():
-            setattr(self, key, val)
+        super().__init__(name, **parameters)
         self.emis = emis
 
     def set_name(self, name):
@@ -1149,7 +1149,8 @@ class GreyBodyCloud(Layer):
         """Set spectral calculation grid units.
 
         Args:
-            units (str): Units. should be one of [\ :math:`\\mu`\ m, cm\ :sup:`-1`, nm].
+            units (str): Units; one of micrometres (``um``), inverse centimetres
+                (``cm-1``), or nanometres (``nm``).
                 This is not enforced but currently the rest of this package is unable to
                 handle any other options.
 
@@ -1210,17 +1211,17 @@ class GreyBodyCloud(Layer):
 
         Args:
             tau (int, float): Layer optical depth. The optical depth is uniform across
-                all wavelengths (since this is class represents a grey body cloud).
+                all wavelengths (since this class represents a grey-body cloud).
 
         """
 
         self.inp_tau = tau
 
     def set_input_from_dict(self, inp_dict):
-        """Set all necessary input_parameters from an input dictionary.
+        """Set all necessary input parameters from an input dictionary.
 
         Args:
-            inp_dict (dict): Input dictonary with layer properties. Must contain
+            inp_dict (dict): Input dictionary with layer properties. Must contain
                 all necessary keys (cannot be incomplete). Required keys are:
 
                     - name
@@ -1236,7 +1237,7 @@ class GreyBodyCloud(Layer):
                     - inp_tau
 
                 For explanation of each of those parameters please refer to the
-                respective function which set them explicitly (set_{parameter name}).
+                respective function which sets them explicitly (set_{parameter name}).
 
         """
         self.name = inp_dict["name"]
@@ -1261,47 +1262,36 @@ class GreyBodyCloud(Layer):
             passmark (bool): If True, input has passed the format test.
 
         Raises:
-            TypeError: Raised when test fails for each parameter separately.
+            TypeError: Raised when an input has an unsupported type.
 
         """
-        passmark = False
-
         if not isinstance(self.name, str):
             raise TypeError("Name must be str.")
-
-        if not isinstance(self.low_spc, (int, float)):
-            raise TypeError("Low_spc must be int or float.")
-
-        if not isinstance(self.upp_spc, (int, float)):
-            raise TypeError("Upp_spc must be int or float.")
-
-        if not isinstance(self.res, (int, float)):
-            raise TypeError("res must be int or float.")
 
         if not isinstance(self.spec_units, str):
             raise TypeError("Spec_units must be str.")
 
-        if not isinstance(self.center_alt, (int, float)):
-            raise TypeError("Center_alt must be int or float.")
+        numeric_attributes = (
+            "low_spc",
+            "upp_spc",
+            "res",
+            "center_alt",
+            "thick",
+            "alt_upp",
+            "alt_low",
+            "emis",
+            "inp_tau",
+        )
+        for attribute_name in numeric_attributes:
+            value = getattr(self, attribute_name)
+            if (
+                not isinstance(value, Real)
+                or isinstance(value, (bool, np.bool_))
+                or not np.isfinite(value)
+            ):
+                raise TypeError(f"{attribute_name} must be a finite real number.")
 
-        if not isinstance(self.thick, (int, float)):
-            raise TypeError("thick must be int or float.")
-
-        if not isinstance(self.alt_upp, (int, float)):
-            raise TypeError("Alt_upp must be int or float.")
-
-        if not isinstance(self.alt_low, (int, float)):
-            raise TypeError("Alt_low must be int or float.")
-
-        if not isinstance(self.emis, (int, float)):
-            raise TypeError("Emis must be int or float.")
-
-        if not isinstance(self.inp_tau, (int, float)):
-            raise TypeError("Inp_tau must be int or float.")
-
-        passmark = True
-
-        return passmark
+        return True
 
     def test_input_values(self):
         """This function tests input values of the GreyBodyCloud class.
@@ -1315,7 +1305,7 @@ class GreyBodyCloud(Layer):
             passmark (bool): If True, input has passed the format test.
 
         Raises:
-            TypeError: Raised when test fails for each parameter separately.
+            ValueError: Raised when a value is outside its supported range.
 
         """
 
@@ -1327,8 +1317,20 @@ class GreyBodyCloud(Layer):
         if self.upp_spc < 0:
             raise ValueError("Attribute upp_spc must be non-negative.")
 
+        if self.low_spc >= self.upp_spc:
+            raise ValueError("Attribute low_spc must be less than upp_spc.")
+
+        if self.res <= 0:
+            raise ValueError("Attribute res must be greater than zero.")
+
+        if self.spec_units not in {"cm-1", "um", "nm"}:
+            raise ValueError("Spec_units must be one of 'cm-1', 'um', or 'nm'.")
+
         if self.emis < 0 or self.emis > 1:
             raise ValueError("Emissivity must be between 0 and 1.")
+
+        if self.inp_tau < 0:
+            raise ValueError("Optical depth must be non-negative.")
 
         if self.thick < 0.002:
             raise ValueError(
@@ -1360,7 +1362,7 @@ class GreyBodyCloud(Layer):
 
         """
 
-        # calcualtes layer vertical extent related properties
+        # Calculate layer vertical-extent properties.
         self.calc_layer_extent()
 
         if self.test_complete_input_format():
@@ -1395,16 +1397,23 @@ class GreyBodyCloud(Layer):
             if (hasattr(self, "alt_upp") and hasattr(self, "alt_low")) and (
                 self.alt_upp is not None and self.alt_low is not None
             ):
-                assert (self.alt_upp, self.alt_low) == utils.calc_layer_extent(
-                    self.center_alt, self.thick
-                ), """Both layer (thickness + center altitude) and (upper + lower 
-                        boundary altitude) were given, but do not match."""
+                expected_upp, expected_low = utils.calc_layer_extent(
+                    float(self.center_alt), float(self.thick)
+                )
+                if not (
+                    np.isclose(self.alt_upp, expected_upp)
+                    and np.isclose(self.alt_low, expected_low)
+                ):
+                    raise ValueError(
+                        "Both layer center/thickness and boundary altitudes were "
+                        "given, but do not match."
+                    )
 
                 return
 
             else:
                 self.alt_upp, self.alt_low = utils.calc_layer_extent(
-                    self.center_alt, self.thick
+                    float(self.center_alt), float(self.thick)
                 )
                 return
 
@@ -1412,13 +1421,13 @@ class GreyBodyCloud(Layer):
             self.alt_upp is not None and self.alt_low is not None
         ):
             self.center_alt, self.thick = utils.calc_layer_bounds(
-                self.alt_upp, self.alt_low
+                float(self.alt_upp), float(self.alt_low)
             )
             return
 
         else:
             raise RuntimeError(
-                """To calulate layer altitude characteristics either 
+                """To calculate layer altitude characteristics either
             upper and lower boundary altitude (alt_upp and alt_low) or layer center 
             altitude and vertical extent (center_alt and thick) must be given."""
             )
@@ -1436,7 +1445,7 @@ class GreyBodyCloud(Layer):
         return
 
     def calc_optical_properties(self):
-        """Calculated optical properties.
+        """Calculate optical properties.
 
         In this case all it does is take inp_tau and stretches it over the spectral
         grid. The fact that this is a separate function is because the implementation
@@ -1444,66 +1453,98 @@ class GreyBodyCloud(Layer):
 
         """
 
-        self.tau = [self.inp_tau] * len(self.wvnm)
+        self.tau = np.full(np.asarray(self.wvnm).shape, self.inp_tau, dtype=float)
         return
 
     @utils.show_runtime
-    def regrid(self, wvls, track_diff=False, diff_type="pct"):
-        """Linearly interpolates calculated values from ewp_hs to a new grid.
+    def regrid(
+        self,
+        wvls,
+        track_diff=False,
+        diff_type="pct",
+        retain_original=None,
+    ):
+        """Linearly interpolate optical depth to a new wavelength grid.
 
         Instance must have the "tau" attribute.
 
         Args:
-
-            wvls (aray-like): new grid, units [\ :math:`\\mu`\ m]
-            track_diff (bool): If True, calculates differences arising from
+            wvls (array-like): New wavelength grid in micrometres.
+            track_diff (bool): If True, calculate differences arising from
                 interpolation.
-        Returns:
-            old attribute tau now as "tau_old"
-            new attribute "tau"
-            difference between old and new attribute "tau_diff"
+            diff_type (str): Difference representation, ``"pct"`` or ``"abs"``.
+            retain_original (bool | None): Retain coarse arrays as ``*_old``. ``None``
+                preserves the historical behavior; difference tracking always retains
+                them.
 
         Raises:
             ValueError: Raised when any wavelength array is not monotonic.
 
         """
+        if retain_original is None:
+            retain_original = True
+        retain_original = bool(retain_original or track_diff)
 
-        # preserve original results
-        self.wvls_old = self.wvls
-        self.tau_old = self.tau
+        if retain_original:
+            self.wvls_old = np.asarray(self.wvls).copy()
+            self.tau_old = np.asarray(self.tau).copy()
+        else:
+            for attribute_name in ("wvls_old", "tau_old"):
+                if hasattr(self, attribute_name):
+                    delattr(self, attribute_name)
 
-        # check if new input wavelengths are monotonic and increasing or decreasing
-        wvls_mono = utils.monotonic(wvls)
-        if wvls_mono == 0:
-            raise ValueError("Wvls is not monotonic.")
-        elif wvls_mono == 2:
-            wvls = np.flip(wvls)
+        target = np.asarray(wvls, dtype=float)
+        self.tau = self.interpolate_optical_depth(target)
+        self.wvls = target.copy()
 
-        # check if existing wavelengths are monotoning and increasing or decreasing
-        cls_mono = utils.monotonic(self.wvls)
-        if cls_mono == 0:
-            raise ValueError("Instance wavelengths are not monotonic.???")
-        elif cls_mono == 2:
-            self.wvls = np.flip(self.wvls)
-            self.tau = np.flip(self.tau)
-
-        # interpolate
-        self.tau = np.interp(wvls, self.wvls, self.tau)
-        self.wvls = wvls
-
-        if wvls_mono == 2:
-            self.wvls = np.flip(self.wvls)
-            self.tau = np.flip(self.tau)
-
-        if track_diff == True:
+        if track_diff:
             self.track_regrid_diff(diff_type=diff_type)
 
-        return
+    def interpolate_optical_depth(self, wvls):
+        """Interpolate optical depth without modifying the coarse layer data.
+
+        Args:
+            wvls (array-like): Target wavelengths in micrometres.
+
+        Returns:
+            numpy.ndarray: Optical depth on the requested grid and in its original
+            ordering.
+
+        Raises:
+            ValueError: If either wavelength grid is empty, non-dimensional, or not
+                monotonic.
+        """
+        target = np.asarray(wvls, dtype=float)
+        source = np.asarray(self.wvls, dtype=float)
+        values = np.asarray(self.tau, dtype=float)
+        if target.ndim != 1 or target.size == 0:
+            raise ValueError("Target wavelengths must be a non-empty 1D array.")
+        if source.ndim != 1 or source.size == 0:
+            raise ValueError("Layer wavelengths must be a non-empty 1D array.")
+        if values.shape != source.shape:
+            raise ValueError("Layer optical depth must match the wavelength grid.")
+
+        target_order = 1 if target.size < 2 else utils.monotonic(target)
+        source_order = 1 if source.size < 2 else utils.monotonic(source)
+        if target_order == 0:
+            raise ValueError("Target wavelengths are not monotonic.")
+        if source_order == 0:
+            raise ValueError("Layer wavelengths are not monotonic.")
+
+        interpolation_target = target[::-1] if target_order == 2 else target
+        interpolation_source = source[::-1] if source_order == 2 else source
+        interpolation_values = values[::-1] if source_order == 2 else values
+        interpolated = np.interp(
+            interpolation_target,
+            interpolation_source,
+            interpolation_values,
+        )
+        return interpolated[::-1] if target_order == 2 else interpolated
 
     def track_regrid_diff(self, diff_type="pct"):
-        """Calculates the difference before and after interpolation.
+        """Calculate the difference before and after interpolation.
 
-        Called by optical_properties.regrid().
+        Called by :meth:`regrid` when difference tracking is requested.
 
         Args:
             diff_type (str): "pct" (differences in percent from the old value) or
@@ -1547,7 +1588,7 @@ class GreyBodyCloud(Layer):
         return
 
     def plot_diff(self, **kwargs):
-        """Plots difference in calcualted optical properties.
+        """Plot differences in calculated optical properties.
 
         Instance must have differences in optical properties calculated and stored
         as _diff attributes. For further information see

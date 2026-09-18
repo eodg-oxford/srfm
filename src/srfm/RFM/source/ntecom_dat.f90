@@ -1,7 +1,7 @@
 MODULE NTECOM_DAT
 !
 ! VERSION
-!   15SEP24 AD Checked.
+!   15SEP25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION
@@ -31,6 +31,6 @@ MODULE NTECOM_DAT
 ! GLOBAL VARIABLES
     TYPE(NTETYP), ALLOCATABLE :: NTE(:)
 !
-    INTEGER(I4) :: NNTE = 0   ! No. of nonLTE vib.temp profiles
+    INTEGER(I4) :: NNTE = 0  ! No. of nonLTE vib.temp profiles
 !
 END MODULE NTECOM_DAT

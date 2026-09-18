@@ -23,11 +23,15 @@ import importlib.util
 from . import rfm_helper
 from .input_schema import validate_oxharp_inputs
 from .main import (
+    _add_grey_body_optical_depth,
     _calculate_output_utau,
+    _grey_body_effective_parameters,
+    _interpolate_grey_body_optical_depths,
     _interpolate_scattering_block,
     _plot_retained_spectral_outputs,
     _resolve_output_geometry,
     _resolve_retained_outputs,
+    _prepare_grey_body_layers,
     _write_srfm_netcdf,
     _write_spectral_text,
 )
@@ -116,6 +120,8 @@ def run_srfm(inp):
                 lyr
             ].calculate_op()  # calculates layer optical properties, may run in parallel
 
+    gbc_lyrs = _prepare_grey_body_layers(inp.values)
+
     ########################################################################################
     # prepare atmospheric layer structure
     ########################################################################################
@@ -184,6 +190,11 @@ def run_srfm(inp):
             lev=levels, track_lev=track_lev, new_lyr=scat_lyrs[lyr]
         )
 
+    for lyr in gbc_lyrs:
+        levels, track_lev = utilities.add_lyr_from_Layer(
+            lev=levels, track_lev=track_lev, new_lyr=gbc_lyrs[lyr]
+        )
+
     # convert the tracking levels array to a tracking layers array
     track_lyr = utilities.track_lev_to_track_lyr(track_lev)
     track_lyr = track_lyr[::-1]
@@ -225,6 +236,9 @@ def run_srfm(inp):
 
     RFM_wvnm = model_RFM.rfm_output.wavenumber
     wvls = (1.0 / RFM_wvnm) * 1e4
+    grey_body_optical_depths = _interpolate_grey_body_optical_depths(
+        gbc_lyrs, wvls
+    )
 
     # add output from optical properties calculation, TODO MOVE UP?
     for lyr in scat_lyrs.keys():
@@ -272,6 +286,7 @@ def run_srfm(inp):
         }
         for lyr in scat_lyrs
     }
+    effective_params["gbc_lyrs_inputs"] = _grey_body_effective_parameters(gbc_lyrs)
 
     ########################################################################################
     # prepare DISORT common variables
@@ -478,7 +493,12 @@ def run_srfm(inp):
         model_DISORT.set_wvnm(wvnm)
         model_DISORT.set_wvl(wvl)
 
-        tau_g = np.asarray(tau_g, dtype=float)
+        tau_g = _add_grey_body_optical_depth(
+            tau_g,
+            track_lyr,
+            grey_body_optical_depths,
+            wvl_idx,
+        )
 
         # layer optical depths from Rayleigh scattering
         #    tau_R = np.zeros(shape=(tau_g.shape))

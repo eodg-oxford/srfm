@@ -1,16 +1,16 @@
 MODULE HITCOM_DAT
 !
 ! VERSION
-!   13AUG24 AD Checked.
+!   24AUG26 AD Add USEVIB 
+!   09AUG25 AD Checked.
 !   11AUG23 AD Remove SET_* flags, add %IST 
 !   31MAY23 AD Remove PARHIT,BASHIT,IFWDPT. Add SET_* flags.
 !   29JAN20 AD Removed redundant fields, add/rename others 
 !   24FEB17 AD F90 version. Checked.
 !
 ! DESCRIPTION
-!   HITRAN line data.
-!   Data Type representing structure of HITRAN record. Invoke HITCOM_RESET to
-!   release cached buffers when the model is reused in the same session.
+!   HITRAN line data 
+!   Data Type representing structure of HITRAN record.
 !
 ! VARIABLE KINDS
     USE KIND_DAT
@@ -48,6 +48,7 @@ MODULE HITCOM_DAT
     TYPE(HITTYP) :: HIT
     TYPE(HITTYP), ALLOCATABLE :: CYC(:)  ! Cyclic buffer
 !
+    LOGICAL     :: USEVIB = .FALSE. ! T=Use Vib.Index file
     INTEGER(I4) :: ICYC1  ! Index for lowest wavenumber line
     INTEGER(I4) :: NCYC   ! Current size of CYC array
     INTEGER(I4) :: NLIN   ! No.lines currently stored
@@ -78,13 +79,12 @@ CONTAINS
     HIT%BLQ = ''
     HIT%ULQ = ''
 
-    IF ( ALLOCATED ( CYC ) ) THEN
-      DEALLOCATE ( CYC )
-    END IF
+    IF ( ALLOCATED ( CYC ) ) DEALLOCATE ( CYC )
 
-    ICYC1 = 0
-    NCYC  = 0
-    NLIN  = 0
+    USEVIB = .FALSE.
+    ICYC1  = 0
+    NCYC   = 0
+    NLIN   = 0
   END SUBROUTINE HITCOM_RESET
 
 END MODULE HITCOM_DAT

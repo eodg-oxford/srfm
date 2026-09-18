@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE JACFOV
 !
 ! VERSION
-!   24NOV23 AD Checked.
+!   17NOV25 AD Checked.
 !   30MAY18 AD Bug#7 rewritten and simplified. Checked.
 !   02MAY18 AD original.
 !

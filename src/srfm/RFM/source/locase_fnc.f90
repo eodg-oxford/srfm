@@ -3,7 +3,7 @@ CONTAINS
 PURE FUNCTION LOCASE ( INPSTR )
 !
 ! VERSION
-!   09FEB24 AD Checked.
+!   28JAN26 AD Checked.
 !   01MAY17 AD F90 conversion from F77 subroutine. Checked.
 !
 ! DESCRIPTION

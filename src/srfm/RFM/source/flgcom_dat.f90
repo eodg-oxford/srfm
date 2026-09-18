@@ -1,6 +1,9 @@
 MODULE FLGCOM_DAT
 !
 ! VERSION
+!   01SEP26 AD Add C41FLG, C4CFLG.
+!   26FEB26 AD Checked.
+!   12MAR25 AD Remove LUNFLG. Checked.
 !   15MAR23 AD Add C32 flag.
 !   24JUN19 AD Remove CIA flag. Checked.
 !   19DEC17 AD F90 conversion. Checked.
@@ -20,6 +23,8 @@ MODULE FLGCOM_DAT
     LOGICAL :: BFXFLG = .FALSE. ! T = Source Fn varies with layer optical depth
     LOGICAL :: BINFLG = .FALSE. ! T = write output spectra as binary files
     LOGICAL :: C32FLG = .FALSE. ! T = use (old) MT_CKD v3.2 H2O continuum model
+    LOGICAL :: C41FLG = .FALSE. ! T = use (old) MT_CKD v4.1.1 H2O ctm model
+    LOGICAL :: C4CFLG = .FALSE. ! T = use MT_CKD v4.3 "closure" forgn.ctm model
     LOGICAL :: CHIFLG = .FALSE. ! T = use Chi-Factor for any CO2 lines
     LOGICAL :: CLCFLG = .FALSE. ! T = explicit LBL calc for each path
     LOGICAL :: COOFLG = .FALSE. ! T = Calculate cooling rates
@@ -42,7 +47,6 @@ MODULE FLGCOM_DAT
     LOGICAL :: LEVFLG = .FALSE. ! T = spectra at intermediate output levels
     LOGICAL :: LINFLG = .FALSE. ! T = Assume VMR varies linearly with altitude
     LOGICAL :: LOSFLG = .FALSE. ! T = Calculate elev. pointing Jacobian spectra
-    LOGICAL :: LUNFLG = .FALSE. ! T = Reuse same LUN for all output spectra
     LOGICAL :: LUTFLG = .FALSE. ! T = Use Look-Up Tables for absorption coeffs.
     LOGICAL :: MIXFLG = .FALSE. ! T = use line-mixing
     LOGICAL :: MTXFLG = .FALSE. ! T = inter-level matrix of flux calculations
@@ -78,6 +82,8 @@ CONTAINS
     BFXFLG = .FALSE.
     BINFLG = .FALSE.
     C32FLG = .FALSE.
+    C41FLG = .FALSE.
+    C4CFLG = .FALSE.
     CHIFLG = .FALSE.
     CLCFLG = .FALSE.
     COOFLG = .FALSE.
@@ -100,7 +106,6 @@ CONTAINS
     LEVFLG = .FALSE.
     LINFLG = .FALSE.
     LOSFLG = .FALSE.
-    LUNFLG = .FALSE.
     LUTFLG = .FALSE.
     MIXFLG = .FALSE.
     MTXFLG = .FALSE.

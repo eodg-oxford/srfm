@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE RADLAY ( ITAN, IATM, IDIR, RAD, OPT )
 !
 ! VERSION
-!   30APR24 AD Checked.
+!   10APR26 AD Checked.
 !   05MAR19 AD Remove JTAN argument. Scale path AMT by TAN(ITAN)%SEC
 !              Assume IDXPTH will always assign path. Checked.
 !   01JUL17 AD F90 original. Checked.

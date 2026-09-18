@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE DIMTAB 
 !
 ! VERSION
-!   01AUG24 AD Checked.
+!   30JUL26 AD Checked.
 !   24JUN19 AD Interpolate LOG(PREATM) since LNPATM may not yet be set. Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !

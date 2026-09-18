@@ -1,7 +1,7 @@
 MODULE KIND_DAT
 !
 ! VERSION
-!   13DEC23 AD Checked.
+!   07AUG26 AD Checked.
 !   01MAY17 AD Original. Checked.
 !
 ! DESCRIPTION

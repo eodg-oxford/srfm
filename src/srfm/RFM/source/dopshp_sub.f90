@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE DOPSHP ( DWNO, K )
 !
 ! VERSION
-!   06MAY24 AD Checked.
+!   13APR26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

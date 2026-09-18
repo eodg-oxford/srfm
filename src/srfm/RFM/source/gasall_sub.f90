@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE GASALL ( IMIN, FAIL, ERRMSG )
 !
 ! VERSION
-!   10JUL24 AD Checked.
+!   13JUN26 AD Checked.
 !   01MAY17 AD F90 conversion. Tested.
 !
 ! DESCRIPTION

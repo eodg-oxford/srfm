@@ -3,8 +3,9 @@ CONTAINS
 SUBROUTINE CTMC32 ( ILBL ) 
 !     
 ! VERSION
+!   25FEB26 AD Checked.
 !   15MAR23 AD Renamed from CTMH2O to CTMC32
-!   22JUL19 AD Rearrange to C11 = SNGL(...) to avoid compilation warnings. Checked.
+!   22JUL19 AD Rearrange to C11 = SNGL(...) to avoid compilation warnings.
 !   31JAN19 AD Fix Bug#15 - indexing of ABSWID with ILBL instead of ICLC
 !   02NOV18 AD Incorporated into distributed version of RFM
 !              Correct XX evaluation for indexing XFCREV
@@ -13,7 +14,6 @@ SUBROUTINE CTMC32 ( ILBL )
 !   25MAY18 KPS Bugfix
 !   17MAY18 KPS new routine for MT_CKD3.2 - between ***  &&&
 !   01MAY17 AD F90 conversion
-  
 ! 
 ! DESCRIPTION    
 !   H2O continuum MT_CKD v3.2

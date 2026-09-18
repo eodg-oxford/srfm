@@ -2,7 +2,8 @@ MODULE DRVGAS_SUB
 CONTAINS
 SUBROUTINE DRVGAS ( LUNDRV, FAIL, ERRMSG )
 !
-! VERSION 
+! VERSION
+!   27MAR26 AD Checked.
 !   15APR24 AD Bug#45 Set fatal error rather than warning if NGAS = 0
 !   19APR22 AD Bug#33 Add 'air' if REX flag enabled. Checked.
 !   24JUN19 AD Remove setting of 'air' as absorber with REX flag. Checked.

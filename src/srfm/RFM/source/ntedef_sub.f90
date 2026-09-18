@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE NTEDEF ( NAMDEF, FAIL, ERRMSG )
 !
 ! VERSION
-!   07JUL24 AD Checked.
+!   08JUN26 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE REAGRD ( FILGRD, WNOMIN, WNOMAX, FAIL, ERRMSG )
 !
 ! VERSION
+!   02FEB26 AD Checked.
 !   21NOV18 AD Bug#11: Set upper limit of loop to MIN(IDXMAX,NTOT). Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !

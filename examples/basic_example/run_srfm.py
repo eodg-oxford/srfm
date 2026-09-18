@@ -46,12 +46,6 @@ from srfm import inputs, main
 # the downloaded example can be run from anywhere.
 EXAMPLE_DIR = Path(__file__).resolve().parent
 
-required_variables = ("SRFM_HITRAN_FILE", "SRFM_XSC_DIR")
-missing_variables = [name for name in required_variables if not os.environ.get(name)]
-if missing_variables:
-    names = ", ".join(missing_variables)
-    raise RuntimeError(f"Set {names} before running this example; see README.rst.")
-
 srfm_inputs = inputs.Inputs()
 srfm_inputs.read_srfm_drv(EXAMPLE_DIR / "driver_table.py")
 

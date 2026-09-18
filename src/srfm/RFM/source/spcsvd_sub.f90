@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SPCSVD 
 !
 ! VERSION
-!   02DEC23 AD Checked.
+!   24NOV25 AD Checked.
 !   01MAY17 AD F90 conversion of rfmsvd.for. Checked.
 ! 
 ! DESCRIPTION    

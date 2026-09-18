@@ -3,7 +3,7 @@ CONTAINS
 FUNCTION SPCLOS ( ITAN, TYP ) 
 !
 ! VERSION
-!   29MAR24 AD Checked.
+!   10MAR26 AD Checked.
 !   04FEB19 AD Original. Adapted from earlier subroutine. Checked.
 !
 ! DESCRIPTION

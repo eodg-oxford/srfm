@@ -3,7 +3,7 @@ CONTAINS
 INTEGER(I4) PURE FUNCTION IDXGAS ( IDXMOL, IDXISO )
 !
 ! VERSION
-!   22MAR23 AD Checked.
+!   06MAR26 AD Checked.
 !   01MAY17 AD F90 conversion of igasid.for. Checked.
 !
 ! DESCRIPTION

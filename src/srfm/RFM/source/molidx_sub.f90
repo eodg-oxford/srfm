@@ -3,6 +3,8 @@ CONTAINS
 SUBROUTINE MOLIDX ( IDX, MOL, ADDNEW )
 !
 ! VERSION
+!   01SEP26 AD HITRAN2024: Reassign 56:62, Use 70:74 for GEISA molecules
+!   04NOV24 AD Checked.
 !   27SEP22 AD HITRAN2020 modifications: #51 CH3F (was C3H4),
 !              #52 GeH4 (was CH3), #53 CS2 (unchanged), #54 CH3I (new),
 !              #55 NF3 (new), #56 C3H4 (reassigned), #57 CH3 (reassigned) 
@@ -36,9 +38,9 @@ SUBROUTINE MOLIDX ( IDX, MOL, ADDNEW )
   SAVE
 !
 ! ARGUMENTS
-    INTEGER(I4),  INTENT(INOUT) :: IDX ! Molecule index
-    CHARACTER(*), INTENT(INOUT) :: MOL ! Molecule name
-    LOGICAL, OPTIONAL, INTENT(IN) :: ADDNEW
+    INTEGER(I4),    INTENT(INOUT) :: IDX    ! Molecule index
+    CHARACTER(*),   INTENT(INOUT) :: MOL    ! Molecule name
+    LOGICAL, OPTIONAL, INTENT(IN) :: ADDNEW ! T=allow new molec to be defined
 !
 ! LOCAL CONSTANTS
     INTEGER(I4), PARAMETER :: IOFNEW = 184 ! Offset index for new molecules
@@ -122,14 +124,21 @@ SUBROUTINE MOLIDX ( IDX, MOL, ADDNEW )
     CASE ( 53 )  ; MOL = 'cs2'
     CASE ( 54 )  ; MOL = 'ch3i'
     CASE ( 55 )  ; MOL = 'nf3'
-! TIPS molecules
-    CASE ( 56 )  ; MOL = 'c3h4'
+! HITRAN2024 additions
+    CASE ( 56 )  ; MOL = 'h3+'
     CASE ( 57 )  ; MOL = 'ch3'
+    CASE ( 58 )  ; MOL = 's2'
+    CASE ( 59 )  ; MOL = 'cofcl'
+    CASE ( 60 )  ; MOL = 'hono'
+    CASE ( 61 )  ; MOL = 'clno2'
+! TIPS2024 molecules
+    CASE ( 62 )  ; MOL = 'c3h4'
 ! GEISA molecules
-!    CASE ( 60 )  ; MOL = 'geh4'
-    CASE ( 61 )  ; MOL = 'c3h8'  ; ICHK = 2  ! Propane
-    CASE ( 62 )  ; MOL = 'hnc'
-    CASE ( 63 )  ; MOL = 'c6h6'  ; ICHK = 2  ! Benzene
+    CASE ( 70 )  ; MOL = 'c3h8'  ; ICHK = 2  ! Propane
+    CASE ( 71 )  ; MOL = 'hnc'
+    CASE ( 72 )  ; MOL = 'c6h6'  ; ICHK = 2  ! Benzene
+    CASE ( 73 )  ; MOL = 'ruo4'
+    CASE ( 74 )  ; MOL = 'h2c3h2'
 !
     CASE ( 99 )  ; MOL = 'air'
 !
@@ -265,20 +274,27 @@ SUBROUTINE MOLIDX ( IDX, MOL, ADDNEW )
     CASE ( 'so3'     ) ; IDX = 47
     CASE ( 'c2n2'    ) ; IDX = 48 
     CASE ( 'cocl2'   ) ; IDX = 49
-! TIPS molecules
     CASE ( 'so'      ) ; IDX = 50
     CASE ( 'ch3f'    ) ; IDX = 51
     CASE ( 'geh4'    ) ; IDX = 52
     CASE ( 'cs2'     ) ; IDX = 53
     CASE ( 'ch3i'    ) ; IDX = 54
     CASE ( 'nf3'     ) ; IDX = 55
-    CASE ( 'c3h4'    ) ; IDX = 56
+! HITRAN2024 molecules
+    CASE ( 'h3+'     ) ; IDX = 56
     CASE ( 'ch3'     ) ; IDX = 57
+    CASE ( 's2'      ) ; IDX = 58
+    CASE ( 'cofcl'   ) ; IDX = 59
+    CASE ( 'hono'    ) ; IDX = 60
+    CASE ( 'clno2'   ) ; IDX = 61
+! TIPS2024 molecule
+    CASE ( 'c3h4'    ) ; IDX = 62
 ! GEISA molecules
-!    CASE ( 'geh4'    ) ; IDX = 60
-    CASE ( 'c3h8q'   ) ; IDX = 61 ; MOL = 'c3h8' ; ICHK = 2
-    CASE ( 'hnc'     ) ; IDX = 62
-    CASE ( 'c6h6q'   ) ; IDX = 63 ; MOL = 'c6h6' ; ICHK = 2
+    CASE ( 'c3h8q'   ) ; IDX = 70 ; MOL = 'c3h8' ; ICHK = 2
+    CASE ( 'hnc'     ) ; IDX = 71
+    CASE ( 'c6h6q'   ) ; IDX = 72 ; MOL = 'c6h6' ; ICHK = 2
+    CASE ( 'ruo4'    ) ; IDX = 73
+    CASE ( 'h2c3h2'  ) ; IDX = 74
 !
     CASE ( 'air' )     ; IDX = 99
 !
@@ -408,4 +424,3 @@ SUBROUTINE MOLIDX ( IDX, MOL, ADDNEW )
 !
 END SUBROUTINE MOLIDX
 END MODULE MOLIDX_SUB
-

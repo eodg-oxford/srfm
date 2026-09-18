@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE OBSCHK ( RVAL, USEHGT, FAIL, ERRMSG )
 !
 ! VERSION
-!   21MAY24 AD Checked.
+!   27APR26 AD Checked.
 !   29APR21 AD Bug#30 Don't set TAN%IAT = IATOBS with NADFLG, just ZENFLG
 !   05AUG19 AD Add USEHGT, RVAL arguments. Change ALTOBS to HGTOBS. Checked.
 !   02OCT17 AD F90 conversion. Checked.

@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE PTHWRT ( FAIL, ERRMSG )
 !
 ! VERSION
+!   06JUN26 AD Checked.
 !   04JUL24 AD Remove '!' at start of Rec#4 for limb viewing and set all fields.
 !              Remove FLG. Minor changes to header records.
 !   22APR22 AD Bug#35 Allow for ZEN/NAD/HOM geometric path scaling from TAN%STR

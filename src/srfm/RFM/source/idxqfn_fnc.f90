@@ -3,7 +3,7 @@ CONTAINS
 INTEGER(I4) FUNCTION IDXQFN ( IDXMOL, IDXISO )
 !
 ! VERSION
-!   13SEP24 AD Checked.
+!   11SEP25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

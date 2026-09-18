@@ -1,8 +1,11 @@
 MODULE WRTHDR_SUB
 CONTAINS
-SUBROUTINE WRTHDR ( LUN, TYP, IJAC, ILEV, ISPC, ITAN, FAIL, ERRMSG )
+SUBROUTINE WRTHDR ( LUN, TYP, FAIL, ERRMSG, &
+                    IJAC, ILEV, ISPC, ITAN, JTAN )
 !
 ! VERSION
+!   29JUL26 AD Checked.
+!   01AUG25 AD Add JTAN argument. Change text in headers.
 !   27MAY24 AD Checked.
 !   25MAR19 AD Use USRUNI for length units if HOM flag. Checked.
 !   01MAY17 AD F90 conversion. Checked.
@@ -18,6 +21,7 @@ SUBROUTINE WRTHDR ( LUN, TYP, IJAC, ILEV, ISPC, ITAN, FAIL, ERRMSG )
     USE FLGCOM_DAT ! Option flags
     USE HDRCOM_DAT ! Output header data
     USE JACCOM_DAT ! Jacobian data
+    USE LENHGT_DAT ! Max length of height component of RFM output filenames
     USE LEVCOM_DAT ! Intermediate output levels
     USE SPCCOM_DAT ! Spectral range data
     USE TANCOM_DAT ! Tangent path data
@@ -31,12 +35,13 @@ SUBROUTINE WRTHDR ( LUN, TYP, IJAC, ILEV, ISPC, ITAN, FAIL, ERRMSG )
 ! ARGUMENTS
     INTEGER(I4),   INTENT(IN)  :: LUN    ! Next available LUN
     CHARACTER(3),  INTENT(IN)  :: TYP    ! Type of spectrum 'ABS','COO',etc
-    INTEGER(I4),   INTENT(IN)  :: IJAC   ! Index of Jacobian, or 0    
-    INTEGER(I4),   INTENT(IN)  :: ILEV   ! Index of output level, or 0    
-    INTEGER(I4),   INTENT(IN)  :: ISPC   ! Spectral range index 
-    INTEGER(I4),   INTENT(IN)  :: ITAN   ! Index of output tan.path
     LOGICAL,       INTENT(OUT) :: FAIL   ! Set TRUE if a fatal error occurs
     CHARACTER(80), INTENT(OUT) :: ERRMSG ! Error message written if FAIL is TRUE
+    INTEGER(I4),   INTENT(IN)  :: IJAC   ! Index of Jacobian, or 0
+    INTEGER(I4),   INTENT(IN)  :: ILEV   ! Index of output level, or 0 
+    INTEGER(I4),   INTENT(IN)  :: ISPC   ! Spectral range index 
+    INTEGER(I4),   INTENT(IN)  :: ITAN   ! Index of output tan.path
+    INTEGER(I4),   INTENT(IN)  :: JTAN   ! Secondary tangent path index
 !
 ! LOCAL VARIABLES
     INTEGER(I4)   :: IGHFAC ! -1 if output in GHz, else 1
@@ -50,6 +55,7 @@ SUBROUTINE WRTHDR ( LUN, TYP, IJAC, ILEV, ISPC, ITAN, FAIL, ERRMSG )
     CHARACTER(32) :: PTHTXT ! Text describing viewing geometry
     CHARACTER(13) :: TYPTXT ! Text describing type of spectrum
     CHARACTER(10) :: WNOGHZ ! 'Wavenumber' or 'Frequency ' in HEADR3
+    CHARACTER(LENHGT) :: ADJSTR ! Hgt etc represented as string.
 !
 ! EXECUTABLE CODE -------------------------------------------------------------
 !
@@ -73,20 +79,26 @@ SUBROUTINE WRTHDR ( LUN, TYP, IJAC, ILEV, ISPC, ITAN, FAIL, ERRMSG )
   END IF
 !
 ! Set header records for output files ('123456789' replaced by tangent height)
+  ADJSTR = ADJUSTR(TAN(ITAN)%STR) 
   IF ( HOMFLG ) THEN
-    PTHTXT = 'Homog. Path Length =' // TAN(ITAN)%STR // ' ' // USRUNI
+    PTHTXT = 'Homog. Path Length =' // ADJSTR // ' ' // USRUNI
   ELSE IF ( FLXFLG ) THEN
-    PTHTXT = 'for Altitude Level =' // TAN(ITAN)%STR // ' km' 
+    IF ( JTAN .GT. 0 ) THEN
+      PTHTXT = 'between Alts ' // ADJSTR // ' : '// &
+               ADJUSTR(TAN(JTAN)%STR) // ' km' 
+    ELSE 
+      PTHTXT = 'for Altitude Level =' // ADJSTR // ' km' 
+    END IF
   ELSE IF ( NADFLG ) THEN
-    PTHTXT = 'Nadir Path Airmass =' // TAN(ITAN)%STR 
+    PTHTXT = 'Nadir Path Airmass =' // ADJSTR 
   ELSE IF ( ZENFLG ) THEN
-    PTHTXT = 'Zenith Path Airmass=' // TAN(ITAN)%STR 
+    PTHTXT = 'Zenith Path Airmass=' // ADJSTR 
   ELSE IF ( USRELE ) THEN
-    PTHTXT = 'View Elevation Ang.=' // TAN(ITAN)%STR // ' dg'
+    PTHTXT = 'View Elevation Ang.=' // ADJSTR // ' dg'
   ELSE IF ( USRGEO ) THEN
-    PTHTXT = 'Limb Geom.Tang.Hgt =' // TAN(ITAN)%STR // ' km'
+    PTHTXT = 'Limb Geom.Tang.Hgt =' // ADJSTR // ' km'
   ELSE                                    ! Normal limb-viewing geometry
-    PTHTXT = 'Limb Path Tang.Hgt =' // TAN(ITAN)%STR // ' km'
+    PTHTXT = 'Limb Path Tang.Hgt =' // ADJSTR // ' km'
   END IF
   IF ( FLXFLG ) THEN
     HEADR1 = '! Flux '//TYPTXT//' calc.'//PTHTXT//' by RFM v.'//VIDHDR
@@ -96,11 +108,17 @@ SUBROUTINE WRTHDR ( LUN, TYP, IJAC, ILEV, ISPC, ITAN, FAIL, ERRMSG )
   IPT = INDEX ( HEADR1, '123456789' )
 !
   HEADR2 = TXTHDR
+
 ! Note that HEADR3 is modified by JACHDR if JAC,MTX,LEV flags enabled 
-  IF ( IJAC .EQ. 0 .AND. ILEV .EQ. 0 ) THEN
-    HEADR3 = '!No.Pts  Lower_'//WNOGHZ//'   Delta_'//WNOGHZ//'  '// &
-             'Upper_'//WNOGHZ//'  Label'
-  ELSE IF ( ILEV .GT. 0 ) THEN            ! Intermediate output levels
+  IF ( IJAC .NE. 0 ) THEN
+    IF ( JAC(IJAC)%COL ) THEN     ! Column or surface Jacobian
+      HEADR3 = '! Jacobian spectrum for ' // TRIM ( JAC(IJAC)%COD )
+    ELSE                               ! Profile level perturbation
+      HEADR3 = '! Jacobian spectrum for ' // TRIM ( JAC(IJAC)%COD ) // &
+             ' perturbed at altitude =' // TRIM ( C9REAL ( JAC(IJAC)%HGT ) ) &
+             // ' [km]'
+    END IF
+  ELSE IF ( ILEV .NE. 0 ) THEN    ! Intermediate output levels
     HEADR3 = '! Intermediate spectrum at level ' // &
              TRIM ( C9REAL ( LEV(ILEV)%HGT ) ) // ' km'
     IF ( LEV(ILEV)%IDR .EQ. 1 ) THEN
@@ -108,12 +126,12 @@ SUBROUTINE WRTHDR ( LUN, TYP, IJAC, ILEV, ISPC, ITAN, FAIL, ERRMSG )
     ELSE IF ( LEV(ILEV)%IDR .EQ. -1 ) THEN
       HEADR3 = TRIM ( HEADR3 ) // ' downward path'
     END IF
-  ELSE IF ( JAC(IJAC)%COL ) THEN     ! Column or surface Jacobian
-    HEADR3 = '! Jacobian spectrum for ' // TRIM ( JAC(IJAC)%COD )
-  ELSE                               ! Profile level perturbation
-    HEADR3 = '! Jacobian spectrum for ' // TRIM ( JAC(IJAC)%COD ) // &
-             ' perturbed at altitude =' // TRIM ( C9REAL ( JAC(IJAC)%HGT ) ) &
-             // ' [km]'
+  ELSE IF ( JTAN .NE. 0 ) THEN   ! Secondary matrix level
+    HEADR3 = '! Dependence of spectrum at ' // ADJSTR // ' km' // &
+             ' on atmosphere at ' // ADJUSTR(TAN(JTAN)%STR) // ' km' 
+  ELSE 
+    HEADR3 = '!No.Pts  Lower_'//WNOGHZ//'   Delta_'//WNOGHZ//'  '// &
+             'Upper_'//WNOGHZ//'  Label'
   END IF
 !
 ! Conversion factor from [cm-1] to [GHz] if required

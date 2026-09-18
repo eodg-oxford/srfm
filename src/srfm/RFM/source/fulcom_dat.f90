@@ -1,7 +1,7 @@
 MODULE FULCOM_DAT
 !
 ! VERSION
-!   04FEB24 AD Checked.
+!   23JAN26 AD Checked.
 !   01MAY17 AD F90 original. Checked.
 !
 ! DESCRIPTION

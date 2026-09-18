@@ -63,6 +63,8 @@ RFM_FLAG_CODES: tuple[str, ...] = (
     "BFX",
     "BIN",
     "C32",
+    "C41",
+    "C4C",
     "CHI",
     "CIA",
     "CLC",
@@ -86,7 +88,6 @@ RFM_FLAG_CODES: tuple[str, ...] = (
     "LEV",
     "LIN",
     "LOS",
-    "LUN",
     "LUT",
     "MIX",
     "MTX",
@@ -190,6 +191,7 @@ SRFM_INPUT_SCHEMA: dict[str, FieldSpec] = {
     "ttemp": FieldSpec(NUMBER_TYPES),
     # Scattering and geometry.
     "scat_lyrs_inputs": FieldSpec(MAPPING_TYPES),
+    "gbc_lyrs_inputs": FieldSpec(MAPPING_TYPES),
     "date": FieldSpec((dt.datetime, tuple)),
     "sun": FieldSpec((bool,), required=True),
     "sza": FieldSpec(NUMBER_TYPES, required=True),
@@ -337,6 +339,23 @@ LAYER_SCHEMA: dict[str, FieldSpec] = {
     ),
     "multiprocess": FieldSpec((bool,), required=True),
     "angle": FieldSpec(nullable=True),
+}
+
+
+GREY_BODY_LAYER_SCHEMA: dict[str, FieldSpec] = {
+    "name": FieldSpec((str,), required=True),
+    "low_spc": FieldSpec(NUMBER_TYPES, required=True),
+    "upp_spc": FieldSpec(NUMBER_TYPES, required=True),
+    "res": FieldSpec(NUMBER_TYPES, required=True),
+    "spec_units": FieldSpec(
+        (str,), required=True, choices=frozenset({"cm-1", "um", "nm"})
+    ),
+    "center_alt": FieldSpec(NUMBER_TYPES, required=True, nullable=True),
+    "thick": FieldSpec(NUMBER_TYPES, required=True, nullable=True),
+    "alt_upp": FieldSpec(NUMBER_TYPES, required=True, nullable=True),
+    "alt_low": FieldSpec(NUMBER_TYPES, required=True, nullable=True),
+    "emis": FieldSpec(NUMBER_TYPES, required=True),
+    "inp_tau": FieldSpec(NUMBER_TYPES, required=True),
 }
 
 
@@ -551,6 +570,11 @@ def _validate_layers(layers: Any, issues: list[str]) -> None:
             issues.append(f"scat_lyrs_inputs.{layer_name}: expected a mapping")
             continue
         _check_mapping(layer, LAYER_SCHEMA, path, issues)
+        configured_name = layer.get("name")
+        if isinstance(configured_name, str) and configured_name != layer_name:
+            issues.append(
+                f"{path}name: must match the containing layer name {layer_name!r}"
+            )
         _validate_positive(
             layer,
             ("res", "r", "s", "rho", "radii", "phase_quad_N"),
@@ -638,6 +662,90 @@ def _validate_layers(layers: Any, issues: list[str]) -> None:
                 )
         if layer.get("comp") == "ri" and layer.get("refractive_index") is None:
             issues.append(f"{path}refractive_index: required when comp is 'ri'")
+
+
+def _validate_grey_body_layers(layers: Any, issues: list[str]) -> None:
+    """Validate every configured non-scattering grey-body cloud layer.
+
+    Args:
+        layers: Candidate mapping of layer names to grey-body input mappings.
+        issues: Mutable collection receiving detected problems.
+    """
+    if layers is None or not isinstance(layers, Mapping):
+        return
+
+    for layer_name, layer in layers.items():
+        path = f"gbc_lyrs_inputs.{layer_name}."
+        if not isinstance(layer_name, str):
+            issues.append(
+                f"gbc_lyrs_inputs: layer name {layer_name!r} must be a string"
+            )
+            continue
+        if not isinstance(layer, Mapping):
+            issues.append(f"gbc_lyrs_inputs.{layer_name}: expected a mapping")
+            continue
+
+        _check_mapping(layer, GREY_BODY_LAYER_SCHEMA, path, issues)
+        _validate_positive(layer, ("res",), path, issues)
+
+        configured_name = layer.get("name")
+        if isinstance(configured_name, str) and configured_name != layer_name:
+            issues.append(
+                f"{path}name: must match the containing layer name {layer_name!r}"
+            )
+
+        low, high = layer.get("low_spc"), layer.get("upp_spc")
+        if isinstance(low, Real) and isinstance(high, Real) and low >= high:
+            issues.append(f"{path}low_spc: must be less than upp_spc")
+        for key in ("low_spc", "upp_spc", "inp_tau"):
+            value = layer.get(key)
+            if isinstance(value, Real) and value < 0:
+                issues.append(f"{path}{key}: must be non-negative")
+
+        emissivity = layer.get("emis")
+        if isinstance(emissivity, Real) and not 0 <= emissivity <= 1:
+            issues.append(f"{path}emis: must be between 0 and 1")
+
+        centre_extent = (
+            layer.get("center_alt") is not None and layer.get("thick") is not None
+        )
+        bound_extent = (
+            layer.get("alt_low") is not None and layer.get("alt_upp") is not None
+        )
+        if not centre_extent and not bound_extent:
+            issues.append(
+                f"{path}center_alt: provide center_alt/thick or alt_low/alt_upp"
+            )
+
+        thickness = layer.get("thick")
+        if isinstance(thickness, Real) and thickness < 0.002:
+            issues.append(f"{path}thick: must be at least 0.002 km")
+
+        alt_low, alt_upp = layer.get("alt_low"), layer.get("alt_upp")
+        if (
+            isinstance(alt_low, Real)
+            and isinstance(alt_upp, Real)
+            and alt_low >= alt_upp
+        ):
+            issues.append(f"{path}alt_low: must be less than alt_upp")
+
+        if (
+            centre_extent
+            and bound_extent
+            and all(
+                isinstance(layer.get(key), Real)
+                for key in ("center_alt", "thick", "alt_low", "alt_upp")
+            )
+        ):
+            expected_low = layer["center_alt"] - layer["thick"] / 2
+            expected_upp = layer["center_alt"] + layer["thick"] / 2
+            if not (
+                np.isclose(layer["alt_low"], expected_low)
+                and np.isclose(layer["alt_upp"], expected_upp)
+            ):
+                issues.append(
+                    f"{path}alt_low: explicit bounds must match center_alt/thick"
+                )
 
 
 def _validate_inputs(
@@ -856,6 +964,17 @@ def _validate_inputs(
         minimum_atmospheres=2 if runner == "iasi" else 1,
     )
     _validate_layers(normalized.get("scat_lyrs_inputs"), issues)
+    _validate_grey_body_layers(normalized.get("gbc_lyrs_inputs"), issues)
+    scattering_layers = normalized.get("scat_lyrs_inputs")
+    grey_body_layers = normalized.get("gbc_lyrs_inputs")
+    if isinstance(scattering_layers, Mapping) and isinstance(
+        grey_body_layers, Mapping
+    ):
+        for duplicate_name in sorted(set(scattering_layers) & set(grey_body_layers)):
+            issues.append(
+                "gbc_lyrs_inputs."
+                f"{duplicate_name}: layer name is already used by scat_lyrs_inputs"
+            )
 
     if runner == "oxharp":
         if normalized.get("sun") is True:

@@ -3,7 +3,8 @@ CONTAINS
 SUBROUTINE BINFIL ( LUNHIT, NAMHIT, WNOREQ, IDMREQ, USEFIL, IDMFIL, FAIL, ERRMSG )
 !
 ! VERSION
-!   05AUG24 AD Checked.
+!   01SEP26 AD Allow for IFP=0 if molec. index > file fwd.ptr array size.
+!   02AUG25 AD Checked.
 !   11AUG23 AD Return file values via arguments
 !   19MAY23 AD Simplified from original OPNHIT
 !
@@ -82,7 +83,9 @@ SUBROUTINE BINFIL ( LUNHIT, NAMHIT, WNOREQ, IDMREQ, USEFIL, IDMFIL, FAIL, ERRMSG
   IF ( CHKIDM ) THEN
     CALL SETIFP ( LUNHIT, IREC1, IFP, FAIL, ERRMSG )
     IF ( FAIL ) RETURN
-    IDMFIL = IDMREQ .AND. IFP .LT. IREC2 ! Flag reqd molecules in the file
+! Flag reqd molecules in the file. 
+! Note IFP=0 for any molecules with ID > no.fwd pointers in binary file.
+    IDMFIL = IDMREQ .AND. IFP .LT. IREC2 .AND. IFP .GT. 0 
     USEFIL = ANY ( IDMFIL ) 
   ELSE
     USEFIL = .TRUE.

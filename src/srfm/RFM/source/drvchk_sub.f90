@@ -3,6 +3,8 @@ CONTAINS
 SUBROUTINE DRVCHK ( FAIL, ERRMSG )
 !
 ! VERSION
+!   21APR26 AD Add CHKNTE.
+!   01AUG25 AD Remove COOWGT.
 !   02OCT24 AD Checked.
 !   18APR22 AD Remove check for REXFLG, ADDAIR - now done elsewhere. Checked.
 !   24JUN19 AD Add ATMAUX; if REXFLG, ADDAIR, if COOFLG, COOWGT. Checked.
@@ -26,9 +28,9 @@ SUBROUTINE DRVCHK ( FAIL, ERRMSG )
     USE CHKFOV_SUB ! Check FOV tangent heights
     USE CHKLEV_SUB ! Set up tangent paths for intermediate output levels
     USE CHKNAM_SUB ! Check RFM output filename templates
+    USE CHKNTE_SUB ! Check energy assigned to all required vibrational levels
     USE CHKSFC_SUB ! Check vertical path defined for surface reflection
     USE CHKTAN_SUB ! Check limb-viewing tangent paths
-    USE COOWGT_SUB ! Calculate cooling rate weights
 !
   IMPLICIT NONE
 !
@@ -65,8 +67,11 @@ SUBROUTINE DRVCHK ( FAIL, ERRMSG )
 ! Set tangent paths/Jacobians for intermediate output levels
   IF ( LEVFLG ) CALL CHKLEV  
 !
-! Set weights for cooling rate calculations 
-  IF ( COOFLG ) CALL COOWGT
+! Check an energy has been assigned for all vib levels
+  IF ( NTEFLG ) THEN
+    CALL CHKNTE ( FAIL, ERRMSG )
+    IF ( FAIL ) RETURN
+  END IF
 !
 END SUBROUTINE DRVCHK
 END MODULE DRVCHK_SUB

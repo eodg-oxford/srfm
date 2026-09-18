@@ -4,7 +4,7 @@ SUBROUTINE GRASUM ( NVMR, ZTAN, ZBOT, PBOT, TBOT, ZTOP, &
                     PTOP, TTOP, TCG, PCG, ECG, AMT, LEN, PSI )
 !
 ! VERSION
-!   01JUN24 AD Checked.
+!   03MAY26 AD Checked.
 !   01MAY17 AD F90 conversion of rfmgra.for. Checked.
 !
 ! DESCRIPTION

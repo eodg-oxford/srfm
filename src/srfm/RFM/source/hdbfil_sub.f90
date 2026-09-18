@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE HDBFIL ( LUNHIT, NAMHIT, WNOREQ, IDMREQ, USEFIL, IDMFIL, HDB, FAIL, ERRMSG )
 !
 ! VERSION
-!   09AUG24 AD Checked.
+!   03AUG26 AD Checked.
 !   11AUG23 AD Return data via arguments
 !   30MAY23 AD Original.
 !

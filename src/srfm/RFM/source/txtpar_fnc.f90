@@ -3,7 +3,7 @@ CONTAINS
 FUNCTION TXTPAR ( IPAR )
 !
 ! VERSION
-!   27AUG24 AD Checked.
+!   28AUG26 AD Checked.
 !   11AUG23 AD Use SETCOM instead of HDBCOM for IPAR values
 !   31MAY23 AD Original.
 !

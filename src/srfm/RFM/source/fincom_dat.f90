@@ -1,7 +1,7 @@
 MODULE FINCOM_DAT
 !
 ! VERSION
-!   02JUN24 AD Checked
+!   04MAY26 AD Checked
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

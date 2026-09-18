@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE TRIANG ( N, X, Y, NTRI, IDXTRI ) 
 !
 ! VERSION
+!   20FEB26 AD Checked.
 !   19FEB20 AD Bug#24 Amend perimeter check. Checked.
 !   10FEB19 AD Bug#16 Add NTRI argument
 !   01MAY17 AD F90 conversion of part of triang.for. Checked.

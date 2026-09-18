@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE DRVJAC ( LUNDRV, FAIL, ERRMSG )
 !
 ! VERSION
-!   22APR24 AD Checked.
+!   04APR26 AD Checked.
 !   05MAR19 AD Bug fix - ensure JDX=0 is defined at start. Checked.
 !   01MAY17 AD F90 conversion of inpjac.for. Checked.
 !

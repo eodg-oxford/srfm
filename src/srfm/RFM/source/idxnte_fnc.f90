@@ -3,7 +3,7 @@ CONTAINS
 INTEGER(I4) PURE FUNCTION IDXNTE ( IDXVIB )
 !
 ! VERSION
-!   14SEP24 AD Checked.
+!   12SEP25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION

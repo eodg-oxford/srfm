@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE DIMPLV 
 !
 ! VERSION
-!   07OCT24 AD Checked.
+!   06OCT25 AD Checked.
 !   01MAY17 AD F90 conversion of part of dimpre.for. Tested.
 !
 ! DESCRIPTION

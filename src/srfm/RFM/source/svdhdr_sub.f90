@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SVDHDR ( RECORD, TAB, IDXMOL, IDXISO, FAIL, ERRMSG ) 
 !
 ! VERSION
-!   06NOV23 AD Checked.
+!   30OCT25 AD Checked.
 !   01MAY17 AD F90 conversion of svdinf.for. Checked.
 !
 ! DESCRIPTION

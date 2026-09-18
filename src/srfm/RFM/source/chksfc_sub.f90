@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE CHKSFC
 !
 ! VERSION
-!   20APR24 AD Checked.
+!   31MAR26 AD Checked.
 !   05MAR19 AD F90 original. Checked.
 !
 ! DESCRIPTION

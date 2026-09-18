@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE LIMPTH 
 !
 ! VERSION
-!   29APR24 AD Checked.
+!   09APR26 AD Checked.
 !   05MAR19 AD Simplified to exclude 2D paths. Checked.
 !   01JUL17 AD F90 conversion of tanpth.for. 
 !

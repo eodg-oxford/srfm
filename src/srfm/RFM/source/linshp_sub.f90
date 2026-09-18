@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE LINSHP ( ISHP, WNOGRD, ABSLIN, SUBWNG )
 !
 ! VERSION
-!   29AUG24 AD Checked.
+!   30AUG26 AD Checked.
 !   24JUN19 AD Allow for CIA 'lineshape'. Checked.
 !   01MAY17 AD F90 original. Checked.
 !

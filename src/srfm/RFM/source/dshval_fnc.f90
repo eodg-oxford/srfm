@@ -3,7 +3,7 @@ CONTAINS
 REAL(R8) FUNCTION DSHVAL ( HGT, PSI )
 !
 ! VERSION
-!   16JAN24 AD Checked.
+!   09JAN26 AD Checked.
 !   01MAY17 AD F90 version. Checked.
 !
 ! DESCRIPTION

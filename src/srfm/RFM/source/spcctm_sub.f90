@@ -3,6 +3,8 @@ CONTAINS
 SUBROUTINE SPCCTM 
 !
 ! VERSION
+!   01SEP26 AD Add C41FLG, CTMC41_SUB
+!   24FEB26 AD Checked.
 !   15MAR23 AD Add new H2O continuum v4.1 and C32 flag
 !   02NOV18 AD New H2O continuum MT_CKD v3.2. Checked.
 !   16NOV17 AD F90 conversion. Checked.
@@ -20,12 +22,13 @@ SUBROUTINE SPCCTM
     USE CLCCOM_DAT ! Calculated path segments
     USE GASCOM_DAT ! Molecule and isotope data
     USE IDXCON_DAT ! RFM/HITRAN indices for specific molecules
-    USE FLGCOM_DAT, ONLY: C32FLG  ! T=use v3.2 H2O continuum
+    USE FLGCOM_DAT, ONLY: C41FLG, C32FLG  ! T=use v3.2 H2O continuum
     USE WIDCOM_DAT, ONLY: NLBL, IDXLBL ! Indices for LBL path segments
 !
 ! SUBROUTINES
-    USE CTMC32_SUB ! MT_CKD v3.2 H2O continuum
     USE CTMC25_SUB ! H2O continuum MT_CKD v2.5
+    USE CTMC32_SUB ! H2O continuum MT_CKD v3.2
+    USE CTMC41_SUB ! H2O continuum MT_CKD v4.1.1
     USE CTMCKD_SUB ! CKD H2O continuum
     USE CTMCO2_SUB ! CO2 continuum
     USE CTMH2O_SUB ! H2O continuum
@@ -57,6 +60,8 @@ SUBROUTINE SPCCTM
           CALL CTMC25 ( ILBL ) 
         ELSE IF ( C32FLG ) THEN 
           CALL CTMC32 ( ILBL )
+        ELSE IF ( C41FLG ) THEN 
+          CALL CTMC41 ( ILBL )
         ELSE
           CALL CTMH2O ( ILBL )
         END IF

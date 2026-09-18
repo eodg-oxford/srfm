@@ -1,7 +1,7 @@
 MODULE REXCOM_DAT
 !
 ! VERSION
-!   23SEP24 AD Checked.
+!   24SEP25 AD Checked.
 !   01MAY17 AD F90 original. Checked.
 !
 ! DESCRIPTION

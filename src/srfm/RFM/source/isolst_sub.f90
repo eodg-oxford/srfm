@@ -3,6 +3,8 @@ CONTAINS
 SUBROUTINE ISOLST ( IDXMOL, NISO, WGTISO )
 !
 ! VERSION
+!   01SEP26 AD Updated for HITRAN2024. 
+!   29MAR26 AD Checked.
 !   27SEP22 AD Add HITRAN2020 Molecules/isotopes. Checked.
 !   03JUN19 AD Add GEISA molecules/isotopes. Checked.
 !   04MAY18 AD Add HITRAN2016 isotopes/molecules: add H2O-262, CO2-737, 
@@ -31,28 +33,28 @@ SUBROUTINE ISOLST ( IDXMOL, NISO, WGTISO )
 ! Effectively these are constants but have to be stored as variables in order to
 ! use WGT as a pointer
 !
-! #1  H2O                             161  181  171  162  182  172  262
-    REAL(R4), TARGET :: WGT01(7) = (/ 18., 20., 19., 19., 21., 20., 20./)
-! #2  CO2                             626  636  628  627  638  637  828  827  727  838  837  737 
-    REAL(R4), TARGET :: WGT02(12) = (/ 44., 45., 46., 45., 47., 46., 48., 47., 46., 49., 48., 47. /)
-! #3  O3                             666  668  686  667  676
-    REAL(R4), TARGET :: WGT03(5) = (/ 48., 50., 50., 49., 49. /)
+! #1  H2O                             161  181  171  162  182  172  262  282  272
+    REAL(R4), TARGET :: WGT01(9) = (/ 18., 20., 19., 19., 21., 20., 20., 22., 21. /)
+! #2  CO2                             626  636  628  627  638  637  828  827  727  838  837  737  646
+    REAL(R4), TARGET :: WGT02(13)= (/ 44., 45., 46., 45., 47., 46., 48., 47., 46., 49., 48., 47., 46. /)
+! #3  O3                             666  668  686  667  676  688  868  678  867  687  677  767  888  887  878  877  787  777
+    REAL(R4), TARGET :: WGT03(18)= (/ 48., 50., 50., 49., 49., 52., 52., 51., 51., 51., 50., 50., 54., 53., 53., 52., 52., 51. /)
 ! #4  N2O                            446  456  546  448  447  458* 548* 556*  *GEISA
     REAL(R4), TARGET :: WGT04(8) = (/ 44., 45., 45., 46., 45., 47., 47., 46. /)
-! #5  CO                              26   36   28   27   38   37
-    REAL(R4), TARGET :: WGT05(6) = (/ 28., 29., 30., 29., 31., 30. /)
+! #5  CO                              26   36   28   27   38   37   46   48   47
+    REAL(R4), TARGET :: WGT05(9) = (/ 28., 29., 30., 29., 31., 30., 30., 32., 31. /)
 ! #6  CH4                            211  311  212  312
     REAL(R4), TARGET :: WGT06(4) = (/ 16., 17., 17., 18. /)
 ! #7  O2                              66   68   67
     REAL(R4), TARGET :: WGT07(3) = (/ 32., 34., 33. /)
-! #8  NO                              46   56   48
-    REAL(R4), TARGET :: WGT08(3) = (/ 30., 31., 32. /)
-! #9  SO2                            626  646  628* 636*    *old GEISA, but keep in case required
-    REAL(R4), TARGET :: WGT09(4) = (/ 64., 66., 66., 65. /)
-! #10 NO2                            646  656*   *HITRAN2020
-    REAL(R4), TARGET :: WGT10(2) = (/ 46., 47. /)
-! #11 NH3                           4111 5111
-    REAL(R4), TARGET :: WGT11(2) = (/ 17., 18. /)
+! #8  NO                              46   56   48   47   58   57
+    REAL(R4), TARGET :: WGT08(6) = (/ 30., 31., 32., 31., 33., 32. /)
+! #9  SO2                            626  646  636  628    
+    REAL(R4), TARGET :: WGT09(4) = (/ 64., 66., 65., 66. /)
+! #10 NO2                            646  656  648
+    REAL(R4), TARGET :: WGT10(3) = (/ 46., 47., 48. /)
+! #11 NH3                           4111 5111 4112
+    REAL(R4), TARGET :: WGT11(3) = (/ 17., 18., 18. /)
 ! #12 HNO3                           146  156
     REAL(R4), TARGET :: WGT12(2) = (/ 63., 64. /)
 ! #13 OH                              61   81   62
@@ -67,14 +69,14 @@ SUBROUTINE ISOLST ( IDXMOL, NISO, WGTISO )
     REAL(R4), TARGET :: WGT17(2) =  (/ 128., 129. /)
 ! #18 ClO                             56   76
     REAL(R4), TARGET :: WGT18(2) = (/ 51., 53. /)
-! #19 OCS                            622  624  632  623  822  634* *Geisa
-    REAL(R4), TARGET :: WGT19(6) = (/ 60., 62., 61., 61., 62., 63. /)
+! #19 OCS                            622  624  632  623  822  634  722
+    REAL(R4), TARGET :: WGT19(7) = (/ 60., 62., 61., 61., 62., 63., 61. /)
 ! #20 H2CO                           126  136  128
     REAL(R4), TARGET :: WGT20(3) = (/ 30., 31., 32. /) 
 ! #21 HOCl                           165  167 
     REAL(R4), TARGET :: WGT21(2) = (/ 52., 54. /)
-! #22 N2                              44   45
-    REAL(R4), TARGET :: WGT22(2) = (/ 28., 29. /)
+! #22 N2                              44   45   55
+    REAL(R4), TARGET :: WGT22(3) = (/ 28., 29., 30. /)
 ! #23 HCN                            124  134  125  224*    *Geisa
     REAL(R4), TARGET :: WGT23(4) = (/ 27., 28., 28., 28. /)
 ! #24 CH3Cl                          215  217
@@ -83,8 +85,8 @@ SUBROUTINE ISOLST ( IDXMOL, NISO, WGTISO )
     REAL(R4), TARGET :: WGT25(1) = (/ 34. /)
 ! #26 C2H2                          1221 1231 1222
     REAL(R4), TARGET :: WGT26(3) = (/ 26., 27., 27. /)
-! #27 C2H6                          1221 1231
-    REAL(R4), TARGET :: WGT27(2) = (/ 30., 31. /)
+! #27 C2H6                          1221 1231 1222
+    REAL(R4), TARGET :: WGT27(3) = (/ 30., 31., 31. /)
 ! #28 PH3                           1111
     REAL(R4), TARGET :: WGT28(1) = (/ 34. /)
 ! #29 COF2                           269  369
@@ -93,8 +95,8 @@ SUBROUTINE ISOLST ( IDXMOL, NISO, WGTISO )
     REAL(R4), TARGET :: WGT30(1) = (/ 146. /)
 ! #31 H2S                            121  141  131
     REAL(R4), TARGET :: WGT31(3) = (/ 34., 36., 35. /)
-! #32 HCOOH                          126
-    REAL(R4), TARGET :: WGT32(1) = (/ 46. /)               
+! #32 HCOOH                          126  136
+    REAL(R4), TARGET :: WGT32(2) = (/ 46., 47. /)               
 ! #33 HO2                            166
     REAL(R4), TARGET :: WGT33(1) = (/ 33. /)               
 ! #34 O                                6
@@ -105,56 +107,68 @@ SUBROUTINE ISOLST ( IDXMOL, NISO, WGTISO )
     REAL(R4), TARGET :: WGT36(1) = (/ 30. /)               
 ! #37 HOBr                           169  161
     REAL(R4), TARGET :: WGT37(2) = (/ 96., 98. /)               
-! #38 C2H4                           221  231  
-    REAL(R4), TARGET :: WGT38(2) = (/ 28., 29. /)               
+! #38 C2H4                           112211 112311 112212 
+    REAL(R4), TARGET :: WGT38(3) = (/   28.,   29.,   29./)               
 ! #39 CH3OH                         2161
     REAL(R4), TARGET :: WGT39(1) = (/ 32. /)
 ! #40 CH3Br                          219  211 
     REAL(R4), TARGET :: WGT40(2) = (/ 94., 96. /)
-! #41 CH3CN                         2124
-    REAL(R4), TARGET :: WGT41(1) = (/ 41. /)               
+! #41 CH3CN                         2124 3124 2134 3134
+    REAL(R4), TARGET :: WGT41(4) = (/ 41., 42., 42., 43./)               
 ! #42 CF4                             29
     REAL(R4), TARGET :: WGT42(1) = (/ 88. /)               
 ! #43 C4H2                          2211
     REAL(R4), TARGET :: WGT43(1) = (/ 50. /)               
-! #44 HC3N                          1224
-    REAL(R4), TARGET :: WGT44(1) = (/ 51. /)
+! #44 HC3N                          12224 12225 12234 12324 13224 22224 
+    REAL(R4), TARGET :: WGT44(6) = (/ 51.,  52.,  52.,  52.,  52.,  52./)
 ! #45 H2                             11   12 
     REAL(R4), TARGET :: WGT45(2) = (/ 2., 3. /)
 ! #46 CS                              22   24   32   23 
     REAL(R4), TARGET :: WGT46(4) = (/ 44., 46., 45., 45. /)               
 ! #47 SO3                             26
     REAL(R4), TARGET :: WGT47(1) = (/ 80. /)               
-! #48 C2N2                          4224
-    REAL(R4), TARGET :: WGT48(1) = (/ 52. /)
+! #48 C2N2                          4224 5225
+    REAL(R4), TARGET :: WGT48(2) = (/ 52., 54./)
 ! #49 COCl2                         2655 2657 2677
     REAL(R4), TARGET :: WGT49(3) = (/ 98., 102., 104. /)
 ! #50 SO                              26   46   28 
     REAL(R4), TARGET :: WGT50(3) = (/ 48., 50., 50. /)
-! #51 CH3F                           219 (HITRAN 2020)
-    REAL(R4), TARGET :: WGT51(1) = (/ 34. /)
+! #51 CH3F                           219   319
+    REAL(R4), TARGET :: WGT51(2) = (/ 34.,  35./)
 ! #52 GeH4                           411  211  011  311  611 (HITRAN 2020)
     REAL(R4), TARGET :: WGT52(5) = (/ 78., 76., 74., 77., 80. /)
 ! #53 CS2                            222  224  223  232 (HITRAN 2020)
     REAL(R4), TARGET :: WGT53(4) = (/ 76., 78., 77., 77. /)
-! #54 CH3I                            217 (HITRAN 2020)
-    REAL(R4), TARGET :: WGT54(1) = (/ 142. /) 
+! #54 CH3I                            217  317
+    REAL(R4), TARGET :: WGT54(2) = (/ 142., 143./) 
 ! #55 NF3                             49 (HITRAN 2020)
     REAL(R4), TARGET :: WGT55(1) = (/ 71. /) 
-! #56 C3H4                          1221 (TIPS 2020)
-    REAL(R4), TARGET :: WGT56(1) = (/ 40. /)
-! #57 CH3                           2111 (TIPS 2020)
+! #56 H3+                            111 112 122 222 (HITRAN 2024)
+    REAL(R4), TARGET :: WGT56(4) = (/ 3., 4., 5., 6. /)
+! #57 CH3                            2111 (HITRAN 2024)
     REAL(R4), TARGET :: WGT57(1) = (/ 15. /)
+! #58 S2                              22 (HITRAN 2024)
+    REAL(R4), TARGET :: WGT58(1) = (/ 64. /)
+! #59 COFCl                          2695 2697 (HITRAN 2024)
+    REAL(R4), TARGET :: WGT59(2) = (/ 82., 84. /)
+! #60 HONO                           1646 2646 (HITRAN 2024)
+    REAL(R4), TARGET :: WGT60(2) = (/ 47., 48. /)
+! #61 ClNO2                          5466 7466 (HITRAN 2024)
+    REAL(R4), TARGET :: WGT61(2) = (/ 81., 83. /)
+! #62 C3H4                          1221 (TIPS 2025)
+    REAL(R4), TARGET :: WGT62(1) = (/ 40. /)
 !
 ! GEISA molecules
-! #60 GeH4                           411*
-!    REAL(R4), TARGET :: WGT60(1) = (/ 77.,  /)           
-! #61 C3H8                           221*
-    REAL(R4), TARGET :: WGT61(1) = (/ 44. /)               
-! #62 HNC                            142*
-    REAL(R4), TARGET :: WGT62(1) = (/ 27. /)               
-! #63 C6H6                           266*
-    REAL(R4), TARGET :: WGT63(1) = (/ 78. /)
+! #70 C3H8                           221*
+    REAL(R4), TARGET :: WGT70(1) = (/ 44. /)               
+! #71 HNC                            142*
+    REAL(R4), TARGET :: WGT71(1) = (/ 27. /)               
+! #72 C6H6                           266*
+    REAL(R4), TARGET :: WGT72(1) = (/ 78. /)
+! #73 RuO4                            466*
+    REAL(R4), TARGET :: WGT73(1) = (/ 160. /)
+! #74 H2C3H2                          1221
+    REAL(R4), TARGET :: WGT74(1) = (/ 40.0 /)
 !
     REAL(R4), POINTER :: WGT(:)   ! used to point to appropriate WGTnn array
 !
@@ -220,11 +234,18 @@ SUBROUTINE ISOLST ( IDXMOL, NISO, WGTISO )
     CASE ( 55 ) ; WGT => WGT55
     CASE ( 56 ) ; WGT => WGT56
     CASE ( 57 ) ; WGT => WGT57
-!
-!    CASE ( 60 ) ; WGT => WGT60
+    CASE ( 58 ) ; WGT => WGT58
+    CASE ( 59 ) ; WGT => WGT59
+    CASE ( 60 ) ; WGT => WGT60
     CASE ( 61 ) ; WGT => WGT61
     CASE ( 62 ) ; WGT => WGT62
-    CASE ( 63 ) ; WGT => WGT63
+!
+    CASE ( 70 ) ; WGT => WGT70
+    CASE ( 71 ) ; WGT => WGT71
+    CASE ( 72 ) ; WGT => WGT72
+    CASE ( 73 ) ; WGT => WGT73
+    CASE ( 74 ) ; WGT => WGT74
+
     CASE DEFAULT ; CONTINUE        ! Any other molecule index
   END SELECT
 !

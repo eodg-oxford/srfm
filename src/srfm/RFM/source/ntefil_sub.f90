@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE NTEFIL ( NAMNTE, FAIL, ERRMSG )
 !
 ! VERSION
+!   14OCT25 AD Checked.
 !   24JUN19 AD Use LOG(PREATM) since LNPATM may not be set yet. Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !

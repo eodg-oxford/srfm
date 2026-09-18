@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE CIADEF ( NAMDEF, FAIL, ERRMSG )
 !
 ! VERSION
-!   28JUL24 AD Checked.
+!   29JUN26 AD Checked.
 !   24JUN19 AD Rewrite for through all molec.combinations, including Air.Checked
 !   01MAY17 AD F90 conversion. Checked.
 !

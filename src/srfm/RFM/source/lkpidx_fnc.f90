@@ -3,7 +3,7 @@ CONTAINS
 REAL(R4) PURE FUNCTION LKPIDX ( XIDX, YTAB )
 !
 ! VERSION
-!   10APR23 AD Checked.
+!   19MAR26 AD Checked.
 !   01MAY17 AD F90 version. Checked.
 !
 ! DESCRIPTION

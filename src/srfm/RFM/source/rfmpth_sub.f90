@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE RFMPTH ( FAIL, ERRMSG ) 
 !
 ! VERSION
-!   29AUG24 AD Checked.
+!   30AUG26 AD Checked.
 !   24JUN19 AD Remove CIA flag - always call CIAPTH. Checked.
 !   05MAR19 AD Split LIMPTH into LIMPTH and GRAPTH. Remove FLXPTH
 !   01MAY17 AD F90 original. Checked.

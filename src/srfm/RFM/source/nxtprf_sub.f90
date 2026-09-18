@@ -3,6 +3,7 @@ CONTAINS
 SUBROUTINE NXTPRF ( LUN, LABEL, PRF, FAIL, ERRMSG )
 !
 ! VERSION
+!   05FEB26 AD Checked,
 !   16FEB24 AD Bug#44 - test for NaN
 !   28NOV23 AD Checked.
 !   01MAY17 AD Original. Checked.

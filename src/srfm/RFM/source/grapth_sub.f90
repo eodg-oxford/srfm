@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE GRAPTH 
 !
 ! VERSION
-!   24APR24 AD Checked.
+!   06APR26 AD Checked.
 !   05MAR19 AD Separated out from LIMPTH for 2D atmospheres. Checked.
 !   01JUL17 AD F90 conversion of tanpth.for. Checked.
 !

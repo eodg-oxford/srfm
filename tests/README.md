@@ -91,16 +91,21 @@ assumed.
 
 ### Integration (`tests/integration/`)
 
-Nine deliberately small component-boundary cases cover:
+Integration coverage includes:
 
 - size distribution -> quadrature -> optical properties -> compiled Mie;
 - synthetic ARIA refractive indices -> compiled Mie optical calculation;
 - `Inputs` -> `MieLayer` Python-side preparation;
 - structured RFM driver -> compiled RFM -> parsed optical-depth output, using
   a three-level atmosphere and three-point F11 cross section;
+- every RFM option flag, incompatible flag pair, dependency rule, and malformed
+  flag path in the native ``*FLG`` parser, including repeated calls after
+  rejected configurations;
 - a genuine malformed native RFM run, including stderr log forwarding and
   transient-log removal;
 - Python DISORT configuration -> compiled single- and double-precision DISORT;
+- all 17 families and 57 cases from the authoritative DISORT Fortran driver,
+  including its 47 embedded reference comparisons;
   and
 - each specialized top-level runner -> its own schema before filesystem side
   effects.

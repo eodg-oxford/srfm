@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE SPCTXT ( RECORD, FAIL, ERRMSG )
 !
 ! VERSION
-!   24SEP24 AD Checked.
+!   26SEP25 AD Checked.
 !   01MAY17 AD F90 conversion. Tested.
 !
 ! DESCRIPTION

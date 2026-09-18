@@ -4,10 +4,8 @@ from pathlib import Path
 from srfm import rfm_helper
 
 EXAMPLE_DIR = Path(__file__).resolve().parent
-HITRAN_FILE = Path(
-    os.environ.get("SRFM_HITRAN_FILE", "PATH_TO_HITRAN_FILE")
-).expanduser()
-XSC_DIR = Path(os.environ.get("SRFM_XSC_DIR", "PATH_TO_XSC_DIR")).expanduser()
+HITRAN_FILE = Path("INPUT_PATH_TO_HITRAN_HERE").expanduser()
+XSC_DIR = Path("INPUT_PATH_TO_XSC_DIRECTORY_HERE").expanduser()
 
 # Final output grid, in cm-1
 FIN_WVNMLO = 850.0  # min
@@ -141,10 +139,9 @@ inputs = {
     "adjust_maxcmu": False,  # if DISORT output intensity is negative, rerun with more streams
     "btemp": 300.0,  # optional: lower-boundary temperature (K)
     "ttemp": 295.0,  # optional: upper-boundary temperature (K)
-    ## Scattering configuration
-    # scattering layers are named and are as keys in this dict, refer to docs for
-    # specific parameters
-    # This entire mapping is optional; omit it for a clear-sky calculation.
+    ## Layer (scattering, grey body, etc.) configuration
+    # Layers are named by the keys in these dictionaries; refer to the docs for
+    # layer-specific parameters. Both mappings are optional.
     "scat_lyrs_inputs": {
         "Sulphuric_acid_1": {
             "name": "Sulphuric_acid_1",
@@ -229,6 +226,21 @@ inputs = {
             "r": 15.0,
             "alt_upp": None,
             "alt_low": None,
+        },
+    },
+    "gbc_lyrs_inputs": {
+        "GBC_1": {
+            "name": "GBC_1",  # GreyBodyCloud layer name
+            "low_spc": SPC_WVNMLO,  # spectral calculation grid lower limit
+            "upp_spc": SPC_WVNMHI,  # spectral calculation grid upper limit
+            "res": 1.0,  # spectral calculation grid resolution
+            "spec_units": SPC_UNITS,  # spectral calculation grid units
+            "center_alt": 5.0,  # layer center altitude (km)
+            "thick": 0.01,  # layer thickness (km)
+            "alt_upp": None,  # layer upper boundary altitude (km)
+            "alt_low": None,  # layer lower boundary altitude (km)
+            "emis": 1.0,  # grey-body emissivity; currently a stub
+            "inp_tau": 1e4,  # cloud optical depth
         },
     },
     ## solar reflection

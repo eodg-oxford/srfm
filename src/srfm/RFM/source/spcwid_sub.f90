@@ -3,6 +3,8 @@ CONTAINS
 SUBROUTINE SPCWID ( FAIL, ERRMSG ) 
 !
 ! VERSION
+!   04APR26 AD Checked.
+!   17APR25 AD Bug#50 Change ANTE, CNTE to D.P.
 !   26AUG24 AD Checked.
 !   11AUG23 AD Remove test for OPNHFL. Checked.
 !   22MAY23 AD Change INIHFL to INIHIT and add WNUWID argument
@@ -58,8 +60,8 @@ SUBROUTINE SPCWID ( FAIL, ERRMSG )
     INTEGER(I4) :: JEXCL,JEXCU ! Closest Low/Upp Wide Mesh Intvl including line 
     INTEGER(I4) :: JWID        ! Wide mesh interval counter
     INTEGER(I4) :: JWIDL,JWIDU ! Low/Upp Wide Mesh Intvls incl.line contrib.
-    REAL(R4)    :: ANTE        ! Non-lte factor for k abs
-    REAL(R4)    :: CNTE        ! Non-lte factor for c abs
+    REAL(R8)    :: ANTE        ! Non-lte factor for k abs
+    REAL(R8)    :: CNTE        ! Non-lte factor for c abs
     REAL(R8)    :: WNUM        ! Wavenumber of HITRAN line
     REAL(R4)    :: ABSORP(0:NWD2) ! Absorption
 !
@@ -107,9 +109,9 @@ SUBROUTINE SPCWID ( FAIL, ERRMSG )
           IWD2 = 2 * JWID + IQAD - 3
           IF ( GAS(IGAS)%NTE ) THEN
             ABSWID(IQAD,JWID,ILBL) = ABSWID(IQAD,JWID,ILBL) + &
-                                     ANTE * ABSORP(IWD2) 
+                                     SNGL ( ANTE * DBLE(ABSORP(IWD2)) ) 
             CNTWID(IQAD,JWID,ILBL) = CNTWID(IQAD,JWID,ILBL) + &
-                                     CNTE * ABSORP(IWD2) 
+                                     SNGL ( CNTE * DBLE(ABSORP(IWD2)) ) 
           ELSE
             ABSWID(IQAD,JWID,ILBL) = ABSWID(IQAD,JWID,ILBL) + ABSORP(IWD2) 
           END IF

@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE CIAMOL ( MOLSTR, IDX1, IDX2, FAIL, ERRMSG ) 
 !
 ! VERSION
-!   30JUL24 AD Checked.
+!   02JUL26 AD Checked.
 !   24JUN19 AD Change to use IDXMOL to determine indices. Checked.
 !   01MAY17 AD F90 conversion. Checked.
 ! 

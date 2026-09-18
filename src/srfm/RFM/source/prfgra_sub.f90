@@ -3,7 +3,7 @@ CONTAINS
 SUBROUTINE PRFGRA ( TYPE, IPRF )
 !
 ! VERSION
-!   18SEP24 AD Checked.
+!   19SEP25 AD Checked.
 !   01MAY17 AD F90 conversion. Checked.
 !
 ! DESCRIPTION
