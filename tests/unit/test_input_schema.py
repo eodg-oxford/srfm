@@ -189,6 +189,7 @@ def test_public_schema_copy_cannot_change_authoritative_mapping():
     schema_copy = get_srfm_input_schema()
     schema_copy.pop("results_fldr")
     assert "results_fldr" in SRFM_INPUT_SCHEMA
+    assert "maxulv" not in SRFM_INPUT_SCHEMA
     assert set(RFM_CONFIG_SCHEMA) >= {
         "output_mode",
         "driver_path",
@@ -230,11 +231,11 @@ def test_runner_schemas_require_the_inputs_each_runner_consumes(basic_values):
     assert "utau" not in IASI_INPUT_SCHEMA
 
     oxharp_values["usrtau"] = False
-    with pytest.raises(InputValidationError, match="usrtau: must be True"):
+    with pytest.raises(InputValidationError, match="usrtau: current value False"):
         validate_oxharp_inputs(oxharp_values)
 
     iasi_values["usrtau"] = False
-    with pytest.raises(InputValidationError, match="usrtau: must be True"):
+    with pytest.raises(InputValidationError, match="usrtau: current value False"):
         validate_iasi_inputs(iasi_values)
 
 
@@ -452,8 +453,116 @@ def test_flux_only_disort_allows_zero_user_angle_dimensions(basic_values):
     basic_values["onlyfl"] = False
     with pytest.raises(InputValidationError) as caught:
         validate_srfm_inputs(basic_values)
-    assert "maxumu: may be zero only when onlyfl is True" in caught.value.issues
-    assert "maxphi: may be zero only when onlyfl is True" in caught.value.issues
+    assert any(
+        issue.startswith("maxumu: current value 0; permitted values:")
+        for issue in caught.value.issues
+    )
+    assert any(
+        issue.startswith("maxphi: current value 0; permitted values:")
+        for issue in caught.value.issues
+    )
+
+
+@pytest.mark.parametrize(
+    ("field", "invalid_value"),
+    [
+        ("fisot", -0.01),
+        ("albedo", 1.01),
+        ("temis", -0.01),
+        ("earth_radius", 0),
+        ("nmom", -1),
+        ("maxcmu", 2),
+        ("maxcmu", 5),
+        ("maxumu", -1),
+        ("maxphi", -1),
+        ("ibcnd", 2),
+        ("prnt", [False, False, 0, False, False]),
+        ("disort_precision", "quadruple"),
+        ("header", "x" * 128),
+        ("btemp", -1.0),
+        ("ttemp", -1.0),
+        ("saa", 361.0),
+        ("azi", -1.0),
+    ],
+)
+def test_disort_scalar_values_report_name_current_and_permitted_values(
+    basic_values, field, invalid_value
+):
+    """Reject native DISORT bounds before Fortran can terminate the process."""
+    basic_values[field] = invalid_value
+
+    with pytest.raises(InputValidationError) as caught:
+        validate_srfm_inputs(basic_values)
+
+    issue = next(
+        problem
+        for problem in caught.value.issues
+        if problem.startswith(f"{field}: current value")
+    )
+    assert repr(invalid_value) in issue
+    assert "; permitted values:" in issue
+
+
+@pytest.mark.parametrize(
+    ("updates", "field", "invalid_value"),
+    [
+        ({"ibcnd": 1, "onlyfl": True}, "onlyfl", True),
+        ({"usrang": False, "maxumu": 1}, "maxumu", 1),
+        ({"usrtau": False}, "usrtau", False),
+        ({"ibcnd": 1, "out": [], "out_toa": True}, "out", []),
+        ({"sun": True, "sza": 90.0}, "sza", 90.0),
+        ({"usrang": True, "onlyfl": False, "zen": 90.0}, "zen", 90.0),
+        ({"ibcnd": 1, "usrang": True, "zen": 120.0}, "zen", 120.0),
+    ],
+)
+def test_disort_cross_field_values_report_the_failing_input(
+    basic_values, updates, field, invalid_value
+):
+    """Report fatal native combinations with the same actionable format."""
+    basic_values.update(updates)
+
+    with pytest.raises(InputValidationError) as caught:
+        validate_srfm_inputs(basic_values)
+
+    issue = next(
+        problem
+        for problem in caught.value.issues
+        if problem.startswith(f"{field}: current value")
+    )
+    assert repr(invalid_value) in issue
+    assert "; permitted values:" in issue
+
+
+def test_disort_boundary_values_validate(basic_values):
+    """Accept inclusive native boundaries and supported cross-field limits."""
+    basic_values.update(
+        fisot=0.0,
+        albedo=1.0,
+        temis=0.0,
+        earth_radius=1.0,
+        nmom=0,
+        maxcmu=4,
+        maxumu=4,
+        maxphi=1,
+        usrang=False,
+        header="x" * 127,
+        btemp=0.0,
+        ttemp=0.0,
+        sun=False,
+        sza=180.0,
+        saa=360.0,
+        zen=180.0,
+        azi=360.0,
+    )
+
+    validate_srfm_inputs(basic_values)
+
+
+def test_empty_disort_header_validates(basic_values):
+    """Allow an empty DISORT header as well as non-empty strings."""
+    basic_values["header"] = ""
+
+    validate_srfm_inputs(basic_values)
 
 
 @pytest.mark.parametrize(
@@ -464,9 +573,9 @@ def test_flux_only_disort_allows_zero_user_angle_dimensions(basic_values):
         ({"spc_wvnmlo": 900, "spc_wvnmhi": 800}, "spc_wvnmlo"),
         ({"convolve_iasi": True, "iasi_ils": None}, "iasi_ils"),
         ({"out_mode": "txt", "retain_outputs": ("flup",)}, "out_mode"),
-        ({"usrtau": False}, "usrtau: must be True"),
+        ({"usrtau": False}, "usrtau: current value False"),
         ({"date": (2025, 2, 29)}, "date: day is out of range"),
-        ({"header": "x" * 127}, "header: must contain fewer"),
+        ({"header": "x" * 128}, "header: current value"),
     ],
 )
 def test_cross_field_validation(basic_values, updates, problem):
@@ -586,6 +695,115 @@ def test_grey_body_layer_is_accepted_by_every_runner_schema(basic_values):
     assert iasi["gbc_lyrs_inputs"] == generic["gbc_lyrs_inputs"]
 
 
+@pytest.mark.parametrize("collection_state", ["omitted", "none", "empty"])
+def test_layer_collections_are_optional_for_every_runner(
+    basic_values, collection_state
+):
+    """Allow clear-sky runs with no scattering or grey-body layer mappings."""
+    values_by_runner = []
+
+    generic_values = deepcopy(basic_values)
+    values_by_runner.append((validate_srfm_inputs, generic_values))
+
+    oxharp_values = deepcopy(basic_values)
+    oxharp_values.update(sza_cos=1.0, zen_cos=1.0, zen_sec=1.0)
+    values_by_runner.append((validate_oxharp_inputs, oxharp_values))
+
+    iasi_values = deepcopy(basic_values)
+    iasi_values.update(
+        plot_profiles=False,
+        iasi_spc_fldr="/synthetic",
+        iasi_fl="scene_20250323_A.pkl",
+        px=0,
+        nedt="synthetic-nedt.txt",
+        ils="synthetic.ils",
+    )
+    values_by_runner.append((validate_iasi_inputs, iasi_values))
+
+    for validator, values in values_by_runner:
+        for key in ("scat_lyrs_inputs", "gbc_lyrs_inputs"):
+            if collection_state == "omitted":
+                values.pop(key)
+            elif collection_state == "none":
+                values[key] = None
+            else:
+                values[key] = {}
+
+        validator(values)
+
+
+@pytest.mark.parametrize(
+    ("collection", "layer_name"),
+    [
+        ("scat_lyrs_inputs", "Ash_1"),
+        ("gbc_lyrs_inputs", "GBC_1"),
+    ],
+)
+@pytest.mark.parametrize("extent_form", ["centre", "bounds"])
+def test_layer_extent_pairs_can_omit_the_unused_pair(
+    basic_values, collection, layer_name, extent_form
+):
+    """Treat centre/thickness and lower/upper bounds as alternative pairs."""
+    layer = basic_values[collection][layer_name]
+    center_alt = layer["center_alt"]
+    thickness = layer["thick"]
+
+    if extent_form == "centre":
+        layer.pop("alt_low", None)
+        layer.pop("alt_upp", None)
+    else:
+        layer.pop("center_alt")
+        layer.pop("thick")
+        layer["alt_low"] = round(center_alt - thickness / 2, 3)
+        layer["alt_upp"] = round(center_alt + thickness / 2, 3)
+
+    validate_srfm_inputs(basic_values)
+
+
+@pytest.mark.parametrize(
+    ("collection", "layer_name"),
+    [
+        ("scat_lyrs_inputs", "Ash_1"),
+        ("gbc_lyrs_inputs", "GBC_1"),
+    ],
+)
+def test_layer_extent_rejects_inconsistent_complete_representations(
+    basic_values, collection, layer_name
+):
+    """Reject all-four extent inputs unless both pairs describe one layer."""
+    layer = basic_values[collection][layer_name]
+    layer.update(
+        center_alt=1.23456,
+        thick=0.12345,
+        alt_low=1.173,
+        alt_upp=1.296,
+    )
+    validate_srfm_inputs(basic_values)
+
+    layer["alt_upp"] = 1.4
+    with pytest.raises(InputValidationError, match="explicit bounds must match"):
+        validate_srfm_inputs(basic_values)
+
+
+def test_incomplete_layer_extent_reports_only_the_pair_requirement(basic_values):
+    """Avoid marking an unused individual extent field as unconditionally required."""
+    layer = basic_values["scat_lyrs_inputs"]["Water_cloud_1"]
+    layer.pop("center_alt")
+
+    with pytest.raises(InputValidationError) as caught:
+        validate_srfm_inputs(basic_values)
+
+    layer_issues = [
+        issue
+        for issue in caught.value.issues
+        if issue.startswith("scat_lyrs_inputs.Water_cloud_1.")
+    ]
+    assert layer_issues == [
+        "scat_lyrs_inputs.Water_cloud_1.center_alt: "
+        "provide center_alt/thick or alt_low/alt_upp"
+    ]
+
+
 @pytest.mark.parametrize(
     ("updates", "problem"),
     [
@@ -646,6 +864,24 @@ def test_run_srfm_revalidates_programmatic_inputs_before_side_effects(tmp_path):
     with pytest.raises(InputValidationError, match="misspelled_field: unknown field"):
         run_srfm(inputs)
 
+    assert not results.exists()
+
+
+def test_run_srfm_rejects_bad_disort_value_before_native_execution(
+    basic_values, tmp_path
+):
+    """A bad DISORT scalar fails before output creation or native execution."""
+    results = tmp_path / "invalid-disort-must-not-exist"
+    basic_values.update(results_fldr=str(results), fisot=-1.0)
+    inputs = Inputs(**basic_values)
+
+    with pytest.raises(InputValidationError) as caught:
+        run_srfm(inputs)
+
+    assert (
+        "fisot: current value -1.0; permitted values: "
+        "a finite real number greater than or equal to 0"
+    ) in caught.value.issues
     assert not results.exists()
 
 

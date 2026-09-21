@@ -142,6 +142,24 @@ driver file.
 DISORT configuration
 --------------------
 
+The basic example exposes the following inputs that are passed directly to
+DISORT: ``fisot``, ``albedo``, ``temis``, ``earth_radius``, ``nmom``,
+``maxcmu``, ``maxumu``, ``maxphi``, ``usrang``, ``usrtau``,
+``ibcnd``, ``onlyfl``, ``prnt``, ``planck``, ``lamber``, ``deltamplus``,
+``do_pseudo_sphere``, ``header``, ``btemp``, and ``ttemp``.
+``disort_precision`` selects the compiled wrapper and ``adjust_maxcmu`` controls
+SRFM's retry behaviour. The geometry fields ``sun``, ``sza``, ``saa``, ``zen``,
+and ``azi`` determine DISORT's beam strength and angular inputs. Finally,
+``out_fmt``, ``out``, and ``out_toa`` determine its output optical depths, while
+the atmosphere and configured layers supply optical depth, single-scatter
+albedo, temperature, and phase moments.
+
+SRFM validates the user-controlled values before starting RFM or DISORT. A
+failure identifies the field, supplied value, and permitted values, for example
+``maxcmu: current value 5; permitted values: an even integer greater than or
+equal to 4``. This prevents DISORT's fatal ``VAR in error`` path for malformed
+driver values.
+
 * ``fisot`` (``int`` or ``float``): Isotropic illumination incident at the top
   of the atmosphere; must be non-negative.
 * ``albedo`` (``int`` or ``float``): Lambertian bottom-boundary albedo.
@@ -151,23 +169,24 @@ DISORT configuration
 * ``earth_radius`` (**optional** ``int`` or ``float``): Positive Earth radius
   in kilometres, used by the pseudo-spherical correction. The default is
   6371 km.
-* ``nmom`` (``int``): Requested number of phase-function moments. SRFM raises
-  it when a scattering layer or stream count requires more moments.
-* ``maxcmu`` (``int``): Positive, even number of DISORT computational streams;
-  must be at least 2.
+* ``nmom`` (``int``): Non-negative requested number of phase-function moments.
+  SRFM raises it when a scattering layer or stream count requires more moments.
+* ``maxcmu`` (``int``): Even number of DISORT computational streams, at least
+  4. Although the native bounds check admits 2 streams, this bundled DISORT then
+  raises a fatal ``2 streams not recommended`` error, so SRFM rejects 2 early.
 * ``maxumu`` (``int``): Number of output polar-angle cosines allocated by
-  DISORT. It must be positive unless ``onlyfl`` is ``True``.
+  DISORT. It must be positive unless ``onlyfl`` is ``True``. When ``usrang`` is
+  ``False`` and angular intensities are requested, it must be at least
+  ``maxcmu`` to hold the computational angles.
 * ``maxphi`` (``int``): Number of output azimuthal angles allocated by DISORT.
   It must be positive unless ``onlyfl`` is ``True``.
-* ``maxulv`` (``int``): Compatibility input for DISORT output-level allocation.
-  Every top-level runner derives the effective value from ``out`` and
-  ``out_toa``.
 * ``usrang`` (``bool``): Return output at user-defined angles. Permitted values:
   ``True`` or ``False``.
 * ``usrtau`` (``bool``): Return output at user-defined optical depths. Every
   top-level runner requires ``True`` when using ``out``.
 * ``ibcnd`` (``int``): DISORT boundary-condition mode. Permitted values: ``0``
-  for a general atmosphere or ``1`` for the special flux/albedo problem.
+  for a general atmosphere or ``1`` for the special albedo/transmissivity
+  problem. Native DISORT requires ``onlyfl=False`` in mode 1.
 * ``onlyfl`` (``bool``): Return fluxes only instead of angular intensities.
   Permitted values: ``True`` or ``False``.
 * ``prnt`` (list of five ``bool``): DISORT output-section print switches.
@@ -182,20 +201,23 @@ DISORT configuration
 * ``disort_precision`` (``str``): Compiled DISORT implementation to call.
   Permitted values: ``"single"`` or ``"double"``.
 * ``header`` (**optional** ``str``): Header sent to DISORT terminal output.
-  ``"NO HEADER"`` suppresses the header and is the default; fewer than 127
-  characters are permitted.
+  ``"NO HEADER"`` suppresses the header and is the default; at most 127
+  characters are permitted, including an empty string.
 * ``adjust_maxcmu`` (``bool``): Retry with more streams when Delta-M+ produces
   a small negative intensity. Permitted values: ``True`` or ``False``.
 * ``btemp`` (**optional** ``int`` or ``float``): Bottom-boundary temperature in
-  kelvin. If omitted, SRFM derives it from the lowest atmospheric temperature.
+  kelvin; it must be non-negative. If omitted, SRFM derives it from the lowest
+  atmospheric temperature.
 * ``ttemp`` (**optional** ``int`` or ``float``): Top-boundary temperature in
-  kelvin. If omitted, SRFM derives it from the highest atmospheric temperature.
+  kelvin; it must be non-negative. If omitted, SRFM derives it from the highest
+  atmospheric temperature.
 
 Scattering-layer configuration
 ------------------------------
 
 ``scat_lyrs_inputs`` is an **optional** dictionary keyed by unique layer name.
-Omit it for a clear-sky calculation. Each value is a dictionary with the
+Omit it, set it to ``None``, or use an empty dictionary for a clear-sky
+calculation. Each value is a dictionary with the
 parameters below. The same fields apply to the example's
 ``Sulphuric_acid_1``, ``Ash_1``, and ``Water_cloud_1`` layers.
 
@@ -229,6 +251,7 @@ parameters below. The same fields apply to the example's
   in km; must exceed ``alt_low``.
 * ``alt_low`` (``int``, ``float``, or ``None``): Explicit lower layer boundary
   in km.
+
 * ``radii`` (``int``): Positive number of particle radii used to integrate the
   size distribution.
 * ``eta`` (``float``): Relative size-distribution tail cutoff. Permitted range:
@@ -249,16 +272,30 @@ parameters below. The same fields apply to the example's
   g m\ :sup:`-2` used to derive layer optical depth.
 * ``r`` (``int`` or ``float``): Positive mean particle radius in micrometres.
 
+The unused altitude pair may be omitted entirely. If all four altitude values
+are supplied, both pairs must describe the same boundaries after SRFM's
+0.001-km layer-boundary rounding.
+
+``gbc_lyrs_inputs`` is likewise optional and accepts omission, ``None``, or an
+empty dictionary. Its grey-body layers use the same alternative altitude pairs:
+``center_alt`` with ``thick``, or ``alt_low`` with ``alt_upp``. When all four
+are supplied they must describe the same layer.
+
 Solar and viewing geometry
 --------------------------
 
 * ``sun`` (``bool``): Include direct solar illumination and reflection.
   Permitted values: ``True`` or ``False``.
 * ``sza`` (``int`` or ``float``): Solar zenith angle in degrees. Permitted
-  range: 0 to 180.
+  range: 0 to 180. When ``sun`` is ``True``, DISORT requires a positive incident
+  beam cosine, so the permitted range is 0 inclusive to 90 exclusive. Set
+  ``sun=False`` for night-side geometries.
 * ``saa`` (``int`` or ``float``): Solar azimuth angle in degrees. Permitted
   range: 0 to 360.
 * ``zen`` (``int`` or ``float``): Viewing zenith angle in degrees. Permitted
-  range: 0 to 180.
+  range: 0 to 180. A value of exactly 90 is not permitted when user-angle
+  intensities are requested because DISORT forbids a zero output-angle cosine.
+  Mode ``ibcnd=1`` additionally requires a positive cosine, so user angles must
+  be less than 90 degrees.
 * ``azi`` (``int`` or ``float``): Viewing azimuth angle in degrees. Permitted
   range: 0 to 360.

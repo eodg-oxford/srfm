@@ -46,6 +46,12 @@ class Fwd_model:
     """
 
     def __init__(self, name=None, **parameters):
+        """Initialize a named forward-model container.
+
+        Args:
+            name (str | None): Human-readable model name.
+            **parameters: Reserved model parameters.
+        """
         self.name = name
         self.parameters = {}
 
@@ -115,6 +121,14 @@ class RFM(Fwd_model):
         status="RFM model object created.",
         **parameters,
     ):
+        """Initialize an RFM model and assign any additional parameters.
+
+        Args:
+            name (str): Human-readable model name.
+            rfm_fldr (path-like | None): Optional RFM working directory.
+            status (str): Initial model status.
+            **parameters: Additional attributes assigned to the model.
+        """
         super().__init__(name)
         self.rfm_fldr = rfm_fldr
         self.status = status
@@ -368,6 +382,19 @@ class DISORT(Fwd_model):
         status="DISORT object created.",
         **parameters,
     ):
+        """Initialize a DISORT model with input and output containers.
+
+        Args:
+            name (str): Human-readable model name.
+            disort_fldr (path-like | None): Optional DISORT working directory.
+            disort_input (dict | None): Initial input parameters.
+            disort_out (dict | None): Initial historical outputs.
+            retain_history (bool): Retain each result in ``disort_out``.
+            disort_fmt_passmark (bool): Initial format-validation state.
+            disort_integrity_passmark (bool): Initial integrity-validation state.
+            status (str): Initial model status.
+            **parameters: Additional attributes assigned to the model.
+        """
         super().__init__(name)
         self.disort_fldr = disort_fldr
         self.disort_input = {} if disort_input is None else disort_input
@@ -1757,6 +1784,12 @@ class SRFM(Fwd_model):
     """
 
     def __init__(self, name="SRFM", **parameters):
+        """Initialize the combined forward-model result container.
+
+        Args:
+            name (str): Human-readable model name.
+            **parameters: Additional attributes assigned to the model.
+        """
         super().__init__(name)
         for key, val in parameters.items():
             setattr(self, key, val)

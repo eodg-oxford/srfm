@@ -52,8 +52,22 @@ def test_mie_layer_rejects_inconsistent_extent():
     Conflicting bounds would place optical properties in ambiguous layers.
     """
     layer = MieLayer(center_alt=10, thick=2, alt_low=7, alt_upp=11)
-    with pytest.raises(AssertionError, match="do not match"):
+    with pytest.raises(ValueError, match="do not match"):
         layer.calc_layer_extent()
+
+
+def test_mie_layer_accepts_consistent_rounded_extent():
+    """Use the same millimetre-level rounding for both extent representations."""
+    layer = MieLayer(
+        center_alt=1.23456,
+        thick=0.12345,
+        alt_low=1.173,
+        alt_upp=1.296,
+    )
+
+    layer.calc_layer_extent()
+
+    assert (layer.alt_low, layer.alt_upp) == (1.173, 1.296)
 
 
 def test_mie_layer_number_surface_volume_calculations_are_equivalent():

@@ -386,7 +386,7 @@ def run_srfm(inp):
     # define Layer properties
     scat_lyrs_inputs = {}
 
-    if "scat_lyrs_inputs" in inp.values.keys():
+    if inp.values.get("scat_lyrs_inputs"):
 
         # calculate MieLayer optical properties
         for lyr in inp.values["scat_lyrs_inputs"].keys():

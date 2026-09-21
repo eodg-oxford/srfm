@@ -1,5 +1,9 @@
-Modules and Functions
-=====================
+API Reference
+=============
+
+The following pages document the public classes and functions provided by the
+SRFM Python package. The command-line runner modules are included because they
+also expose reusable entry-point functions.
 
 srfm.ARIA\_module
 -----------------
@@ -7,7 +11,6 @@ srfm.ARIA\_module
 .. automodule:: srfm.ARIA_module
    :members:
    :show-inheritance:
-   :undoc-members:
 
 srfm.disort\_functions
 ----------------------
@@ -15,7 +18,6 @@ srfm.disort\_functions
 .. automodule:: srfm.disort_functions
    :members:
    :show-inheritance:
-   :undoc-members:
 
 srfm.forward\_model
 -------------------
@@ -23,7 +25,27 @@ srfm.forward\_model
 .. automodule:: srfm.forward_model
    :members:
    :show-inheritance:
-   :undoc-members:
+
+srfm.iasi\_main
+---------------
+
+.. automodule:: srfm.iasi_main
+   :members:
+   :show-inheritance:
+
+srfm.input\_schema
+------------------
+
+.. automodule:: srfm.input_schema
+   :members:
+   :show-inheritance:
+
+srfm.inputs
+-----------
+
+.. automodule:: srfm.inputs
+   :members:
+   :show-inheritance:
 
 srfm.layer
 ----------
@@ -31,8 +53,13 @@ srfm.layer
 .. automodule:: srfm.layer
    :members:
    :show-inheritance:
-   :undoc-members:
 
+srfm.main
+---------
+
+.. automodule:: srfm.main
+   :members:
+   :show-inheritance:
 
 srfm.optical\_properties
 ------------------------
@@ -40,7 +67,20 @@ srfm.optical\_properties
 .. automodule:: srfm.optical_properties
    :members:
    :show-inheritance:
-   :undoc-members:
+
+srfm.orography
+--------------
+
+.. automodule:: srfm.orography
+   :members:
+   :show-inheritance:
+
+srfm.oxharp\_main
+-----------------
+
+.. automodule:: srfm.oxharp_main
+   :members:
+   :show-inheritance:
 
 srfm.plotting
 -------------
@@ -48,7 +88,6 @@ srfm.plotting
 .. automodule:: srfm.plotting
    :members:
    :show-inheritance:
-   :undoc-members:
 
 srfm.quadrature
 ---------------
@@ -56,7 +95,20 @@ srfm.quadrature
 .. automodule:: srfm.quadrature
    :members:
    :show-inheritance:
-   :undoc-members:
+
+srfm.readers.read\_iasi\_l1c
+----------------------------
+
+.. automodule:: srfm.readers.read_iasi_l1c
+   :members:
+   :show-inheritance:
+
+srfm.readers.read\_iasi\_l2
+---------------------------
+
+.. automodule:: srfm.readers.read_iasi_l2
+   :members:
+   :show-inheritance:
 
 srfm.rfm\_functions
 -------------------
@@ -64,7 +116,13 @@ srfm.rfm\_functions
 .. automodule:: srfm.rfm_functions
    :members:
    :show-inheritance:
-   :undoc-members:
+
+srfm.rfm\_helper
+----------------
+
+.. automodule:: srfm.rfm_helper
+   :members:
+   :show-inheritance:
 
 srfm.size\_distribution
 -----------------------
@@ -72,7 +130,6 @@ srfm.size\_distribution
 .. automodule:: srfm.size_distribution
    :members:
    :show-inheritance:
-   :undoc-members:
 
 srfm.units
 ----------
@@ -80,7 +137,6 @@ srfm.units
 .. automodule:: srfm.units
    :members:
    :show-inheritance:
-   :undoc-members:
 
 srfm.utilities
 --------------
@@ -88,76 +144,3 @@ srfm.utilities
 .. automodule:: srfm.utilities
    :members:
    :show-inheritance:
-   :undoc-members:
-
-srfm.readers.read_iasi_l1c
---------------------------
-
-.. automodule:: srfm.readers.read_iasi_l1c
-   :members:
-   :show-inheritance:
-   :undoc-members:
-   :noindex:
-   
-srfm.read_iasi_l2
------------------
-
-.. automodule:: srfm.readers.read_iasi_l2
-   :members:
-   :show-inheritance:
-   :undoc-members:
-   :noindex:
-
-srfm.rfm_helper
----------------
-
-.. automodule:: srfm.rfm_helper
-   :members:
-   :show-inheritance:
-   :undoc-members:
-   :noindex:
-
-srfm.main
----------
-
-.. automodule:: srfm.rfm_helper
-   :members:
-   :show-inheritance:
-   :undoc-members:
-   :noindex:
-   
-srfm.iasi_main
---------------
-
-.. automodule:: srfm.rfm_helper
-   :members:
-   :show-inheritance:
-   :undoc-members:
-   :noindex:
-   
-srfm.inputs
------------
-
-.. automodule:: srfm.rfm_helper
-   :members:
-   :show-inheritance:
-   :undoc-members:
-   :noindex:
-
-srfm.orography
---------------
-
-.. automodule:: srfm.rfm_helper
-   :members:
-   :show-inheritance:
-   :undoc-members:
-   :noindex:
-
-srfm.oxharp_main
-----------------
-
-.. automodule:: srfm.rfm_helper
-   :members:
-   :show-inheritance:
-   :undoc-members:
-   :noindex:

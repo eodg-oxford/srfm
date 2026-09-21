@@ -45,6 +45,11 @@ class FieldSpec:
     default: Any = _MISSING
     choices: frozenset[Any] | None = None
     item_choices: frozenset[Any] | None = None
+    minimum: Real | None = None
+    maximum: Real | None = None
+    minimum_inclusive: bool = True
+    maximum_inclusive: bool = True
+    permitted: str | None = None
 
 
 PATH_TYPES = (str, os.PathLike)
@@ -164,40 +169,144 @@ SRFM_INPUT_SCHEMA: dict[str, FieldSpec] = {
     "driver_inputs": FieldSpec(MAPPING_TYPES, required=True),
     "levels": FieldSpec(nullable=True),
     # DISORT configuration.
-    "fisot": FieldSpec(NUMBER_TYPES, required=True),
-    "albedo": FieldSpec(NUMBER_TYPES, required=True),
-    "temis": FieldSpec(NUMBER_TYPES, required=True),
-    "earth_radius": FieldSpec(NUMBER_TYPES),
-    "nmom": FieldSpec(INTEGER_TYPES, required=True),
-    "maxcmu": FieldSpec(INTEGER_TYPES, required=True),
-    "maxumu": FieldSpec(INTEGER_TYPES, required=True),
-    "maxphi": FieldSpec(INTEGER_TYPES, required=True),
-    "maxulv": FieldSpec(INTEGER_TYPES, required=True),
-    "usrang": FieldSpec((bool,), required=True),
-    "usrtau": FieldSpec((bool,), required=True),
-    "ibcnd": FieldSpec(INTEGER_TYPES, required=True, choices=frozenset({0, 1})),
-    "onlyfl": FieldSpec((bool,), required=True),
-    "prnt": FieldSpec((list,), required=True),
-    "planck": FieldSpec((bool,), required=True),
-    "lamber": FieldSpec((bool,), required=True),
-    "deltamplus": FieldSpec((bool,), required=True),
-    "do_pseudo_sphere": FieldSpec((bool,), required=True),
-    "disort_precision": FieldSpec(
-        (str,), required=True, choices=frozenset({"single", "double"})
+    "fisot": FieldSpec(
+        NUMBER_TYPES,
+        required=True,
+        minimum=0,
+        permitted="a finite real number greater than or equal to 0",
     ),
-    "header": FieldSpec((str,)),
-    "adjust_maxcmu": FieldSpec((bool,), required=True),
-    "btemp": FieldSpec(NUMBER_TYPES),
-    "ttemp": FieldSpec(NUMBER_TYPES),
+    "albedo": FieldSpec(
+        NUMBER_TYPES,
+        required=True,
+        minimum=0,
+        maximum=1,
+        permitted="a finite real number in the inclusive range [0, 1]",
+    ),
+    "temis": FieldSpec(
+        NUMBER_TYPES,
+        required=True,
+        minimum=0,
+        maximum=1,
+        permitted="a finite real number in the inclusive range [0, 1]",
+    ),
+    "earth_radius": FieldSpec(
+        NUMBER_TYPES,
+        minimum=0,
+        minimum_inclusive=False,
+        permitted="a finite real number greater than 0 km",
+    ),
+    "nmom": FieldSpec(
+        INTEGER_TYPES,
+        required=True,
+        minimum=0,
+        permitted="an integer greater than or equal to 0",
+    ),
+    "maxcmu": FieldSpec(
+        INTEGER_TYPES,
+        required=True,
+        minimum=4,
+        permitted="an even integer greater than or equal to 4",
+    ),
+    "maxumu": FieldSpec(
+        INTEGER_TYPES,
+        required=True,
+        minimum=0,
+        permitted=(
+            "a non-negative integer that is positive unless onlyfl is True; "
+            "when usrang is False and onlyfl is False it must be at least maxcmu"
+        ),
+    ),
+    "maxphi": FieldSpec(
+        INTEGER_TYPES,
+        required=True,
+        minimum=0,
+        permitted="a non-negative integer that is positive unless onlyfl is True",
+    ),
+    "usrang": FieldSpec((bool,), required=True, permitted="True or False"),
+    "usrtau": FieldSpec(
+        (bool,), required=True, permitted="True for SRFM's user-output-level workflow"
+    ),
+    "ibcnd": FieldSpec(
+        INTEGER_TYPES,
+        required=True,
+        choices=frozenset({0, 1}),
+        permitted="0 (general case) or 1 (albedo/transmissivity case)",
+    ),
+    "onlyfl": FieldSpec(
+        (bool,),
+        required=True,
+        permitted="True or False; it must be False when ibcnd is 1",
+    ),
+    "prnt": FieldSpec(
+        (list,), required=True, permitted="a list containing exactly five booleans"
+    ),
+    "planck": FieldSpec((bool,), required=True, permitted="True or False"),
+    "lamber": FieldSpec((bool,), required=True, permitted="True or False"),
+    "deltamplus": FieldSpec((bool,), required=True, permitted="True or False"),
+    "do_pseudo_sphere": FieldSpec(
+        (bool,), required=True, permitted="True or False"
+    ),
+    "disort_precision": FieldSpec(
+        (str,),
+        required=True,
+        choices=frozenset({"single", "double"}),
+        permitted="'single' or 'double'",
+    ),
+    "header": FieldSpec(
+        (str,),
+        permitted="a string containing at most 127 characters, including an empty string",
+    ),
+    "adjust_maxcmu": FieldSpec((bool,), required=True, permitted="True or False"),
+    "btemp": FieldSpec(
+        NUMBER_TYPES,
+        minimum=0,
+        permitted="a finite real number greater than or equal to 0 K",
+    ),
+    "ttemp": FieldSpec(
+        NUMBER_TYPES,
+        minimum=0,
+        permitted="a finite real number greater than or equal to 0 K",
+    ),
     # Scattering and geometry.
-    "scat_lyrs_inputs": FieldSpec(MAPPING_TYPES),
-    "gbc_lyrs_inputs": FieldSpec(MAPPING_TYPES),
+    "scat_lyrs_inputs": FieldSpec(MAPPING_TYPES, nullable=True),
+    "gbc_lyrs_inputs": FieldSpec(MAPPING_TYPES, nullable=True),
     "date": FieldSpec((dt.datetime, tuple)),
-    "sun": FieldSpec((bool,), required=True),
-    "sza": FieldSpec(NUMBER_TYPES, required=True),
-    "saa": FieldSpec(NUMBER_TYPES, required=True),
-    "zen": FieldSpec(NUMBER_TYPES, required=True),
-    "azi": FieldSpec(NUMBER_TYPES, required=True),
+    "sun": FieldSpec((bool,), required=True, permitted="True or False"),
+    "sza": FieldSpec(
+        NUMBER_TYPES,
+        required=True,
+        minimum=0,
+        maximum=180,
+        permitted=(
+            "a finite angle in [0, 180] degrees and, when sun is True, "
+            "in [0, 90) degrees"
+        ),
+    ),
+    "saa": FieldSpec(
+        NUMBER_TYPES,
+        required=True,
+        minimum=0,
+        maximum=360,
+        permitted="a finite angle in the inclusive range [0, 360] degrees",
+    ),
+    "zen": FieldSpec(
+        NUMBER_TYPES,
+        required=True,
+        minimum=0,
+        maximum=180,
+        permitted=(
+            "a finite angle in [0, 180] degrees other than 90 degrees when "
+            "angular intensities are requested; with ibcnd=1 and usrang=True, "
+            "an angle in [0, 90) degrees"
+        ),
+    ),
+    "azi": FieldSpec(
+        NUMBER_TYPES,
+        required=True,
+        minimum=0,
+        maximum=360,
+        permitted="a finite angle in the inclusive range [0, 360] degrees",
+    ),
 }
 
 
@@ -209,11 +318,25 @@ OXHARP_INPUT_SCHEMA: dict[str, FieldSpec] = {
     "plot_profiles": FieldSpec((bool,)),
     "base_plots": FieldSpec((bool,)),
     "show_plots": FieldSpec((bool,)),
-    "sza": FieldSpec(NUMBER_TYPES),
-    "saa": FieldSpec(NUMBER_TYPES),
-    "zen": FieldSpec(NUMBER_TYPES),
-    "sza_cos": FieldSpec(NUMBER_TYPES),
-    "zen_cos": FieldSpec(NUMBER_TYPES, required=True),
+    "sza": FieldSpec(NUMBER_TYPES, minimum=0, maximum=180),
+    "saa": FieldSpec(NUMBER_TYPES, minimum=0, maximum=360),
+    "zen": FieldSpec(NUMBER_TYPES, minimum=0, maximum=180),
+    "sza_cos": FieldSpec(
+        NUMBER_TYPES,
+        minimum=-1,
+        maximum=1,
+        permitted="a finite cosine in [-1, 1] and, when sun is True, in (0, 1]",
+    ),
+    "zen_cos": FieldSpec(
+        NUMBER_TYPES,
+        required=True,
+        minimum=-1,
+        maximum=1,
+        permitted=(
+            "a finite cosine in [-1, 1] other than 0 when angular intensities "
+            "are requested; with ibcnd=1 and usrang=True, a cosine in (0, 1]"
+        ),
+    ),
     "zen_sec": FieldSpec(NUMBER_TYPES, required=True),
     "sza_deg": FieldSpec(NUMBER_TYPES),
     "sza_rad": FieldSpec(NUMBER_TYPES),
@@ -320,10 +443,10 @@ LAYER_SCHEMA: dict[str, FieldSpec] = {
     ),
     "comp": FieldSpec((str,), required=True),
     "refractive_index": FieldSpec(nullable=True),
-    "center_alt": FieldSpec(NUMBER_TYPES, required=True, nullable=True),
-    "thick": FieldSpec(NUMBER_TYPES, required=True, nullable=True),
-    "alt_upp": FieldSpec(NUMBER_TYPES, required=True, nullable=True),
-    "alt_low": FieldSpec(NUMBER_TYPES, required=True, nullable=True),
+    "center_alt": FieldSpec(NUMBER_TYPES, nullable=True),
+    "thick": FieldSpec(NUMBER_TYPES, nullable=True),
+    "alt_upp": FieldSpec(NUMBER_TYPES, nullable=True),
+    "alt_low": FieldSpec(NUMBER_TYPES, nullable=True),
     "radii": FieldSpec(INTEGER_TYPES, required=True),
     "eta": FieldSpec(NUMBER_TYPES, required=True),
     "phase_quad_N": FieldSpec(INTEGER_TYPES, required=True),
@@ -350,10 +473,10 @@ GREY_BODY_LAYER_SCHEMA: dict[str, FieldSpec] = {
     "spec_units": FieldSpec(
         (str,), required=True, choices=frozenset({"cm-1", "um", "nm"})
     ),
-    "center_alt": FieldSpec(NUMBER_TYPES, required=True, nullable=True),
-    "thick": FieldSpec(NUMBER_TYPES, required=True, nullable=True),
-    "alt_upp": FieldSpec(NUMBER_TYPES, required=True, nullable=True),
-    "alt_low": FieldSpec(NUMBER_TYPES, required=True, nullable=True),
+    "center_alt": FieldSpec(NUMBER_TYPES, nullable=True),
+    "thick": FieldSpec(NUMBER_TYPES, nullable=True),
+    "alt_upp": FieldSpec(NUMBER_TYPES, nullable=True),
+    "alt_low": FieldSpec(NUMBER_TYPES, nullable=True),
     "emis": FieldSpec(NUMBER_TYPES, required=True),
     "inp_tau": FieldSpec(NUMBER_TYPES, required=True),
 }
@@ -389,6 +512,18 @@ def _is_array_like(value: Any) -> bool:
     return _is_sequence(value) or isinstance(value, np.ndarray)
 
 
+def _append_value_issue(
+    issues: list[str], field_path: str, value: Any, permitted: str
+) -> None:
+    """Append a diagnostic containing the field, supplied value, and constraint."""
+    issue = (
+        f"{field_path}: current value {value!r}; "
+        f"permitted values: {permitted}"
+    )
+    if issue not in issues:
+        issues.append(issue)
+
+
 def _check_mapping(
     value: Mapping[str, Any],
     schema: Mapping[str, FieldSpec],
@@ -419,7 +554,10 @@ def _check_mapping(
         item = value[key]
         if item is None:
             if not spec.nullable:
-                issues.append(f"{field_path}: may not be None")
+                if spec.permitted is None:
+                    issues.append(f"{field_path}: may not be None")
+                else:
+                    _append_value_issue(issues, field_path, item, spec.permitted)
             continue
         if spec.expected is not None:
             valid_type = isinstance(item, spec.expected)
@@ -431,19 +569,46 @@ def _check_mapping(
             ):
                 valid_type = valid_type and not isinstance(item, (bool, np.bool_))
             if not valid_type:
-                expected = ", ".join(t.__name__ for t in spec.expected)
-                issues.append(
-                    f"{field_path}: expected {expected}, got {type(item).__name__}"
-                )
+                if spec.permitted is None:
+                    expected = ", ".join(t.__name__ for t in spec.expected)
+                    issues.append(
+                        f"{field_path}: expected {expected}, got {type(item).__name__}"
+                    )
+                else:
+                    _append_value_issue(issues, field_path, item, spec.permitted)
                 continue
             if isinstance(item, Real) and not np.isfinite(item):
-                issues.append(f"{field_path}: must be finite")
+                if spec.permitted is None:
+                    issues.append(f"{field_path}: must be finite")
+                else:
+                    _append_value_issue(issues, field_path, item, spec.permitted)
                 continue
         if spec.choices is not None and item not in spec.choices:
-            choices = ", ".join(
-                repr(choice) for choice in sorted(spec.choices, key=str)
-            )
-            issues.append(f"{field_path}: expected one of {choices}, got {item!r}")
+            if spec.permitted is None:
+                choices = ", ".join(
+                    repr(choice) for choice in sorted(spec.choices, key=str)
+                )
+                issues.append(f"{field_path}: expected one of {choices}, got {item!r}")
+            else:
+                _append_value_issue(issues, field_path, item, spec.permitted)
+            continue
+        below_minimum = spec.minimum is not None and (
+            item < spec.minimum
+            if spec.minimum_inclusive
+            else item <= spec.minimum
+        )
+        above_maximum = spec.maximum is not None and (
+            item > spec.maximum
+            if spec.maximum_inclusive
+            else item >= spec.maximum
+        )
+        if below_minimum or above_maximum:
+            permitted = spec.permitted
+            if permitted is None:
+                lower = "-infinity" if spec.minimum is None else repr(spec.minimum)
+                upper = "infinity" if spec.maximum is None else repr(spec.maximum)
+                permitted = f"a value between {lower} and {upper}"
+            _append_value_issue(issues, field_path, item, permitted)
 
 
 def _validate_positive(mapping, keys, path, issues, *, allow_zero=False):
@@ -465,6 +630,175 @@ def _validate_positive(mapping, keys, path, issues, *, allow_zero=False):
             if invalid:
                 relation = "non-negative" if allow_zero else "greater than zero"
                 issues.append(f"{path}{key}: must be {relation}")
+
+
+def _validate_disort_inputs(
+    mapping: Mapping[str, Any], runner: str, issues: list[str]
+) -> None:
+    """Validate user-controlled values that reach native DISORT arguments.
+
+    The constraints mirror fatal checks in ``DISORT.f`` plus the stricter
+    requirements introduced by SRFM's conversion from degrees to angle cosines.
+    Every diagnostic uses the same actionable format: input name, supplied value,
+    and permitted values.
+
+    Args:
+        mapping: Normalized top-level input mapping.
+        runner: Runner identifier used to select its geometry representation.
+        issues: Mutable collection receiving detected problems.
+    """
+    maxcmu = mapping.get("maxcmu")
+    if type(maxcmu) is int and maxcmu % 2:
+        _append_value_issue(
+            issues, "maxcmu", maxcmu, SRFM_INPUT_SCHEMA["maxcmu"].permitted
+        )
+
+    onlyfl = mapping.get("onlyfl")
+    for key in ("maxumu", "maxphi"):
+        value = mapping.get(key)
+        if onlyfl is False and type(value) is int and value == 0:
+            _append_value_issue(
+                issues, key, value, SRFM_INPUT_SCHEMA[key].permitted
+            )
+
+    maxumu = mapping.get("maxumu")
+    if (
+        mapping.get("usrang") is False
+        and onlyfl is False
+        and type(maxumu) is int
+        and type(maxcmu) is int
+        and maxumu < maxcmu
+    ):
+        _append_value_issue(
+            issues, "maxumu", maxumu, SRFM_INPUT_SCHEMA["maxumu"].permitted
+        )
+
+    if mapping.get("usrtau") is False:
+        _append_value_issue(
+            issues,
+            "usrtau",
+            False,
+            SRFM_INPUT_SCHEMA["usrtau"].permitted,
+        )
+
+    if mapping.get("ibcnd") == 1 and onlyfl is True:
+        _append_value_issue(
+            issues,
+            "onlyfl",
+            True,
+            SRFM_INPUT_SCHEMA["onlyfl"].permitted,
+        )
+
+    output = mapping.get("out")
+    if mapping.get("ibcnd") == 1 and isinstance(output, list) and all(
+        isinstance(value, Real) for value in output
+    ):
+        output_count = len(output)
+        if mapping.get("out_toa") is True:
+            if mapping.get("out_fmt") == "tau":
+                contains_toa = any(np.isclose(value, 0.0) for value in output)
+            else:
+                levels = mapping.get("levels")
+                contains_toa = False
+                if _is_array_like(levels) and len(levels):
+                    top_altitude = levels[-1]
+                    if isinstance(top_altitude, Real):
+                        contains_toa = any(
+                            np.isclose(value, top_altitude) for value in output
+                        )
+            if not contains_toa:
+                output_count += 1
+        if output_count < 2:
+            _append_value_issue(
+                issues,
+                "out",
+                output,
+                (
+                    "at least two resolved output levels when ibcnd is 1 "
+                    "(native DISORT requires effective MAXULV >= 2)"
+                ),
+            )
+
+    prnt = mapping.get("prnt")
+    if "prnt" in mapping and (
+        not isinstance(prnt, list)
+        or len(prnt) != 5
+        or not all(type(value) is bool for value in prnt)
+    ):
+        _append_value_issue(
+            issues, "prnt", prnt, SRFM_INPUT_SCHEMA["prnt"].permitted
+        )
+
+    header = mapping.get("header")
+    if isinstance(header, str) and len(header) > 127:
+        _append_value_issue(
+            issues, "header", header, SRFM_INPUT_SCHEMA["header"].permitted
+        )
+
+    angular_intensities = mapping.get("usrang") is True and onlyfl is False
+    if runner == "srfm":
+        solar_zenith = mapping.get("sza")
+        if (
+            mapping.get("sun") is True
+            and isinstance(solar_zenith, Real)
+            and not isinstance(solar_zenith, (bool, np.bool_))
+            and solar_zenith >= 90
+        ):
+            _append_value_issue(
+                issues,
+                "sza",
+                solar_zenith,
+                SRFM_INPUT_SCHEMA["sza"].permitted,
+            )
+
+        viewing_zenith = mapping.get("zen")
+        invalid_view = (
+            angular_intensities
+            and isinstance(viewing_zenith, Real)
+            and np.isclose(viewing_zenith, 90)
+        )
+        invalid_ibcnd_view = (
+            mapping.get("ibcnd") == 1
+            and mapping.get("usrang") is True
+            and isinstance(viewing_zenith, Real)
+            and viewing_zenith >= 90
+        )
+        if invalid_view or invalid_ibcnd_view:
+            _append_value_issue(
+                issues,
+                "zen",
+                viewing_zenith,
+                SRFM_INPUT_SCHEMA["zen"].permitted,
+            )
+    elif runner == "oxharp":
+        solar_cosine = mapping.get("sza_cos")
+        if (
+            mapping.get("sun") is True
+            and isinstance(solar_cosine, Real)
+            and solar_cosine <= 0
+        ):
+            _append_value_issue(
+                issues,
+                "sza_cos",
+                solar_cosine,
+                OXHARP_INPUT_SCHEMA["sza_cos"].permitted,
+            )
+
+        viewing_cosine = mapping.get("zen_cos")
+        invalid_view = angular_intensities and viewing_cosine == 0
+        invalid_ibcnd_view = (
+            mapping.get("ibcnd") == 1
+            and mapping.get("usrang") is True
+            and isinstance(viewing_cosine, Real)
+            and viewing_cosine <= 0
+        )
+        if invalid_view or invalid_ibcnd_view:
+            _append_value_issue(
+                issues,
+                "zen_cos",
+                viewing_cosine,
+                OXHARP_INPUT_SCHEMA["zen_cos"].permitted,
+            )
 
 
 def _validate_rfm_config(config: Any, issues: list[str]) -> None:
@@ -651,8 +985,8 @@ def _validate_layers(layers: Any, issues: list[str]) -> None:
                 for key in ("center_alt", "thick", "alt_low", "alt_upp")
             )
         ):
-            expected_low = layer["center_alt"] - layer["thick"] / 2
-            expected_upp = layer["center_alt"] + layer["thick"] / 2
+            expected_low = round(layer["center_alt"] - layer["thick"] / 2, 3)
+            expected_upp = round(layer["center_alt"] + layer["thick"] / 2, 3)
             if not (
                 np.isclose(layer["alt_low"], expected_low)
                 and np.isclose(layer["alt_upp"], expected_upp)
@@ -737,8 +1071,8 @@ def _validate_grey_body_layers(layers: Any, issues: list[str]) -> None:
                 for key in ("center_alt", "thick", "alt_low", "alt_upp")
             )
         ):
-            expected_low = layer["center_alt"] - layer["thick"] / 2
-            expected_upp = layer["center_alt"] + layer["thick"] / 2
+            expected_low = round(layer["center_alt"] - layer["thick"] / 2, 3)
+            expected_upp = round(layer["center_alt"] + layer["thick"] / 2, 3)
             if not (
                 np.isclose(layer["alt_low"], expected_low)
                 and np.isclose(layer["alt_upp"], expected_upp)
@@ -821,13 +1155,6 @@ def _validate_inputs(
                 elif not np.all(np.diff(level_array) > 0):
                     issues.append("levels: values must be strictly increasing")
 
-    prnt = normalized.get("prnt")
-    if "prnt" in normalized and (
-        not isinstance(prnt, list)
-        or len(prnt) != 5
-        or not all(type(v) is bool for v in prnt)
-    ):
-        issues.append("prnt: must be a list containing exactly five boolean values")
     output = normalized.get("out")
     if "out" in normalized and output is not None:
         if isinstance(output, Real) and not isinstance(output, (bool, np.bool_)):
@@ -864,39 +1191,8 @@ def _validate_inputs(
                 "out: must be specified unless out_toa is True"
             )
 
-    _validate_positive(
-        normalized,
-        ("nmom", "maxcmu", "maxulv", "scattering_block_size"),
-        "",
-        issues,
-    )
-    _validate_positive(normalized, ("maxumu", "maxphi"), "", issues, allow_zero=True)
-    if normalized.get("onlyfl") is False:
-        for key in ("maxumu", "maxphi"):
-            if normalized.get(key) == 0:
-                issues.append(f"{key}: may be zero only when onlyfl is True")
-    if normalized.get("usrtau") is False:
-        issues.append("usrtau: must be True when output levels are specified with out")
-    if isinstance(normalized.get("maxcmu"), Integral) and normalized["maxcmu"] % 2:
-        issues.append("maxcmu: must be even")
-    if isinstance(normalized.get("maxcmu"), Integral) and normalized["maxcmu"] < 2:
-        issues.append("maxcmu: must be at least 2")
-    bounded_fields = [
-        ("albedo", 0, 1),
-        ("temis", 0, 1),
-    ]
-    if runner == "srfm":
-        bounded_fields.extend(
-            (("sza", 0, 180), ("zen", 0, 180), ("saa", 0, 360), ("azi", 0, 360))
-        )
-    elif runner == "oxharp":
-        bounded_fields.extend(
-            (("saa", 0, 360), ("azi", 0, 360), ("sza_cos", -1, 1), ("zen_cos", -1, 1))
-        )
-    for key, lower, upper in bounded_fields:
-        value = normalized.get(key)
-        if isinstance(value, Real) and not lower <= value <= upper:
-            issues.append(f"{key}: must be between {lower} and {upper}")
+    _validate_positive(normalized, ("scattering_block_size",), "", issues)
+    _validate_disort_inputs(normalized, runner, issues)
 
     if (
         runner != "iasi"
@@ -943,13 +1239,6 @@ def _validate_inputs(
                 "out_mode: retain_outputs must include bbt or radiance "
                 "when writing text output"
             )
-
-    header = normalized.get("header")
-    if isinstance(header, str) and len(header) >= 127:
-        issues.append("header: must contain fewer than 127 characters")
-    earth_radius = normalized.get("earth_radius")
-    if isinstance(earth_radius, Real) and earth_radius <= 0:
-        issues.append("earth_radius: must be greater than zero")
 
     rfm_config = normalized.get("rfm_config")
     if isinstance(rfm_config, Mapping) and rfm_config.get("output_mode") == "files":

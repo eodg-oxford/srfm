@@ -75,6 +75,7 @@ class RI:
     expected_column_names = ["wavl", "wavn", "n", "dn", "k", "dk"]
 
     def __init__(self):
+        """Initialize empty mappings for refractive-index headers and data."""
         self.header = {}
         self.data = {}
 

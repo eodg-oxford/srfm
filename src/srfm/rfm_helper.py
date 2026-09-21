@@ -334,6 +334,7 @@ def _run_rfm_impl(
         removed = clean_outputs(root, patterns)
 
     def _invoke() -> int:
+        """Invoke the native RFM wrapper with the requested capture options."""
         # Forward whichever optional pieces we have to the shared library.
         kwargs: dict[str, Any] = {}
         kwargs["driver_lines"] = []
@@ -774,6 +775,12 @@ class SpectralRange:
     label: str | None = None
 
     def __post_init__(self) -> None:
+        """Validate the bounds and spacing of the spectral range.
+
+        Raises:
+            ValueError: If a value is non-finite, the bounds are reversed, or
+                the spacing is not positive.
+        """
         values = np.asarray([self.start, self.stop, self.spacing], dtype=float)
         if not np.all(np.isfinite(values)):
             raise ValueError("Spectral range values must be finite.")
@@ -783,6 +790,11 @@ class SpectralRange:
             raise ValueError("Spectral range spacing must be greater than zero.")
 
     def as_record(self) -> str:
+        """Format the spectral range as an RFM driver record.
+
+        Returns:
+            str: Optional label followed by the range values.
+        """
         body = f"{self.start:g} {self.stop:g} {self.spacing:g}"
         return f"{self.label} {body}" if self.label else body
 
@@ -801,9 +813,15 @@ class SpectralFile:
     label: str | None = None
 
     def __post_init__(self) -> None:
+        """Coerce the supplied spectral filename to a path."""
         object.__setattr__(self, "path", Path(self.path))
 
     def as_record(self) -> str:
+        """Format the spectral file reference as an RFM driver record.
+
+        Returns:
+            str: Optional label followed by the spectral file path.
+        """
         body = str(self.path)
         return f"{self.label} {body}" if self.label else body
 
@@ -820,9 +838,19 @@ class SectionLine:
     parts: tuple[Any, ...]
 
     def __init__(self, *parts: Any) -> None:
+        """Initialize a record from values that will be formatted as tokens.
+
+        Args:
+            *parts: Values to include in the driver record.
+        """
         object.__setattr__(self, "parts", tuple(parts))
 
     def as_record(self) -> str:
+        """Format all tokens as a space-delimited RFM driver record.
+
+        Returns:
+            str: Formatted driver record.
+        """
         return " ".join(_format_token(part) for part in self.parts)
 
 
@@ -1324,6 +1352,16 @@ def rfm_main(
         *,
         delete_after: bool = False,
     ) -> tuple[dict[str, str | bytes], dict[str, tuple[int, int]]]:
+        """Collect files created or changed since a prior directory snapshot.
+
+        Args:
+            before_snapshot: File metadata captured before the RFM run, or
+                ``None`` to collect every eligible file.
+            delete_after: Delete collected files after reading them.
+
+        Returns:
+            tuple: Collected file contents and the current directory snapshot.
+        """
         ignore_names = {"rfm.drv"}
         after_snapshot = _snapshot_files(run_directory)
         payload: dict[str, str | bytes] = {}
@@ -1437,6 +1475,17 @@ def rfm_main(
         include_levels: bool,
         clean: bool,
     ) -> RunResult:
+        """Execute one RFM run using the normalized top-level configuration.
+
+        Args:
+            mode: Select file output or in-memory capture.
+            enable_capture_flag: Explicit native capture setting, if any.
+            include_levels: Include optical-depth levels in the run arguments.
+            clean: Remove matching output files before the run.
+
+        Returns:
+            RunResult: Status and outputs returned by the shared runner.
+        """
         run_kwargs: dict[str, Any] = dict(
             run_id=run_id,
             clean_before=clean,
@@ -1466,6 +1515,11 @@ def rfm_main(
     )
 
     def _run_file_mode_capture() -> dict[str, str | bytes]:
+        """Run in file mode and return newly generated files in memory.
+
+        Returns:
+            dict[str, str | bytes]: Generated output payloads keyed by filename.
+        """
         before = _snapshot_files(run_directory)
         _execute_run(
             mode="files",
@@ -1621,6 +1675,18 @@ def _compose_driver_sections(
     """
 
     def ensure_non_empty(name: str, data: List[str]) -> List[str]:
+        """Return section data after verifying that it contains a record.
+
+        Args:
+            name: RFM driver section name used in error messages.
+            data: Normalized records for the section.
+
+        Returns:
+            list[str]: The unchanged section records.
+
+        Raises:
+            ValueError: If ``data`` is empty.
+        """
         if not data:
             raise ValueError(f"{name} section requires at least one entry.")
         return data
@@ -1629,6 +1695,16 @@ def _compose_driver_sections(
     seen_keys: set[str] = set()
 
     def append_section(key: str, records: List[str], required: bool = False) -> None:
+        """Append one validated section to the driver-table output.
+
+        Args:
+            key: RFM driver section identifier.
+            records: Normalized records belonging to the section.
+            required: Require at least one record when true.
+
+        Raises:
+            ValueError: If a required section is empty or a section is duplicated.
+        """
         if required:
             ensure_non_empty(key, records)
         if not records:
@@ -1830,6 +1906,11 @@ def _run_rfm_worker_entry(args_path: Path, result_path: Path) -> None:
 
 
 def _cli() -> None:
+    """Dispatch the private helper-process command-line entry point.
+
+    Raises:
+        SystemExit: If called without the private worker arguments.
+    """
     if len(sys.argv) == 4 and sys.argv[1] == "--rfm-worker":
         _run_rfm_worker_entry(Path(sys.argv[2]), Path(sys.argv[3]))
         return

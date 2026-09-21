@@ -23,6 +23,12 @@ class Layer:
     """Base superclass for an atmospheric layer."""
 
     def __init__(self, name=None, **parameters):
+        """Initialize a named atmospheric layer.
+
+        Args:
+            name (str | None): Human-readable layer name.
+            **parameters: Additional attributes assigned to the layer.
+        """
         self.name = name
         for key, val in parameters.items():
             setattr(self, key, val)
@@ -36,6 +42,12 @@ class MieLayer(Layer):
     """
 
     def __init__(self, name=None, **parameters):
+        """Initialize a layer used for Mie-scattering calculations.
+
+        Args:
+            name (str | None): Human-readable layer name.
+            **parameters: Additional attributes assigned to the layer.
+        """
         super().__init__(name)
         for key, val in parameters.items():
             setattr(self, key, val)
@@ -294,8 +306,9 @@ class MieLayer(Layer):
         """Set all necessary input_parameters from an input dictionary.
 
         Args:
-            inp_dict (dict): Input dictonary with layer properties. Must contain
-                all necessary keys (cannot be incomplete). Required keys are:
+            inp_dict (dict): Input dictionary with layer properties. It must
+                contain the calculation inputs below plus either
+                ``center_alt``/``thick`` or ``alt_low``/``alt_upp``:
 
                     - name
                     - low_spc
@@ -311,10 +324,6 @@ class MieLayer(Layer):
                     - v_den
                     - dist_type
                     - comp
-                    - center_alt
-                    - thick
-                    - alt_upp
-                    - alt_low
                     - radii
                     - eta
                     - phase_quad_N
@@ -342,10 +351,10 @@ class MieLayer(Layer):
         self.v_den = inp_dict["v_den"]
         self.dist_type = inp_dict["dist_type"]
         self.comp = inp_dict["comp"]
-        self.center_alt = inp_dict["center_alt"]
-        self.thick = inp_dict["thick"]
-        self.alt_upp = inp_dict["alt_upp"]
-        self.alt_low = inp_dict["alt_low"]
+        self.center_alt = inp_dict.get("center_alt")
+        self.thick = inp_dict.get("thick")
+        self.alt_upp = inp_dict.get("alt_upp")
+        self.alt_low = inp_dict.get("alt_low")
         self.radii = inp_dict["radii"]
         self.eta = inp_dict["eta"]
         self.phase_quad_N = inp_dict["phase_quad_N"]
@@ -658,10 +667,17 @@ class MieLayer(Layer):
             if (hasattr(self, "alt_upp") and hasattr(self, "alt_low")) and (
                 self.alt_upp is not None and self.alt_low is not None
             ):
-                assert (self.alt_upp, self.alt_low) == utils.calc_layer_extent(
-                    self.center_alt, self.thick
-                ), """Both layer (thickness + center altitude) and (upper + lower 
-                        boundary altitude) were given, but do not match."""
+                expected_upp, expected_low = utils.calc_layer_extent(
+                    float(self.center_alt), float(self.thick)
+                )
+                if not (
+                    np.isclose(self.alt_upp, expected_upp)
+                    and np.isclose(self.alt_low, expected_low)
+                ):
+                    raise ValueError(
+                        "Both layer center/thickness and boundary altitudes were "
+                        "given, but do not match."
+                    )
 
                 return
 
@@ -903,6 +919,7 @@ class MieLayer(Layer):
         interpolation_source = source[::-1] if source_order == 2 else source
 
         def interpolate(values):
+            """Interpolate one property array onto the requested wavelength grid."""
             values = np.asarray(values)
             ordered_values = values[::-1] if source_order == 2 else values
             if ordered_values.ndim == 1:
@@ -1118,6 +1135,13 @@ class GreyBodyCloud(Layer):
     """
 
     def __init__(self, name=None, emis=1, **parameters):
+        """Initialize a grey-body cloud layer.
+
+        Args:
+            name (str | None): Human-readable layer name.
+            emis (int, float): Cloud emissivity.
+            **parameters: Additional attributes assigned to the layer.
+        """
         super().__init__(name, **parameters)
         self.emis = emis
 
@@ -1221,18 +1245,15 @@ class GreyBodyCloud(Layer):
         """Set all necessary input parameters from an input dictionary.
 
         Args:
-            inp_dict (dict): Input dictionary with layer properties. Must contain
-                all necessary keys (cannot be incomplete). Required keys are:
+            inp_dict (dict): Input dictionary with layer properties. It must
+                contain the calculation inputs below plus either
+                ``center_alt``/``thick`` or ``alt_low``/``alt_upp``:
 
                     - name
                     - low_spc
                     - upp_spc
                     - spec_units
                     - res
-                    - center_alt
-                    - thick
-                    - alt_upp
-                    - alt_low
                     - emis
                     - inp_tau
 
@@ -1245,10 +1266,10 @@ class GreyBodyCloud(Layer):
         self.upp_spc = inp_dict["upp_spc"]
         self.spec_units = inp_dict["spec_units"]
         self.res = inp_dict["res"]
-        self.center_alt = inp_dict["center_alt"]
-        self.thick = inp_dict["thick"]
-        self.alt_upp = inp_dict["alt_upp"]
-        self.alt_low = inp_dict["alt_low"]
+        self.center_alt = inp_dict.get("center_alt")
+        self.thick = inp_dict.get("thick")
+        self.alt_upp = inp_dict.get("alt_upp")
+        self.alt_low = inp_dict.get("alt_low")
         self.emis = inp_dict["emis"]
         self.inp_tau = inp_dict["inp_tau"]
 

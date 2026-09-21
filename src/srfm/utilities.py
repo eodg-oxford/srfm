@@ -516,6 +516,7 @@ def show_runtime(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
+        """Run the decorated function and report its elapsed wall-clock time."""
         t_start = time.perf_counter()
         result = func(*args, **kwargs)
         t_end = time.perf_counter()
@@ -1132,6 +1133,17 @@ def convolve_spectrum(spc, x, ils):
     return spc_c
 
 def json_handler(obj):
+    """Convert supported NumPy and datetime objects to JSON-compatible values.
+
+    Args:
+        obj: Object passed to a JSON encoder's ``default`` callback.
+
+    Returns:
+        list, int, float, str: JSON-compatible representation of ``obj``.
+
+    Raises:
+        TypeError: If ``obj`` is not a supported NumPy or datetime value.
+    """
     if isinstance(obj, np.ndarray): return obj.tolist()
     if isinstance(obj, np.generic): return obj.item()
     if isinstance(obj, datetime.datetime): return obj.isoformat()

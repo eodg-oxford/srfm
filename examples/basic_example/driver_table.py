@@ -120,11 +120,10 @@ inputs = {
     "albedo": 0.0,  # bottom boundary albedo
     "temis": 1.0,  # top boundary emissivity
     "earth_radius": 6371.0,  # optional: Earth radius (km); defaults to 6371
-    "nmom": 17,  # number of phase function moments
-    "maxcmu": 16,  # number of computational streams
+    "nmom": 17,  # requested phase moments; SRFM raises this when required
+    "maxcmu": 16,  # computational streams; even and at least 4
     "maxumu": 1,  # number of user output polar angles
     "maxphi": 1,  # number of user azimuth angles
-    "maxulv": 1,  # legacy value; run_srfm derives this from out and out_toa
     "usrang": True,  # return output at user angles?
     "usrtau": True,  # return output at user optical depths?
     "ibcnd": 0,  # boundary conditions
@@ -158,8 +157,6 @@ inputs = {
             "comp": "sulphuric acid",  # refractive index
             "center_alt": 14.0,  # scattering layer center altitude
             "thick": 1.5,  # scattering layer thickness
-            "alt_upp": None,  # scattering layer upper boundary
-            "alt_low": None,  # scattering layer lower boundary
             "radii": 181,  # number of particle radii in particle size distribution
             "eta": 1e-6,  # size distribution cut-off
             "phase_quad_N": 200,  # number of quadrature points in the phase function
@@ -186,8 +183,6 @@ inputs = {
             "comp": "ash",
             "center_alt": 9.0,
             "thick": 1.0,
-            "alt_upp": None,
-            "alt_low": None,
             "radii": 181,
             "eta": 1e-6,
             "phase_quad_N": 200,
@@ -224,8 +219,6 @@ inputs = {
             "multiprocess": False,
             "mass_loading": 100.0,
             "r": 15.0,
-            "alt_upp": None,
-            "alt_low": None,
         },
     },
     "gbc_lyrs_inputs": {
@@ -237,17 +230,16 @@ inputs = {
             "spec_units": SPC_UNITS,  # spectral calculation grid units
             "center_alt": 5.0,  # layer center altitude (km)
             "thick": 0.01,  # layer thickness (km)
-            "alt_upp": None,  # layer upper boundary altitude (km)
-            "alt_low": None,  # layer lower boundary altitude (km)
             "emis": 1.0,  # grey-body emissivity; currently a stub
             "inp_tau": 1e4,  # cloud optical depth
         },
     },
     ## solar reflection
     "sun": True,  # if True, include solar reflection
-    "sza": 0,  # solar zenith angle, 0-180, 0 for directly overhead, >90 for night (not included)
+    # With sun=True, sza is in [0, 90); set sun=False for a night-side scene.
+    "sza": 0,  # solar zenith angle; 0 is directly overhead
     "saa": 0,  # solar azimuth angle, 0-360
     ## Angles
-    "zen": 40,  # satellite zenith angle, 0-180
+    "zen": 40,  # satellite zenith angle, 0-180 (not 90 for angular output)
     "azi": 50,  # satellite azimuth angle, 0-360
 }

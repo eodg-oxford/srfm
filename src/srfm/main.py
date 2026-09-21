@@ -165,7 +165,7 @@ def _prepare_grey_body_layers(values):
         dict[str, GreyBodyCloud]: Calculated layers keyed by their configured names.
     """
     grey_body_layers = {}
-    for layer_name, layer_inputs in values.get("gbc_lyrs_inputs", {}).items():
+    for layer_name, layer_inputs in (values.get("gbc_lyrs_inputs") or {}).items():
         grey_body_layer = layer.GreyBodyCloud()
         grey_body_layer.set_input_from_dict(dict(layer_inputs))
         grey_body_layer.calculate_op()
@@ -679,7 +679,7 @@ def run_srfm(inp):
     # define Layer properties
     scat_lyrs_inputs = {}
 
-    if "scat_lyrs_inputs" in inp.values.keys():
+    if inp.values.get("scat_lyrs_inputs"):
 
         # calculate MieLayer optical properties
         for lyr in inp.values["scat_lyrs_inputs"].keys():
@@ -956,8 +956,8 @@ def run_srfm(inp):
 
     model_DISORT.set_maxumu(inp.values["maxumu"])
     model_DISORT.set_maxphi(inp.values["maxphi"])
-    # maxulv must match the resolved output geometry. The driver-table value is
-    # retained for compatibility with other runners but is derived here.
+    # maxulv is an internal DISORT dimension derived from the resolved output
+    # geometry rather than a public driver-table input.
     model_DISORT.set_maxulv(len(output_values))
     effective_params["maxulv"] = len(output_values)
 

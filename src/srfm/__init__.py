@@ -42,6 +42,15 @@ __all__ = [
 
 
 def _safe_import(name: str, optional: bool = False):
+    """Import a package submodule while tolerating missing optional extensions.
+
+    Args:
+        name: Submodule name relative to :mod:`srfm`.
+        optional: Emit a warning and bind ``None`` when the submodule is missing.
+
+    Raises:
+        ModuleNotFoundError: If a required submodule cannot be imported.
+    """
     try:
         module = import_module(f".{name}", __name__)
         globals()[name] = module

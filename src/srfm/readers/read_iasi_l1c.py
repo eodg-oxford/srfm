@@ -47,11 +47,6 @@ class Iasi_L1c:
       stats (dict[str, int]): Summary counts of good/bad pixels and MDRs.
       mdruse (list[bool]): Flags showing which Measurement Data Records are usable.
 
-    Methods:
-      spectrum: Return a single spectrum, optionally in brightness temperature.
-      subset: Reduce `loc` to entries that match additional filters.
-      write_stats: Print statistics about good/bad pixels and MDR usage.
-
     Examples:
       ```python
       from srfm.readers.read_iasi_l1c import Iasi_L1c

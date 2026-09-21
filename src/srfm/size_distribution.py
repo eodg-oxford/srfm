@@ -26,6 +26,11 @@ class SizeDistribution(ABC):
     """
 
     def __init__(self, type):
+        """Initialize a size distribution with its distribution type.
+
+        Args:
+            type (str): Name of the particle size distribution.
+        """
         self.type = type
 
     @abstractmethod
@@ -52,12 +57,26 @@ class GaussianDistribution(SizeDistribution):
     def __init__(
         self, n=None, r=None, s=None, surface_area_density=None, volume_density=None
     ):
+        """Initialize the unimplemented Gaussian distribution container.
+
+        Args:
+            n (int, float | None): Particle number concentration.
+            r (int, float | None): Mean particle radius.
+            s (int, float | None): Distribution spread.
+            surface_area_density (int, float | None): Reserved surface-area density.
+            volume_density (int, float | None): Reserved particle-volume density.
+        """
         super().__init__("gaussian")
         self.n = n  # number per cm^3
         self.r = r  # um
         self.s = s
 
     def mean(self):
+        """Return the stored mean particle radius.
+
+        Returns:
+            int, float | None: Mean particle radius.
+        """
         return self.r
 
 
@@ -88,6 +107,18 @@ class LogNormalDistribution(SizeDistribution):
     def __init__(
         self, n=None, r=None, s=None, surface_area_density=None, volume_density=None
     ):
+        """Initialize a log-normal distribution from a valid parameter set.
+
+        Args:
+            n (int, float | None): Particle number concentration.
+            r (int, float | None): Median particle radius in micrometres.
+            s (int, float | None): Geometric standard deviation.
+            surface_area_density (int, float | None): Particle surface-area density.
+            volume_density (int, float | None): Particle volume density.
+
+        Raises:
+            ValueError: If values are non-positive or their combination is invalid.
+        """
         super().__init__("log_normal")
 
         # Check which combination of inputs is provided
