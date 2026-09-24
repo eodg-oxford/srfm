@@ -1,0 +1,50 @@
+
+
+.. _sphx_glr_auto_examples_basic_example:
+
+Basic examples
+==============
+
+Start here to configure and run SRFM from a Python driver table.
+
+
+.. raw:: html
+
+  <div id='sg-tag-list' class='sphx-glr-tag-list'></div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbnails">
+
+.. thumbnail-parent-div-open
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="This example calculates brightness-temperature spectra for an atmosphere with sulphuric-acid aerosol, ash, and a water cloud. It demonstrates the traditional SRFM workflow in which a small runner loads a separate, editable driver table.">
+
+.. only:: html
+
+  .. image:: /auto_examples/basic_example/images/thumb/sphx_glr_run_srfm_thumb.png
+    :alt:
+
+  :doc:`/auto_examples/basic_example/run_srfm`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Run SRFM with a driver table</div>
+    </div>
+
+
+.. thumbnail-parent-div-close
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/basic_example/run_srfm
+

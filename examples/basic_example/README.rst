@@ -22,4 +22,7 @@ From this directory, run::
 
 The output is written beneath ``results/``. Edit ``driver_table.py`` to change
 the grids, output geometry, atmospheric inputs, scattering layers, or viewing
-angles.
+angles. The table also demonstrates a coarse spectral Lambertian albedo, a
+custom beam-normal solar spectrum that is passed to DISORT without amplitude or
+date scaling, and a prescribed Angstrom/Henyey--Greenstein layer separated from
+the Mie and grey-body layers.

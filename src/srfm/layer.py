@@ -9,6 +9,7 @@ Used to contain scattering information for a single layer.
 """
 
 from numbers import Real
+from collections.abc import Mapping
 
 import numpy as np
 from . import optical_properties as op
@@ -17,6 +18,10 @@ import warnings
 from . import size_distribution as sz
 from multiprocessing import Process, Manager
 import matplotlib.pyplot as plt
+from .spectral_fields import SpectralField
+
+
+NORMALIZED_MOMENT_TOLERANCE = 1e-5
 
 
 class Layer:
@@ -516,7 +521,85 @@ class MieLayer(Layer):
 
         return passmark
 
-    def calculate_op(self):
+    def validate_inputs(self):
+        """Validate all Mie inputs before calculating optical properties.
+
+        The method also resolves the configured vertical representation so every
+        optical-layer object exposes finite lower and upper boundaries during the
+        cross-layer geometry check.
+
+        Returns:
+            bool: ``True`` when every input is valid.
+
+        Raises:
+            TypeError: If an input has an unsupported type.
+            ValueError: If an input is non-finite or outside its physical range.
+            RuntimeError: If the vertical extent or particle loading is incomplete.
+        """
+        self.calc_layer_extent()
+        if not isinstance(self.name, str) or not self.name:
+            raise TypeError("Name must be a non-empty string.")
+        for attribute_name in ("low_spc", "upp_spc", "res", "r", "s", "eta"):
+            value = getattr(self, attribute_name, None)
+            if (
+                not isinstance(value, Real)
+                or isinstance(value, (bool, np.bool_))
+                or not np.isfinite(value)
+            ):
+                raise TypeError(f"{attribute_name} must be a finite real number.")
+        if self.low_spc < 0 or self.upp_spc <= self.low_spc:
+            raise ValueError("Mie spectral bounds must satisfy 0 <= low_spc < upp_spc.")
+        if self.res <= 0:
+            raise ValueError("Mie spectral resolution must be greater than zero.")
+        if self.spec_units not in {"cm-1", "um", "nm"}:
+            raise ValueError("Spec_units must be one of 'cm-1', 'um', or 'nm'.")
+        if self.r < 0:
+            raise ValueError("Particle mean radius (r) must be non-negative.")
+        if self.s < 1:
+            raise ValueError("Distribution spread must be greater than or equal to 1.")
+        if not 0 < self.eta < 1:
+            raise ValueError("Eta must satisfy 0 < eta < 1.")
+        for attribute_name in ("radii", "phase_quad_N"):
+            value = getattr(self, attribute_name, None)
+            if type(value) is not int or value < 1:
+                raise TypeError(f"{attribute_name} must be a positive integer.")
+        for attribute_name in ("mass_loading", "n", "s_a_den", "v_den"):
+            value = getattr(self, attribute_name, None)
+            if value is not None and (
+                not isinstance(value, Real)
+                or isinstance(value, (bool, np.bool_))
+                or not np.isfinite(value)
+                or value < 0
+            ):
+                raise ValueError(f"{attribute_name} must be finite and non-negative.")
+        if all(
+            getattr(self, attribute_name, None) is None
+            for attribute_name in ("mass_loading", "n", "s_a_den", "v_den")
+        ):
+            raise RuntimeError(
+                "One of mass_loading, n, s_a_den, or v_den must be supplied."
+            )
+        density = getattr(self, "rho", None)
+        if isinstance(density, Real) and not isinstance(density, (bool, np.bool_)):
+            if not np.isfinite(density) or density <= 0:
+                raise ValueError("rho must be finite and greater than zero.")
+        elif not isinstance(density, str):
+            raise TypeError("rho must be a finite real number or supported name.")
+        for attribute_name in ("alt_low", "alt_upp", "center_alt", "thick"):
+            value = getattr(self, attribute_name, None)
+            if (
+                not isinstance(value, Real)
+                or isinstance(value, (bool, np.bool_))
+                or not np.isfinite(value)
+            ):
+                raise TypeError(f"{attribute_name} must be a finite real number.")
+        if self.alt_low >= self.alt_upp:
+            raise ValueError("alt_low must be less than alt_upp.")
+        if self.thick < 0.002:
+            raise ValueError("Mie layer thickness must be at least 0.002 km.")
+        return True
+
+    def calculate_op(self, validate=True):
         """Used to calculate the optical properties for the MieLayer class.
 
         The function calls specialized functions to perform the actual calculations.
@@ -535,8 +618,10 @@ class MieLayer(Layer):
 
         """
 
-        # calcualtes layer vertical extent related properties
-        self.calc_layer_extent()
+        # Calculate layer vertical-extent properties and validate raw inputs before
+        # deriving concentration or optical quantities.
+        if validate:
+            self.validate_inputs()
         self.nsv_or_ml()
         if self.test_complete_input_format():
             pass
@@ -551,6 +636,46 @@ class MieLayer(Layer):
         self.calc_size_distribution()
         self.calc_grids()
         self.calc_optical_properties()
+
+    @property
+    def required_nmom(self):
+        """Return the highest available normalized Legendre-moment order."""
+        if not hasattr(self, "legendre_coefficient"):
+            return 0
+        return int(np.asarray(self.legendre_coefficient).shape[1] - 1)
+
+    def column_optical_properties(self, wavenumber_cm_inverse, nmom=None):
+        """Interpolate Mie column optical properties for one spectral block.
+
+        Extinction coefficient is converted to complete layer optical depth inside
+        this interface, keeping the runner independent of the particle source.
+
+        Args:
+            wavenumber_cm_inverse (array-like): Target grid in ``cm-1``.
+            nmom (int | None): Optional maximum moment order. When supplied,
+                calculated coefficients are padded with zeros through this order.
+
+        Returns:
+            dict[str, numpy.ndarray]: Column optical depth, single-scattering
+            albedo, and normalized Legendre coefficients.
+        """
+        wavenumber = np.asarray(wavenumber_cm_inverse, dtype=float)
+        wavelengths = 1.0e4 / wavenumber
+        properties = self.interpolate_optical_properties(wavelengths)
+        normalized_moments = properties["legendre_coefficient"]
+        if nmom is not None:
+            if type(nmom) is not int or nmom < self.required_nmom:
+                raise ValueError("nmom must include every calculated Mie moment")
+            padded_moments = np.zeros((wavenumber.size, nmom + 1), dtype=float)
+            padded_moments[:, : normalized_moments.shape[1]] = normalized_moments
+            normalized_moments = padded_moments
+        return {
+            "particle_optical_depth": (
+                properties["beta_ext"] * 1.0e3 * (self.alt_upp - self.alt_low)
+            ),
+            "single_scattering_albedo": properties["ssalb"],
+            "normalized_legendre_coefficients": normalized_moments,
+        }
 
     def nsv_or_ml(self):
         """Check input for size distribution.
@@ -1119,6 +1244,351 @@ class MieLayer(Layer):
         return
 
 
+class PrescribedOpticalLayer(Layer):
+    """Layer whose column particle optical properties are supplied by the user.
+
+    Optical depth may be tabulated or follow an Angstrom law. Single-scattering
+    albedo may be scalar or spectral. Phase data may be analytic
+    Henyey-Greenstein asymmetry or tabulated normalized Legendre moments.
+    """
+
+    def set_input_from_dict(self, inp_dict):
+        """Set prescribed-layer inputs from their public mapping.
+
+        Args:
+            inp_dict (Mapping): Layer name, bounds, optical depth, albedo, and
+                optional phase-function specification.
+        """
+        self.name = inp_dict["name"]
+        self.alt_low = inp_dict["alt_low"]
+        self.alt_upp = inp_dict["alt_upp"]
+        self.optical_depth_input = inp_dict["optical_depth"]
+        self.single_scattering_albedo_input = inp_dict["ssalb"]
+        self.phase_function_input = inp_dict.get("phase_function")
+
+    @staticmethod
+    def _finite_scalar(value, field_path, minimum=None, maximum=None):
+        """Return one validated finite real scalar."""
+        if (
+            not isinstance(value, Real)
+            or isinstance(value, (bool, np.bool_))
+            or not np.isfinite(value)
+        ):
+            raise ValueError(f"{field_path} must be a finite real number")
+        scalar = float(value)
+        if minimum is not None and scalar < minimum:
+            raise ValueError(f"{field_path} must be greater than or equal to {minimum:g}")
+        if maximum is not None and scalar > maximum:
+            raise ValueError(f"{field_path} must be less than or equal to {maximum:g}")
+        return scalar
+
+    def validate_inputs(
+        self,
+        computational_wavenumber_cm_inverse,
+        *,
+        scattering_block_size=10000,
+    ):
+        """Validate and prepare every prescribed optical input.
+
+        Validation processes the computational grid in bounded blocks when phase
+        requirements depend on interpolated scattering optical depth. No RFM,
+        Mie, or DISORT calculation is invoked.
+
+        Args:
+            computational_wavenumber_cm_inverse (array-like): Complete model grid
+                in ``cm-1``.
+            scattering_block_size (int): Maximum number of target points handled
+                together while validating coupled spectral quantities.
+
+        Returns:
+            bool: ``True`` when all inputs are valid.
+
+        Raises:
+            TypeError: If a required mapping has the wrong type.
+            ValueError: If geometry, spectra, or phase normalization are invalid.
+        """
+        path = f"prescribed_lyrs_inputs.{self.name}"
+        if not isinstance(self.name, str) or not self.name:
+            raise TypeError("Prescribed layer name must be a non-empty string")
+        self.alt_low = self._finite_scalar(self.alt_low, f"{path}.alt_low")
+        self.alt_upp = self._finite_scalar(self.alt_upp, f"{path}.alt_upp")
+        if self.alt_low >= self.alt_upp:
+            raise ValueError(f"{path}.alt_low must be less than alt_upp")
+        self.thick = self.alt_upp - self.alt_low
+        self.center_alt = self.alt_low + self.thick / 2.0
+        if type(scattering_block_size) is not int or scattering_block_size <= 0:
+            raise ValueError("scattering_block_size must be a positive integer")
+        computational_grid = np.asarray(
+            computational_wavenumber_cm_inverse, dtype=float
+        )
+        if (
+            computational_grid.ndim != 1
+            or computational_grid.size == 0
+            or not np.all(np.isfinite(computational_grid))
+            or np.any(computational_grid <= 0)
+        ):
+            raise ValueError("computational wavenumber grid must be finite and positive")
+
+        optical_depth = self.optical_depth_input
+        if not isinstance(optical_depth, Mapping):
+            raise TypeError(f"{path}.optical_depth must be a mapping")
+        optical_depth_type = optical_depth.get("type")
+        self.optical_depth_type = optical_depth_type
+        self.optical_depth_field = None
+        if optical_depth_type == "angstrom":
+            self.reference_optical_depth = self._finite_scalar(
+                optical_depth.get("reference_value"),
+                f"{path}.optical_depth.reference_value",
+                minimum=0,
+            )
+            self.reference_wavelength_um = self._finite_scalar(
+                optical_depth.get("reference_wavelength_um"),
+                f"{path}.optical_depth.reference_wavelength_um",
+                minimum=np.nextafter(0.0, 1.0),
+            )
+            self.angstrom_exponent = self._finite_scalar(
+                optical_depth.get("angstrom_exponent"),
+                f"{path}.optical_depth.angstrom_exponent",
+            )
+        elif optical_depth_type == "tabulated":
+            self.optical_depth_field = SpectralField.from_specification(
+                optical_depth,
+                f"{path}.optical_depth",
+                minimum=0,
+            )
+            self.optical_depth_field.validate_coverage(computational_grid)
+        else:
+            raise ValueError(
+                f"{path}.optical_depth.type must be 'angstrom' or 'tabulated'"
+            )
+
+        single_scattering_albedo = self.single_scattering_albedo_input
+        self.single_scattering_albedo_field = None
+        if isinstance(single_scattering_albedo, Real) and not isinstance(
+            single_scattering_albedo, (bool, np.bool_)
+        ):
+            self.single_scattering_albedo_scalar = self._finite_scalar(
+                single_scattering_albedo,
+                f"{path}.ssalb",
+                minimum=0,
+                maximum=1,
+            )
+        elif isinstance(single_scattering_albedo, Mapping):
+            self.single_scattering_albedo_scalar = None
+            self.single_scattering_albedo_field = SpectralField.from_specification(
+                single_scattering_albedo,
+                f"{path}.ssalb",
+                minimum=0,
+                maximum=1,
+            )
+            self.single_scattering_albedo_field.validate_coverage(computational_grid)
+        else:
+            raise TypeError(
+                f"{path}.ssalb must be a finite scalar or a spectral-field mapping; "
+                "bare arrays have no interpolation coordinate"
+            )
+
+        phase_function = self.phase_function_input
+        self.phase_function_type = None
+        self.asymmetry_scalar = None
+        self.asymmetry_field = None
+        self.moment_field = None
+        if phase_function is not None:
+            if not isinstance(phase_function, Mapping):
+                raise TypeError(f"{path}.phase_function must be a mapping or None")
+            self.phase_function_type = phase_function.get("type")
+            if self.phase_function_type == "henyey_greenstein":
+                asymmetry = phase_function.get("asymmetry")
+                if isinstance(asymmetry, Real) and not isinstance(
+                    asymmetry, (bool, np.bool_)
+                ):
+                    self.asymmetry_scalar = self._finite_scalar(
+                        asymmetry,
+                        f"{path}.phase_function.asymmetry",
+                        minimum=-1,
+                        maximum=1,
+                    )
+                elif isinstance(asymmetry, Mapping):
+                    self.asymmetry_field = SpectralField.from_specification(
+                        asymmetry,
+                        f"{path}.phase_function.asymmetry",
+                        minimum=-1,
+                        maximum=1,
+                    )
+                    self.asymmetry_field.validate_coverage(computational_grid)
+                else:
+                    raise TypeError(
+                        f"{path}.phase_function.asymmetry must be a scalar or "
+                        "spectral-field mapping"
+                    )
+            elif self.phase_function_type == "legendre_moments":
+                if phase_function.get("convention") != "normalised":
+                    raise ValueError(
+                        f"{path}.phase_function.convention must be 'normalised'"
+                    )
+                self.moment_field = SpectralField.from_specification(
+                    phase_function,
+                    f"{path}.phase_function",
+                    matrix_values=True,
+                )
+                self.moment_field.validate_coverage(computational_grid)
+            else:
+                raise ValueError(
+                    f"{path}.phase_function.type must be 'henyey_greenstein' "
+                    "or 'legendre_moments'"
+                )
+
+        phase_required = False
+        for start in range(0, computational_grid.size, scattering_block_size):
+            stop = min(start + scattering_block_size, computational_grid.size)
+            block = computational_grid[start:stop]
+            particle_optical_depth = self._interpolate_optical_depth(block)
+            single_scattering_albedo = self._interpolate_single_scattering_albedo(block)
+            if not np.all(np.isfinite(particle_optical_depth)) or np.any(
+                particle_optical_depth < 0
+            ):
+                raise ValueError(
+                    f"{path}.optical_depth must be finite and non-negative "
+                    "throughout the computational grid"
+                )
+            if not np.all(np.isfinite(single_scattering_albedo)) or np.any(
+                (single_scattering_albedo < 0) | (single_scattering_albedo > 1)
+            ):
+                raise ValueError(
+                    f"{path}.ssalb must be finite and in [0, 1] throughout "
+                    "the computational grid"
+                )
+            scattering = particle_optical_depth * single_scattering_albedo > 0
+            if np.any(scattering):
+                phase_required = True
+                if self.moment_field is not None:
+                    zeroth_moment = self.moment_field.interpolate(block)[:, 0]
+                    if np.any(
+                        np.abs(zeroth_moment[scattering] - 1.0)
+                        > NORMALIZED_MOMENT_TOLERANCE
+                    ):
+                        raise ValueError(
+                            f"{path}.phase_function.values: beta_0 must equal 1 "
+                            f"within {NORMALIZED_MOMENT_TOLERANCE:g} wherever "
+                            "particle scattering optical depth is positive"
+                        )
+        if phase_required and self.phase_function_type is None:
+            raise ValueError(
+                f"{path}.phase_function is required where optical_depth * ssalb is positive"
+            )
+        self._validated = True
+        return True
+
+    @property
+    def required_nmom(self):
+        """Return the highest explicitly supplied Legendre-moment order."""
+        return 0 if self.moment_field is None else self.moment_field.component_count - 1
+
+    def _interpolate_optical_depth(self, wavenumber_cm_inverse):
+        """Evaluate prescribed column optical depth on one target block."""
+        wavenumber = np.asarray(wavenumber_cm_inverse, dtype=float)
+        if self.optical_depth_type == "angstrom":
+            wavelength_um = 1.0e4 / wavenumber
+            return self.reference_optical_depth * (
+                wavelength_um / self.reference_wavelength_um
+            ) ** (-self.angstrom_exponent)
+        return self.optical_depth_field.interpolate(wavenumber)
+
+    def _interpolate_single_scattering_albedo(self, wavenumber_cm_inverse):
+        """Evaluate particle single-scattering albedo on one target block."""
+        wavenumber = np.asarray(wavenumber_cm_inverse, dtype=float)
+        if self.single_scattering_albedo_field is None:
+            return np.full(wavenumber.shape, self.single_scattering_albedo_scalar)
+        return self.single_scattering_albedo_field.interpolate(wavenumber)
+
+    def column_optical_properties(self, wavenumber_cm_inverse, nmom=None):
+        """Return prescribed column optical properties for one spectral block.
+
+        Args:
+            wavenumber_cm_inverse (array-like): Target wavenumbers in ``cm-1``.
+            nmom (int | None): Highest requested Legendre order. Defaults to the
+                highest explicitly supplied order or zero.
+
+        Returns:
+            dict[str, numpy.ndarray]: Column optical depth, single-scattering
+            albedo, and normalized Legendre coefficients.
+
+        Raises:
+            RuntimeError: If :meth:`validate_inputs` has not been called.
+            ValueError: If ``nmom`` is negative or smaller than tabulated data.
+        """
+        if not getattr(self, "_validated", False):
+            raise RuntimeError("validate_inputs must be called before optical interpolation")
+        if nmom is None:
+            nmom = self.required_nmom
+        if type(nmom) is not int or nmom < self.required_nmom:
+            raise ValueError("nmom must include every supplied Legendre moment")
+        wavenumber = np.asarray(wavenumber_cm_inverse, dtype=float)
+        particle_optical_depth = self._interpolate_optical_depth(wavenumber)
+        single_scattering_albedo = self._interpolate_single_scattering_albedo(wavenumber)
+        if self.phase_function_type is None:
+            moments = np.zeros((wavenumber.size, nmom + 1), dtype=float)
+            moments[:, 0] = 1.0
+        elif self.phase_function_type == "henyey_greenstein":
+            if self.asymmetry_field is None:
+                asymmetry = np.full(wavenumber.shape, self.asymmetry_scalar)
+            else:
+                asymmetry = self.asymmetry_field.interpolate(wavenumber)
+            moments = asymmetry[:, np.newaxis] ** np.arange(nmom + 1)[np.newaxis, :]
+        else:
+            supplied = self.moment_field.interpolate(wavenumber)
+            moments = np.zeros((wavenumber.size, nmom + 1), dtype=float)
+            moments[:, : supplied.shape[1]] = supplied
+        return {
+            "particle_optical_depth": particle_optical_depth,
+            "single_scattering_albedo": single_scattering_albedo,
+            "normalized_legendre_coefficients": moments,
+        }
+
+    def source_metadata(self):
+        """Return compact prescribed-input provenance without numerical arrays."""
+        metadata = {
+            "name": self.name,
+            "layer_type": "prescribed",
+            "alt_low": self.alt_low,
+            "alt_upp": self.alt_upp,
+        }
+        if self.optical_depth_type == "angstrom":
+            metadata["optical_depth"] = {
+                "type": "angstrom",
+                "reference_value": self.reference_optical_depth,
+                "reference_wavelength_um": self.reference_wavelength_um,
+                "angstrom_exponent": self.angstrom_exponent,
+            }
+        else:
+            metadata["optical_depth"] = {
+                "type": "tabulated",
+                **self.optical_depth_field.provenance(),
+            }
+        if self.single_scattering_albedo_field is None:
+            metadata["ssalb"] = self.single_scattering_albedo_scalar
+        else:
+            metadata["ssalb"] = self.single_scattering_albedo_field.provenance()
+        if self.phase_function_type == "henyey_greenstein":
+            metadata["phase_function"] = {
+                "type": "henyey_greenstein",
+                "asymmetry": (
+                    self.asymmetry_scalar
+                    if self.asymmetry_field is None
+                    else self.asymmetry_field.provenance()
+                ),
+            }
+        elif self.phase_function_type == "legendre_moments":
+            metadata["phase_function"] = {
+                "type": "legendre_moments",
+                "convention": "normalised",
+                **self.moment_field.provenance(),
+            }
+        else:
+            metadata["phase_function"] = None
+        return metadata
+
+
 class GreyBodyCloud(Layer):
     """Class that represents a grey body cloud.
 
@@ -1364,7 +1834,58 @@ class GreyBodyCloud(Layer):
 
         return passmark
 
-    def calculate_op(self):
+    def validate_inputs(self):
+        """Validate all grey-body inputs before calculating optical depth.
+
+        Returns:
+            bool: ``True`` when every input is valid.
+
+        Raises:
+            TypeError: If an input has an unsupported type.
+            ValueError: If an input is non-finite or outside its supported range.
+            RuntimeError: If vertical geometry is incomplete.
+        """
+        self.calc_layer_extent()
+        if not isinstance(self.name, str) or not self.name:
+            raise TypeError("Name must be a non-empty string.")
+        if not isinstance(self.spec_units, str):
+            raise TypeError("Spec_units must be str.")
+        numeric_attributes = (
+            "low_spc",
+            "upp_spc",
+            "res",
+            "center_alt",
+            "thick",
+            "alt_upp",
+            "alt_low",
+            "emis",
+            "inp_tau",
+        )
+        for attribute_name in numeric_attributes:
+            value = getattr(self, attribute_name, None)
+            if (
+                not isinstance(value, Real)
+                or isinstance(value, (bool, np.bool_))
+                or not np.isfinite(value)
+            ):
+                raise TypeError(f"{attribute_name} must be a finite real number.")
+        if self.low_spc < 0 or self.low_spc >= self.upp_spc:
+            raise ValueError("Grey-body bounds must satisfy 0 <= low_spc < upp_spc.")
+        if self.res <= 0:
+            raise ValueError("Grey-body spectral resolution must be greater than zero.")
+        if self.spec_units not in {"cm-1", "um", "nm"}:
+            raise ValueError("Spec_units must be one of 'cm-1', 'um', or 'nm'.")
+        if not 0 <= self.emis <= 1:
+            raise ValueError("Emissivity must be between 0 and 1.")
+        if self.inp_tau < 0:
+            raise ValueError("Optical depth must be non-negative.")
+        if self.alt_low >= self.alt_upp:
+            raise ValueError("alt_low must be less than alt_upp.")
+        if self.thick < 0.002:
+            raise ValueError("Grey-body layer thickness must be at least 0.002 km.")
+        return True
+
+    def calculate_op(self, validate=True):
         """Used to calculate the optical properties for the GreyBodyCloud class.
 
         The function calls specialized functions to perform the actual calculations.
@@ -1383,8 +1904,9 @@ class GreyBodyCloud(Layer):
 
         """
 
-        # Calculate layer vertical-extent properties.
-        self.calc_layer_extent()
+        # Resolve and validate geometry before calculating any optical quantities.
+        if validate:
+            self.validate_inputs()
 
         if self.test_complete_input_format():
             pass

@@ -1,0 +1,1027 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Driver table &mdash; SRFM 1.2.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css?v=fd6457a4" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css?v=f4aeca0c" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css?v=2082cf3c" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=590429e0"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/sg-tags.js?v=d80f6fa4"></script>
+      <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Input files" href="input_files.html" />
+    <link rel="prev" title="Run SRFM with a driver table" href="auto_examples/basic_example/run_srfm.html" />
+   
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-M598215MF0"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+
+    // Default: deny analytics storage until user consents
+    gtag('consent', 'default', {
+      'ad_storage': 'denied',
+      'analytics_storage': 'denied',
+      'wait_for_update': 500
+    });
+
+    gtag('js', new Date());
+
+    // Apply saved choice immediately
+    (function() {
+      const choice = localStorage.getItem('ga-consent');
+      if (choice === 'granted') {
+        gtag('consent', 'update', {analytics_storage: 'granted'});
+        gtag('config', 'G-M598215MF0');
+      }
+    })();
+  </script>
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            SRFM
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#components">Components</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#installation">Installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#supported-platforms-and-prerequisites">Supported platforms and prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#building-and-packaging">Building and packaging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#installing-from-dist">Installing from dist/</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#verification">Verification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#external-dependencies">External dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#documentation">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overview.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html#basic-examples">Basic examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="auto_examples/basic_example/index.html">Basic examples</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="auto_examples/basic_example/run_srfm.html">Run SRFM with a driver table</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="auto_examples/basic_example/run_srfm.html#external-spectroscopy-data">External spectroscopy data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="auto_examples/basic_example/run_srfm.html#the-driver-table">The driver table</a></li>
+<li class="toctree-l4"><a class="reference internal" href="auto_examples/basic_example/run_srfm.html#example-output">Example output</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Driver table</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#general-run-and-output">General run and output</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#spectral-grids">Spectral grids</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#output-geometry">Output geometry</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#atmospheric-calculation-levels">Atmospheric calculation levels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rfm-execution-configuration">RFM execution configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rfm-driver-sections">RFM driver sections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#disort-configuration">DISORT configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scattering-layer-configuration">Scattering-layer configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#prescribed-optical-layers">Prescribed optical layers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#vertical-optical-layer-restrictions">Vertical optical-layer restrictions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#solar-and-viewing-geometry">Solar and viewing geometry</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="input_files.html">Input files</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="input_files.html#driver-and-atmospheric-files">Driver and atmospheric files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input_files.html#common-spectral-text-format">Common spectral text format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input_files.html#surface-albedo-files">Surface albedo files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input_files.html#custom-solar-spectrum-files">Custom solar-spectrum files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input_files.html#prescribed-optical-property-files">Prescribed optical-property files</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="memory.html">Memory-efficient calculations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="memory.html#output-retention">Output retention</a></li>
+<li class="toctree-l2"><a class="reference internal" href="memory.html#compatibility-interfaces">Compatibility interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="memory.html#benchmarking">Benchmarking</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="srfm.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.ARIA_module">srfm.ARIA_module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.ARIA_module.RI"><code class="docutils literal notranslate"><span class="pre">RI</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.ARIA_module.RI.load_refractive_indices"><code class="docutils literal notranslate"><span class="pre">RI.load_refractive_indices()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.ARIA_module.RI.read"><code class="docutils literal notranslate"><span class="pre">RI.read()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.ARIA_module.RI.select"><code class="docutils literal notranslate"><span class="pre">RI.select()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.ARIA_module.ReadError"><code class="docutils literal notranslate"><span class="pre">ReadError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.ARIA_module.find_ri_files"><code class="docutils literal notranslate"><span class="pre">find_ri_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.ARIA_module.get_ri_filepathname"><code class="docutils literal notranslate"><span class="pre">get_ri_filepathname()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.ARIA_module.read_ri_file"><code class="docutils literal notranslate"><span class="pre">read_ri_file()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.disort_functions">srfm.disort_functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.disort_functions.get_pmom_from_disort"><code class="docutils literal notranslate"><span class="pre">get_pmom_from_disort()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.disort_functions.test_disort_input_format"><code class="docutils literal notranslate"><span class="pre">test_disort_input_format()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.disort_functions.test_disort_input_integrity"><code class="docutils literal notranslate"><span class="pre">test_disort_input_integrity()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.disort_functions.update_maxcmu"><code class="docutils literal notranslate"><span class="pre">update_maxcmu()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.disort_functions.update_maxulv"><code class="docutils literal notranslate"><span class="pre">update_maxulv()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.disort_functions.update_maxumu"><code class="docutils literal notranslate"><span class="pre">update_maxumu()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.forward_model">srfm.forward_model</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT"><code class="docutils literal notranslate"><span class="pre">DISORT</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.add_disort_empty_input"><code class="docutils literal notranslate"><span class="pre">DISORT.add_disort_empty_input()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.add_disort_input"><code class="docutils literal notranslate"><span class="pre">DISORT.add_disort_input()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.calc_bbt"><code class="docutils literal notranslate"><span class="pre">DISORT.calc_bbt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.calc_pmom"><code class="docutils literal notranslate"><span class="pre">DISORT.calc_pmom()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.calc_pmom_double"><code class="docutils literal notranslate"><span class="pre">DISORT.calc_pmom_double()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.calc_pmom_single"><code class="docutils literal notranslate"><span class="pre">DISORT.calc_pmom_single()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.initialize_disort_output_arrays"><code class="docutils literal notranslate"><span class="pre">DISORT.initialize_disort_output_arrays()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.run_disort"><code class="docutils literal notranslate"><span class="pre">DISORT.run_disort()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.run_disort_double"><code class="docutils literal notranslate"><span class="pre">DISORT.run_disort_double()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.run_disort_single"><code class="docutils literal notranslate"><span class="pre">DISORT.run_disort_single()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.save_model_pickle"><code class="docutils literal notranslate"><span class="pre">DISORT.save_model_pickle()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_accur"><code class="docutils literal notranslate"><span class="pre">DISORT.set_accur()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_albedo"><code class="docutils literal notranslate"><span class="pre">DISORT.set_albedo()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_bemst"><code class="docutils literal notranslate"><span class="pre">DISORT.set_bemst()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_btemp"><code class="docutils literal notranslate"><span class="pre">DISORT.set_btemp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_deltamplus"><code class="docutils literal notranslate"><span class="pre">DISORT.set_deltamplus()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_do_pseudo_sphere"><code class="docutils literal notranslate"><span class="pre">DISORT.set_do_pseudo_sphere()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_dtauc"><code class="docutils literal notranslate"><span class="pre">DISORT.set_dtauc()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_dtauc_manually"><code class="docutils literal notranslate"><span class="pre">DISORT.set_dtauc_manually()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_earth_radius"><code class="docutils literal notranslate"><span class="pre">DISORT.set_earth_radius()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_emust"><code class="docutils literal notranslate"><span class="pre">DISORT.set_emust()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_fbeam"><code class="docutils literal notranslate"><span class="pre">DISORT.set_fbeam()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_fisot"><code class="docutils literal notranslate"><span class="pre">DISORT.set_fisot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_h_lyr"><code class="docutils literal notranslate"><span class="pre">DISORT.set_h_lyr()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_h_lyr_from_rfm"><code class="docutils literal notranslate"><span class="pre">DISORT.set_h_lyr_from_rfm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_header"><code class="docutils literal notranslate"><span class="pre">DISORT.set_header()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_ibcnd"><code class="docutils literal notranslate"><span class="pre">DISORT.set_ibcnd()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_lamber"><code class="docutils literal notranslate"><span class="pre">DISORT.set_lamber()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_maxcly"><code class="docutils literal notranslate"><span class="pre">DISORT.set_maxcly()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_maxcly_from_rfm"><code class="docutils literal notranslate"><span class="pre">DISORT.set_maxcly_from_rfm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_maxcmu"><code class="docutils literal notranslate"><span class="pre">DISORT.set_maxcmu()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_maxmom"><code class="docutils literal notranslate"><span class="pre">DISORT.set_maxmom()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_maxphi"><code class="docutils literal notranslate"><span class="pre">DISORT.set_maxphi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_maxulv"><code class="docutils literal notranslate"><span class="pre">DISORT.set_maxulv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_maxumu"><code class="docutils literal notranslate"><span class="pre">DISORT.set_maxumu()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_mixed_pmom"><code class="docutils literal notranslate"><span class="pre">DISORT.set_mixed_pmom()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_onlyfl"><code class="docutils literal notranslate"><span class="pre">DISORT.set_onlyfl()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_phi"><code class="docutils literal notranslate"><span class="pre">DISORT.set_phi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_phi0"><code class="docutils literal notranslate"><span class="pre">DISORT.set_phi0()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_plank"><code class="docutils literal notranslate"><span class="pre">DISORT.set_plank()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_pmom"><code class="docutils literal notranslate"><span class="pre">DISORT.set_pmom()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_pmom_manually"><code class="docutils literal notranslate"><span class="pre">DISORT.set_pmom_manually()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_prnt"><code class="docutils literal notranslate"><span class="pre">DISORT.set_prnt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_rho_accurate"><code class="docutils literal notranslate"><span class="pre">DISORT.set_rho_accurate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_rhoq"><code class="docutils literal notranslate"><span class="pre">DISORT.set_rhoq()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_rhou"><code class="docutils literal notranslate"><span class="pre">DISORT.set_rhou()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_ssalb"><code class="docutils literal notranslate"><span class="pre">DISORT.set_ssalb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_ssalb_manually"><code class="docutils literal notranslate"><span class="pre">DISORT.set_ssalb_manually()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_temis"><code class="docutils literal notranslate"><span class="pre">DISORT.set_temis()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_temper"><code class="docutils literal notranslate"><span class="pre">DISORT.set_temper()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_temper_from_rfm"><code class="docutils literal notranslate"><span class="pre">DISORT.set_temper_from_rfm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_ttemp"><code class="docutils literal notranslate"><span class="pre">DISORT.set_ttemp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_umu"><code class="docutils literal notranslate"><span class="pre">DISORT.set_umu()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_umu0"><code class="docutils literal notranslate"><span class="pre">DISORT.set_umu0()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_usrang"><code class="docutils literal notranslate"><span class="pre">DISORT.set_usrang()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_usrtau"><code class="docutils literal notranslate"><span class="pre">DISORT.set_usrtau()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_utau"><code class="docutils literal notranslate"><span class="pre">DISORT.set_utau()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_wvl"><code class="docutils literal notranslate"><span class="pre">DISORT.set_wvl()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_wvnm"><code class="docutils literal notranslate"><span class="pre">DISORT.set_wvnm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.set_wvnm_range"><code class="docutils literal notranslate"><span class="pre">DISORT.set_wvnm_range()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.test_disort_input_format"><code class="docutils literal notranslate"><span class="pre">DISORT.test_disort_input_format()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DISORT.test_disort_input_integrity"><code class="docutils literal notranslate"><span class="pre">DISORT.test_disort_input_integrity()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.forward_model.DisortResult"><code class="docutils literal notranslate"><span class="pre">DisortResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.DisortResult.as_dict"><code class="docutils literal notranslate"><span class="pre">DisortResult.as_dict()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.forward_model.Fwd_model"><code class="docutils literal notranslate"><span class="pre">Fwd_model</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.forward_model.RFM"><code class="docutils literal notranslate"><span class="pre">RFM</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.RFM.add_rfm_opt_output"><code class="docutils literal notranslate"><span class="pre">RFM.add_rfm_opt_output()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.RFM.calc_col_dens_and_mass"><code class="docutils literal notranslate"><span class="pre">RFM.calc_col_dens_and_mass()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.RFM.get_wnos_from_RFM"><code class="docutils literal notranslate"><span class="pre">RFM.get_wnos_from_RFM()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.RFM.load_output_prf"><code class="docutils literal notranslate"><span class="pre">RFM.load_output_prf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.RFM.run_rfm"><code class="docutils literal notranslate"><span class="pre">RFM.run_rfm()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.forward_model.SRFM"><code class="docutils literal notranslate"><span class="pre">SRFM</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.SRFM.calc_bbt"><code class="docutils literal notranslate"><span class="pre">SRFM.calc_bbt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.SRFM.convolve_with_iasi"><code class="docutils literal notranslate"><span class="pre">SRFM.convolve_with_iasi()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.SRFM.initialize_srfm_output_arrays_from_disort"><code class="docutils literal notranslate"><span class="pre">SRFM.initialize_srfm_output_arrays_from_disort()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.SRFM.interp"><code class="docutils literal notranslate"><span class="pre">SRFM.interp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.SRFM.set_wvls"><code class="docutils literal notranslate"><span class="pre">SRFM.set_wvls()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.SRFM.set_wvnm"><code class="docutils literal notranslate"><span class="pre">SRFM.set_wvnm()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.forward_model.SRFM.store_disort_result"><code class="docutils literal notranslate"><span class="pre">SRFM.store_disort_result()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.iasi_main">srfm.iasi_main</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.iasi_main.run_srfm"><code class="docutils literal notranslate"><span class="pre">run_srfm()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.input_schema">srfm.input_schema</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.input_schema.FieldSpec"><code class="docutils literal notranslate"><span class="pre">FieldSpec</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.input_schema.InputValidationError"><code class="docutils literal notranslate"><span class="pre">InputValidationError</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.input_schema.get_iasi_input_schema"><code class="docutils literal notranslate"><span class="pre">get_iasi_input_schema()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.input_schema.get_oxharp_input_schema"><code class="docutils literal notranslate"><span class="pre">get_oxharp_input_schema()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.input_schema.get_srfm_input_schema"><code class="docutils literal notranslate"><span class="pre">get_srfm_input_schema()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.input_schema.validate_iasi_inputs"><code class="docutils literal notranslate"><span class="pre">validate_iasi_inputs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.input_schema.validate_oxharp_inputs"><code class="docutils literal notranslate"><span class="pre">validate_oxharp_inputs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.input_schema.validate_srfm_inputs"><code class="docutils literal notranslate"><span class="pre">validate_srfm_inputs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.inputs">srfm.inputs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.inputs.Inputs"><code class="docutils literal notranslate"><span class="pre">Inputs</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.inputs.Inputs.read_oxharp_drv"><code class="docutils literal notranslate"><span class="pre">Inputs.read_oxharp_drv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.inputs.Inputs.read_srfm_drv"><code class="docutils literal notranslate"><span class="pre">Inputs.read_srfm_drv()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.inputs.Inputs.validate_srfm"><code class="docutils literal notranslate"><span class="pre">Inputs.validate_srfm()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.layer">srfm.layer</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.calc_grids"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.calc_grids()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.calc_layer_extent"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.calc_layer_extent()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.calc_optical_properties"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.calc_optical_properties()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.calculate_op"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.calculate_op()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.interpolate_optical_depth"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.interpolate_optical_depth()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.plot_diff"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.plot_diff()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.regrid"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.regrid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.set_alt_lim"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.set_alt_lim()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.set_center_alt"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.set_center_alt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.set_emis"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.set_emis()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.set_input_from_dict"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.set_input_from_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.set_name"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.set_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.set_res"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.set_res()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.set_spc_lim"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.set_spc_lim()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.set_spec_units"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.set_spec_units()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.set_tau"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.set_tau()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.set_thick"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.set_thick()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.test_complete_input_format"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.test_complete_input_format()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.test_input_values"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.test_input_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.track_regrid_diff"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.track_regrid_diff()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.GreyBodyCloud.validate_inputs"><code class="docutils literal notranslate"><span class="pre">GreyBodyCloud.validate_inputs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.layer.Layer"><code class="docutils literal notranslate"><span class="pre">Layer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer"><code class="docutils literal notranslate"><span class="pre">MieLayer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.add_op_calc_output"><code class="docutils literal notranslate"><span class="pre">MieLayer.add_op_calc_output()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.calc_grids"><code class="docutils literal notranslate"><span class="pre">MieLayer.calc_grids()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.calc_layer_extent"><code class="docutils literal notranslate"><span class="pre">MieLayer.calc_layer_extent()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.calc_optical_properties"><code class="docutils literal notranslate"><span class="pre">MieLayer.calc_optical_properties()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.calc_size_distribution"><code class="docutils literal notranslate"><span class="pre">MieLayer.calc_size_distribution()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.calc_tau"><code class="docutils literal notranslate"><span class="pre">MieLayer.calc_tau()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.calculate_op"><code class="docutils literal notranslate"><span class="pre">MieLayer.calculate_op()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.column_optical_properties"><code class="docutils literal notranslate"><span class="pre">MieLayer.column_optical_properties()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.discard_phase_function"><code class="docutils literal notranslate"><span class="pre">MieLayer.discard_phase_function()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.interpolate_optical_properties"><code class="docutils literal notranslate"><span class="pre">MieLayer.interpolate_optical_properties()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.n_s_v"><code class="docutils literal notranslate"><span class="pre">MieLayer.n_s_v()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.nsv_or_ml"><code class="docutils literal notranslate"><span class="pre">MieLayer.nsv_or_ml()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.plot_diff"><code class="docutils literal notranslate"><span class="pre">MieLayer.plot_diff()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.regrid"><code class="docutils literal notranslate"><span class="pre">MieLayer.regrid()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.required_nmom"><code class="docutils literal notranslate"><span class="pre">MieLayer.required_nmom</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_alt_lim"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_alt_lim()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_center_alt"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_center_alt()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_comp"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_comp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_dist_type"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_dist_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_eta"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_eta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_input_from_dict"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_input_from_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_leg_coeffs"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_leg_coeffs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_leg_coeffs_type"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_leg_coeffs_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_mass_loading"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_mass_loading()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_multiproccess"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_multiproccess()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_n"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_n()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_name"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_name()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_phase_quad_N"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_phase_quad_N()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_phase_quad_type"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_phase_quad_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_r"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_r()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_radii"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_radii()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_radii_quad_type"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_radii_quad_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_res"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_res()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_rho"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_rho()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_s"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_s()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_s_a_den"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_s_a_den()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_spc_lim"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_spc_lim()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_spec_units"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_spec_units()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_thick"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_thick()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_v_den"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_v_den()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.test_complete_input_format"><code class="docutils literal notranslate"><span class="pre">MieLayer.test_complete_input_format()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.test_input_values"><code class="docutils literal notranslate"><span class="pre">MieLayer.test_input_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.track_regrid_diff"><code class="docutils literal notranslate"><span class="pre">MieLayer.track_regrid_diff()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.validate_inputs"><code class="docutils literal notranslate"><span class="pre">MieLayer.validate_inputs()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.layer.PrescribedOpticalLayer"><code class="docutils literal notranslate"><span class="pre">PrescribedOpticalLayer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.PrescribedOpticalLayer.column_optical_properties"><code class="docutils literal notranslate"><span class="pre">PrescribedOpticalLayer.column_optical_properties()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.PrescribedOpticalLayer.required_nmom"><code class="docutils literal notranslate"><span class="pre">PrescribedOpticalLayer.required_nmom</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.PrescribedOpticalLayer.set_input_from_dict"><code class="docutils literal notranslate"><span class="pre">PrescribedOpticalLayer.set_input_from_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.PrescribedOpticalLayer.source_metadata"><code class="docutils literal notranslate"><span class="pre">PrescribedOpticalLayer.source_metadata()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.PrescribedOpticalLayer.validate_inputs"><code class="docutils literal notranslate"><span class="pre">PrescribedOpticalLayer.validate_inputs()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.main">srfm.main</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.main.run_srfm"><code class="docutils literal notranslate"><span class="pre">run_srfm()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.optical_properties">srfm.optical_properties</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.optical_properties.calc_op_diff"><code class="docutils literal notranslate"><span class="pre">calc_op_diff()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.optical_properties.ewp_hs"><code class="docutils literal notranslate"><span class="pre">ewp_hs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.optical_properties.get_quad"><code class="docutils literal notranslate"><span class="pre">get_quad()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.optical_properties.get_radii"><code class="docutils literal notranslate"><span class="pre">get_radii()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.optical_properties.get_ri"><code class="docutils literal notranslate"><span class="pre">get_ri()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.optical_properties.legendre_polynomial_expansion"><code class="docutils literal notranslate"><span class="pre">legendre_polynomial_expansion()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.optical_properties.loop_mie_over_radii"><code class="docutils literal notranslate"><span class="pre">loop_mie_over_radii()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.optical_properties.loop_mie_over_wavelengths"><code class="docutils literal notranslate"><span class="pre">loop_mie_over_wavelengths()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.optical_properties.mie_ewp"><code class="docutils literal notranslate"><span class="pre">mie_ewp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.optical_properties.normalised_legendre_polynomial_expansion"><code class="docutils literal notranslate"><span class="pre">normalised_legendre_polynomial_expansion()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.optical_properties.phase_from_legendre"><code class="docutils literal notranslate"><span class="pre">phase_from_legendre()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.optical_properties.phase_from_normalised_legendre"><code class="docutils literal notranslate"><span class="pre">phase_from_normalised_legendre()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.optical_properties.plot_diff_dict"><code class="docutils literal notranslate"><span class="pre">plot_diff_dict()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.optical_properties.regrid"><code class="docutils literal notranslate"><span class="pre">regrid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.optical_properties.track_regrid_diff"><code class="docutils literal notranslate"><span class="pre">track_regrid_diff()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.orography">srfm.orography</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.orography.get_elevation"><code class="docutils literal notranslate"><span class="pre">get_elevation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.orography.load_orography"><code class="docutils literal notranslate"><span class="pre">load_orography()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.orography.plot_Earth"><code class="docutils literal notranslate"><span class="pre">plot_Earth()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.oxharp_main">srfm.oxharp_main</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.oxharp_main.run_srfm"><code class="docutils literal notranslate"><span class="pre">run_srfm()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.plotting">srfm.plotting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.plotting.map_extent"><code class="docutils literal notranslate"><span class="pre">map_extent()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.quadrature">srfm.quadrature</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.quadrature.bessel_zero"><code class="docutils literal notranslate"><span class="pre">bessel_zero()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.quadrature.first_guess"><code class="docutils literal notranslate"><span class="pre">first_guess()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.quadrature.legendre"><code class="docutils literal notranslate"><span class="pre">legendre()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.quadrature.newton_g"><code class="docutils literal notranslate"><span class="pre">newton_g()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.quadrature.quadrature"><code class="docutils literal notranslate"><span class="pre">quadrature()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.quadrature.quadrature101"><code class="docutils literal notranslate"><span class="pre">quadrature101()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.quadrature.shift_quadrature"><code class="docutils literal notranslate"><span class="pre">shift_quadrature()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.readers.read_iasi_l1c">srfm.readers.read_iasi_l1c</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l1c.Iasi_L1c"><code class="docutils literal notranslate"><span class="pre">Iasi_L1c</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l1c.Iasi_L1c.fail"><code class="docutils literal notranslate"><span class="pre">Iasi_L1c.fail</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l1c.Iasi_L1c.errtxt"><code class="docutils literal notranslate"><span class="pre">Iasi_L1c.errtxt</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l1c.Iasi_L1c.file"><code class="docutils literal notranslate"><span class="pre">Iasi_L1c.file</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l1c.Iasi_L1c.mph"><code class="docutils literal notranslate"><span class="pre">Iasi_L1c.mph</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l1c.Iasi_L1c.nloc"><code class="docutils literal notranslate"><span class="pre">Iasi_L1c.nloc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l1c.Iasi_L1c.loc"><code class="docutils literal notranslate"><span class="pre">Iasi_L1c.loc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l1c.Iasi_L1c.scale"><code class="docutils literal notranslate"><span class="pre">Iasi_L1c.scale</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l1c.Iasi_L1c.stats"><code class="docutils literal notranslate"><span class="pre">Iasi_L1c.stats</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l1c.Iasi_L1c.mdruse"><code class="docutils literal notranslate"><span class="pre">Iasi_L1c.mdruse</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l1c.Iasi_L1c.spectrum"><code class="docutils literal notranslate"><span class="pre">Iasi_L1c.spectrum()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l1c.Iasi_L1c.write_stats"><code class="docutils literal notranslate"><span class="pre">Iasi_L1c.write_stats()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.readers.read_iasi_l2">srfm.readers.read_iasi_l2</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2"><code class="docutils literal notranslate"><span class="pre">Iasi_L2</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.fail"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.fail</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.errtxt"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.errtxt</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.mph"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.mph</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.grd"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.grd</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.nloc"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.nloc</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.fov"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.fov</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.lin"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.lin</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.stp"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.stp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.pix"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.pix</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.daylin"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.daylin</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.msclin"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.msclin</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.lat"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.lat</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.lon"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.lon</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.sza"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.sza</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.zen"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.zen</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.saa"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.saa</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.azi"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.azi</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.sfe"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.sfe</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.sfp"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.sfp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.BADI2"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.BADI2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.BADU2"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.BADU2</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.readers.read_iasi_l2.Iasi_L2.BADU4"><code class="docutils literal notranslate"><span class="pre">Iasi_L2.BADU4</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.rfm_functions">srfm.rfm_functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_functions.compile_rfm"><code class="docutils literal notranslate"><span class="pre">compile_rfm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_functions.construct_rfm_driver_table"><code class="docutils literal notranslate"><span class="pre">construct_rfm_driver_table()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_functions.construct_rfm_grid_file"><code class="docutils literal notranslate"><span class="pre">construct_rfm_grid_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_functions.construct_rfm_output_levels_file"><code class="docutils literal notranslate"><span class="pre">construct_rfm_output_levels_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_functions.get_rfm_optical_depths"><code class="docutils literal notranslate"><span class="pre">get_rfm_optical_depths()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_functions.read_atm_file"><code class="docutils literal notranslate"><span class="pre">read_atm_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_functions.read_output"><code class="docutils literal notranslate"><span class="pre">read_output()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_functions.read_output_prf"><code class="docutils literal notranslate"><span class="pre">read_output_prf()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_functions.write_atm_file"><code class="docutils literal notranslate"><span class="pre">write_atm_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_functions.write_xsc_file"><code class="docutils literal notranslate"><span class="pre">write_xsc_file()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.rfm_helper">srfm.rfm_helper</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_helper.DriverSectionInfo"><code class="docutils literal notranslate"><span class="pre">DriverSectionInfo</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_helper.OpticalDepthGrid"><code class="docutils literal notranslate"><span class="pre">OpticalDepthGrid</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.rfm_helper.OpticalDepthGrid.layer_count"><code class="docutils literal notranslate"><span class="pre">OpticalDepthGrid.layer_count</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.rfm_helper.OpticalDepthGrid.to_dataframe"><code class="docutils literal notranslate"><span class="pre">OpticalDepthGrid.to_dataframe()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_helper.RunResult"><code class="docutils literal notranslate"><span class="pre">RunResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.rfm_helper.RunResult.status"><code class="docutils literal notranslate"><span class="pre">RunResult.status</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.rfm_helper.RunResult.removed_files"><code class="docutils literal notranslate"><span class="pre">RunResult.removed_files</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.rfm_helper.RunResult.output"><code class="docutils literal notranslate"><span class="pre">RunResult.output</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.rfm_helper.RunResult.output_df"><code class="docutils literal notranslate"><span class="pre">RunResult.output_df</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.rfm_helper.RunResult.optical_depth_grid"><code class="docutils literal notranslate"><span class="pre">RunResult.optical_depth_grid</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.rfm_helper.RunResult.ok"><code class="docutils literal notranslate"><span class="pre">RunResult.ok</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_helper.SectionLine"><code class="docutils literal notranslate"><span class="pre">SectionLine</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.rfm_helper.SectionLine.parts"><code class="docutils literal notranslate"><span class="pre">SectionLine.parts</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.rfm_helper.SectionLine.as_record"><code class="docutils literal notranslate"><span class="pre">SectionLine.as_record()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_helper.SpectralFile"><code class="docutils literal notranslate"><span class="pre">SpectralFile</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.rfm_helper.SpectralFile.path"><code class="docutils literal notranslate"><span class="pre">SpectralFile.path</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.rfm_helper.SpectralFile.label"><code class="docutils literal notranslate"><span class="pre">SpectralFile.label</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.rfm_helper.SpectralFile.as_record"><code class="docutils literal notranslate"><span class="pre">SpectralFile.as_record()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_helper.SpectralRange"><code class="docutils literal notranslate"><span class="pre">SpectralRange</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.rfm_helper.SpectralRange.start"><code class="docutils literal notranslate"><span class="pre">SpectralRange.start</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.rfm_helper.SpectralRange.stop"><code class="docutils literal notranslate"><span class="pre">SpectralRange.stop</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.rfm_helper.SpectralRange.spacing"><code class="docutils literal notranslate"><span class="pre">SpectralRange.spacing</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.rfm_helper.SpectralRange.label"><code class="docutils literal notranslate"><span class="pre">SpectralRange.label</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.rfm_helper.SpectralRange.as_record"><code class="docutils literal notranslate"><span class="pre">SpectralRange.as_record()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_helper.clean_outputs"><code class="docutils literal notranslate"><span class="pre">clean_outputs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_helper.get_captured_optical_depth_grid"><code class="docutils literal notranslate"><span class="pre">get_captured_optical_depth_grid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_helper.get_captured_optical_depths"><code class="docutils literal notranslate"><span class="pre">get_captured_optical_depths()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_helper.get_rfm_input_catalog"><code class="docutils literal notranslate"><span class="pre">get_rfm_input_catalog()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_helper.rfm_main"><code class="docutils literal notranslate"><span class="pre">rfm_main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_helper.run_rfm"><code class="docutils literal notranslate"><span class="pre">run_rfm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_helper.run_rfm_with_parameters"><code class="docutils literal notranslate"><span class="pre">run_rfm_with_parameters()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.size_distribution">srfm.size_distribution</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution.mean"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.mean()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution.mean"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution.value"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.value()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.SizeDistribution"><code class="docutils literal notranslate"><span class="pre">SizeDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.SizeDistribution.mean"><code class="docutils literal notranslate"><span class="pre">SizeDistribution.mean()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.create_distribution"><code class="docutils literal notranslate"><span class="pre">create_distribution()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.spectral_fields">srfm.spectral_fields</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.spectral_fields.SpectralField"><code class="docutils literal notranslate"><span class="pre">SpectralField</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.spectral_fields.SpectralField.component_count"><code class="docutils literal notranslate"><span class="pre">SpectralField.component_count</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.spectral_fields.SpectralField.from_specification"><code class="docutils literal notranslate"><span class="pre">SpectralField.from_specification()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.spectral_fields.SpectralField.interpolate"><code class="docutils literal notranslate"><span class="pre">SpectralField.interpolate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.spectral_fields.SpectralField.provenance"><code class="docutils literal notranslate"><span class="pre">SpectralField.provenance()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.spectral_fields.SpectralField.validate_coverage"><code class="docutils literal notranslate"><span class="pre">SpectralField.validate_coverage()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.spectral_fields.convert_solar_spectral_density"><code class="docutils literal notranslate"><span class="pre">convert_solar_spectral_density()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.spectral_fields.wavenumber_from_grid"><code class="docutils literal notranslate"><span class="pre">wavenumber_from_grid()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.units">srfm.units</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.units.DU_to_col_den"><code class="docutils literal notranslate"><span class="pre">DU_to_col_den()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.units.decimal_degree_to_DMS"><code class="docutils literal notranslate"><span class="pre">decimal_degree_to_DMS()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.units.inv_cm_to_micron"><code class="docutils literal notranslate"><span class="pre">inv_cm_to_micron()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.units.inv_cm_to_nm"><code class="docutils literal notranslate"><span class="pre">inv_cm_to_nm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.units.micron_to_inv_cm"><code class="docutils literal notranslate"><span class="pre">micron_to_inv_cm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.units.nm_to_inv_cm"><code class="docutils literal notranslate"><span class="pre">nm_to_inv_cm()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.utilities">srfm.utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.add_lyr_from_Layer"><code class="docutils literal notranslate"><span class="pre">add_lyr_from_Layer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.calc_Rayleigh_opt_depths"><code class="docutils literal notranslate"><span class="pre">calc_Rayleigh_opt_depths()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.calc_grids"><code class="docutils literal notranslate"><span class="pre">calc_grids()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.calc_layer_bounds"><code class="docutils literal notranslate"><span class="pre">calc_layer_bounds()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.calc_layer_extent"><code class="docutils literal notranslate"><span class="pre">calc_layer_extent()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.calc_layer_opt_thick_Rayleigh"><code class="docutils literal notranslate"><span class="pre">calc_layer_opt_thick_Rayleigh()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.calc_tot_Rayleigh_opt_depth"><code class="docutils literal notranslate"><span class="pre">calc_tot_Rayleigh_opt_depth()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.calc_tot_dtauc"><code class="docutils literal notranslate"><span class="pre">calc_tot_dtauc()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.closest"><code class="docutils literal notranslate"><span class="pre">closest()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.convert_spectral_radiance_to_bbt"><code class="docutils literal notranslate"><span class="pre">convert_spectral_radiance_to_bbt()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.convolve_spectrum"><code class="docutils literal notranslate"><span class="pre">convolve_spectrum()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.find_prime_factors"><code class="docutils literal notranslate"><span class="pre">find_prime_factors()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.get_altitude_prf"><code class="docutils literal notranslate"><span class="pre">get_altitude_prf()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.json_handler"><code class="docutils literal notranslate"><span class="pre">json_handler()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.line_break_str"><code class="docutils literal notranslate"><span class="pre">line_break_str()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.load_solar_spectrum_Gueymard20018"><code class="docutils literal notranslate"><span class="pre">load_solar_spectrum_Gueymard20018()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.mass_loading_from_number_conc"><code class="docutils literal notranslate"><span class="pre">mass_loading_from_number_conc()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.memory_safe_np_zeros_2d"><code class="docutils literal notranslate"><span class="pre">memory_safe_np_zeros_2d()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.monotonic"><code class="docutils literal notranslate"><span class="pre">monotonic()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.number_conc_from_mass_loading"><code class="docutils literal notranslate"><span class="pre">number_conc_from_mass_loading()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.read_ils"><code class="docutils literal notranslate"><span class="pre">read_ils()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.scale_solar_spectrum"><code class="docutils literal notranslate"><span class="pre">scale_solar_spectrum()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.show_runtime"><code class="docutils literal notranslate"><span class="pre">show_runtime()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.utilities.track_lev_to_track_lyr"><code class="docutils literal notranslate"><span class="pre">track_lev_to_track_lyr()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">SRFM</a>
+      </nav>
+
+      <div class="wy-nav-content">
+  <div id="cookie-banner" style="display:none; position:fixed; bottom:0; left:0; right:0; background:#111827; color:#f8fafc; padding:12px 16px; z-index:9999; box-shadow:0 -2px 12px rgba(0,0,0,0.2); font-size:14px;">
+    We use Google Analytics to understand traffic. <a href="/privacy.html" style="color:#93c5fd;">Learn more</a>.
+    <div style="float:right;">
+      <button id="cookie-accept" style="margin-left:8px;">Accept</button>
+      <button id="cookie-reject" style="margin-left:8px;">Reject</button>
+    </div>
+  </div>
+  
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Driver table</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/drv.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="driver-table">
+<h1>Driver table<a class="headerlink" href="#driver-table" title="Link to this heading"></a></h1>
+<p>SRFM can be executed as a standard radiative transfer model with a driver
+table. This page is the complete parameter reference; the
+<a class="reference internal" href="auto_examples/basic_example/run_srfm.html"><span class="doc">worked example</span></a> shows these
+parameters together in an executable calculation.</p>
+<p>The driver table is a Python file containing an <code class="docutils literal notranslate"><span class="pre">inputs</span></code> dictionary. Fields
+marked <strong>optional</strong> may be omitted, in which case SRFM uses the stated default
+or derives the value from the atmosphere. Other fields are required by
+<code class="docutils literal notranslate"><span class="pre">main.run_srfm</span></code>. The example driver also defines named grid constants for
+readability; the parameters below are the values passed to SRFM. Paths may be
+strings or <code class="xref py py-class docutils literal notranslate"><span class="pre">os.PathLike</span></code> objects unless noted otherwise.</p>
+<section id="general-run-and-output">
+<h2>General run and output<a class="headerlink" href="#general-run-and-output" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">date</span></code> (<strong>optional</strong> <code class="xref py py-class docutils literal notranslate"><span class="pre">datetime.datetime</span></code> or three-item <code class="docutils literal notranslate"><span class="pre">tuple</span></code>):
+UTC calculation date, or <code class="docutils literal notranslate"><span class="pre">(year,</span> <span class="pre">month,</span> <span class="pre">day)</span></code>. It determines the
+Sun–Earth distance correction when solar illumination is enabled. If
+omitted, SRFM uses 23 March 2025, representing approximately the mean
+Sun–Earth distance.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">base_plots</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Create one output spectrum plot for every polar
+angle, output level, and azimuthal angle. Permitted values: <code class="docutils literal notranslate"><span class="pre">True</span></code> or
+<code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">out_mode</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Select the saved spectrum format.
+Permitted values: <code class="docutils literal notranslate"><span class="pre">&quot;netcdf&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;txt&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code> for no spectrum file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">show_plots</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Display generated plots interactively as well as
+saving them. Permitted values: <code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">results_fldr</span></code> (path-like): Directory in which SRFM writes RFM products,
+spectra, and plots.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">out_fname</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">str</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Filename for the single
+NetCDF output file. Omitting it or setting it to <code class="docutils literal notranslate"><span class="pre">None</span></code> selects
+<code class="docutils literal notranslate"><span class="pre">srfm.nc</span></code>. The value is used as supplied, including its extension, and
+applies only when <code class="docutils literal notranslate"><span class="pre">out_mode</span></code> is <code class="docutils literal notranslate"><span class="pre">&quot;netcdf&quot;</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">convolve_iasi</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Convolve every output radiance spectrum with
+the IASI instrument line shape. Permitted values: <code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">iasi_ils</span></code> (path-like or <code class="docutils literal notranslate"><span class="pre">None</span></code>): RFM-format IASI instrument-line-shape
+file; required when <code class="docutils literal notranslate"><span class="pre">convolve_iasi</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">retain_outputs</span></code> (required sequence of <code class="docutils literal notranslate"><span class="pre">str</span></code>): Full-grid values kept on
+the returned model. Supported names are <code class="docutils literal notranslate"><span class="pre">&quot;rad&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;radiance&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;uu&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;bbt&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;rfldir&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;rfldn&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;flup&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;dfdt&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;uavg&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;albmed&quot;</span></code>, and <code class="docutils literal notranslate"><span class="pre">&quot;trnmed&quot;</span></code>. In NetCDF mode, the single
+output file contains exactly these requested SRFM result variables together
+with their coordinates and optical-layer metadata. Layer type, computational
+optical depth, particle SSA and normalized moments, surface albedo, and the
+FBEAM spectrum are stored as NetCDF variables where applicable. Large source
+grids and values are summarized rather than embedded in the JSON global
+attribute. Raw
+DISORT results such as <code class="docutils literal notranslate"><span class="pre">&quot;rfldn&quot;</span></code> can be written without retaining BBT or
+radiance. Text mode requires retained BBT or radiance and writes them to
+<code class="docutils literal notranslate"><span class="pre">bbt.txt</span></code> and <code class="docutils literal notranslate"><span class="pre">rad.txt</span></code> respectively. When <code class="docutils literal notranslate"><span class="pre">base_plots</span></code> is true, all
+retained BBT and radiance outputs are plotted; if neither is retained, SRFM
+warns and creates no base plots.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scattering_block_size</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">int</span></code>): Positive number of spectral
+points for which particle properties are interpolated at once. The default
+is 10,000.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">retain_phase_functions</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">bool</span></code>): Keep coarse particle
+phase functions after Legendre expansion for inspection. The default is
+<code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
+</section>
+<section id="spectral-grids">
+<h2>Spectral grids<a class="headerlink" href="#spectral-grids" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">fin_wvnmlo</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Lower wavenumber of the final output
+grid in cm<sup>-1</sup>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fin_wvnmhi</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Upper wavenumber of the final output
+grid in cm<sup>-1</sup>; must be greater than <code class="docutils literal notranslate"><span class="pre">fin_wvnmlo</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fin_res</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Positive final-grid spacing in
+cm<sup>-1</sup>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spc_wvnmlo</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Lower bound of the computational
+spectral grid, in <code class="docutils literal notranslate"><span class="pre">spc_units</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spc_wvnmhi</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Upper bound of the computational
+spectral grid, in <code class="docutils literal notranslate"><span class="pre">spc_units</span></code>; must be greater than <code class="docutils literal notranslate"><span class="pre">spc_wvnmlo</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spc_res</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Positive computational-grid spacing, in
+<code class="docutils literal notranslate"><span class="pre">spc_units</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spc_units</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>): Units of the computational grid. Permitted values:
+<code class="docutils literal notranslate"><span class="pre">&quot;cm-1&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;um&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;nm&quot;</span></code>.</p></li>
+</ul>
+</section>
+<section id="output-geometry">
+<h2>Output geometry<a class="headerlink" href="#output-geometry" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">out_fmt</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>): Interpretation of <code class="docutils literal notranslate"><span class="pre">out</span></code>. Permitted values:
+<code class="docutils literal notranslate"><span class="pre">&quot;altitude&quot;</span></code> for altitude in kilometres or <code class="docutils literal notranslate"><span class="pre">&quot;tau&quot;</span></code> for optical depth.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">out</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, or one-dimensional array-like): Non-negative
+output altitudes or optical depths. Altitudes are matched to the nearest
+atmospheric level boundary. Values retain their supplied order.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">out_toa</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Add top-of-atmosphere output unless it is already in
+<code class="docutils literal notranslate"><span class="pre">out</span></code>. Permitted values: <code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+</ul>
+</section>
+<section id="atmospheric-calculation-levels">
+<h2>Atmospheric calculation levels<a class="headerlink" href="#atmospheric-calculation-levels" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">levels</span></code> (<strong>optional</strong> one-dimensional sequence): Strictly increasing
+atmospheric calculation levels in kilometres. Supply at least two finite
+numeric values. If omitted, SRFM uses its built-in standard level grid.
+Configured optical-layer boundaries are inserted into the effective grid
+automatically.</p></li>
+</ul>
+</section>
+<section id="rfm-execution-configuration">
+<h2>RFM execution configuration<a class="headerlink" href="#rfm-execution-configuration" title="Link to this heading"></a></h2>
+<p>The following keys belong to the nested <code class="docutils literal notranslate"><span class="pre">rfm_config</span></code> dictionary.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">output_mode</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>): How RFM output is obtained. The generic SRFM
+runner requires <code class="docutils literal notranslate"><span class="pre">&quot;capture&quot;</span></code>; <code class="docutils literal notranslate"><span class="pre">&quot;files&quot;</span></code> is supported by the lower-level
+RFM helper only.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">driver_path</span></code> (path-like or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Existing RFM driver-file path, or
+<code class="docutils literal notranslate"><span class="pre">None</span></code> when the driver is assembled from <code class="docutils literal notranslate"><span class="pre">driver_inputs</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">generate_driver</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Permit generation or replacement of
+<code class="docutils literal notranslate"><span class="pre">driver_path</span></code> by the RFM helper. Permitted values: <code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">verbose</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Print detailed RFM execution information. Permitted
+values: <code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">capture_files_content</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Retain raw generated-file contents in
+the RFM result in addition to processed captured output. Permitted values:
+<code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">optical_depth_format</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>): Internal captured representation,
+<code class="docutils literal notranslate"><span class="pre">&quot;compact&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;dataframe&quot;</span></code>. The top-level runners default to the
+compact spectral-first array. The lower-level compatibility API continues
+to support the DataFrame representation.</p></li>
+</ul>
+</section>
+<section id="rfm-driver-sections">
+<h2>RFM driver sections<a class="headerlink" href="#rfm-driver-sections" title="Link to this heading"></a></h2>
+<p>The following keys belong to <code class="docutils literal notranslate"><span class="pre">driver_inputs</span></code> and map to sections of an RFM
+driver file.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">header</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code> or sequence of <code class="docutils literal notranslate"><span class="pre">str</span></code>): Descriptive RFM driver header.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">flags</span></code> (sequence of <code class="docutils literal notranslate"><span class="pre">str</span></code>): Three-character RFM feature flags. The SRFM
+optical-depth workflow requires <code class="docutils literal notranslate"><span class="pre">&quot;OPT&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;LEV&quot;</span></code>. The example also
+uses <code class="docutils literal notranslate"><span class="pre">&quot;NAD&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;SFC&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;PRF&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;DBL&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;CHI&quot;</span></code>, and <code class="docutils literal notranslate"><span class="pre">&quot;MIX&quot;</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spectral</span></code> (sequence of <code class="docutils literal notranslate"><span class="pre">rfm_helper.SpectralRange</span></code> or
+<code class="docutils literal notranslate"><span class="pre">rfm_helper.SpectralFile</span></code>): Spectral ranges or grid files supplied to RFM.
+<code class="docutils literal notranslate"><span class="pre">run_srfm</span></code> replaces the example value with its generated computational
+grid file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gases</span></code> (sequence of <code class="docutils literal notranslate"><span class="pre">str</span></code>): RFM gas identifiers included in gas
+absorption calculations.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">atmosphere</span></code> (sequence of path-like): RFM atmosphere profile files. In the
+example, the altitude-grid profile is followed by the physical atmosphere.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hit</span></code> (sequence of path-like): HITRAN line-data files used by RFM.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">xsc</span></code> (sequence of path-like): Directories or files containing molecular
+cross-section data used by RFM.</p></li>
+</ul>
+</section>
+<section id="disort-configuration">
+<h2>DISORT configuration<a class="headerlink" href="#disort-configuration" title="Link to this heading"></a></h2>
+<p>The basic example exposes the following inputs that are passed directly to
+DISORT: <code class="docutils literal notranslate"><span class="pre">fisot</span></code>, <code class="docutils literal notranslate"><span class="pre">albedo</span></code>, <code class="docutils literal notranslate"><span class="pre">temis</span></code>, <code class="docutils literal notranslate"><span class="pre">earth_radius</span></code>, <code class="docutils literal notranslate"><span class="pre">nmom</span></code>,
+<code class="docutils literal notranslate"><span class="pre">maxcmu</span></code>, <code class="docutils literal notranslate"><span class="pre">maxumu</span></code>, <code class="docutils literal notranslate"><span class="pre">maxphi</span></code>, <code class="docutils literal notranslate"><span class="pre">usrang</span></code>, <code class="docutils literal notranslate"><span class="pre">usrtau</span></code>,
+<code class="docutils literal notranslate"><span class="pre">ibcnd</span></code>, <code class="docutils literal notranslate"><span class="pre">onlyfl</span></code>, <code class="docutils literal notranslate"><span class="pre">prnt</span></code>, <code class="docutils literal notranslate"><span class="pre">planck</span></code>, <code class="docutils literal notranslate"><span class="pre">lamber</span></code>, <code class="docutils literal notranslate"><span class="pre">deltamplus</span></code>,
+<code class="docutils literal notranslate"><span class="pre">do_pseudo_sphere</span></code>, <code class="docutils literal notranslate"><span class="pre">header</span></code>, <code class="docutils literal notranslate"><span class="pre">btemp</span></code>, and <code class="docutils literal notranslate"><span class="pre">ttemp</span></code>.
+<code class="docutils literal notranslate"><span class="pre">disort_precision</span></code> selects the compiled wrapper and <code class="docutils literal notranslate"><span class="pre">adjust_maxcmu</span></code> controls
+SRFM’s retry behaviour. The geometry fields <code class="docutils literal notranslate"><span class="pre">sun</span></code>, <code class="docutils literal notranslate"><span class="pre">sza</span></code>, <code class="docutils literal notranslate"><span class="pre">saa</span></code>, <code class="docutils literal notranslate"><span class="pre">zen</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">azi</span></code> determine DISORT’s beam strength and angular inputs. Finally,
+<code class="docutils literal notranslate"><span class="pre">out_fmt</span></code>, <code class="docutils literal notranslate"><span class="pre">out</span></code>, and <code class="docutils literal notranslate"><span class="pre">out_toa</span></code> determine its output optical depths, while
+the atmosphere and configured layers supply optical depth, single-scatter
+albedo, temperature, and phase moments.</p>
+<p>SRFM validates the user-controlled values before starting RFM or DISORT. A
+failure identifies the field, supplied value, and permitted values, for example
+<code class="docutils literal notranslate"><span class="pre">maxcmu:</span> <span class="pre">current</span> <span class="pre">value</span> <span class="pre">5;</span> <span class="pre">permitted</span> <span class="pre">values:</span> <span class="pre">an</span> <span class="pre">even</span> <span class="pre">integer</span> <span class="pre">greater</span> <span class="pre">than</span> <span class="pre">or</span>
+<span class="pre">equal</span> <span class="pre">to</span> <span class="pre">4</span></code>. This prevents DISORT’s fatal <code class="docutils literal notranslate"><span class="pre">VAR</span> <span class="pre">in</span> <span class="pre">error</span></code> path for malformed
+driver values.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">fisot</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Isotropic illumination incident at the top
+of the atmosphere; must be non-negative.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">albedo</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, or spectral-field mapping): Lambertian
+bottom-boundary albedo. A scalar retains the historical behavior. A mapping
+contains either <code class="docutils literal notranslate"><span class="pre">grid</span></code>/<code class="docutils literal notranslate"><span class="pre">values</span></code> arrays or the standardized text-file
+fields documented in <a class="reference internal" href="input_files.html"><span class="doc">Input files</span></a>. Values must be finite and in [0, 1]
+and the source must cover the computational grid.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">temis</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Boundary emissivity used by DISORT.
+Permitted range: 0 to 1.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">earth_radius</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Positive Earth radius
+in kilometres, used by the pseudo-spherical correction. The default is
+6371 km.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nmom</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>): Non-negative requested number of phase-function moments.
+SRFM raises it when a scattering layer or stream count requires more moments.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">maxcmu</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>): Even number of DISORT computational streams, at least
+4. Although the native bounds check admits 2 streams, this bundled DISORT then
+raises a fatal <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">streams</span> <span class="pre">not</span> <span class="pre">recommended</span></code> error, so SRFM rejects 2 early.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">maxumu</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>): Number of output polar-angle cosines allocated by
+DISORT. It must be positive unless <code class="docutils literal notranslate"><span class="pre">onlyfl</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>. When <code class="docutils literal notranslate"><span class="pre">usrang</span></code> is
+<code class="docutils literal notranslate"><span class="pre">False</span></code> and angular intensities are requested, it must be at least
+<code class="docutils literal notranslate"><span class="pre">maxcmu</span></code> to hold the computational angles.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">maxphi</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>): Number of output azimuthal angles allocated by DISORT.
+It must be positive unless <code class="docutils literal notranslate"><span class="pre">onlyfl</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">usrang</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Return output at user-defined angles. Permitted values:
+<code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">usrtau</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Return output at user-defined optical depths. Every
+top-level runner requires <code class="docutils literal notranslate"><span class="pre">True</span></code> when using <code class="docutils literal notranslate"><span class="pre">out</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ibcnd</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>): DISORT boundary-condition mode. Permitted values: <code class="docutils literal notranslate"><span class="pre">0</span></code>
+for a general atmosphere or <code class="docutils literal notranslate"><span class="pre">1</span></code> for the special albedo/transmissivity
+problem. Native DISORT requires <code class="docutils literal notranslate"><span class="pre">onlyfl=False</span></code> in mode 1.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">onlyfl</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Return fluxes only instead of angular intensities.
+Permitted values: <code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">prnt</span></code> (list of five <code class="docutils literal notranslate"><span class="pre">bool</span></code>): DISORT output-section print switches.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">planck</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Include internal Planck thermal emission. Permitted
+values: <code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lamber</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Treat the bottom reflector as Lambertian. Permitted
+values: <code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">deltamplus</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Use the Delta-M+ phase-function approximation when
+<code class="docutils literal notranslate"><span class="pre">True</span></code>, or standard Delta-M when <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">do_pseudo_sphere</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Apply the pseudo-spherical solar-beam
+correction. Permitted values: <code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">disort_precision</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>): Compiled DISORT implementation to call.
+Permitted values: <code class="docutils literal notranslate"><span class="pre">&quot;single&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;double&quot;</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">header</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">str</span></code>): Header sent to DISORT terminal output.
+<code class="docutils literal notranslate"><span class="pre">&quot;NO</span> <span class="pre">HEADER&quot;</span></code> suppresses the header and is the default; at most 127
+characters are permitted, including an empty string.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">adjust_maxcmu</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Retry with more streams when Delta-M+ produces
+a small negative intensity. Permitted values: <code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">btemp</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Bottom-boundary temperature in
+kelvin; it must be non-negative. If omitted, SRFM derives it from the lowest
+atmospheric temperature.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ttemp</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Top-boundary temperature in
+kelvin; it must be non-negative. If omitted, SRFM derives it from the highest
+atmospheric temperature.</p></li>
+</ul>
+</section>
+<section id="scattering-layer-configuration">
+<h2>Scattering-layer configuration<a class="headerlink" href="#scattering-layer-configuration" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">scat_lyrs_inputs</span></code> is an <strong>optional</strong> dictionary keyed by unique layer name.
+Omit it, set it to <code class="docutils literal notranslate"><span class="pre">None</span></code>, or use an empty dictionary for a clear-sky
+calculation. Each value is a dictionary with the
+parameters below. The same fields apply to the example’s
+<code class="docutils literal notranslate"><span class="pre">Sulphuric_acid_1</span></code>, <code class="docutils literal notranslate"><span class="pre">Ash_1</span></code>, and <code class="docutils literal notranslate"><span class="pre">Water_cloud_1</span></code> layers.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">name</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>): Layer name, normally identical to its dictionary key.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">low_spc</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Lower spectral bound for the layer’s Mie
+calculation, in <code class="docutils literal notranslate"><span class="pre">spec_units</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">upp_spc</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Upper spectral bound; must exceed
+<code class="docutils literal notranslate"><span class="pre">low_spc</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">res</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Positive spacing of the layer optical-property
+grid, in <code class="docutils literal notranslate"><span class="pre">spec_units</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spec_units</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>): Units of the layer optical-property grid. Permitted
+values: <code class="docutils literal notranslate"><span class="pre">&quot;cm-1&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;um&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;nm&quot;</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rho</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, or <code class="docutils literal notranslate"><span class="pre">str</span></code>): Particle density in kg m<sup>-3</sup>,
+or a supported named ash density. Named values: <code class="docutils literal notranslate"><span class="pre">&quot;pumice&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;glass&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;mineral&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;rock&quot;</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">n</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Particle number concentration. At
+least one of <code class="docutils literal notranslate"><span class="pre">mass_loading</span></code>, <code class="docutils literal notranslate"><span class="pre">n</span></code>, <code class="docutils literal notranslate"><span class="pre">s_a_den</span></code>, or <code class="docutils literal notranslate"><span class="pre">v_den</span></code> must be set.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">s</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Particle-size distribution spread. A
+log-normal distribution requires a value greater than 1.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">s_a_den</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Particle surface-area density.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">v_den</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Particle volume density.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dist_type</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>): Particle-size distribution. Permitted value for a
+complete calculation: <code class="docutils literal notranslate"><span class="pre">&quot;log_normal&quot;</span></code>. <code class="docutils literal notranslate"><span class="pre">&quot;gaussian&quot;</span></code> is recognized but
+not implemented by the full Mie-layer pathway.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">comp</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>): Refractive-index composition identifier or refractive-
+index filename, such as <code class="docutils literal notranslate"><span class="pre">&quot;sulphuric</span> <span class="pre">acid&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;ash&quot;</span></code>, or an <code class="docutils literal notranslate"><span class="pre">.ri</span></code> file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">center_alt</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Layer centre altitude in km.
+Supply it with <code class="docutils literal notranslate"><span class="pre">thick</span></code>, or instead supply both explicit altitude bounds.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">thick</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Positive layer thickness in km.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">alt_upp</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Explicit upper layer boundary
+in km; must exceed <code class="docutils literal notranslate"><span class="pre">alt_low</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">alt_low</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Explicit lower layer boundary
+in km.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">radii</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>): Positive number of particle radii used to integrate the
+size distribution.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">eta</span></code> (<code class="docutils literal notranslate"><span class="pre">float</span></code>): Relative size-distribution tail cutoff. Permitted range:
+greater than 0 and less than 1.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">phase_quad_N</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>): Positive number of phase-function quadrature
+points.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">phase_quad_type</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>): Phase-function quadrature rule. Permitted
+values: <code class="docutils literal notranslate"><span class="pre">&quot;G&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;R&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;L&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;T&quot;</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">radii_quad_type</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>): Particle-radius quadrature rule. Permitted
+values: <code class="docutils literal notranslate"><span class="pre">&quot;G&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;R&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;L&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;T&quot;</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">leg_coeffs</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Calculate Legendre expansion coefficients.
+Permitted values: <code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">leg_coeffs_type</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>): Legendre coefficient convention. Permitted
+values: <code class="docutils literal notranslate"><span class="pre">&quot;regular&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;normalised&quot;</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">multiprocess</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Enable the experimental multiprocessing path for
+optical-property calculations. Permitted values: <code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mass_loading</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Column particle mass in
+g m<sup>-2</sup> used to derive layer optical depth.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">r</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Positive mean particle radius in micrometres.</p></li>
+</ul>
+<p>The unused altitude pair may be omitted entirely. If all four altitude values
+are supplied, both pairs must describe the same boundaries after SRFM’s
+0.001-km layer-boundary rounding.</p>
+<p><code class="docutils literal notranslate"><span class="pre">gbc_lyrs_inputs</span></code> is likewise optional and accepts omission, <code class="docutils literal notranslate"><span class="pre">None</span></code>, or an
+empty dictionary. Its grey-body layers use the same alternative altitude pairs:
+<code class="docutils literal notranslate"><span class="pre">center_alt</span></code> with <code class="docutils literal notranslate"><span class="pre">thick</span></code>, or <code class="docutils literal notranslate"><span class="pre">alt_low</span></code> with <code class="docutils literal notranslate"><span class="pre">alt_upp</span></code>. When all four
+are supplied they must describe the same layer.</p>
+</section>
+<section id="prescribed-optical-layers">
+<h2>Prescribed optical layers<a class="headerlink" href="#prescribed-optical-layers" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">prescribed_lyrs_inputs</span></code> is a separate optional mapping. It is not part of
+<code class="docutils literal notranslate"><span class="pre">scat_lyrs_inputs</span></code> because its values are already column optical properties,
+not Mie microphysics. Each layer requires <code class="docutils literal notranslate"><span class="pre">name</span></code>, finite <code class="docutils literal notranslate"><span class="pre">alt_low</span></code> and
+<code class="docutils literal notranslate"><span class="pre">alt_upp</span></code> in kilometres with <code class="docutils literal notranslate"><span class="pre">alt_low</span> <span class="pre">&lt;</span> <span class="pre">alt_upp</span></code>, <code class="docutils literal notranslate"><span class="pre">optical_depth</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">ssalb</span></code>.</p>
+<p>An Angstrom optical depth is configured as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;optical_depth&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;angstrom&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;reference_value&quot;</span><span class="p">:</span> <span class="mf">0.00058</span><span class="p">,</span>
+    <span class="s2">&quot;reference_wavelength_um&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="s2">&quot;angstrom_exponent&quot;</span><span class="p">:</span> <span class="mf">1.48</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>SRFM evaluates
+<span class="math notranslate nohighlight">\(\tau(\lambda)=\tau_{ref}(\lambda/\lambda_{ref})^{-\alpha}\)</span> with
+wavelength in micrometres. The reference value must be non-negative, reference
+wavelength finite and positive, and exponent finite. Alternatively,
+<code class="docutils literal notranslate"><span class="pre">type=&quot;tabulated&quot;</span></code> accepts a common in-memory or file-backed spectral field.</p>
+<p><code class="docutils literal notranslate"><span class="pre">ssalb</span></code> accepts a finite scalar in [0, 1], broadcast across the calculation,
+or a common spectral field. A bare one-dimensional array is deliberately not
+accepted because SRFM cannot infer its coordinate.</p>
+<p>Henyey–Greenstein phase data accept scalar or spectral asymmetry:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;phase_function&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;henyey_greenstein&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;asymmetry&quot;</span><span class="p">:</span> <span class="mf">0.490</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The asymmetry factor lies in [-1, 1]. Normalized moments are calculated as
+<span class="math notranslate nohighlight">\(\beta_l=g^l\)</span> from order zero through <code class="docutils literal notranslate"><span class="pre">nmom</span></code>. Fully tabulated moments
+use <code class="docutils literal notranslate"><span class="pre">type=&quot;legendre_moments&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">convention=&quot;normalised&quot;</span></code>, a spectral grid,
+and values shaped <code class="docutils literal notranslate"><span class="pre">(spectral_points,</span> <span class="pre">moments)</span></code>. File-backed moments use
+<code class="docutils literal notranslate"><span class="pre">value_columns</span></code> as described in <a class="reference internal" href="input_files.html"><span class="doc">Input files</span></a>. Moment zero equals one
+within <code class="docutils literal notranslate"><span class="pre">1e-5</span></code> wherever scattering optical depth <code class="docutils literal notranslate"><span class="pre">tau</span> <span class="pre">*</span> <span class="pre">ssalb</span></code> is positive.
+An absorption-only prescribed layer may omit phase data.</p>
+<p>Mie and prescribed particle objects expose the same blockwise column optical
+depth, single-scattering albedo, and normalized-moment contract. Properties are
+interpolated in bounded blocks controlled by <code class="docutils literal notranslate"><span class="pre">scattering_block_size</span></code>.</p>
+</section>
+<section id="vertical-optical-layer-restrictions">
+<h2>Vertical optical-layer restrictions<a class="headerlink" href="#vertical-optical-layer-restrictions" title="Link to this heading"></a></h2>
+<p>Names are unique across <code class="docutils literal notranslate"><span class="pre">scat_lyrs_inputs</span></code>, <code class="docutils literal notranslate"><span class="pre">prescribed_lyrs_inputs</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">gbc_lyrs_inputs</span></code>. Their resolved altitude intervals must be separated: two
+objects may neither overlap by a positive distance nor share an exact boundary.
+Validation is independent of dictionary order and occurs before layer optical
+calculations, RFM, or DISORT.</p>
+<p>Each accepted object replaces every requested internal level inside its bounds
+with its lower and upper boundaries. It therefore occupies exactly one model
+cell and contributes its complete column optical depth to that cell. SRFM does
+not fractionally split, combine, or mix configured optical objects.</p>
+</section>
+<section id="solar-and-viewing-geometry">
+<h2>Solar and viewing geometry<a class="headerlink" href="#solar-and-viewing-geometry" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sun</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Include direct solar illumination and reflection.
+Permitted values: <code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">solar_spectrum</span></code> (<strong>optional</strong> spectral-field mapping): Custom beam-normal
+DISORT <code class="docutils literal notranslate"><span class="pre">FBEAM</span></code> spectral irradiance. Its required units, conversions, file
+form, and no-scaling convention are documented in <a class="reference internal" href="input_files.html"><span class="doc">Input files</span></a>.
+Omitting it selects the established Gueymard-2018 spectrum with date-based
+Earth–Sun-distance scaling. With <code class="docutils literal notranslate"><span class="pre">sun=False</span></code>, FBEAM is zero.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sza</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Solar zenith angle in degrees. Permitted
+range: 0 to 180. When <code class="docutils literal notranslate"><span class="pre">sun</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, DISORT requires a positive incident
+beam cosine, so the permitted range is 0 inclusive to 90 exclusive. Set
+<code class="docutils literal notranslate"><span class="pre">sun=False</span></code> for night-side geometries.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">saa</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Solar azimuth angle in degrees. Permitted
+range: 0 to 360.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">zen</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Viewing zenith angle in degrees. Permitted
+range: 0 to 180. A value of exactly 90 is not permitted when user-angle
+intensities are requested because DISORT forbids a zero output-angle cosine.
+Mode <code class="docutils literal notranslate"><span class="pre">ibcnd=1</span></code> additionally requires a positive cosine, so user angles must
+be less than 90 degrees.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">azi</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Viewing azimuth angle in degrees. Permitted
+range: 0 to 360.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="auto_examples/basic_example/run_srfm.html" class="btn btn-neutral float-left" title="Run SRFM with a driver table" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="input_files.html" class="btn btn-neutral float-right" title="Input files" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Antonin Knizek, Roy Grainger.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+  <script>
+    (function() {
+      const banner = document.getElementById('cookie-banner');
+      const choice = localStorage.getItem('ga-consent');
+      if (!choice) {
+        banner.style.display = 'block';
+      }
+
+      function update(consent) {
+        localStorage.setItem('ga-consent', consent);
+        if (consent === 'granted') {
+          gtag('consent', 'update', {analytics_storage: 'granted'});
+          gtag('config', 'G-M598215MF0');
+        } else {
+          gtag('consent', 'update', {analytics_storage: 'denied'});
+        }
+        banner.style.display = 'none';
+      }
+
+      const acceptBtn = document.getElementById('cookie-accept');
+      const rejectBtn = document.getElementById('cookie-reject');
+      if (acceptBtn) acceptBtn.onclick = () => update('granted');
+      if (rejectBtn) rejectBtn.onclick = () => update('denied');
+    })();
+  </script>
+
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

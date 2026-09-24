@@ -37,3 +37,24 @@ def test_python_disort_wrapper_runs_compiled_solver_in_isolated_process(
     assert result["uu"].shape == (1, 1, 1)
     assert np.all(np.isfinite(result["uu"]))
     assert result["uu"].item() > 0
+
+
+@pytest.mark.parametrize("asymmetry", [-0.4, 0.0, 0.35, 0.8])
+@pytest.mark.parametrize("nmom", [2, 7])
+def test_native_henyey_greenstein_moments_confirm_analytic_convention(
+    asymmetry, nmom, require_native, run_native_case
+):
+    """Native ``getmom(iphas=3)`` agrees with analytic normalized moments."""
+    require_native(disort_module_d, "double-precision DISORT")
+
+    native, _ = run_native_case(
+        "getmom",
+        {"precision": "double", "asymmetry": asymmetry, "nmom": nmom},
+    )
+
+    np.testing.assert_allclose(
+        native,
+        asymmetry ** np.arange(nmom + 1),
+        rtol=1e-13,
+        atol=1e-15,
+    )

@@ -11,15 +11,23 @@ This package is designed to manage satellite data and perform retrievals.
 It combines Python tooling with compiled Fortran extensions
 for radiative transfer.
 
-The package was built and is maintained by Antonin Knizek as part of code 
+The package was built and is maintained by Antonin Knizek as part of code
 belonging to the Earth Observation Data Group and the University of Oxford.
-For more info, comments or to leave feedback, 
+For more info, comments or to leave feedback,
 please contact antonin.knizek@physics.ox.ac.uk or contact the `EODG <https://eodg.atm.ox.ac.uk/eodg/>`_ group.
+
+DISCLAIMER: Development of parts of this package was assisted by AI. I have used codex CLI to optimize the main
+calculation routine (having written it myself first) and create routines for writing out files and checking input
+parameter formats.
 
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-   
+
    overview
+   auto_examples/index
+   drv
+   input_files
+   memory
    srfm

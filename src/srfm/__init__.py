@@ -28,6 +28,7 @@ __all__ = [
     "optical_properties",
     "size_distribution",
     "quadrature",
+    "spectral_fields",
     "mie_module",
     "layer",
     "orography",

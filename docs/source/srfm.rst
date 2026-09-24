@@ -131,6 +131,13 @@ srfm.size\_distribution
    :members:
    :show-inheritance:
 
+srfm.spectral\_fields
+----------------------
+
+.. automodule:: srfm.spectral_fields
+   :members:
+   :show-inheritance:
+
 srfm.units
 ----------
 

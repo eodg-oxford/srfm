@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from srfm.layer import GreyBodyCloud, Layer, MieLayer
+from srfm.layer import GreyBodyCloud, Layer, MieLayer, PrescribedOpticalLayer
 from srfm.size_distribution import LogNormalDistribution
 
 pytestmark = pytest.mark.unit
@@ -316,3 +316,190 @@ def test_grey_body_cloud_rejects_invalid_optical_inputs(updates, problem):
 
     with pytest.raises(ValueError, match=problem):
         cloud.test_input_values()
+
+
+def _prescribed_layer(**overrides):
+    """Return a valid Angstrom/HG prescribed layer for focused tests."""
+    values = {
+        "name": "aerosol",
+        "alt_low": 1.0,
+        "alt_upp": 2.0,
+        "optical_depth": {
+            "type": "angstrom",
+            "reference_value": 0.2,
+            "reference_wavelength_um": 1.0,
+            "angstrom_exponent": 1.5,
+        },
+        "ssalb": 0.8,
+        "phase_function": {
+            "type": "henyey_greenstein",
+            "asymmetry": 0.5,
+        },
+    }
+    values.update(overrides)
+    prescribed = PrescribedOpticalLayer()
+    prescribed.set_input_from_dict(values)
+    return prescribed
+
+
+def test_prescribed_angstrom_scalar_ssa_and_hg_moments_are_analytic():
+    """The common contract evaluates Angstrom and ``g**ell`` without native code."""
+    prescribed = _prescribed_layer()
+    wavenumber = np.array([5000.0, 10000.0, 20000.0])
+    prescribed.validate_inputs(wavenumber, scattering_block_size=2)
+
+    properties = prescribed.column_optical_properties(wavenumber, nmom=4)
+
+    wavelength_um = 1.0e4 / wavenumber
+    expected_tau = 0.2 * wavelength_um**-1.5
+    np.testing.assert_allclose(properties["particle_optical_depth"], expected_tau)
+    np.testing.assert_allclose(properties["single_scattering_albedo"], 0.8)
+    expected_moments = 0.5 ** np.arange(5)
+    np.testing.assert_allclose(
+        properties["normalized_legendre_coefficients"],
+        np.broadcast_to(expected_moments, (3, 5)),
+    )
+
+
+def test_prescribed_spectral_ssa_and_asymmetry_interpolate_by_block():
+    """Spectral SSA and HG asymmetry retain full-grid interpolation results."""
+    spectral = _prescribed_layer(
+        ssalb={
+            "grid": [1000.0, 2000.0],
+            "values": [0.2, 0.8],
+            "grid_units": "cm-1",
+        },
+        phase_function={
+            "type": "henyey_greenstein",
+            "asymmetry": {
+                "grid": [1000.0, 2000.0],
+                "values": [-0.2, 0.6],
+                "grid_units": "cm-1",
+            },
+        },
+    )
+    grid = np.linspace(1000.0, 2000.0, 7)
+    spectral.validate_inputs(grid, scattering_block_size=2)
+
+    full = spectral.column_optical_properties(grid, nmom=3)
+    blocked = [
+        spectral.column_optical_properties(grid[start : start + 2], nmom=3)
+        for start in range(0, grid.size, 2)
+    ]
+
+    for key in full:
+        np.testing.assert_allclose(
+            np.concatenate([block[key] for block in blocked]), full[key]
+        )
+    np.testing.assert_allclose(full["single_scattering_albedo"], np.linspace(0.2, 0.8, 7))
+
+
+def test_prescribed_tabulated_moments_validate_beta_zero_only_for_scattering():
+    """Invalid beta zero is harmless for pure absorption but not scattering."""
+    phase_function = {
+        "type": "legendre_moments",
+        "grid": [1000.0, 2000.0],
+        "values": [[0.5, 0.1], [0.5, 0.2]],
+        "grid_units": "cm-1",
+        "convention": "normalised",
+    }
+    scattering = _prescribed_layer(phase_function=phase_function)
+    with pytest.raises(ValueError, match="beta_0"):
+        scattering.validate_inputs([1000.0, 2000.0])
+
+    absorption = _prescribed_layer(ssalb=0.0, phase_function=None)
+    absorption.validate_inputs([1000.0, 2000.0])
+    properties = absorption.column_optical_properties([1500.0], nmom=3)
+    np.testing.assert_allclose(properties["single_scattering_albedo"], [0.0])
+    np.testing.assert_allclose(
+        properties["normalized_legendre_coefficients"], [[1.0, 0.0, 0.0, 0.0]]
+    )
+
+
+def test_prescribed_valid_tabulated_moments_keep_spectral_rows_and_pad_order():
+    """Explicit moment rows interpolate spectrally and pad higher DISORT orders."""
+    prescribed = _prescribed_layer(
+        phase_function={
+            "type": "legendre_moments",
+            "grid": [1000.0, 2000.0],
+            "values": [[1.0, 0.2], [1.0, 0.6]],
+            "grid_units": "cm-1",
+            "convention": "normalised",
+        }
+    )
+    prescribed.validate_inputs([1000.0, 1500.0, 2000.0])
+
+    moments = prescribed.column_optical_properties([1500.0], nmom=3)[
+        "normalized_legendre_coefficients"
+    ]
+
+    np.testing.assert_allclose(moments, [[1.0, 0.4, 0.0, 0.0]])
+
+
+def test_prescribed_moment_values_reject_transposed_or_inconsistent_shape():
+    """Moment arrays have an unambiguous spectral-row orientation."""
+    prescribed = _prescribed_layer(
+        phase_function={
+            "type": "legendre_moments",
+            "grid": [1000.0, 1500.0, 2000.0],
+            "values": [[1.0, 1.0, 1.0], [0.2, 0.3, 0.4]],
+            "grid_units": "cm-1",
+            "convention": "normalised",
+        }
+    )
+
+    with pytest.raises(ValueError, match="shape"):
+        prescribed.validate_inputs([1000.0, 2000.0])
+
+
+@pytest.mark.parametrize(
+    ("overrides", "problem"),
+    [
+        ({"alt_low": 2.0, "alt_upp": 1.0}, "less than alt_upp"),
+        ({"ssalb": np.array([0.2, 0.3])}, "bare arrays"),
+        ({"ssalb": 1.1}, "less than or equal to 1"),
+        (
+            {
+                "optical_depth": {
+                    "type": "angstrom",
+                    "reference_value": -0.1,
+                    "reference_wavelength_um": 1.0,
+                    "angstrom_exponent": 1.0,
+                }
+            },
+            "greater than or equal to 0",
+        ),
+        (
+            {
+                "phase_function": {
+                    "type": "henyey_greenstein",
+                    "asymmetry": 1.1,
+                }
+            },
+            "less than or equal to 1",
+        ),
+        ({"phase_function": None}, "phase_function is required"),
+    ],
+)
+def test_prescribed_layer_rejects_invalid_inputs(overrides, problem):
+    """Invalid geometry and optical values fail with their configuration path."""
+    prescribed = _prescribed_layer(**overrides)
+    with pytest.raises((TypeError, ValueError), match=problem):
+        prescribed.validate_inputs([1000.0, 2000.0])
+
+
+def test_mie_common_contract_returns_complete_column_optical_depth():
+    """Mie and prescribed layers expose the same column-property names."""
+    mie_layer = _synthetic_mie_layer()
+    mie_layer.alt_low = 2.0
+    mie_layer.alt_upp = 2.5
+
+    properties = mie_layer.column_optical_properties([1052.631578947, 1176.470588235], nmom=3)
+
+    np.testing.assert_allclose(properties["particle_optical_depth"], [1250.0, 750.0])
+    assert set(properties) == {
+        "particle_optical_depth",
+        "single_scattering_albedo",
+        "normalized_legendre_coefficients",
+    }
+    assert properties["normalized_legendre_coefficients"].shape == (2, 4)

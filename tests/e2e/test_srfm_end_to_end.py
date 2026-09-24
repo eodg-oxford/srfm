@@ -1,4 +1,5 @@
 from pprint import pformat
+import json
 
 import numpy as np
 import pytest
@@ -380,6 +381,87 @@ def test_netcdf_supports_a_raw_retained_output_without_bbt_or_radiance(
             "output_level",
         )
         assert dataset.variables["rfldn"].shape == (3, 3)
+        assert list(dataset.variables["layer_names"][:]) == [
+            "synthetic_aerosol",
+            "synthetic_grey_body",
+        ]
+        assert list(dataset.variables["layer_type"][:]) == ["mie", "grey_body"]
+        metadata = json.loads(dataset.srfm_params)
+        assert metadata["scat_lyrs_inputs"]["synthetic_aerosol"]["layer_type"] == "mie"
+        assert metadata["scat_lyrs_inputs"]["synthetic_aerosol"]["mass_loading"] == 0.005
+
+
+def test_prescribed_hg_spectral_boundaries_complete_native_pathway(
+    tmp_path,
+    tiny_atmosphere,
+    tiny_altitude_grid,
+    tiny_xsc_file,
+    require_native,
+    run_native_case,
+):
+    """Run custom FBEAM, spectral albedo, and prescribed HG optics end to end."""
+    require_native(rfm_py, "RFM")
+    require_native(disort_module_d, "double-precision DISORT")
+    results = tmp_path / "prescribed-results"
+    values = _complete_input_values(
+        results, tiny_atmosphere, tiny_altitude_grid, tiny_xsc_file
+    )
+    computational_grid = np.array([999.5, 1000.0, 1000.5])
+    values.update(
+        scat_lyrs_inputs=None,
+        gbc_lyrs_inputs=None,
+        prescribed_lyrs_inputs={
+            "prescribed_aerosol": {
+                "name": "prescribed_aerosol",
+                "alt_low": 0.2,
+                "alt_upp": 0.4,
+                "optical_depth": {
+                    "type": "angstrom",
+                    "reference_value": 0.05,
+                    "reference_wavelength_um": 1.0,
+                    "angstrom_exponent": 0.0,
+                },
+                "ssalb": 0.75,
+                "phase_function": {
+                    "type": "henyey_greenstein",
+                    "asymmetry": 0.4,
+                },
+            }
+        },
+        albedo={
+            "grid": computational_grid,
+            "values": np.array([0.1, 0.2, 0.3]),
+            "grid_units": "cm-1",
+        },
+        solar_spectrum={
+            "grid": computational_grid,
+            "values": np.array([2.0, 3.0, 4.0]),
+            "grid_units": "cm-1",
+            "value_units": "W m-2 (cm-1)-1",
+        },
+        sun=True,
+        sza=30.0,
+        out_mode="netcdf",
+        out_fname="prescribed.nc",
+        retain_outputs=("rfldir", "rfldn", "flup", "rad"),
+    )
+
+    result, _ = run_native_case("e2e", {"values": values})
+
+    _assert_complete_result(result, results, values)
+    assert result["rfldir"].shape == (3, 3)
+    assert result["rfldn"].shape == (3, 3)
+    assert result["flup"].shape == (3, 3)
+    with Dataset(results / "prescribed.nc") as dataset:
+        assert list(dataset.variables["layer_names"][:]) == ["prescribed_aerosol"]
+        assert list(dataset.variables["layer_type"][:]) == ["prescribed"]
+        np.testing.assert_allclose(dataset.variables["tau"][:], 0.05)
+        np.testing.assert_allclose(
+            dataset.variables["surface_albedo"][:], [0.1, 0.2, 0.3]
+        )
+        np.testing.assert_allclose(
+            dataset.variables["solar_spectral_irradiance"][:], [2.0, 3.0, 4.0]
+        )
 
 
 def test_complete_oxharp_pathway_with_derived_geometry(

@@ -80,6 +80,10 @@ They cover:
 - `Inputs`, structured RFM helper dataclasses and driver generation;
 - layer construction, extent/grid/concentration/mass-loading preparation, and
   size-distribution configuration without invoking Mie;
+- scalar and spectral albedo, custom beam-normal solar spectra, common
+  in-memory/file-backed spectral fields, prescribed Angstrom or tabulated
+  optics, analytic HG moments, normalized tabulated moments, and cross-type
+  vertical-layer separation;
 - Legendre expansion and other deterministic optical-property mathematics;
 - DISORT setter, dimension, validation, and model-integrity behaviour without
   invoking the native solver;
@@ -104,6 +108,8 @@ Integration coverage includes:
 - a genuine malformed native RFM run, including stderr log forwarding and
   transient-log removal;
 - Python DISORT configuration -> compiled single- and double-precision DISORT;
+- analytic Henyey--Greenstein moments -> native ``getmom(iphas=3)`` convention
+  oracle;
 - all 17 families and 57 cases from the authoritative DISORT Fortran driver,
   including its 47 embedded reference comparisons;
   and
@@ -138,6 +144,8 @@ matrix comprises:
 - double-precision DISORT with solar illumination, IASI convolution, NetCDF
   brightness-temperature/radiance output, and a non-interactive brightness-
   temperature plot.
+- a prescribed HG particle layer with spectral albedo and an unscaled custom
+  FBEAM spectrum, including NetCDF optical provenance.
 
 Together these cover `None`, text, and NetCDF output modes; default and custom
 filenames; both plot quantities; solar on/off; IASI convolution on/off; and

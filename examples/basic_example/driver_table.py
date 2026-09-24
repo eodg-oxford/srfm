@@ -18,6 +18,10 @@ SPC_WVNMLO = FIN_WVNMLO - 2.0  # min
 SPC_WVNMHI = FIN_WVNMHI + 2.0  # max
 SPC_UNITS = "cm-1"  # units (cm-1, nm, um)
 
+# Compact in-memory fields may use a coarser grid than the main calculation.
+# SRFM validates complete coverage and interpolates linearly in wavenumber.
+BOUNDARY_WAVENUMBER = [SPC_WVNMLO, (SPC_WVNMLO + SPC_WVNMHI) / 2, SPC_WVNMHI]
+
 inputs = {
     ## General
     # Every optional input consumed by main.run_srfm is shown explicitly in
@@ -117,7 +121,11 @@ inputs = {
     ],
     ## DISORT configuration
     "fisot": 0.0,  # isotropic illumination at the top of the atmosphere
-    "albedo": 0.0,  # bottom boundary albedo
+    "albedo": {
+        "grid": BOUNDARY_WAVENUMBER,
+        "values": [0.08, 0.12, 0.18],
+        "grid_units": "cm-1",
+    },  # spectral Lambertian bottom-boundary albedo; a scalar remains supported
     "temis": 1.0,  # top boundary emissivity
     "earth_radius": 6371.0,  # optional: Earth radius (km); defaults to 6371
     "nmom": 17,  # requested phase moments; SRFM raises this when required
@@ -234,8 +242,37 @@ inputs = {
             "inp_tau": 1e4,  # cloud optical depth
         },
     },
+    # Prescribed particle optics participate in the same non-overlapping vertical
+    # structure as Mie and grey-body layers. This layer spans 6.0--6.4 km.
+    "prescribed_lyrs_inputs": {
+        "prescribed_aerosol": {
+            "name": "prescribed_aerosol",
+            "alt_low": 6.0,
+            "alt_upp": 6.4,
+            "optical_depth": {
+                "type": "angstrom",
+                "reference_value": 0.00058,
+                "reference_wavelength_um": 1.0,
+                "angstrom_exponent": 1.48,
+            },
+            "ssalb": 0.822,
+            "phase_function": {
+                "type": "henyey_greenstein",
+                "asymmetry": 0.490,
+            },
+        },
+    },
     ## solar reflection
     "sun": True,  # if True, include solar reflection
+    # Values are beam-normal DISORT FBEAM spectral irradiance. A custom spectrum
+    # receives unit conversion and interpolation only: no date, cosine, or amplitude
+    # scaling is applied.
+    "solar_spectrum": {
+        "grid": BOUNDARY_WAVENUMBER,
+        "values": [0.75, 0.95, 1.10],
+        "grid_units": "cm-1",
+        "value_units": "W m-2 (cm-1)-1",
+    },
     # With sun=True, sza is in [0, 90); set sun=False for a night-side scene.
     "sza": 0,  # solar zenith angle; 0 is directly overhead
     "saa": 0,  # solar azimuth angle, 0-360

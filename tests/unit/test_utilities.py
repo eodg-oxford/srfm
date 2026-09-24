@@ -149,6 +149,21 @@ def test_add_layer_and_tracking_conversion():
     assert utilities.track_lev_to_track_lyr(tracking) == [None, None, "ash", None]
 
 
+def test_wide_optical_component_replaces_internal_levels_with_one_cell():
+    """A wide component is tracked once and therefore receives its full column."""
+    component = SimpleNamespace(name="prescribed", alt_low=0.5, alt_upp=4.5)
+    levels, tracking = utilities.add_lyr_from_Layer(
+        [0, 1, 2, 3, 4, 5], [None] * 6, component
+    )
+    tracked_layers = utilities.track_lev_to_track_lyr(tracking)
+    particle_optical_depth = np.zeros(len(tracked_layers))
+    particle_optical_depth[tracked_layers.index("prescribed")] = 0.7
+
+    assert levels == [0, 0.5, 4.5, 5]
+    assert tracked_layers.count("prescribed") == 1
+    np.testing.assert_allclose(particle_optical_depth, [0.0, 0.7, 0.0])
+
+
 @pytest.mark.parametrize(
     ("values", "code"),
     [([1, 2, 3], 1), ([3, 2, 1], 2), ([1, 3, 2], 0), ([1, 1, 2], 0)],

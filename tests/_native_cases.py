@@ -52,6 +52,22 @@ def _disort_case(payload):
     return {"status": model.status, "uu": output["uu"]}
 
 
+def _getmom_case(payload):
+    """Evaluate native DISORT HG moments as a convention oracle."""
+    if payload.get("precision", "double") == "single":
+        from srfm.DISORT import disort_module_s as module
+    else:
+        from srfm.DISORT_dbl import disort_module_d as module
+    nmom = int(payload["nmom"])
+    workspace = np.zeros(nmom + 1)
+    return module.getmom(
+        iphas=3,
+        gg=float(payload["asymmetry"]),
+        nmom=nmom,
+        pmom=workspace,
+    )
+
+
 def _mie_case(payload):
     """Run a minimal compiled Mie optical-properties calculation.
 
@@ -177,6 +193,8 @@ def _e2e_case(payload):
         "uu": getattr(model, "uu", None),
         "bbt": getattr(model, "bbt", None),
         "flup": getattr(model, "flup", None),
+        "rfldir": getattr(model, "rfldir", None),
+        "rfldn": getattr(model, "rfldn", None),
         "output_values": getattr(model, "output_values", None),
         "input_keys": tuple(inputs.values),
     }
@@ -184,6 +202,7 @@ def _e2e_case(payload):
 
 CASES = {
     "disort": _disort_case,
+    "getmom": _getmom_case,
     "mie": _mie_case,
     "rfm_flag_matrix": _rfm_flag_matrix_case,
     "e2e": _e2e_case,

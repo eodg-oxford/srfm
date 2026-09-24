@@ -867,6 +867,152 @@ def test_run_srfm_revalidates_programmatic_inputs_before_side_effects(tmp_path):
     assert not results.exists()
 
 
+def _valid_prescribed_layer(alt_low=6.0, alt_upp=7.0):
+    """Return a compact prescribed HG layer mapping for schema tests."""
+    return {
+        "name": "prescribed",
+        "alt_low": alt_low,
+        "alt_upp": alt_upp,
+        "optical_depth": {
+            "type": "angstrom",
+            "reference_value": 0.01,
+            "reference_wavelength_um": 1.0,
+            "angstrom_exponent": 1.2,
+        },
+        "ssalb": 0.8,
+        "phase_function": {
+            "type": "henyey_greenstein",
+            "asymmetry": 0.4,
+        },
+    }
+
+
+def test_schema_accepts_spectral_albedo_custom_solar_and_prescribed_layer(basic_values):
+    """Every new top-level representation coexists with the legacy mappings."""
+    grid = np.array([840.0, 1010.0])
+    basic_values["albedo"] = {
+        "grid": grid,
+        "values": np.array([0.1, 0.3]),
+        "grid_units": "cm-1",
+    }
+    basic_values["solar_spectrum"] = {
+        "grid": grid,
+        "values": np.array([1.0, 2.0]),
+        "grid_units": "cm-1",
+        "value_units": "W m-2 (cm-1)-1",
+    }
+    basic_values["prescribed_lyrs_inputs"] = {
+        "prescribed": _valid_prescribed_layer()
+    }
+
+    validated = validate_srfm_inputs(basic_values)
+
+    assert validated["albedo"]["grid_units"] == "cm-1"
+    assert validated["solar_spectrum"]["value_units"] == "W m-2 (cm-1)-1"
+    assert "prescribed" in validated["prescribed_lyrs_inputs"]
+
+
+@pytest.mark.parametrize(
+    ("field", "values", "problem"),
+    [
+        ("albedo", [-0.1, 0.2], "greater than or equal to 0"),
+        ("albedo", [0.2, np.inf], "all values must be finite"),
+        ("solar_spectrum", [-1.0, 2.0], "greater than or equal to 0"),
+    ],
+)
+def test_schema_rejects_invalid_boundary_spectral_values(
+    basic_values, field, values, problem
+):
+    """Albedo and beam spectra enforce finite physical values."""
+    specification = {
+        "grid": [840.0, 1010.0],
+        "values": values,
+        "grid_units": "cm-1",
+    }
+    if field == "solar_spectrum":
+        specification["value_units"] = "W m-2 (cm-1)-1"
+    basic_values[field] = specification
+
+    with pytest.raises(InputValidationError, match=problem):
+        validate_srfm_inputs(basic_values)
+
+
+def test_schema_accepts_file_backed_prescribed_moments(basic_values, tmp_path):
+    """Moment files select multiple ordered value columns explicitly."""
+    moment_file = tmp_path / "moments.txt"
+    moment_file.write_text("840 1 0.2\n1010 1 0.3\n", encoding="utf-8")
+    prescribed = _valid_prescribed_layer()
+    prescribed["phase_function"] = {
+        "type": "legendre_moments",
+        "file": moment_file,
+        "grid_column": 0,
+        "value_columns": [1, 2],
+        "skiprows": 0,
+        "grid_units": "cm-1",
+        "convention": "normalised",
+    }
+    basic_values["prescribed_lyrs_inputs"] = {"prescribed": prescribed}
+
+    validate_srfm_inputs(basic_values)
+
+
+@pytest.mark.parametrize("second_low", [3.25, 3.5])
+def test_optical_layers_reject_overlap_and_shared_boundary(
+    basic_values, second_low
+):
+    """Positive overlap and exact boundary contact are both invalid."""
+    # The public example's low Mie layer spans 2.5--3.5 km.
+    basic_values["prescribed_lyrs_inputs"] = {
+        "prescribed": _valid_prescribed_layer(second_low, 4.0)
+    }
+
+    with pytest.raises(InputValidationError, match="overlaps or shares a boundary"):
+        validate_srfm_inputs(basic_values)
+
+
+def test_optical_layer_geometry_validation_is_dictionary_order_independent(basic_values):
+    """Reversing mappings cannot change overlap validation."""
+    prescribed = _valid_prescribed_layer(3.25, 4.0)
+    basic_values["prescribed_lyrs_inputs"] = {"prescribed": prescribed}
+    basic_values["scat_lyrs_inputs"] = dict(
+        reversed(list(basic_values["scat_lyrs_inputs"].items()))
+    )
+
+    with pytest.raises(InputValidationError, match="overlaps or shares a boundary"):
+        validate_srfm_inputs(basic_values)
+
+
+def test_duplicate_names_are_rejected_across_all_layer_mappings(basic_values):
+    """The configured object name is globally unique across optical types."""
+    duplicate = next(iter(basic_values["scat_lyrs_inputs"]))
+    prescribed = _valid_prescribed_layer(6.0, 7.0)
+    prescribed["name"] = duplicate
+    basic_values["prescribed_lyrs_inputs"] = {duplicate: prescribed}
+
+    with pytest.raises(InputValidationError, match="already used by scat_lyrs_inputs"):
+        validate_srfm_inputs(basic_values)
+
+
+def test_spectral_coverage_is_checked_before_model_side_effects(basic_values, tmp_path):
+    """File data that cannot cover the model grid fails before output creation."""
+    source = tmp_path / "short-albedo.txt"
+    source.write_text("900 0.1\n950 0.2\n", encoding="utf-8")
+    results = tmp_path / "must-not-exist"
+    basic_values["results_fldr"] = str(results)
+    basic_values["albedo"] = {
+        "file": source,
+        "grid_column": 0,
+        "value_column": 1,
+        "skiprows": 0,
+        "grid_units": "cm-1",
+    }
+
+    with pytest.raises(ValueError, match="computational grid spans"):
+        run_srfm(Inputs(**basic_values))
+
+    assert not results.exists()
+
+
 def test_run_srfm_rejects_bad_disort_value_before_native_execution(
     basic_values, tmp_path
 ):

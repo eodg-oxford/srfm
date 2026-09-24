@@ -3,11 +3,13 @@
 import numpy as np
 import pandas as pd
 import pytest
+import json
 from netCDF4 import Dataset
 from pathlib import Path
 from unittest.mock import patch
 
 from srfm.forward_model import SRFM
+from srfm.layer import GreyBodyCloud, PrescribedOpticalLayer
 from srfm.main import (
     _add_grey_body_optical_depth,
     _calculate_output_utau,
@@ -256,6 +258,85 @@ def test_complete_netcdf_writer_supports_raw_output_without_radiance_or_bbt(
             "output_level",
         )
         np.testing.assert_allclose(dataset.variables["rfldn"][:], model.rfldn)
+
+
+def test_netcdf_records_layer_types_spectral_arrays_and_compact_provenance(tmp_path):
+    """Large source arrays become variables or compact JSON summaries."""
+    model = SRFM()
+    model.wvnm = np.array([1000.0, 1500.0, 2000.0])
+    model.output_format = "tau"
+    model.output_values = np.array([0.0])
+    model.output_polar_angles = np.array([0.0])
+    model.output_azimuthal_angles = np.array([0.0])
+    model.rfldn = np.ones((3, 1))
+
+    prescribed = PrescribedOpticalLayer()
+    prescribed.set_input_from_dict(
+        {
+            "name": "aerosol",
+            "alt_low": 1.0,
+            "alt_upp": 2.0,
+            "optical_depth": {
+                "type": "tabulated",
+                "grid": [1000.0, 2000.0],
+                "values": [0.1, 0.3],
+                "grid_units": "cm-1",
+            },
+            "ssalb": 0.8,
+            "phase_function": {
+                "type": "henyey_greenstein",
+                "asymmetry": 0.5,
+            },
+        }
+    )
+    prescribed.validate_inputs(model.wvnm)
+    grey = GreyBodyCloud(
+        name="cloud",
+        low_spc=1000.0,
+        upp_spc=2000.0,
+        res=1000.0,
+        spec_units="cm-1",
+        center_alt=3.0,
+        thick=0.2,
+        alt_low=None,
+        alt_upp=None,
+        emis=1.0,
+        inp_tau=0.4,
+    )
+    grey.calculate_op()
+    large_grid = np.linspace(1000.0, 2000.0, 20_000)
+    filename = tmp_path / "optics.nc"
+
+    _write_srfm_netcdf(
+        filename,
+        model,
+        ("rfldn",),
+        {
+            "driver_inputs": {"spectral": (1000.0, 2000.0)},
+            "albedo": {"grid": large_grid, "values": np.full(20_000, 0.2)},
+        },
+        model.wvnm,
+        {"aerosol": prescribed},
+        grey_body_layers={"cloud": grey},
+        surface_albedo=np.array([0.1, 0.2, 0.3]),
+        solar_spectral_irradiance=np.array([2.0, 3.0, 4.0]),
+        nmom=2,
+        scattering_block_size=2,
+    )
+
+    with Dataset(filename) as dataset:
+        assert list(dataset.variables["layer_names"][:]) == ["aerosol", "cloud"]
+        assert list(dataset.variables["layer_type"][:]) == ["prescribed", "grey_body"]
+        np.testing.assert_allclose(dataset.variables["tau"][:], [[0.1, 0.2, 0.3], [0.4] * 3])
+        np.testing.assert_allclose(dataset.variables["surface_albedo"][:], [0.1, 0.2, 0.3])
+        np.testing.assert_allclose(
+            dataset.variables["solar_spectral_irradiance"][:], [2.0, 3.0, 4.0]
+        )
+        assert dataset.variables["normalized_legendre_moment"].shape == (2, 3, 3)
+        metadata = json.loads(dataset.srfm_params)
+        assert metadata["albedo"]["grid"]["shape"] == [20_000]
+        assert metadata["albedo"]["values"]["stored_as"] == "NetCDF variable"
+        assert len(dataset.srfm_params) < 5_000
 
 
 def test_retained_output_selection_accepts_every_radiance_alias():

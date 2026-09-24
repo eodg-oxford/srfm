@@ -66,6 +66,10 @@ To run the packaged example as a traditional radiative transfer model:
 4. Run ``run_srfm.py``.
 5. Results are written to the paths you configured.
 
+The :doc:`Examples gallery <auto_examples/index>` provides a complete driver,
+supporting input files, a representative output spectrum, and a downloadable
+bundle that can be adapted and run locally.
+
 You can also import modules directly::
 
    from srfm import *

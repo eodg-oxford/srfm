@@ -37,17 +37,20 @@ from .input_schema import validate_iasi_inputs
 from .main import (
     _add_grey_body_optical_depth,
     _calculate_output_utau,
+    _calculate_optical_layers,
+    _construct_and_validate_optical_layers,
     _grey_body_effective_parameters,
     _interpolate_grey_body_optical_depths,
-    _interpolate_scattering_block,
+    _interpolate_particle_block,
+    _prepare_boundary_spectral_fields,
+    _prepare_solar_spectral_irradiance,
+    _set_spectral_boundary_inputs,
     _plot_spectral_outputs,
     _resolve_output_geometry,
     _resolve_retained_outputs,
-    _prepare_grey_body_layers,
     _write_srfm_netcdf,
     _write_spectral_text,
 )
-import copy
 
 
 def _format_iasi_plot_title(keystr, model, polar, level, azimuthal):
@@ -82,6 +85,24 @@ def run_srfm(inp):
     if not hasattr(inp, "values"):
         raise TypeError("run_srfm expects an Inputs-like object with a values mapping.")
     inp.values = validate_iasi_inputs(inp.values)
+    requested_wavenumber, _ = utilities.calc_grids(
+        inp.values["spc_wvnmlo"],
+        inp.values["spc_wvnmhi"],
+        inp.values["spc_res"],
+        inp.values["spc_units"],
+    )
+    prepared_albedo, prepared_custom_solar = _prepare_boundary_spectral_fields(
+        inp.values, requested_wavenumber
+    )
+    scat_lyrs, prescribed_lyrs, gbc_lyrs = _construct_and_validate_optical_layers(
+        inp.values, requested_wavenumber
+    )
+    _calculate_optical_layers(
+        scat_lyrs,
+        gbc_lyrs,
+        inp.values.get("retain_phase_functions", False),
+    )
+    particle_lyrs = {**scat_lyrs, **prescribed_lyrs}
     ########################################################################################
     # Assign some variables:
     ########################################################################################
@@ -376,33 +397,6 @@ def run_srfm(inp):
     rfm_grid_fname = rfm_functions.construct_rfm_grid_file(
         RFM_wvnm, filename="grid.spc", rfm_fldr=inp.values["results_fldr"]
     )
-    ########################################################################################
-    # define an atmospheric scattering layers
-    ########################################################################################
-    scat_lyrs = (
-        {}
-    )  # dictionary of scattering layers, key - layer name, value - Layer() object
-
-    # define Layer properties
-    scat_lyrs_inputs = {}
-
-    if inp.values.get("scat_lyrs_inputs"):
-
-        # calculate MieLayer optical properties
-        for lyr in inp.values["scat_lyrs_inputs"].keys():
-            scat_lyrs_inputs[lyr] = (
-                inp.values["scat_lyrs_inputs"][lyr]
-                | inp.values["scat_lyrs_inputs"][lyr]
-            )
-            scat_lyrs[lyr] = layer.MieLayer()
-            scat_lyrs[lyr].set_input_from_dict(
-                scat_lyrs_inputs[lyr]
-            )  # sets input for scattering layer
-            scat_lyrs[
-                lyr
-            ].calculate_op()  # calculates layer optical properties, may run in parallel
-
-    gbc_lyrs = _prepare_grey_body_layers(inp.values)
 
     ########################################################################################
     # prepare atmospheric layer structure
@@ -472,6 +466,11 @@ def run_srfm(inp):
             lev=levels, track_lev=track_lev, new_lyr=scat_lyrs[lyr]
         )
 
+    for lyr in prescribed_lyrs:
+        levels, track_lev = utilities.add_lyr_from_Layer(
+            lev=levels, track_lev=track_lev, new_lyr=prescribed_lyrs[lyr]
+        )
+
     for lyr in gbc_lyrs:
         levels, track_lev = utilities.add_lyr_from_Layer(
             lev=levels, track_lev=track_lev, new_lyr=gbc_lyrs[lyr]
@@ -520,16 +519,13 @@ def run_srfm(inp):
 
     RFM_wvnm = model_RFM.rfm_output.wavenumber
     wvls = (1.0 / RFM_wvnm) * 1e4
+    if isinstance(prepared_albedo, float):
+        surface_albedo = prepared_albedo
+    else:
+        surface_albedo = prepared_albedo.interpolate(RFM_wvnm)
     grey_body_optical_depths = _interpolate_grey_body_optical_depths(
         gbc_lyrs, wvls
     )
-
-    # add output from optical properties calculation, TODO MOVE UP?
-    for lyr in scat_lyrs.keys():
-        scat_lyrs[lyr].add_op_calc_output()
-
-        if not inp.values.get("retain_phase_functions", False):
-            scat_lyrs[lyr].discard_phase_function()
 
         # Prepare dict with layer parameters to be saved in the output
     layer_attrs = (
@@ -561,16 +557,27 @@ def run_srfm(inp):
         "multiprocess",
     )
 
-    effective_params = copy.deepcopy(inp.values)
+    effective_params = dict(inp.values)
     effective_params["scat_lyrs_inputs"] = {
-        lyr: {
+        lyr: {"layer_type": "mie"}
+        | {
             attr: getattr(scat_lyrs[lyr], attr)
             for attr in layer_attrs
             if hasattr(scat_lyrs[lyr], attr)
         }
         for lyr in scat_lyrs
     }
+    effective_params["prescribed_lyrs_inputs"] = {
+        lyr: prescribed_lyrs[lyr].source_metadata() for lyr in prescribed_lyrs
+    }
     effective_params["gbc_lyrs_inputs"] = _grey_body_effective_parameters(gbc_lyrs)
+    effective_params["albedo"] = (
+        prepared_albedo
+        if isinstance(prepared_albedo, float)
+        else prepared_albedo.provenance()
+    )
+    if prepared_custom_solar is not None:
+        effective_params["solar_spectrum"] = prepared_custom_solar.provenance()
 
     ########################################################################################
     # prepare DISORT common variables
@@ -596,15 +603,15 @@ def run_srfm(inp):
     # set disort_input parameters common to all loop iterations
     # these need to be set first:
     nmom = inp.values["nmom"]
-    for lyr in scat_lyrs.keys():
-        if (scat_lyrs[lyr].legendre_coefficient.shape[1] - 1) > nmom:
-            nmom = scat_lyrs[lyr].legendre_coefficient.shape[1] - 1
+    for particle_layer in particle_lyrs.values():
+        nmom = max(nmom, particle_layer.required_nmom)
 
     model_DISORT.set_maxcmu(inp.values["maxcmu"])
 
     model_DISORT.set_maxmom(nmom)
     if nmom < model_DISORT.disort_input["maxcmu"]:
         model_DISORT.set_maxmom(model_DISORT.disort_input["maxcmu"])
+    nmom = model_DISORT.disort_input["maxmom"]
 
     model_DISORT.set_maxumu(inp.values["maxumu"])
     model_DISORT.set_maxphi(inp.values["maxphi"])
@@ -624,7 +631,8 @@ def run_srfm(inp):
     model_DISORT.set_do_pseudo_sphere(inp.values["do_pseudo_sphere"])
 
     model_DISORT.set_fisot(inp.values["fisot"])
-    model_DISORT.set_albedo(inp.values["albedo"])
+    if isinstance(surface_albedo, float):
+        model_DISORT.set_albedo(surface_albedo)
 
     model_DISORT.set_temis(inp.values["temis"])
     model_DISORT.set_earth_radius(inp.values.get("earth_radius", 6371.0))
@@ -663,25 +671,21 @@ def run_srfm(inp):
     # prepare solar spectrum
     ########################################################################################
 
-    # load solar spectrum from file
-    solar_spc, solar_spc_wvnm = utilities.load_solar_spectrum_Gueymard20018()
-    solar_spc = np.interp(
-        RFM_wvnm, solar_spc_wvnm[::-1], solar_spc[::-1]
-    )  # interpolate to RFM_wvnm (the calculation grid)
-
-    # scale with year day (different Sun-Earth distance throughout the year
-    # the original spectrum is for 1 AU
-    solar_spc = utilities.scale_solar_spectrum(solar_spc, year_day)
-
-    # get incoming solar beam polar angle for DISORT
-    solar_zen_deg = iasi_data["sza"][px]  # solar zenith angle [degrees]
-    solar_zen_rad = np.deg2rad(solar_zen_deg)  # solar zenith angle [rad]
-    solar_zen_cos = np.cos(
-        solar_zen_rad
-    ).item()  # cosine of the solar zenith angle, UMU0
-
-    model_DISORT.set_umu0(solar_zen_cos)
-    model_DISORT.set_phi0(iasi_data["saa"][px])
+    solar_enabled = inp.values.get("sun", True)
+    solar_spc = _prepare_solar_spectral_irradiance(
+        prepared_custom_solar,
+        RFM_wvnm,
+        year_day,
+        sun=solar_enabled,
+    )
+    if solar_enabled:
+        solar_zen_deg = iasi_data["sza"][px]
+        solar_zen_rad = np.deg2rad(solar_zen_deg)
+        model_DISORT.set_umu0(np.cos(solar_zen_rad).item())
+        model_DISORT.set_phi0(iasi_data["saa"][px])
+    else:
+        model_DISORT.set_umu0(1)
+        model_DISORT.set_phi0(0)
     model_DISORT.set_umu([iasi_zen_cos])
     model_DISORT.set_phi([iasi_data["azi"][px]])
 
@@ -735,22 +739,24 @@ def run_srfm(inp):
     # set dynamic variables and run DISORT
     ########################################################################################
     scattering_block_size = inp.values.get("scattering_block_size", 10000)
-    scattering_block = {}
-    scattering_block_start = 0
+    particle_block = {}
+    particle_block_start = 0
     skipped_scattering = {
         layer_name: {"count": 0, "first": None, "last": None}
-        for layer_name in scat_lyrs
+        for layer_name in particle_lyrs
     }
     for wvl_idx, (wvnm, wvl, tau_g) in enumerate(
         zip(RFM_wvnm, wvls, model_RFM.rfm_output.differential_tau)
     ):
-        if scat_lyrs and wvl_idx % scattering_block_size == 0:
-            scattering_block_start = wvl_idx
+        if particle_lyrs and wvl_idx % scattering_block_size == 0:
+            particle_block_start = wvl_idx
             block_stop = min(wvl_idx + scattering_block_size, len(wvls))
-            scattering_block = _interpolate_scattering_block(
-                scat_lyrs, wvls[wvl_idx:block_stop]
+            particle_block = _interpolate_particle_block(
+                particle_lyrs,
+                RFM_wvnm[wvl_idx:block_stop],
+                nmom,
             )
-        block_index = wvl_idx - scattering_block_start
+        block_index = wvl_idx - particle_block_start
 
         # track progress
         if wvnm in pct_val:
@@ -782,13 +788,17 @@ def run_srfm(inp):
 
         # particle layer optical depths (from particle scattering)
         tau_p = np.zeros(shape=(len(tau_g)))
-        for lyr in scat_lyrs.keys():
-            tau_p[track_lyr.index(lyr)] = scattering_block[lyr]["tau"][block_index]
+        for lyr in particle_lyrs:
+            tau_p[track_lyr.index(lyr)] = particle_block[lyr][
+                "particle_optical_depth"
+            ][block_index]
 
         # particle layer single scatter albedo
         w_p = np.zeros(shape=(len(tau_g)))
-        for lyr in scat_lyrs.keys():
-            w_p[track_lyr.index(lyr)] = scattering_block[lyr]["ssalb"][block_index]
+        for lyr in particle_lyrs:
+            w_p[track_lyr.index(lyr)] = particle_block[lyr][
+                "single_scattering_albedo"
+            ][block_index]
 
         dtauc_tot = utilities.calc_tot_dtauc(tau_g=tau_g, tau_R=tau_R, tau_p=tau_p)
         dtauc_tot = np.maximum(np.asarray(dtauc_tot, dtype=float), 0.0)
@@ -847,19 +857,22 @@ def run_srfm(inp):
         model_DISORT.set_ssalb(tau_g=tau_g, tau_R=tau_R, tau_p=tau_p, w_p=w_p)
 
         particle_moments = {}
-        for lyr in scat_lyrs.keys():
-            layer_tau = scattering_block[lyr]["tau"][block_index]
-            if layer_tau < threshold_od:
+        for lyr in particle_lyrs:
+            layer_tau = particle_block[lyr]["particle_optical_depth"][block_index]
+            layer_ssalb = particle_block[lyr]["single_scattering_albedo"][block_index]
+            if layer_tau * layer_ssalb < threshold_od:
                 skipped = skipped_scattering[lyr]
                 skipped["count"] += 1
                 skipped["first"] = wvnm if skipped["first"] is None else skipped["first"]
                 skipped["last"] = wvnm
             else:
-                coefficients = scattering_block[lyr]["legendre_coefficient"][
-                    block_index
-                ].copy()
-                Legendre_precision = 1 / coefficients[0]
-                if abs(Legendre_precision - 1) > 1e-5:
+                coefficients = particle_block[lyr][
+                    "normalized_legendre_coefficients"
+                ][block_index].copy()
+                if (
+                    abs(coefficients[0] - 1.0)
+                    > layer.NORMALIZED_MOMENT_TOLERANCE
+                ):
                     raise RuntimeError(
                         "Something is wrong with the phase function. The first "
                         f"coefficient is {coefficients[0]}, but should be 1.0. "
@@ -880,8 +893,13 @@ def run_srfm(inp):
         # set wavenumber range for DISORT (for Planck function)
         model_DISORT.set_wvnm_range(wvnm - 0.5, wvnm + 0.5)
 
-        # set incoming beam of (solar) radiation
-        model_DISORT.set_fbeam(solar_spc[wvl_idx])
+        _set_spectral_boundary_inputs(
+            model_DISORT,
+            wvl_idx,
+            surface_albedo,
+            solar_spc,
+            sun=solar_enabled,
+        )
         #    model_DISORT.set_fbeam(0.1)
 
         # run disort input tests
@@ -907,7 +925,7 @@ def run_srfm(inp):
     for layer_name, skipped in skipped_scattering.items():
         if skipped["count"]:
             warnings.warn(
-                f"Scattering layer {layer_name!r} was below optical-depth threshold "
+                f"Particle layer {layer_name!r} was below scattering optical-depth threshold "
                 f"{threshold_od:g} at {skipped['count']} wavenumbers from "
                 f"{skipped['first']:g} to {skipped['last']:g} cm-1; particle "
                 "scattering was omitted there.",
@@ -957,8 +975,13 @@ def run_srfm(inp):
             model_SRFM,
             inp.values["retain_outputs"],
             effective_params,
-            wvls,
-            scat_lyrs,
+            RFM_wvnm,
+            particle_lyrs,
+            grey_body_layers=gbc_lyrs,
+            surface_albedo=surface_albedo,
+            solar_spectral_irradiance=solar_spc,
+            nmom=nmom,
+            scattering_block_size=scattering_block_size,
         )
 
     elif inp.values["out_mode"] == None:

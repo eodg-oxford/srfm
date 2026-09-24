@@ -1,163 +1,153 @@
-Modules and Functions
-=====================
+API Reference
+=============
 
-srfm.ARIA\_module module
-------------------------
+The following pages document the public classes and functions provided by the
+SRFM Python package. The command-line runner modules are included because they
+also expose reusable entry-point functions.
+
+srfm.ARIA\_module
+-----------------
 
 .. automodule:: srfm.ARIA_module
    :members:
    :show-inheritance:
-   :undoc-members:
 
-srfm.disort\_functions module
------------------------------
+srfm.disort\_functions
+----------------------
 
 .. automodule:: srfm.disort_functions
    :members:
    :show-inheritance:
-   :undoc-members:
 
-srfm.forward\_model module
---------------------------
+srfm.forward\_model
+-------------------
 
 .. automodule:: srfm.forward_model
    :members:
    :show-inheritance:
-   :undoc-members:
 
-srfm.layer module
------------------
+srfm.iasi\_main
+---------------
+
+.. automodule:: srfm.iasi_main
+   :members:
+   :show-inheritance:
+
+srfm.input\_schema
+------------------
+
+.. automodule:: srfm.input_schema
+   :members:
+   :show-inheritance:
+
+srfm.inputs
+-----------
+
+.. automodule:: srfm.inputs
+   :members:
+   :show-inheritance:
+
+srfm.layer
+----------
 
 .. automodule:: srfm.layer
    :members:
    :show-inheritance:
-   :undoc-members:
 
+srfm.main
+---------
 
-srfm.optical\_properties module
--------------------------------
+.. automodule:: srfm.main
+   :members:
+   :show-inheritance:
+
+srfm.optical\_properties
+------------------------
 
 .. automodule:: srfm.optical_properties
    :members:
    :show-inheritance:
-   :undoc-members:
 
-srfm.plotting module
---------------------
+srfm.orography
+--------------
+
+.. automodule:: srfm.orography
+   :members:
+   :show-inheritance:
+
+srfm.oxharp\_main
+-----------------
+
+.. automodule:: srfm.oxharp_main
+   :members:
+   :show-inheritance:
+
+srfm.plotting
+-------------
 
 .. automodule:: srfm.plotting
    :members:
    :show-inheritance:
-   :undoc-members:
 
-srfm.quadrature module
-----------------------
+srfm.quadrature
+---------------
 
 .. automodule:: srfm.quadrature
    :members:
    :show-inheritance:
-   :undoc-members:
 
-srfm.rfm\_functions module
---------------------------
-
-.. automodule:: srfm.rfm_functions
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-srfm.size\_distribution module
-------------------------------
-
-.. automodule:: srfm.size_distribution
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-srfm.units module
------------------
-
-.. automodule:: srfm.units
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-srfm.utilities module
----------------------
-
-.. automodule:: srfm.utilities
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-srfm.readers.read_iasi_l1c module
----------------------------------
+srfm.readers.read\_iasi\_l1c
+----------------------------
 
 .. automodule:: srfm.readers.read_iasi_l1c
    :members:
    :show-inheritance:
-   :undoc-members:
-   :noindex:
-   
-srfm.read_iasi_l2 module
-------------------------
+
+srfm.readers.read\_iasi\_l2
+---------------------------
 
 .. automodule:: srfm.readers.read_iasi_l2
    :members:
    :show-inheritance:
-   :undoc-members:
-   :noindex:
 
-srfm.rfm_helper module
------------------------------
+srfm.rfm\_functions
+-------------------
+
+.. automodule:: srfm.rfm_functions
+   :members:
+   :show-inheritance:
+
+srfm.rfm\_helper
+----------------
 
 .. automodule:: srfm.rfm_helper
    :members:
    :show-inheritance:
-   :undoc-members:
-   :noindex:
 
-srfm.main module
------------------------------
+srfm.size\_distribution
+-----------------------
 
-.. automodule:: srfm.rfm_helper
+.. automodule:: srfm.size_distribution
    :members:
    :show-inheritance:
-   :undoc-members:
-   :noindex:
-   
-srfm.iasi_main module
------------------------------
 
-.. automodule:: srfm.rfm_helper
+srfm.spectral\_fields
+----------------------
+
+.. automodule:: srfm.spectral_fields
    :members:
    :show-inheritance:
-   :undoc-members:
-   :noindex:
-   
-srfm.inputs module
------------------------------
 
-.. automodule:: srfm.rfm_helper
+srfm.units
+----------
+
+.. automodule:: srfm.units
    :members:
    :show-inheritance:
-   :undoc-members:
-   :noindex:
 
-srfm.orography module
------------------------------
+srfm.utilities
+--------------
 
-.. automodule:: srfm.rfm_helper
+.. automodule:: srfm.utilities
    :members:
    :show-inheritance:
-   :undoc-members:
-   :noindex:
-
-srfm.oxharp_main module
------------------------------
-
-.. automodule:: srfm.rfm_helper
-   :members:
-   :show-inheritance:
-   :undoc-members:
-   :noindex:

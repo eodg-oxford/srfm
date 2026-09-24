@@ -14,6 +14,7 @@ import os
 from typing import Any
 
 import numpy as np
+from .spectral_fields import GRID_UNITS, SOLAR_VALUE_UNITS
 
 _MISSING = object()
 
@@ -176,11 +177,12 @@ SRFM_INPUT_SCHEMA: dict[str, FieldSpec] = {
         permitted="a finite real number greater than or equal to 0",
     ),
     "albedo": FieldSpec(
-        NUMBER_TYPES,
+        (Real, Mapping),
         required=True,
-        minimum=0,
-        maximum=1,
-        permitted="a finite real number in the inclusive range [0, 1]",
+        permitted=(
+            "a finite real number in [0, 1] or an in-memory/file-backed "
+            "spectral-field mapping"
+        ),
     ),
     "temis": FieldSpec(
         NUMBER_TYPES,
@@ -269,7 +271,9 @@ SRFM_INPUT_SCHEMA: dict[str, FieldSpec] = {
     ),
     # Scattering and geometry.
     "scat_lyrs_inputs": FieldSpec(MAPPING_TYPES, nullable=True),
+    "prescribed_lyrs_inputs": FieldSpec(MAPPING_TYPES, nullable=True),
     "gbc_lyrs_inputs": FieldSpec(MAPPING_TYPES, nullable=True),
+    "solar_spectrum": FieldSpec(MAPPING_TYPES, nullable=True),
     "date": FieldSpec((dt.datetime, tuple)),
     "sun": FieldSpec((bool,), required=True, permitted="True or False"),
     "sza": FieldSpec(
@@ -479,6 +483,29 @@ GREY_BODY_LAYER_SCHEMA: dict[str, FieldSpec] = {
     "alt_low": FieldSpec(NUMBER_TYPES, nullable=True),
     "emis": FieldSpec(NUMBER_TYPES, required=True),
     "inp_tau": FieldSpec(NUMBER_TYPES, required=True),
+}
+
+
+PRESCRIBED_LAYER_SCHEMA: dict[str, FieldSpec] = {
+    "name": FieldSpec((str,), required=True),
+    "alt_low": FieldSpec(NUMBER_TYPES, required=True),
+    "alt_upp": FieldSpec(NUMBER_TYPES, required=True),
+    "optical_depth": FieldSpec(MAPPING_TYPES, required=True),
+    "ssalb": FieldSpec((Real, Mapping), required=True),
+    "phase_function": FieldSpec(MAPPING_TYPES, nullable=True),
+}
+
+
+_SPECTRAL_FIELD_KEYS = {
+    "grid",
+    "values",
+    "file",
+    "grid_column",
+    "value_column",
+    "value_columns",
+    "skiprows",
+    "grid_units",
+    "value_units",
 }
 
 
@@ -879,6 +906,291 @@ def _validate_driver(
                 )
 
 
+def _validate_spectral_field_mapping(
+    value: Any,
+    path: str,
+    issues: list[str],
+    *,
+    matrix_values: bool = False,
+    minimum: float | None = None,
+    maximum: float | None = None,
+    require_value_units: bool = False,
+    extra_keys: set[str] | None = None,
+) -> None:
+    """Validate one in-memory or file-backed spectral-field mapping.
+
+    File contents are deliberately loaded by the runner preflight, where coverage
+    can be checked against the computational grid before model side effects.
+
+    Args:
+        value: Candidate spectral-field mapping.
+        path: Dotted path used in diagnostics.
+        issues: Mutable collection receiving validation failures.
+        matrix_values: Require a spectral-by-component value matrix.
+        minimum: Optional inclusive lower value bound.
+        maximum: Optional inclusive upper value bound.
+        require_value_units: Require one supported solar-density unit spelling.
+        extra_keys: Representation-specific keys accepted in addition to the
+            common spectral-field keys.
+    """
+    if not isinstance(value, Mapping):
+        issues.append(f"{path}: expected a mapping")
+        return
+    allowed = _SPECTRAL_FIELD_KEYS | (extra_keys or set())
+    for unknown in sorted(set(value) - allowed):
+        issues.append(f"{path}.{unknown}: unknown field")
+
+    has_file = "file" in value
+    has_grid = "grid" in value
+    has_values = "values" in value
+    if has_file and (has_grid or has_values):
+        issues.append(f"{path}: file and grid/values representations are mutually exclusive")
+    elif not has_file and not (has_grid and has_values):
+        issues.append(f"{path}: provide either file or both grid and values")
+    elif has_grid != has_values:
+        issues.append(f"{path}: grid and values must be supplied together")
+
+    grid_units = value.get("grid_units")
+    if grid_units not in GRID_UNITS:
+        issues.append(
+            f"{path}.grid_units: expected one of "
+            + ", ".join(repr(unit) for unit in sorted(GRID_UNITS))
+        )
+    if require_value_units:
+        value_units = value.get("value_units")
+        if value_units not in SOLAR_VALUE_UNITS:
+            issues.append(
+                f"{path}.value_units: expected one of "
+                + ", ".join(repr(unit) for unit in sorted(SOLAR_VALUE_UNITS))
+            )
+    elif "value_units" in value:
+        issues.append(f"{path}.value_units: only solar_spectrum accepts value units")
+
+    if has_file:
+        if not isinstance(value.get("file"), PATH_TYPES):
+            issues.append(f"{path}.file: expected str or path-like value")
+        grid_column = value.get("grid_column", 0)
+        if type(grid_column) is not int or grid_column < 0:
+            issues.append(f"{path}.grid_column: must be a non-negative integer")
+        skiprows = value.get("skiprows", 0)
+        if type(skiprows) is not int or skiprows < 0:
+            issues.append(f"{path}.skiprows: must be a non-negative integer")
+        if matrix_values:
+            columns = value.get("value_columns")
+            if isinstance(columns, np.ndarray):
+                columns = columns.tolist()
+            if (
+                not _is_sequence(columns)
+                or len(columns) == 0
+                or any(type(column) is not int or column < 0 for column in columns)
+            ):
+                issues.append(
+                    f"{path}.value_columns: must be a non-empty sequence of "
+                    "non-negative integers"
+                )
+            elif len(set(columns)) != len(columns):
+                issues.append(f"{path}.value_columns: values must be distinct")
+            if "value_column" in value:
+                issues.append(f"{path}.value_column: use value_columns for moment data")
+        else:
+            value_column = value.get("value_column", 1)
+            if type(value_column) is not int or value_column < 0:
+                issues.append(f"{path}.value_column: must be a non-negative integer")
+            if "value_columns" in value:
+                issues.append(f"{path}.value_columns: use value_column for scalar data")
+        return
+
+    if not (has_grid and has_values):
+        return
+    try:
+        grid = np.asarray(value["grid"], dtype=float)
+        values = np.asarray(value["values"], dtype=float)
+    except (TypeError, ValueError):
+        issues.append(f"{path}: grid and values must be numeric arrays")
+        return
+    if grid.ndim != 1 or grid.size < 2 or not np.all(np.isfinite(grid)):
+        issues.append(f"{path}.grid: must be a finite 1D array with at least two points")
+    elif np.any(grid <= 0) or not (
+        np.all(np.diff(grid) > 0) or np.all(np.diff(grid) < 0)
+    ):
+        issues.append(f"{path}.grid: values must be positive and strictly monotonic")
+    if matrix_values:
+        valid_shape = values.ndim == 2 and values.shape[0] == grid.size and values.shape[1] > 0
+        expected = "shape (spectral_points, moments)"
+    else:
+        valid_shape = values.ndim == 1 and values.shape == grid.shape
+        expected = "the same one-dimensional shape as grid"
+    if not valid_shape:
+        issues.append(f"{path}.values: must have {expected}")
+        return
+    if not np.all(np.isfinite(values)):
+        issues.append(f"{path}.values: all values must be finite")
+    if minimum is not None and np.any(values < minimum):
+        issues.append(f"{path}.values: values must be greater than or equal to {minimum:g}")
+    if maximum is not None and np.any(values > maximum):
+        issues.append(f"{path}.values: values must be less than or equal to {maximum:g}")
+
+
+def _validate_boundary_spectral_inputs(mapping: Mapping[str, Any], issues: list[str]) -> None:
+    """Validate scalar/spectral albedo and optional custom solar irradiance."""
+    albedo = mapping.get("albedo")
+    if isinstance(albedo, Real) and not isinstance(albedo, (bool, np.bool_)):
+        if not np.isfinite(albedo) or not 0 <= albedo <= 1:
+            _append_value_issue(
+                issues,
+                "albedo",
+                albedo,
+                "a finite scalar in [0, 1] or a spectral-field mapping",
+            )
+    elif isinstance(albedo, Mapping):
+        _validate_spectral_field_mapping(
+            albedo, "albedo", issues, minimum=0, maximum=1
+        )
+
+    solar_spectrum = mapping.get("solar_spectrum")
+    if solar_spectrum is not None:
+        _validate_spectral_field_mapping(
+            solar_spectrum,
+            "solar_spectrum",
+            issues,
+            minimum=0,
+            require_value_units=True,
+        )
+
+
+def _validate_prescribed_layers(layers: Any, issues: list[str]) -> None:
+    """Validate prescribed-layer structure and all in-memory numerical fields."""
+    if layers is None or not isinstance(layers, Mapping):
+        return
+    for layer_name, prescribed in layers.items():
+        path = f"prescribed_lyrs_inputs.{layer_name}."
+        if not isinstance(layer_name, str):
+            issues.append(
+                f"prescribed_lyrs_inputs: layer name {layer_name!r} must be a string"
+            )
+            continue
+        if not isinstance(prescribed, Mapping):
+            issues.append(f"prescribed_lyrs_inputs.{layer_name}: expected a mapping")
+            continue
+        _check_mapping(prescribed, PRESCRIBED_LAYER_SCHEMA, path, issues)
+        configured_name = prescribed.get("name")
+        if isinstance(configured_name, str) and configured_name != layer_name:
+            issues.append(f"{path}name: must match the containing layer name {layer_name!r}")
+        alt_low = prescribed.get("alt_low")
+        alt_upp = prescribed.get("alt_upp")
+        if isinstance(alt_low, Real) and isinstance(alt_upp, Real) and alt_low >= alt_upp:
+            issues.append(f"{path}alt_low: must be less than alt_upp")
+
+        optical_depth = prescribed.get("optical_depth")
+        optical_path = f"{path}optical_depth"
+        if isinstance(optical_depth, Mapping):
+            optical_type = optical_depth.get("type")
+            if optical_type == "angstrom":
+                allowed = {
+                    "type",
+                    "reference_value",
+                    "reference_wavelength_um",
+                    "angstrom_exponent",
+                }
+                for unknown in sorted(set(optical_depth) - allowed):
+                    issues.append(f"{optical_path}.{unknown}: unknown field")
+                for required in allowed - {"type"}:
+                    if required not in optical_depth:
+                        issues.append(f"{optical_path}.{required}: required field is missing")
+                reference_value = optical_depth.get("reference_value")
+                reference_wavelength = optical_depth.get("reference_wavelength_um")
+                exponent = optical_depth.get("angstrom_exponent")
+                for key, candidate in (
+                    ("reference_value", reference_value),
+                    ("reference_wavelength_um", reference_wavelength),
+                    ("angstrom_exponent", exponent),
+                ):
+                    if (
+                        not isinstance(candidate, Real)
+                        or isinstance(candidate, (bool, np.bool_))
+                        or not np.isfinite(candidate)
+                    ):
+                        issues.append(f"{optical_path}.{key}: must be a finite real number")
+                if isinstance(reference_value, Real) and reference_value < 0:
+                    issues.append(f"{optical_path}.reference_value: must be non-negative")
+                if isinstance(reference_wavelength, Real) and reference_wavelength <= 0:
+                    issues.append(
+                        f"{optical_path}.reference_wavelength_um: must be greater than zero"
+                    )
+            elif optical_type == "tabulated":
+                _validate_spectral_field_mapping(
+                    optical_depth,
+                    optical_path,
+                    issues,
+                    minimum=0,
+                    extra_keys={"type"},
+                )
+            else:
+                issues.append(f"{optical_path}.type: expected 'angstrom' or 'tabulated'")
+
+        single_scattering_albedo = prescribed.get("ssalb")
+        if isinstance(single_scattering_albedo, Real) and not isinstance(
+            single_scattering_albedo, (bool, np.bool_)
+        ):
+            if not np.isfinite(single_scattering_albedo) or not 0 <= single_scattering_albedo <= 1:
+                issues.append(f"{path}ssalb: scalar value must be finite and in [0, 1]")
+        elif isinstance(single_scattering_albedo, Mapping):
+            _validate_spectral_field_mapping(
+                single_scattering_albedo,
+                f"{path}ssalb",
+                issues,
+                minimum=0,
+                maximum=1,
+            )
+        elif "ssalb" in prescribed:
+            issues.append(
+                f"{path}ssalb: expected a scalar or spectral-field mapping; "
+                "bare arrays are not supported"
+            )
+
+        phase_function = prescribed.get("phase_function")
+        if isinstance(phase_function, Mapping):
+            phase_type = phase_function.get("type")
+            phase_path = f"{path}phase_function"
+            if phase_type == "henyey_greenstein":
+                for unknown in sorted(set(phase_function) - {"type", "asymmetry"}):
+                    issues.append(f"{phase_path}.{unknown}: unknown field")
+                if "asymmetry" not in phase_function:
+                    issues.append(f"{phase_path}.asymmetry: required field is missing")
+                asymmetry = phase_function.get("asymmetry")
+                if isinstance(asymmetry, Real) and not isinstance(asymmetry, (bool, np.bool_)):
+                    if not np.isfinite(asymmetry) or not -1 <= asymmetry <= 1:
+                        issues.append(
+                            f"{phase_path}.asymmetry: scalar must be finite and in [-1, 1]"
+                        )
+                elif isinstance(asymmetry, Mapping):
+                    _validate_spectral_field_mapping(
+                        asymmetry,
+                        f"{phase_path}.asymmetry",
+                        issues,
+                        minimum=-1,
+                        maximum=1,
+                    )
+                elif "asymmetry" in phase_function:
+                    issues.append(
+                        f"{phase_path}.asymmetry: expected a scalar or spectral-field mapping"
+                    )
+            elif phase_type == "legendre_moments":
+                if phase_function.get("convention") != "normalised":
+                    issues.append(f"{phase_path}.convention: expected 'normalised'")
+                _validate_spectral_field_mapping(
+                    phase_function,
+                    phase_path,
+                    issues,
+                    matrix_values=True,
+                    extra_keys={"type", "convention"},
+                )
+            else:
+                issues.append(
+                    f"{phase_path}.type: expected 'henyey_greenstein' or 'legendre_moments'"
+                )
+
+
 def _validate_layers(layers: Any, issues: list[str]) -> None:
     """Validate every configured scattering layer and cross-field constraint.
 
@@ -1082,6 +1394,72 @@ def _validate_grey_body_layers(layers: Any, issues: list[str]) -> None:
                 )
 
 
+def _configured_layer_bounds(layer: Mapping[str, Any]) -> tuple[float, float] | None:
+    """Return effective layer bounds when they can be resolved safely."""
+    alt_low, alt_upp = layer.get("alt_low"), layer.get("alt_upp")
+    if (
+        isinstance(alt_low, Real)
+        and isinstance(alt_upp, Real)
+        and np.isfinite(alt_low)
+        and np.isfinite(alt_upp)
+        and alt_low < alt_upp
+    ):
+        return float(alt_low), float(alt_upp)
+    center, thickness = layer.get("center_alt"), layer.get("thick")
+    if (
+        isinstance(center, Real)
+        and isinstance(thickness, Real)
+        and np.isfinite(center)
+        and np.isfinite(thickness)
+        and thickness > 0
+    ):
+        return (
+            float(round(center - thickness / 2, 3)),
+            float(round(center + thickness / 2, 3)),
+        )
+    return None
+
+
+def _validate_optical_layer_structure(mapping: Mapping[str, Any], issues: list[str]) -> None:
+    """Reject duplicate names, overlaps, and shared optical-layer boundaries."""
+    groups = (
+        ("scat_lyrs_inputs", mapping.get("scat_lyrs_inputs")),
+        ("prescribed_lyrs_inputs", mapping.get("prescribed_lyrs_inputs")),
+        ("gbc_lyrs_inputs", mapping.get("gbc_lyrs_inputs")),
+    )
+    ownership: dict[str, str] = {}
+    intervals: list[tuple[float, float, str, str]] = []
+    for group_name, layers in groups:
+        if not isinstance(layers, Mapping):
+            continue
+        for layer_name, configured in layers.items():
+            if not isinstance(layer_name, str) or not isinstance(configured, Mapping):
+                continue
+            previous_group = ownership.get(layer_name)
+            if previous_group is not None:
+                issues.append(
+                    f"{group_name}.{layer_name}: layer name is already used by {previous_group}"
+                )
+            else:
+                ownership[layer_name] = group_name
+            bounds = _configured_layer_bounds(configured)
+            if bounds is not None:
+                intervals.append((*bounds, group_name, layer_name))
+
+    intervals.sort(key=lambda item: (item[0], item[1], item[2], item[3]))
+    for first_index, first in enumerate(intervals):
+        first_low, first_upp, first_group, first_name = first
+        for second in intervals[first_index + 1 :]:
+            second_low, second_upp, second_group, second_name = second
+            if second_low > first_upp:
+                break
+            issues.append(
+                f"{second_group}.{second_name}: optical layer [{second_low:g}, "
+                f"{second_upp:g}] km overlaps or shares a boundary with "
+                f"{first_group}.{first_name} [{first_low:g}, {first_upp:g}] km"
+            )
+
+
 def _validate_inputs(
     values: Mapping[str, Any],
     schema: Mapping[str, FieldSpec],
@@ -1193,6 +1571,7 @@ def _validate_inputs(
 
     _validate_positive(normalized, ("scattering_block_size",), "", issues)
     _validate_disort_inputs(normalized, runner, issues)
+    _validate_boundary_spectral_inputs(normalized, issues)
 
     if (
         runner != "iasi"
@@ -1253,17 +1632,9 @@ def _validate_inputs(
         minimum_atmospheres=2 if runner == "iasi" else 1,
     )
     _validate_layers(normalized.get("scat_lyrs_inputs"), issues)
+    _validate_prescribed_layers(normalized.get("prescribed_lyrs_inputs"), issues)
     _validate_grey_body_layers(normalized.get("gbc_lyrs_inputs"), issues)
-    scattering_layers = normalized.get("scat_lyrs_inputs")
-    grey_body_layers = normalized.get("gbc_lyrs_inputs")
-    if isinstance(scattering_layers, Mapping) and isinstance(
-        grey_body_layers, Mapping
-    ):
-        for duplicate_name in sorted(set(scattering_layers) & set(grey_body_layers)):
-            issues.append(
-                "gbc_lyrs_inputs."
-                f"{duplicate_name}: layer name is already used by scat_lyrs_inputs"
-            )
+    _validate_optical_layer_structure(normalized, issues)
 
     if runner == "oxharp":
         if normalized.get("sun") is True:
