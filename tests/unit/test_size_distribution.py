@@ -3,7 +3,12 @@ import pytest
 
 from srfm.size_distribution import (
     GaussianDistribution,
+    GammaDistribution,
+    InverseModifiedGammaDistribution,
     LogNormalDistribution,
+    ModifiedGammaDistribution,
+    MultimodeLogNormalDistribution,
+    RegularisedPowerLawDistribution,
     SizeDistribution,
     create_distribution,
 )
@@ -33,13 +38,34 @@ def test_gaussian_construction_and_mean_are_explicitly_python_side():
 def test_create_distribution_selects_supported_types():
     """Verify the distribution factory selects supported implementations.
 
-    Both public distribution names must map to their concrete classes.
+    Every public distribution name must map to its concrete class.
     """
     assert isinstance(
         create_distribution("gaussian", n=1, r=2, s=0.2), GaussianDistribution
     )
     assert isinstance(
         create_distribution("log_normal", n=1, r=2, s=1.5), LogNormalDistribution
+    )
+    assert isinstance(
+        create_distribution("multimode_log_normal", n=[1, 2], r=[0.1, 1], s=[1.5, 2]),
+        MultimodeLogNormalDistribution,
+    )
+    assert isinstance(create_distribution("gamma", n=1, r=2, s=0.1), GammaDistribution)
+    assert isinstance(
+        create_distribution("modified_gamma", n=1, r=2, s=0.1, gamma=2),
+        ModifiedGammaDistribution,
+    )
+    assert isinstance(
+        create_distribution("inverse_modified_gamma", n=1, alpha=8, b=1, gamma=2),
+        InverseModifiedGammaDistribution,
+    )
+    assert isinstance(
+        create_distribution("regularised_power_law", n=1, alpha=3, b=1, gamma=4),
+        RegularisedPowerLawDistribution,
+    )
+    assert isinstance(
+        create_distribution("regularized_power_law", n=1, alpha=3, b=1, gamma=4),
+        RegularisedPowerLawDistribution,
     )
 
 
@@ -49,7 +75,7 @@ def test_unknown_distribution_type_rejected():
     A clear failure prevents silently selecting an unintended model.
     """
     with pytest.raises(ValueError, match="Unknown distribution type"):
-        create_distribution("gamma", n=1, r=2, s=1.5)
+        create_distribution("unsupported", n=1, r=2, s=1.5)
 
 
 def test_lognormal_preserves_embedded_reference_values():
@@ -123,6 +149,8 @@ def test_equivalent_lognormal_parameterisations(parameterisation):
         {"n": -1, "r": 1, "s": 1.5},
         {"n": 1, "r": 0, "s": 1.5},
         {"n": 1, "r": 1, "s": 0},
+        {"n": 1, "r": 1, "s": 0.5},
+        {"n": 1, "r": 1, "s": 1},
         {"surface_area_density": 0, "r": 1, "s": 1.5},
         {"volume_density": -1, "r": 1, "s": 1.5},
     ],

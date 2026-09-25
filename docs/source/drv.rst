@@ -248,7 +248,9 @@ parameters below. The same fields apply to the example's
 * ``v_den`` (``int``, ``float``, or ``None``): Particle volume density.
 * ``dist_type`` (``str``): Particle-size distribution. Permitted value for a
   complete calculation: ``"log_normal"``. ``"gaussian"`` is recognized but
-  not implemented by the full Mie-layer pathway.
+  not supported by the full Mie-layer pathway. Additional analytic
+  distributions are available through the direct Python API; see
+  :doc:`size_distributions`.
 * ``comp`` (``str``): Refractive-index composition identifier or refractive-
   index filename, such as ``"sulphuric acid"``, ``"ash"``, or an ``.ri`` file.
 * ``center_alt`` (``int``, ``float``, or ``None``): Layer centre altitude in km.
@@ -277,7 +279,8 @@ parameters below. The same fields apply to the example's
   optical-property calculations. Permitted values: ``True`` or ``False``.
 * ``mass_loading`` (``int``, ``float``, or ``None``): Column particle mass in
   g m\ :sup:`-2` used to derive layer optical depth.
-* ``r`` (``int`` or ``float``): Positive mean particle radius in micrometres.
+* ``r`` (``int`` or ``float``): Positive number-median particle radius in
+  micrometres for the supported ``"log_normal"`` distribution.
 
 The unused altitude pair may be omitted entirely. If all four altitude values
 are supplied, both pairs must describe the same boundaries after SRFM's

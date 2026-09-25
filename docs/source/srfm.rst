@@ -127,6 +127,9 @@ srfm.rfm\_helper
 srfm.size\_distribution
 -----------------------
 
+See :doc:`size_distributions` for formulas, parameter domains, examples, and
+the distinction between the direct distribution API and Mie-layer support.
+
 .. automodule:: srfm.size_distribution
    :members:
    :show-inheritance:
