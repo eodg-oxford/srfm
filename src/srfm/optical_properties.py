@@ -606,16 +606,14 @@ def get_quad(
 def get_radii(distribution, eta=1e-6, radii_quad_type="T", radii=200):
     """Calculates the lower and upper particle radii from the distribution.
 
-    The upper and lower particle radii are calculated at points where
-    :math:`n(r) = eta r_mode`.
-    where *eta* is the cut-off and *r_mode* is the mode of the distribution.
+    Bounds are supplied by the distribution and contain ``1 - eta`` of its
+    number probability. This avoids interpreting every distribution's ``r``
+    and ``s`` parameters as log-normal median radius and geometric spread.
 
     Args:
         distribution (obj): An instance of `srfm.size_distribution.SizeDistribution`.
-        eta (int, float): Size distribution cut-off value. The size distribution is
-            a function that technically spans the (-inf,+inf) size interval. The eta
-            value is a value of the size distribution beyond whose corresponding
-            size (radius) the distribution is truncated. Default is 1e-6.
+        eta (int, float): Total number-probability fraction omitted from the two
+            integration tails. Default is 1e-6.
         radii_quad_type (str): Quadrature type for the radii calculation function.
             Accetped values are values implemented in the ``srfm.quadrature``
             module. Currently implemented (Apr 2025) are "L" (Lobatto quadrature
@@ -631,28 +629,31 @@ def get_radii(distribution, eta=1e-6, radii_quad_type="T", radii=200):
     """
 
     eta = np.float64(eta)
+    radius_lower_bound, radius_upper_bound = distribution.integration_bounds(eta)
 
-    radius_lower_bound = np.exp(
-        np.log(distribution.r)
-        - np.log(distribution.s) ** 2
-        - np.sqrt(-2 * np.log(eta) * np.log(distribution.s) ** 2)
-    )
-
-    radius_upper_bound = np.exp(
-        np.log(distribution.r)
-        - np.log(distribution.s) ** 2
-        + np.sqrt(-2 * np.log(eta) * np.log(distribution.s) ** 2)
-    )
+    if hasattr(distribution, "moment") and not np.isfinite(distribution.moment(2)):
+        raise ValueError(
+            "Mie optical-property integration requires a finite second radius "
+            "moment."
+        )
 
     # determine quadrature points for the distribution,
     # radii = number of required quadrature points
     radii = np.int64(radii)
 
-    radius, weight_temp = quad.quadrature(
-        radii_quad_type, radii, radius_lower_bound, radius_upper_bound
+    log_radius, log_weight = quad.quadrature(
+        radii_quad_type,
+        radii,
+        np.log(radius_lower_bound),
+        np.log(radius_upper_bound),
     )
-    radius_weight = weight_temp * distribution.value(radius)
+    radius = np.exp(log_radius)
+    # dr = r d(log r), so these remain integration weights in radius space.
+    radius_weight = log_weight * radius * distribution.value(radius)
     rad_wt_sum = np.sum(radius_weight)
+
+    if not np.isfinite(rad_wt_sum) or rad_wt_sum <= 0.0:
+        raise ValueError("Size-distribution quadrature produced invalid weights.")
 
     return radius, radius_weight, rad_wt_sum
 

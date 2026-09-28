@@ -29,7 +29,21 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 from scipy.optimize import brentq
-from scipy.special import gammaincinv, gammaln, logsumexp, ndtr, ndtri
+from scipy.special import gammainccinv, gammaincinv, gammaln, logsumexp, ndtr, ndtri
+
+
+SUPPORTED_DISTRIBUTION_TYPES = frozenset(
+    {
+        "gaussian",
+        "log_normal",
+        "multimode_log_normal",
+        "gamma",
+        "modified_gamma",
+        "inverse_modified_gamma",
+        "regularised_power_law",
+        "regularized_power_law",
+    }
+)
 
 
 class SizeDistribution(ABC):
@@ -57,6 +71,61 @@ class SizeDistribution(ABC):
             ``np.inf`` when their first moment does not exist.
         """
         pass
+
+    def quantile(self, probability):
+        """Return the radius at a cumulative number probability.
+
+        Concrete positive-radius distributions implement this method so the
+        optical integration grid can be selected without assuming a particular
+        analytic distribution. The default keeps third-party subclasses
+        source-compatible while giving callers a clear error.
+
+        Args:
+            probability: Cumulative probability strictly between zero and one.
+
+        Returns:
+            Particle radius in micrometres.
+
+        Raises:
+            NotImplementedError: If a subclass does not provide quantiles.
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} does not provide radius quantiles."
+        )
+
+    def integration_bounds(self, eta=1e-6):
+        """Return finite radius bounds containing probability ``1 - eta``.
+
+        Half of the omitted number probability is assigned to each tail. This
+        common contract replaces the former log-normal-only cutoff formula and
+        also works for monotone and heavy-tailed distributions whose density
+        maximum can lie at a boundary.
+
+        Args:
+            eta: Total omitted number-probability fraction, with ``0 < eta < 1``.
+
+        Returns:
+            Two positive finite radii ``(lower, upper)``.
+
+        Raises:
+            ValueError: If ``eta`` or the resulting bounds are invalid.
+        """
+        eta = _finite_parameter("eta", eta)
+        if not 0.0 < eta < 1.0:
+            raise ValueError("eta must be greater than 0 and less than 1.")
+        lower = float(self.quantile(eta / 2.0))
+        upper = float(self.quantile(1.0 - eta / 2.0))
+        if (
+            not np.isfinite(lower)
+            or not np.isfinite(upper)
+            or lower <= 0.0
+            or upper <= lower
+        ):
+            raise ValueError(
+                "The size distribution did not produce finite, positive, ordered "
+                "integration bounds."
+            )
+        return lower, upper
 
 
 def _positive_parameter(name, value):
@@ -442,6 +511,25 @@ class GaussianDistribution(SizeDistribution):
         """
         return self._moments_per_particle[1]
 
+    def quantile(self, probability):
+        """Return a number-distribution radius quantile.
+
+        Positive-radius optical integration requires the truncated Gaussian.
+        The untruncated form deliberately raises because its concentration and
+        moments include negative radii that cannot be represented by Mie theory.
+        """
+        probability = _finite_parameter("probability", probability)
+        if not 0.0 < probability < 1.0:
+            raise ValueError("probability must be greater than 0 and less than 1.")
+        if not self.truncate:
+            raise ValueError(
+                "Positive-radius integration requires GaussianDistribution "
+                "(truncate=True)."
+            )
+        negative_probability = float(ndtr(-self.r / self.s))
+        target = negative_probability + probability * self._positive_fraction
+        return float(self.r + self.s * ndtri(target))
+
     def value(self, radii):
         """Evaluate differential number density at one or more radii.
 
@@ -554,6 +642,13 @@ class LogNormalDistribution(SizeDistribution):
             ``r * exp(log(s)**2 / 2)``.
         """
         return self._moment_per_particle(1)
+
+    def quantile(self, probability):
+        """Return a log-normal number-distribution radius quantile."""
+        probability = _finite_parameter("probability", probability)
+        if not 0.0 < probability < 1.0:
+            raise ValueError("probability must be greater than 0 and less than 1.")
+        return _exp(self.lnr + self.lns * ndtri(probability))
 
     def value(self, radii):
         """Evaluate differential number density at positive radii.
@@ -757,6 +852,25 @@ class MultimodeLogNormalDistribution(SizeDistribution):
         """
         return self.moment(1) / self.n
 
+    def quantile(self, probability):
+        """Return a numerical quantile of the complete log-normal mixture."""
+        probability = _finite_parameter("probability", probability)
+        if not 0.0 < probability < 1.0:
+            raise ValueError("probability must be greater than 0 and less than 1.")
+
+        def residual(log_radius):
+            """Return normalized mixture CDF minus the requested probability."""
+            standardised = (log_radius - self._log_r) / self._log_s
+            return float(
+                np.dot(self.mode_number_densities, ndtr(standardised)) / self.n
+                - probability
+            )
+
+        tail_width = max(10.0, abs(float(ndtri(probability))) + 2.0)
+        lower = float(np.min(self._log_r - tail_width * self._log_s))
+        upper = float(np.max(self._log_r + tail_width * self._log_s))
+        return _exp(brentq(residual, lower, upper, xtol=1e-12, rtol=1e-12))
+
     def cdf(self, radii):
         r"""Evaluate cumulative number concentration below given radii.
 
@@ -954,6 +1068,15 @@ class ModifiedGammaDistribution(SizeDistribution):
     def mean(self):
         """Return the finite arithmetic mean radius in micrometres."""
         return self._moment_per_particle(1)
+
+    def quantile(self, probability):
+        """Return a modified-gamma number-distribution radius quantile."""
+        probability = _finite_parameter("probability", probability)
+        if not 0.0 < probability < 1.0:
+            raise ValueError("probability must be greater than 0 and less than 1.")
+        shape = (self.alpha + 1.0) / self.gamma
+        gamma_quantile = float(gammaincinv(shape, probability))
+        return _exp((np.log(gamma_quantile) - self._log_b) / self.gamma)
 
     def value(self, radii):
         """Evaluate differential number density at positive radii.
@@ -1171,6 +1294,17 @@ class InverseModifiedGammaDistribution(SizeDistribution):
         """Return the arithmetic mean, or ``np.inf`` if ``alpha <= 2``."""
         return self._moment_per_particle(1)
 
+    def quantile(self, probability):
+        """Return an inverse-modified-gamma number-distribution quantile."""
+        probability = _finite_parameter("probability", probability)
+        if not 0.0 < probability < 1.0:
+            raise ValueError("probability must be greater than 0 and less than 1.")
+        shape = (self.alpha - 1.0) / self.gamma
+        inverse_gamma_quantile = float(gammainccinv(shape, probability))
+        return _exp(
+            (self._log_b - np.log(inverse_gamma_quantile)) / self.gamma
+        )
+
     def value(self, radii):
         """Evaluate differential number density at positive radii.
 
@@ -1348,6 +1482,14 @@ class RegularisedPowerLawDistribution(SizeDistribution):
     def mean(self):
         """Return the arithmetic mean, or ``np.inf`` when it diverges."""
         return self._moment_per_particle(1)
+
+    def quantile(self, probability):
+        """Return a regularised-power-law number-distribution quantile."""
+        probability = _finite_parameter("probability", probability)
+        if not 0.0 < probability < 1.0:
+            raise ValueError("probability must be greater than 0 and less than 1.")
+        log_transition = -np.log1p(-probability) / (self.gamma - 1.0)
+        return _exp(self._log_b + np.log(np.expm1(log_transition)) / self.alpha)
 
     def value(self, radii):
         """Evaluate differential number density at positive radii.

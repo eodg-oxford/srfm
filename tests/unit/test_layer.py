@@ -2,7 +2,15 @@ import numpy as np
 import pytest
 
 from srfm.layer import GreyBodyCloud, Layer, MieLayer, PrescribedOpticalLayer
-from srfm.size_distribution import LogNormalDistribution
+from srfm.size_distribution import (
+    GammaDistribution,
+    GaussianDistribution,
+    InverseModifiedGammaDistribution,
+    LogNormalDistribution,
+    ModifiedGammaDistribution,
+    MultimodeLogNormalDistribution,
+    RegularisedPowerLawDistribution,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -85,6 +93,91 @@ def test_mie_layer_number_surface_volume_calculations_are_equivalent():
     assert by_volume.n == pytest.approx(20)
 
 
+@pytest.mark.parametrize(
+    ("parameters", "distribution_class"),
+    [
+        ({"r": 0.5, "s": 0.2, "dist_type": "gaussian"}, GaussianDistribution),
+        (
+            {
+                "r": [0.1, 1.0],
+                "s": [1.5, 1.8],
+                "n": [8.0, 2.0],
+                "dist_type": "multimode_log_normal",
+            },
+            MultimodeLogNormalDistribution,
+        ),
+        ({"r": 0.5, "s": 0.1, "dist_type": "gamma"}, GammaDistribution),
+        (
+            {"r": 0.5, "s": 0.1, "gamma": 2.0, "dist_type": "modified_gamma"},
+            ModifiedGammaDistribution,
+        ),
+        (
+            {
+                "r": 0.5,
+                "alpha": 8.0,
+                "gamma": 2.0,
+                "dist_type": "inverse_modified_gamma",
+            },
+            InverseModifiedGammaDistribution,
+        ),
+        (
+            {
+                "r": 0.5,
+                "alpha": 3.0,
+                "gamma": 4.0,
+                "dist_type": "regularised_power_law",
+            },
+            RegularisedPowerLawDistribution,
+        ),
+    ],
+    ids=["gaussian", "multimode", "gamma", "modified-gamma", "inverse", "power"],
+)
+def test_mie_layer_constructs_every_positive_radius_distribution(
+    parameters, distribution_class
+):
+    """Every analytic positive-radius option can drive a Mie layer."""
+    parameters.setdefault("n", 10.0)
+    mie_layer = MieLayer(**parameters)
+
+    mie_layer.n_s_v()
+
+    assert isinstance(mie_layer.size_distribution, distribution_class)
+    if isinstance(mie_layer.size_distribution, GaussianDistribution):
+        assert mie_layer.size_distribution.truncate is True
+
+
+def test_gamma_layer_uses_distribution_moments_for_density_conversions():
+    """A gamma effective variance below one must not enter log-normal formulae."""
+    reference = MieLayer(n=20.0, r=0.5, s=0.1, dist_type="gamma")
+    reference.n_s_v()
+    by_surface = MieLayer(
+        s_a_den=reference.s_a_den, r=0.5, s=0.1, dist_type="gamma"
+    )
+    by_volume = MieLayer(v_den=reference.v_den, r=0.5, s=0.1, dist_type="gamma")
+
+    by_surface.n_s_v()
+    by_volume.n_s_v()
+
+    assert by_surface.n == pytest.approx(20.0)
+    assert by_volume.n == pytest.approx(20.0)
+    assert reference.size_distribution.median_radius == pytest.approx(0.5)
+
+
+def test_gamma_layer_accepts_effective_radius_as_an_alternative():
+    """The layer forwards an explicit effective radius without also passing r."""
+    mie_layer = MieLayer(
+        n=20.0,
+        r=None,
+        effective_radius=2.0,
+        s=0.1,
+        dist_type="gamma",
+    )
+
+    mie_layer.n_s_v()
+
+    assert mie_layer.size_distribution.effective_radius == pytest.approx(2.0)
+
+
 def test_mie_layer_mass_loading_and_number_concentration_round_trip():
     """Verify mass loading and number concentration round-trip.
 
@@ -101,6 +194,26 @@ def test_mie_layer_mass_loading_and_number_concentration_round_trip():
     layer.mass_loading = None
     layer.nsv_or_ml()
     assert layer.mass_loading == pytest.approx(original_mass)
+
+
+def test_gamma_layer_mass_loading_round_trip_uses_volume_moment():
+    """Mass loading converts through the selected distribution's third moment."""
+    mie_layer = MieLayer(
+        mass_loading=0.2,
+        rho=2300,
+        thick=1,
+        r=0.4,
+        s=0.1,
+        dist_type="gamma",
+    )
+
+    mie_layer.nsv_or_ml()
+    number_from_loading = mie_layer.n
+    mie_layer.mass_loading = None
+    mie_layer.nsv_or_ml()
+
+    assert mie_layer.n == pytest.approx(number_from_loading)
+    assert mie_layer.mass_loading == pytest.approx(0.2)
 
 
 @pytest.mark.parametrize("missing", ["r", "s", "concentration"])

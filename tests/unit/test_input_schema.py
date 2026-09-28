@@ -827,7 +827,6 @@ def test_grey_body_layer_errors_identify_layer_and_field(
 @pytest.mark.parametrize(
     ("updates", "problem"),
     [
-        ({"dist_type": "gaussian"}, "gaussian is recognized but not implemented"),
         ({"rho": "water"}, "named density must be pumice, glass, mineral, or rock"),
         ({"center_alt": "high", "thick": []}, "center_alt: expected Real"),
         ({"name": "different"}, "name: must match the containing layer name"),
@@ -848,6 +847,46 @@ def test_layer_validation_rejects_unsupported_or_malformed_values(
     basic_values["scat_lyrs_inputs"]["Ash_1"].update(updates)
     with pytest.raises(InputValidationError, match=problem):
         validate_srfm_inputs(basic_values)
+
+
+@pytest.mark.parametrize(
+    "updates",
+    [
+        {"dist_type": "gaussian", "s": 0.2},
+        {
+            "dist_type": "multimode_log_normal",
+            "r": [0.1, 1.0],
+            "s": [1.5, 1.8],
+            "n": [8.0, 2.0],
+            "mass_loading": None,
+        },
+        {"dist_type": "gamma", "s": 0.1},
+        {
+            "dist_type": "gamma",
+            "r": None,
+            "effective_radius": 0.5,
+            "s": 0.1,
+        },
+        {"dist_type": "modified_gamma", "s": 0.1, "gamma": 2.0},
+        {
+            "dist_type": "inverse_modified_gamma",
+            "s": None,
+            "alpha": 8.0,
+            "gamma": 2.0,
+        },
+        {
+            "dist_type": "regularised_power_law",
+            "s": None,
+            "alpha": 3.0,
+            "gamma": 4.0,
+        },
+    ],
+)
+def test_driver_schema_accepts_supported_mie_distributions(basic_values, updates):
+    """Driver-table layers expose the analytic size-distribution parameters."""
+    basic_values["scat_lyrs_inputs"]["Ash_1"].update(updates)
+
+    validate_srfm_inputs(basic_values)
 
 
 def test_run_srfm_revalidates_programmatic_inputs_before_side_effects(tmp_path):

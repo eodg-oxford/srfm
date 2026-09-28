@@ -166,7 +166,7 @@ inputs = {
             "center_alt": 14.0,  # scattering layer center altitude
             "thick": 1.5,  # scattering layer thickness
             "radii": 181,  # number of particle radii in particle size distribution
-            "eta": 1e-6,  # size distribution cut-off
+            "eta": 1e-6,  # omitted number probability across both radius tails
             "phase_quad_N": 200,  # number of quadrature points in the phase function
             "phase_quad_type": "L",  # phase function quadrature type
             "radii_quad_type": "T",  # size distribution quadrature type

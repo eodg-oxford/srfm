@@ -3,7 +3,15 @@ import pytest
 
 from srfm import optical_properties as optical
 from srfm import quadrature
-from srfm.size_distribution import LogNormalDistribution
+from srfm.size_distribution import (
+    GammaDistribution,
+    GaussianDistribution,
+    InverseModifiedGammaDistribution,
+    LogNormalDistribution,
+    ModifiedGammaDistribution,
+    MultimodeLogNormalDistribution,
+    RegularisedPowerLawDistribution,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -86,6 +94,33 @@ def test_get_radii_produces_positive_ordered_normalised_quadrature():
     assert np.all(np.diff(radius) > 0)
     assert np.all(radius > 0)
     assert total == pytest.approx(5, rel=2e-4)
+
+
+@pytest.mark.parametrize(
+    "distribution",
+    [
+        GaussianDistribution(n=5, r=0.5, s=1.0, truncate=True),
+        MultimodeLogNormalDistribution(
+            n=[4, 1], r=[0.1, 1.0], s=[1.5, 1.8]
+        ),
+        GammaDistribution(n=5, r=0.4, s=0.1),
+        ModifiedGammaDistribution(n=5, r=0.4, s=0.1, gamma=2.0),
+        InverseModifiedGammaDistribution(
+            n=5, alpha=8, median_radius=0.4, gamma=2.0
+        ),
+        RegularisedPowerLawDistribution(
+            n=5, alpha=3, median_radius=0.4, gamma=4.0
+        ),
+    ],
+    ids=lambda distribution: distribution.type,
+)
+def test_get_radii_uses_distribution_specific_quantiles(distribution):
+    """Radius grids integrate every supported positive-radius distribution."""
+    radius, weights, total = optical.get_radii(distribution, eta=1e-6, radii=200)
+
+    assert np.all(radius > 0.0)
+    assert np.all(np.diff(radius) > 0.0)
+    assert total == pytest.approx(distribution.n * (1.0 - 1e-6), rel=5e-6)
 
 
 def test_user_supplied_refractive_index_scalar_and_array():

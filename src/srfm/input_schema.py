@@ -14,6 +14,7 @@ import os
 from typing import Any
 
 import numpy as np
+from . import size_distribution as sz
 from .spectral_fields import GRID_UNITS, SOLAR_VALUE_UNITS
 
 _MISSING = object()
@@ -57,6 +58,9 @@ PATH_TYPES = (str, os.PathLike)
 NUMBER_TYPES = (Real,)
 INTEGER_TYPES = (int,)
 MAPPING_TYPES = (Mapping,)
+SIZE_PARAMETER_TYPES = (Real, list, tuple, np.ndarray)
+
+MIE_DISTRIBUTION_TYPES = sz.SUPPORTED_DISTRIBUTION_TYPES
 
 
 # Authoritative list from the SELECT CASE in RFM/source/drvflg_sub.f90.  CIA is
@@ -435,16 +439,22 @@ LAYER_SCHEMA: dict[str, FieldSpec] = {
     "spec_units": FieldSpec(
         (str,), required=True, choices=frozenset({"cm-1", "um", "nm"})
     ),
-    "mass_loading": FieldSpec(NUMBER_TYPES, required=True, nullable=True),
-    "n": FieldSpec(NUMBER_TYPES, required=True, nullable=True),
-    "r": FieldSpec(NUMBER_TYPES, required=True),
-    "s": FieldSpec(NUMBER_TYPES, required=True),
+    "mass_loading": FieldSpec(NUMBER_TYPES, nullable=True),
+    "n": FieldSpec(SIZE_PARAMETER_TYPES, nullable=True),
+    "r": FieldSpec(SIZE_PARAMETER_TYPES, nullable=True),
+    "s": FieldSpec(SIZE_PARAMETER_TYPES, nullable=True),
     "rho": FieldSpec((Real, str), required=True),
-    "s_a_den": FieldSpec(NUMBER_TYPES, required=True, nullable=True),
-    "v_den": FieldSpec(NUMBER_TYPES, required=True, nullable=True),
+    "s_a_den": FieldSpec(SIZE_PARAMETER_TYPES, nullable=True),
+    "v_den": FieldSpec(SIZE_PARAMETER_TYPES, nullable=True),
     "dist_type": FieldSpec(
-        (str,), required=True, choices=frozenset({"log_normal", "gaussian"})
+        (str,), required=True, choices=MIE_DISTRIBUTION_TYPES
     ),
+    "effective_radius": FieldSpec(NUMBER_TYPES, nullable=True),
+    "alpha": FieldSpec(NUMBER_TYPES, nullable=True),
+    "b": FieldSpec(NUMBER_TYPES, nullable=True),
+    "gamma": FieldSpec(NUMBER_TYPES, nullable=True),
+    "median_radius": FieldSpec(NUMBER_TYPES, nullable=True),
+    "truncate": FieldSpec((bool,), nullable=True),
     "comp": FieldSpec((str,), required=True),
     "refractive_index": FieldSpec(nullable=True),
     "center_alt": FieldSpec(NUMBER_TYPES, nullable=True),
@@ -1222,10 +1232,7 @@ def _validate_layers(layers: Any, issues: list[str]) -> None:
                 f"{path}name: must match the containing layer name {layer_name!r}"
             )
         _validate_positive(
-            layer,
-            ("res", "r", "s", "rho", "radii", "phase_quad_N"),
-            path,
-            issues,
+            layer, ("res", "rho", "radii", "phase_quad_N"), path, issues
         )
         eta = layer.get("eta")
         if isinstance(eta, Real) and not 0 < eta < 1:
@@ -1237,18 +1244,19 @@ def _validate_layers(layers: Any, issues: list[str]) -> None:
             value = layer.get(key)
             if isinstance(value, Real) and value < 0:
                 issues.append(f"{path}{key}: must be non-negative")
-        spread = layer.get("s")
-        if (
-            layer.get("dist_type") == "log_normal"
-            and isinstance(spread, Real)
-            and spread <= 1
-        ):
-            issues.append(f"{path}s: must be greater than 1 for log_normal")
-        if layer.get("dist_type") == "gaussian":
-            issues.append(
-                f"{path}dist_type: gaussian is recognized but not implemented "
-                "for a complete MieLayer calculation"
-            )
+        for key in ("n", "r", "s", "s_a_den", "v_den"):
+            value = layer.get(key)
+            if value is None:
+                continue
+            try:
+                values = np.asarray(value, dtype=float)
+            except (TypeError, ValueError):
+                issues.append(f"{path}{key}: must be numeric")
+                continue
+            if values.ndim > 1 or values.size == 0:
+                issues.append(f"{path}{key}: must be a scalar or one-dimensional")
+            elif np.any(~np.isfinite(values)) or np.any(values <= 0.0):
+                issues.append(f"{path}{key}: values must be finite and greater than zero")
         density = layer.get("rho")
         if isinstance(density, str) and density not in {
             "pumice",
@@ -1259,7 +1267,7 @@ def _validate_layers(layers: Any, issues: list[str]) -> None:
             issues.append(
                 f"{path}rho: named density must be pumice, glass, mineral, or rock"
             )
-        for key in ("mass_loading", "n", "s_a_den", "v_den"):
+        for key in ("mass_loading",):
             value = layer.get(key)
             if isinstance(value, Real) and value < 0:
                 issues.append(f"{path}{key}: must be non-negative")
@@ -1269,6 +1277,66 @@ def _validate_layers(layers: Any, issues: list[str]) -> None:
             issues.append(
                 f"{path}mass_loading: one of mass_loading, n, s_a_den, or v_den is required"
             )
+        dist_type = layer.get("dist_type")
+        if isinstance(dist_type, str) and dist_type in MIE_DISTRIBUTION_TYPES:
+            if layer.get("n") is not None:
+                concentration = {"n": layer["n"]}
+            elif layer.get("s_a_den") is not None:
+                concentration = {"surface_area_density": layer["s_a_den"]}
+            elif layer.get("v_den") is not None:
+                concentration = {"volume_density": layer["v_den"]}
+            elif dist_type == "multimode_log_normal":
+                radii = np.atleast_1d(layer.get("r"))
+                concentration = {"n": np.ones(radii.size)}
+                if radii.size > 1:
+                    issues.append(
+                        f"{path}mass_loading: a multimode distribution requires "
+                        "per-mode n, s_a_den, or v_den to define mode fractions"
+                    )
+            else:
+                concentration = {"n": 1.0}
+
+            if dist_type == "gaussian":
+                shape = {
+                    "r": layer.get("r"),
+                    "s": layer.get("s"),
+                    "truncate": layer.get("truncate", True),
+                }
+            elif dist_type in {"log_normal", "multimode_log_normal"}:
+                shape = {"r": layer.get("r"), "s": layer.get("s")}
+            elif dist_type == "gamma":
+                shape = {
+                    "r": layer.get("r"),
+                    "s": layer.get("s"),
+                    "effective_radius": layer.get("effective_radius"),
+                }
+            elif dist_type == "modified_gamma":
+                shape = {
+                    "r": layer.get("r"),
+                    "s": layer.get("s"),
+                    "gamma": layer.get("gamma"),
+                    "effective_radius": layer.get("effective_radius"),
+                }
+            else:
+                median_radius = layer.get("median_radius")
+                if median_radius is None:
+                    median_radius = layer.get("r")
+                shape = {
+                    "alpha": layer.get("alpha"),
+                    "b": layer.get("b"),
+                    "gamma": layer.get("gamma"),
+                    "median_radius": median_radius,
+                }
+            try:
+                distribution = sz.create_distribution(
+                    dist_type, **shape, **concentration
+                )
+                if dist_type == "gaussian" and not distribution.truncate:
+                    raise ValueError("MieLayer requires truncate=True for gaussian")
+                if not np.isfinite(distribution.moment(2)):
+                    raise ValueError("the second radius moment must be finite")
+            except (TypeError, ValueError) as exc:
+                issues.append(f"{path}dist_type: invalid distribution parameters: {exc}")
         centre_extent = (
             layer.get("center_alt") is not None and layer.get("thick") is not None
         )

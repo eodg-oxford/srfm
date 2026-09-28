@@ -240,17 +240,38 @@ parameters below. The same fields apply to the example's
 * ``rho`` (``int``, ``float``, or ``str``): Particle density in kg m\ :sup:`-3`,
   or a supported named ash density. Named values: ``"pumice"``, ``"glass"``,
   ``"mineral"``, or ``"rock"``.
-* ``n`` (``int``, ``float``, or ``None``): Particle number concentration. At
+* ``n`` (number, one-dimensional sequence, or ``None``): Particle number
+  concentration. A multimode log-normal layer supplies one value per mode. At
   least one of ``mass_loading``, ``n``, ``s_a_den``, or ``v_den`` must be set.
-* ``s`` (``int`` or ``float``): Particle-size distribution spread. A
-  log-normal distribution requires a value greater than 1.
-* ``s_a_den`` (``int``, ``float``, or ``None``): Particle surface-area density.
-* ``v_den`` (``int``, ``float``, or ``None``): Particle volume density.
-* ``dist_type`` (``str``): Particle-size distribution. Permitted value for a
-  complete calculation: ``"log_normal"``. ``"gaussian"`` is recognized but
-  not supported by the full Mie-layer pathway. Additional analytic
-  distributions are available through the direct Python API; see
-  :doc:`size_distributions`.
+* ``s`` (number, one-dimensional sequence, or ``None``): Distribution spread.
+  It is a standard deviation in micrometres for ``"gaussian"``, a geometric
+  standard deviation greater than one for log-normal distributions, and a
+  positive effective variance for ``"gamma"`` and ``"modified_gamma"``.
+* ``s_a_den`` (number, one-dimensional sequence, or ``None``): Particle
+  surface-area density. Multimode values are supplied per mode.
+* ``v_den`` (number, one-dimensional sequence, or ``None``): Particle volume
+  density. Multimode values are supplied per mode.
+* ``dist_type`` (``str``): Particle-size distribution. Permitted values are
+  ``"gaussian"``, ``"log_normal"``, ``"multimode_log_normal"``, ``"gamma"``,
+  ``"modified_gamma"``, ``"inverse_modified_gamma"``, and
+  ``"regularised_power_law"``. The US spelling ``"regularized_power_law"`` is
+  an alias. See :doc:`size_distributions` for the parameter definitions.
+* ``effective_radius`` (number or ``None``): Effective-radius alternative to
+  ``r`` for gamma and modified-gamma distributions. Supply exactly one of the
+  two.
+* ``alpha`` (number or ``None``): Shape exponent for inverse modified-gamma and
+  regularised power-law distributions.
+* ``b`` (number or ``None``): Natural scale parameter for inverse
+  modified-gamma and regularised power-law distributions. If omitted, ``r``
+  supplies their number median.
+* ``gamma`` (number or ``None``): Required positive cutoff exponent for
+  modified-gamma and inverse modified-gamma distributions, or tail parameter
+  greater than one for the regularised power law.
+* ``median_radius`` (number or ``None``): Explicit spelling of the number-median
+  radius for inverse modified-gamma and regularised power-law distributions.
+  It is an alternative to both ``r`` and ``b``.
+* ``truncate`` (``bool`` or ``None``): Gaussian positive-radius truncation.
+  Mie calculations require true; omission defaults to true.
 * ``comp`` (``str``): Refractive-index composition identifier or refractive-
   index filename, such as ``"sulphuric acid"``, ``"ash"``, or an ``.ri`` file.
 * ``center_alt`` (``int``, ``float``, or ``None``): Layer centre altitude in km.
@@ -263,8 +284,8 @@ parameters below. The same fields apply to the example's
 
 * ``radii`` (``int``): Positive number of particle radii used to integrate the
   size distribution.
-* ``eta`` (``float``): Relative size-distribution tail cutoff. Permitted range:
-  greater than 0 and less than 1.
+* ``eta`` (``float``): Total number-probability fraction omitted from the two
+  radius-integration tails. Permitted range: greater than 0 and less than 1.
 * ``phase_quad_N`` (``int``): Positive number of phase-function quadrature
   points.
 * ``phase_quad_type`` (``str``): Phase-function quadrature rule. Permitted
@@ -278,9 +299,12 @@ parameters below. The same fields apply to the example's
 * ``multiprocess`` (``bool``): Enable the experimental multiprocessing path for
   optical-property calculations. Permitted values: ``True`` or ``False``.
 * ``mass_loading`` (``int``, ``float``, or ``None``): Column particle mass in
-  g m\ :sup:`-2` used to derive layer optical depth.
-* ``r`` (``int`` or ``float``): Positive number-median particle radius in
-  micrometres for the supported ``"log_normal"`` distribution.
+  g m\ :sup:`-2` used to derive layer optical depth. A multimode log-normal
+  layer must instead provide per-mode ``n``, ``s_a_den``, or ``v_den`` because
+  one total mass does not determine the relative mode concentrations.
+* ``r`` (number, one-dimensional sequence, or ``None``): Distribution radius
+  in micrometres. It is a Gaussian mean, a number median for log-normal and
+  gamma-family inputs, and one number median per multimode log-normal mode.
 
 The unused altitude pair may be omitted entirely. If all four altitude values
 are supplied, both pairs must describe the same boundaries after SRFM's

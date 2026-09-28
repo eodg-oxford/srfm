@@ -251,17 +251,21 @@ ordinary gamma distribution, ``gengamma`` for the modified gamma distribution,
 for the regularised power law. Additional quadrature tests check that every
 positive-radius density integrates to its requested number concentration.
 
-Mie-layer limitation
---------------------
+Mie-layer integration
+---------------------
 
-These classes and the factory are available through the direct Python API. The
-current :class:`~srfm.layer.MieLayer` radius-grid code derives integration
-limits specifically from the single-mode log-normal ``r`` and ``s``
-parameters. Consequently, the driver-table scattering-layer pathway currently
-supports only ``"log_normal"`` for complete optical calculations. Supporting
-the other distributions there requires distribution-specific or generic
-radius-bound selection and additional schema fields for ``alpha``, ``b`` and
-``gamma``.
+Every positive-radius distribution can be selected by
+:class:`~srfm.layer.MieLayer` and by a driver-table scattering layer. Radius
+quadrature uses distribution quantiles: ``eta / 2`` of the number probability
+is omitted from each tail. Quadrature is performed in log-radius space, which
+resolves mixtures whose component modes are separated by several orders of
+magnitude.
+
+The untruncated mathematical Gaussian includes negative radii and therefore
+cannot drive Mie theory. ``MieLayer`` defaults Gaussian inputs to
+``truncate=True`` and rejects an explicit false value. Heavy-tailed
+distributions must have a finite second radius moment because their Mie
+extinction integral is area weighted.
 
 Reference
 ---------

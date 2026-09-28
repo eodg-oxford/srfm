@@ -23,6 +23,15 @@ from .spectral_fields import SpectralField
 
 NORMALIZED_MOMENT_TOLERANCE = 1e-5
 
+MIE_DISTRIBUTION_TYPES = sz.SUPPORTED_DISTRIBUTION_TYPES
+
+NAMED_PARTICLE_DENSITIES = {
+    "pumice": 950.0,
+    "glass": 2400.0,
+    "mineral": 3000.0,
+    "rock": 2900.0,
+}
+
 
 class Layer:
     """Base superclass for an atmospheric layer."""
@@ -122,10 +131,13 @@ class MieLayer(Layer):
         self.n = n
 
     def set_r(self, r):
-        """Set mean particle radius.
+        """Set the distribution radius parameter.
 
         Args:
-            r (int, float): Mean particle radius, units [\ :math:`\\mu`\ m]
+            r (int, float, array-like): Radius in micrometres. It is the mean
+                for a Gaussian, a number median for log-normal and gamma-family
+                driver inputs, and a vector of number medians for a multimode
+                log-normal distribution.
 
         """
         self.r = r
@@ -138,6 +150,30 @@ class MieLayer(Layer):
 
         """
         self.s = s
+
+    def set_effective_radius(self, effective_radius):
+        """Set an effective-radius alternative for gamma distributions."""
+        self.effective_radius = effective_radius
+
+    def set_alpha(self, alpha):
+        """Set a distribution shape exponent."""
+        self.alpha = alpha
+
+    def set_b(self, b):
+        """Set a distribution scale coefficient."""
+        self.b = b
+
+    def set_gamma(self, gamma):
+        """Set a modified-gamma cutoff or power-law tail exponent."""
+        self.gamma = gamma
+
+    def set_median_radius(self, median_radius):
+        """Set an explicit number-median radius in micrometres."""
+        self.median_radius = median_radius
+
+    def set_truncate(self, truncate=True):
+        """Select positive-radius truncation for a Gaussian distribution."""
+        self.truncate = truncate
 
     def set_rho(self, rho):
         """Set particle mean density.
@@ -174,8 +210,8 @@ class MieLayer(Layer):
         """Set particle size distribution type.
 
         Args:
-            dist_type (str): Particle size distribution type. Accepted values are
-                *lognormal* and *normal*.
+            dist_type (str): Any distribution name accepted by
+                :func:`srfm.size_distribution.create_distribution`.
 
         """
         self.dist_type = dist_type
@@ -231,10 +267,9 @@ class MieLayer(Layer):
         """Set size distribution cut-off (eta value).
 
         Args:
-            eta (int, float): Size distribution cut-off value. The size distribution is
-                a function that technically spans the (-inf,+inf) size interval. The eta
-                value is a value of the size distribution beyond whose corresponding
-                size (radius) the distribution is truncated. Default is 1e-6.
+            eta (int, float): Total number-probability fraction omitted from the
+                lower and upper tails of the positive radius integration. Default
+                is 1e-6.
 
         """
         self.eta = eta
@@ -324,6 +359,12 @@ class MieLayer(Layer):
                     - n
                     - r
                     - s
+                    - effective_radius (distribution-specific, optional)
+                    - alpha (distribution-specific, optional)
+                    - b (distribution-specific, optional)
+                    - gamma (distribution-specific, optional)
+                    - median_radius (distribution-specific, optional)
+                    - truncate (Gaussian only, optional)
                     - rho
                     - s_a_den
                     - v_den
@@ -347,14 +388,20 @@ class MieLayer(Layer):
         self.upp_spc = inp_dict["upp_spc"]
         self.spec_units = inp_dict["spec_units"]
         self.res = inp_dict["res"]
-        self.mass_loading = inp_dict["mass_loading"]
-        self.n = inp_dict["n"]
-        self.r = inp_dict["r"]
-        self.s = inp_dict["s"]
+        self.mass_loading = inp_dict.get("mass_loading")
+        self.n = inp_dict.get("n")
+        self.r = inp_dict.get("r")
+        self.s = inp_dict.get("s")
         self.rho = inp_dict["rho"]
-        self.s_a_den = inp_dict["s_a_den"]
-        self.v_den = inp_dict["v_den"]
+        self.s_a_den = inp_dict.get("s_a_den")
+        self.v_den = inp_dict.get("v_den")
         self.dist_type = inp_dict["dist_type"]
+        self.effective_radius = inp_dict.get("effective_radius")
+        self.alpha = inp_dict.get("alpha")
+        self.b = inp_dict.get("b")
+        self.gamma = inp_dict.get("gamma")
+        self.median_radius = inp_dict.get("median_radius")
+        self.truncate = inp_dict.get("truncate", True)
         self.comp = inp_dict["comp"]
         self.center_alt = inp_dict.get("center_alt")
         self.thick = inp_dict.get("thick")
@@ -404,23 +451,40 @@ class MieLayer(Layer):
         if not isinstance(self.mass_loading, (int, float, type(None))):
             raise TypeError("mass_loading must be int, float or type(None).")
 
-        if not isinstance(self.n, (int, float)):
-            raise TypeError("n must be int or float.")
-
-        if not isinstance(self.r, (int, float)):
-            raise TypeError("r must be int or float.")
-
-        if not isinstance(self.s, (int, float)):
-            raise TypeError("s must be int or float.")
+        for attribute_name in ("n", "r", "s"):
+            value = getattr(self, attribute_name, None)
+            if value is None:
+                continue
+            try:
+                values = np.asarray(value, dtype=float)
+            except (TypeError, ValueError):
+                raise TypeError(
+                    f"{attribute_name} must be numeric."
+                ) from None
+            if values.ndim > 1 or values.size == 0 or np.any(~np.isfinite(values)):
+                raise TypeError(
+                    f"{attribute_name} must be a finite scalar or one-dimensional "
+                    "sequence."
+                )
 
         if not isinstance(self.rho, (int, float, str, type(None))):
             raise TypeError("rho must be int, float or type(None).")
 
-        if not isinstance(self.s_a_den, (int, float, type(None))):
-            raise TypeError("s_a_den must be int, float or type(None).")
-
-        if not isinstance(self.v_den, (int, float, type(None))):
-            raise TypeError("v_den must be int, float or type(None).")
+        for attribute_name in ("s_a_den", "v_den"):
+            value = getattr(self, attribute_name, None)
+            if value is None:
+                continue
+            try:
+                values = np.asarray(value, dtype=float)
+            except (TypeError, ValueError):
+                raise TypeError(
+                    f"{attribute_name} must be numeric or None."
+                ) from None
+            if values.ndim > 1 or values.size == 0 or np.any(~np.isfinite(values)):
+                raise TypeError(
+                    f"{attribute_name} must be a finite scalar or one-dimensional "
+                    "sequence."
+                )
 
         if not isinstance(self.dist_type, str):
             raise TypeError("Dist_type must be str.")
@@ -492,14 +556,12 @@ class MieLayer(Layer):
         if self.upp_spc < 0:
             raise ValueError("Attribute upp_spc must be non-negative.")
 
-        if hasattr(self, "mass_loading") and self.mass_loading < 0:
+        if (
+            hasattr(self, "mass_loading")
+            and self.mass_loading is not None
+            and self.mass_loading < 0
+        ):
             raise ValueError("Attribute mass_loading must be non-negative.")
-
-        if self.r < 0:
-            raise ValueError("Particle mean radius (r) must be non-negative.")
-
-        if self.s < 1:
-            raise ValueError("Distribution spread must be >= 1.")
 
         if self.radii < 1:
             raise ValueError("Number of requested radii must be at least 1.")
@@ -517,9 +579,172 @@ class MieLayer(Layer):
             and then fail."""
             )
 
+        distribution = self._build_size_distribution()
+        if getattr(distribution, "truncate", True) is False:
+            raise ValueError(
+                "MieLayer requires truncate=True for a Gaussian distribution."
+            )
+        if not np.isfinite(distribution.moment(2)):
+            raise ValueError(
+                "Mie optical properties require a finite second radius moment."
+            )
+
         passmark = True
 
         return passmark
+
+    def _distribution_shape_kwargs(self):
+        """Return constructor parameters for the configured distribution.
+
+        The layer-level ``r`` convention is retained wherever possible: it is
+        a Gaussian mean, a log-normal median (one per mode for a mixture), and
+        a number median for gamma-family and power-law inputs. Distribution
+        classes that call this value ``median_radius`` receive the translated
+        keyword here.
+        """
+        dist_type = getattr(self, "dist_type", "log_normal")
+        if dist_type == "gaussian":
+            return {
+                "r": getattr(self, "r", None),
+                "s": getattr(self, "s", None),
+                "truncate": getattr(self, "truncate", True),
+            }
+        if dist_type in {"log_normal", "multimode_log_normal"}:
+            return {"r": getattr(self, "r", None), "s": getattr(self, "s", None)}
+        if dist_type == "gamma":
+            return {
+                "r": getattr(self, "r", None),
+                "s": getattr(self, "s", None),
+                "effective_radius": getattr(self, "effective_radius", None),
+            }
+        if dist_type == "modified_gamma":
+            return {
+                "r": getattr(self, "r", None),
+                "s": getattr(self, "s", None),
+                "gamma": getattr(self, "gamma", None),
+                "effective_radius": getattr(self, "effective_radius", None),
+            }
+        if dist_type in {
+            "inverse_modified_gamma",
+            "regularised_power_law",
+            "regularized_power_law",
+        }:
+            median_radius = getattr(self, "median_radius", None)
+            if median_radius is None:
+                median_radius = getattr(self, "r", None)
+            return {
+                "alpha": getattr(self, "alpha", None),
+                "b": getattr(self, "b", None),
+                "gamma": getattr(self, "gamma", None),
+                "median_radius": median_radius,
+            }
+        raise ValueError(f"Unknown distribution type: {dist_type}")
+
+    def _particle_density(self):
+        """Return configured material density in kg m-3."""
+        density = getattr(self, "rho", None)
+        if isinstance(density, str):
+            try:
+                return NAMED_PARTICLE_DENSITIES[density]
+            except KeyError:
+                raise ValueError(
+                    "Named rho must be pumice, glass, mineral, or rock."
+                ) from None
+        if (
+            not isinstance(density, Real)
+            or isinstance(density, (bool, np.bool_))
+            or not np.isfinite(density)
+            or density <= 0.0
+        ):
+            raise ValueError("rho must be finite and greater than zero.")
+        return float(density)
+
+    def _volume_density_from_loading(self):
+        """Convert column mass loading to particle volume density."""
+        loading = getattr(self, "mass_loading", None)
+        thickness = getattr(self, "thick", None)
+        if loading is None:
+            raise RuntimeError("mass_loading must be set.")
+        if (
+            not isinstance(thickness, Real)
+            or isinstance(thickness, (bool, np.bool_))
+            or not np.isfinite(thickness)
+            or thickness <= 0.0
+        ):
+            raise RuntimeError(
+                "A finite positive layer thickness is required with mass_loading."
+            )
+        return float(loading) * 1.0e6 / (self._particle_density() * thickness)
+
+    def _distribution_concentration_kwargs(self):
+        """Select one concentration representation using factory precedence."""
+        if getattr(self, "n", None) is not None:
+            return {"n": self.n}
+        if getattr(self, "s_a_den", None) is not None:
+            return {"surface_area_density": self.s_a_den}
+        if getattr(self, "v_den", None) is not None:
+            return {"volume_density": self.v_den}
+        if getattr(self, "mass_loading", None) is not None:
+            return {"volume_density": self._volume_density_from_loading()}
+        raise RuntimeError(
+            "One of number concentration (n), surface area density (s_a_den), "
+            "volume density (v_den), or mass loading (mass_loading) must be set."
+        )
+
+    def _build_size_distribution(self):
+        """Construct the configured analytic size distribution."""
+        dist_type = getattr(self, "dist_type", "log_normal")
+        if dist_type not in MIE_DISTRIBUTION_TYPES:
+            raise ValueError(f"Unknown distribution type: {dist_type}")
+        kwargs = self._distribution_shape_kwargs()
+        kwargs.update(self._distribution_concentration_kwargs())
+        return sz.create_distribution(dist_type=dist_type, **kwargs)
+
+    def _sync_distribution_concentrations(self, distribution):
+        """Copy equivalent concentration measures from a distribution."""
+        if isinstance(distribution, sz.MultimodeLogNormalDistribution):
+            self.n = distribution.mode_number_densities.copy()
+            self.s_a_den = distribution.mode_surface_area_densities.copy()
+            self.v_den = distribution.mode_volume_densities.copy()
+        else:
+            self.n = distribution.n
+            self.s_a_den = distribution.surface_area_density
+            self.v_den = distribution.volume_density
+
+    def _update_mass_loading(self, distribution):
+        """Derive column mass loading from the distribution's volume moment."""
+        try:
+            density = self._particle_density()
+            thickness = self.thick
+        except (AttributeError, ValueError):
+            warnings.warn(
+                "Could not calculate particle loading because rho or thickness "
+                "is not set to a supported value.",
+                stacklevel=2,
+            )
+            return
+        if (
+            not isinstance(thickness, Real)
+            or isinstance(thickness, (bool, np.bool_))
+            or not np.isfinite(thickness)
+            or thickness <= 0.0
+        ):
+            warnings.warn(
+                "Could not calculate particle loading because thickness is not "
+                "finite and positive.",
+                stacklevel=2,
+            )
+            return
+        if not np.isfinite(distribution.volume_density):
+            warnings.warn(
+                "Could not calculate particle loading because the distribution's "
+                "third radius moment diverges.",
+                stacklevel=2,
+            )
+            return
+        self.mass_loading = (
+            distribution.volume_density * float(thickness) * density * 1.0e-6
+        )
 
     def validate_inputs(self):
         """Validate all Mie inputs before calculating optical properties.
@@ -539,7 +764,7 @@ class MieLayer(Layer):
         self.calc_layer_extent()
         if not isinstance(self.name, str) or not self.name:
             raise TypeError("Name must be a non-empty string.")
-        for attribute_name in ("low_spc", "upp_spc", "res", "r", "s", "eta"):
+        for attribute_name in ("low_spc", "upp_spc", "res", "eta"):
             value = getattr(self, attribute_name, None)
             if (
                 not isinstance(value, Real)
@@ -553,25 +778,43 @@ class MieLayer(Layer):
             raise ValueError("Mie spectral resolution must be greater than zero.")
         if self.spec_units not in {"cm-1", "um", "nm"}:
             raise ValueError("Spec_units must be one of 'cm-1', 'um', or 'nm'.")
-        if self.r < 0:
-            raise ValueError("Particle mean radius (r) must be non-negative.")
-        if self.s < 1:
-            raise ValueError("Distribution spread must be greater than or equal to 1.")
+        if not isinstance(getattr(self, "dist_type", None), str):
+            raise TypeError("dist_type must be a string.")
+        if self.dist_type not in MIE_DISTRIBUTION_TYPES:
+            raise ValueError(f"Unknown distribution type: {self.dist_type}")
         if not 0 < self.eta < 1:
             raise ValueError("Eta must satisfy 0 < eta < 1.")
         for attribute_name in ("radii", "phase_quad_N"):
             value = getattr(self, attribute_name, None)
             if type(value) is not int or value < 1:
                 raise TypeError(f"{attribute_name} must be a positive integer.")
-        for attribute_name in ("mass_loading", "n", "s_a_den", "v_den"):
+        mass_loading = getattr(self, "mass_loading", None)
+        if mass_loading is not None and (
+            not isinstance(mass_loading, Real)
+            or isinstance(mass_loading, (bool, np.bool_))
+            or not np.isfinite(mass_loading)
+            or mass_loading <= 0.0
+        ):
+            raise ValueError("mass_loading must be finite and greater than zero.")
+        for attribute_name in ("n", "s_a_den", "v_den"):
             value = getattr(self, attribute_name, None)
-            if value is not None and (
-                not isinstance(value, Real)
-                or isinstance(value, (bool, np.bool_))
-                or not np.isfinite(value)
-                or value < 0
+            if value is None:
+                continue
+            try:
+                values = np.asarray(value, dtype=float)
+            except (TypeError, ValueError):
+                raise TypeError(
+                    f"{attribute_name} must be a finite positive scalar or vector."
+                ) from None
+            if (
+                values.ndim > 1
+                or values.size == 0
+                or np.any(~np.isfinite(values))
+                or np.any(values <= 0.0)
             ):
-                raise ValueError(f"{attribute_name} must be finite and non-negative.")
+                raise ValueError(
+                    f"{attribute_name} must contain only finite values greater than zero."
+                )
         if all(
             getattr(self, attribute_name, None) is None
             for attribute_name in ("mass_loading", "n", "s_a_den", "v_den")
@@ -597,6 +840,16 @@ class MieLayer(Layer):
             raise ValueError("alt_low must be less than alt_upp.")
         if self.thick < 0.002:
             raise ValueError("Mie layer thickness must be at least 0.002 km.")
+        distribution = self._build_size_distribution()
+        if self.dist_type == "gaussian" and not distribution.truncate:
+            raise ValueError(
+                "MieLayer requires truncate=True for a Gaussian distribution."
+            )
+        if not np.isfinite(distribution.moment(2)):
+            raise ValueError(
+                "Mie optical properties require a distribution with a finite "
+                "second radius moment."
+            )
         return True
 
     def calculate_op(self, validate=True):
@@ -623,17 +876,6 @@ class MieLayer(Layer):
         if validate:
             self.validate_inputs()
         self.nsv_or_ml()
-        if self.test_complete_input_format():
-            pass
-        else:
-            raise RuntimeError("Input did not pass format test.")
-
-        if self.test_input_values():
-            pass
-        else:
-            raise RuntimeError("Input did not pass value test.")
-
-        self.calc_size_distribution()
         self.calc_grids()
         self.calc_optical_properties()
 
@@ -678,100 +920,44 @@ class MieLayer(Layer):
         }
 
     def nsv_or_ml(self):
-        """Check input for size distribution.
+        """Resolve concentration and mass loading through distribution moments.
 
-        Checks if either number concentration (n), surface area density (s_a_den) or
-        volume density (v_den) are set or is mass loading (mass_loading) is set.
-        The logic that s_a_den, v_den and n can be calculated from each other.
-        mass_loading can be calculated from n and vice versa.
-
-        Raises:
-            RuntimeError: Raised if r and s are not set or if all values are missing.
-
+        The analytic distribution is the single source of truth for number,
+        surface-area, and volume conversions. This avoids applying log-normal
+        moments to Gaussian, gamma, or power-law inputs.
         """
-        if not (hasattr(self, "r") and self.r is not None):
-            raise RuntimeError("Mean particle radius (r) must be set.")
-        if not (hasattr(self, "s") and self.s is not None):
-            raise RuntimeError("Size distribution spread (s) must be set.")
-
-        if (
-            (hasattr(self, "n") and self.n is not None)
-            or (hasattr(self, "s_a_den") and self.s_a_den is not None)
-            or (hasattr(self, "v_den") and self.v_den is not None)
+        dist_type = getattr(self, "dist_type", "log_normal")
+        requires_s = dist_type in {
+            "gaussian",
+            "log_normal",
+            "multimode_log_normal",
+            "gamma",
+            "modified_gamma",
+        }
+        if requires_s and getattr(self, "s", None) is None:
+            raise RuntimeError("Size distribution parameter s must be set.")
+        radius_alternative = getattr(self, "effective_radius", None)
+        if dist_type in {"gaussian", "log_normal", "multimode_log_normal"} and getattr(
+            self, "r", None
+        ) is None:
+            raise RuntimeError("Size distribution radius r must be set.")
+        if dist_type in {"gamma", "modified_gamma"} and (
+            getattr(self, "r", None) is None and radius_alternative is None
         ):
+            raise RuntimeError("Set r or effective_radius for the size distribution.")
 
-            self.n_s_v()
-
-            try:
-                self.mass_loading = utils.mass_loading_from_number_conc(
-                    self.n, self.thick, self.rho, self.s, self.dist_type, self.r
-                )
-            except AttributeError:
-                warnings.warn(
-                    """Could not calculate particle loading, because some of 
-                thick, rho and r are not set, calculation 
-                continues without it."""
-                )
-            except:
-                warnings.warn(
-                    """Could not calculate mass_loading, calculation 
-                continues without it."""
-                )
-        elif hasattr(self, "mass_loading") and self.mass_loading is not None:
-            self.n = utils.number_conc_from_mass_loading(
-                self.mass_loading, self.rho, self.thick, self.s, self.dist_type, self.r
-            )
-            self.n_s_v()
-
-        else:
-            raise RuntimeError(
-                """One of number concentration (n), surface area density (s_a_den), 
-            volume density (v_den) or mass loading (mass_loading) must be set."""
-            )
+        supplied_directly = any(
+            getattr(self, attribute_name, None) is not None
+            for attribute_name in ("n", "s_a_den", "v_den")
+        )
+        self.n_s_v()
+        if supplied_directly:
+            self._update_mass_loading(self.size_distribution)
 
     def n_s_v(self):
-        """Checks inputs for n, s or v.
-
-        Checks if particle either particle number concentration (n), surface area
-        density (s_a_den) or v_den are set and calculates the missing of the three.
-        Requires meand particle radius (r) and distribution spread (s) to be set.
-        If none of the three are set, but particle mass loading (mass_loading) is set
-        instead, n will be calculated from particle loading.
-
-        Raises:
-            RuntimeError: Raised when calculation fails due to insensible values.
-        """
-
-        if hasattr(self, "n") and self.n is not None:
-            self.s_a_den = (
-                self.n * 4 * np.pi * self.r**2 * np.exp(2 * np.log(self.s) ** 2)
-            )
-            self.v_den = (
-                self.n * 4 * np.pi * self.r**3 * np.exp(9 * np.log(self.s) ** 2 / 2) / 3
-            )
-        elif hasattr(self, "s_a_den") and self.s_a_den is not None:
-            self.n = self.s_a_den / (
-                4 * np.pi * self.r**2 * np.exp(2 * np.log(self.s) ** 2)
-            )
-            self.v_den = (
-                self.n * 4 * np.pi * self.r**3 * np.exp(9 * np.log(self.s) ** 2 / 2) / 3
-            )
-        elif hasattr(self, "v_den") and self.v_den is not None:
-            self.n = (
-                3
-                * self.v_den
-                / (4 * np.pi * self.r**3 * np.exp(9 * np.log(self.s) ** 2 / 2))
-            )
-            self.s_a_den = (
-                self.n * 4 * np.pi * self.r**2 * np.exp(2 * np.log(self.s) ** 2)
-            )
-        else:
-            raise RuntimeError(
-                """Something is wrong with number concentration, surface 
-            area density and volume density. Are input values sensible?"""
-            )
-
-        return
+        """Resolve equivalent concentrations using analytic raw moments."""
+        self.calc_size_distribution()
+        self._sync_distribution_concentrations(self.size_distribution)
 
     def calc_layer_extent(self):
         """This function attempts to calculate the layer vertical extent.
@@ -829,16 +1015,9 @@ class MieLayer(Layer):
         return
 
     def calc_size_distribution(self):
-        """Calls functions to calculate the size distribution."""
-        self.size_distribution = sz.create_distribution(
-            dist_type=self.dist_type,
-            n=self.n,
-            r=self.r,
-            s=self.s,
-            surface_area_density=self.s_a_den,
-            volume_density=self.v_den,
-        )
-        return
+        """Construct the selected distribution with its native parameters."""
+        self.size_distribution = self._build_size_distribution()
+        return self.size_distribution
 
     def calc_grids(self):
         """Calculates spectral grids for the calculation of optical properties.
