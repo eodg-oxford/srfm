@@ -16,7 +16,11 @@ FIN_RES = 0.25  # resolution
 SPC_RES = 0.1  # resolution
 SPC_WVNMLO = FIN_WVNMLO - 2.0  # min
 SPC_WVNMHI = FIN_WVNMHI + 2.0  # max
-SPC_UNITS = "cm-1"  # units (cm-1, nm, um)
+SPC_UNITS = "cm-1"  # grid specification (cm-1, nm, um, resolving_power)
+
+# Constant resolving-power alternative (bounds remain wavenumbers in cm-1):
+# SPC_RES = 20_000.0  # R = wavelength / delta_wavelength
+# SPC_UNITS = "resolving_power"
 
 # Compact in-memory fields may use a coarser grid than the main calculation.
 # SRFM validates complete coverage and interpolates linearly in wavenumber.

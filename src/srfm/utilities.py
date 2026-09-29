@@ -772,28 +772,41 @@ def monotonic(x):
 
 
 def calc_grids(lo, hi, res, units):
-    """Calculates spectral grids.
+    r"""Calculate matching wavenumber and wavelength grids.
 
-    Grids are calculated from a given lower and upper limit and resolution in given
-    units.
-    The output grids are regular in the input units.
+    For ``"cm-1"``, ``"um"``, and ``"nm"``, the grid is regularly spaced in
+    the selected coordinate and ``res`` is the spacing in that coordinate.  A
+    ``"resolving_power"`` grid instead has constant spectroscopic resolving
+    power ``R = wavelength / delta_wavelength``.  In that mode, ``lo`` and
+    ``hi`` are wavenumber bounds in cm\ :sup:`-1` and ``res`` is the
+    dimensionless resolving power.  The longer wavelength of each adjacent
+    pair is used for ``wavelength`` in the definition of ``R``.
+
+    All modes return wavenumbers in cm\ :sup:`-1` and wavelengths in
+    micrometres.  The resolving-power mode is geometrically spaced, and is
+    therefore irregular in both returned coordinates when irregular means
+    non-additive spacing.
 
     Args:
-        lo (int, float): Grid lower limit.
-        hi (int, float): Grid upper limit.
-        res (int, float): Grid resolution.
-        units (str): Units of input parameters, can be "cm\ :sup:`-1`", "nm", or
-            "\ :math:`\\mu`\ m".
+        lo (int, float): Lower grid bound.  This is a wavenumber in
+            cm\ :sup:`-1` when ``units`` is ``"resolving_power"``.
+        hi (int, float): Upper grid bound.  This is a wavenumber in
+            cm\ :sup:`-1` when ``units`` is ``"resolving_power"``.
+        res (int, float): Additive grid spacing for a physical-coordinate mode,
+            or dimensionless ``wavelength / delta_wavelength`` for
+            ``"resolving_power"``.
+        units (str): Grid specification.  Accepted values are ``"cm-1"``,
+            ``"um"``, ``"nm"``, and ``"resolving_power"``.
 
     Returns:
-        wvnm (array): Wavenumber grid, units [cm\ :sup:`-1`].
-        wvls (array): Wavelength grid, units [\ :math:`\\mu`\ m].
+        tuple[numpy.ndarray, numpy.ndarray]: Wavenumber grid in
+        cm\ :sup:`-1` followed by the matching wavelength grid in micrometres.
 
     Raises:
-        TypeError: Raised if inputs are incorrect dtypes.
-        ValueError: Raised if units is an unknown value.
-        ValueError: Raised if lo and hi exceed prescribed limits. The limits are set
-            to match the limits of RFM.
+        TypeError: If an input has an unsupported type.
+        ValueError: If the grid specification is unknown, a bound is outside
+            RFM's spectral limits, the bounds are reversed, or the spacing or
+            resolving power is invalid.
 
     """
     # perform checks
@@ -805,13 +818,17 @@ def calc_grids(lo, hi, res, units):
         raise TypeError("lo must be int or float.")
     if not isinstance(units, str):
         raise TypeError("units must be a string.")
-    if units not in ["cm-1", "um", "nm"]:
-        raise ValueError("Accepted values for units are 'cm-1', 'nm', and 'um'.")
+    accepted_grid_specifications = ("cm-1", "um", "nm", "resolving_power")
+    if units not in accepted_grid_specifications:
+        raise ValueError(
+            "Accepted values for units are 'cm-1', 'nm', 'um', and "
+            "'resolving_power'."
+        )
 
     if res <= 0:
         raise ValueError("res must be greater than zero.")
 
-    if units == "cm-1":
+    if units in {"cm-1", "resolving_power"}:
         if not (0.001 <= lo < hi):
             raise ValueError("lo must satisfy 0.001 cm-1 <= lo < hi.")
         if hi > 50000:
@@ -847,6 +864,25 @@ def calc_grids(lo, hi, res, units):
         )  # expected number of points in the grid
         wvls = lo + np.arange(npts) * res
         wvnm = (1 / wvls) * 1e4
+    elif units == "resolving_power":
+        if res <= 1:
+            raise ValueError(
+                "res must be greater than one when units is 'resolving_power'."
+            )
+
+        fractional_wavelength_spacing = 1.0 / res
+        logarithmic_wavenumber_spacing = -np.log1p(
+            -fractional_wavelength_spacing
+        )
+        number_of_intervals = int(
+            np.floor(np.log(hi / lo) / logarithmic_wavenumber_spacing)
+        )
+        grid_indices = np.arange(number_of_intervals + 1)
+        wvnm = lo * np.exp(grid_indices * logarithmic_wavenumber_spacing)
+        # Guard against a last-point round-off excursion beyond the requested
+        # upper bound without changing the constant resolving power.
+        wvnm = wvnm[wvnm <= hi]
+        wvls = 1e4 / wvnm
     return wvnm, wvls
 
 

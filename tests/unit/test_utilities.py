@@ -206,12 +206,43 @@ def test_spectral_grids_are_round_trip_consistent(units):
     assert len(wvnm) == 3
 
 
+def test_resolving_power_grid_is_constant_and_irregular_in_both_coordinates():
+    """Verify a constant resolving power produces the two matching grids.
+
+    Resolving power is evaluated using the longer wavelength in each adjacent
+    pair, matching the documented ``R = wavelength / delta_wavelength``
+    convention.  Geometric sampling must produce non-constant additive
+    differences in both wavelength and wavenumber.
+    """
+    requested_resolving_power = 1_000.0
+    wavenumber, wavelength = utilities.calc_grids(
+        1_000.0, 1_020.0, requested_resolving_power, "resolving_power"
+    )
+
+    achieved_resolving_power = wavelength[:-1] / (
+        wavelength[:-1] - wavelength[1:]
+    )
+    np.testing.assert_allclose(
+        achieved_resolving_power,
+        requested_resolving_power,
+        rtol=2e-12,
+    )
+    np.testing.assert_allclose(wavenumber * wavelength, 1e4, rtol=2e-15)
+    assert wavenumber[0] == pytest.approx(1_000.0)
+    assert wavenumber[-1] <= 1_020.0
+    assert np.all(np.diff(wavenumber) > 0)
+    assert np.all(np.diff(wavelength) < 0)
+    assert not np.allclose(np.diff(wavenumber), np.diff(wavenumber)[0])
+    assert not np.allclose(np.diff(wavelength), np.diff(wavelength)[0])
+
+
 @pytest.mark.parametrize(
     "args",
     [
         (1000, 999, 1, "cm-1"),
         (0, 1, 1, "cm-1"),
         (1000, 1002, 0, "cm-1"),
+        (1000, 1002, 1, "resolving_power"),
         (1, 2, 1, "Hz"),
     ],
 )

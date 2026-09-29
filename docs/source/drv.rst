@@ -71,13 +71,37 @@ Spectral grids
 * ``fin_res`` (``int`` or ``float``): Positive final-grid spacing in
   cm\ :sup:`-1`.
 * ``spc_wvnmlo`` (``int`` or ``float``): Lower bound of the computational
-  spectral grid, in ``spc_units``.
+  spectral grid, in ``spc_units``. For ``"resolving_power"``, this bound is a
+  wavenumber in cm\ :sup:`-1`.
 * ``spc_wvnmhi`` (``int`` or ``float``): Upper bound of the computational
-  spectral grid, in ``spc_units``; must be greater than ``spc_wvnmlo``.
-* ``spc_res`` (``int`` or ``float``): Positive computational-grid spacing, in
-  ``spc_units``.
-* ``spc_units`` (``str``): Units of the computational grid. Permitted values:
-  ``"cm-1"``, ``"um"``, or ``"nm"``.
+  spectral grid, in ``spc_units``; must be greater than ``spc_wvnmlo``. For
+  ``"resolving_power"``, this bound is a wavenumber in cm\ :sup:`-1`.
+* ``spc_res`` (``int`` or ``float``): Positive computational-grid spacing in
+  ``spc_units``. When ``spc_units`` is ``"resolving_power"``, this is the
+  dimensionless resolving power :math:`R = \lambda / \Delta\lambda` and must
+  be greater than one.
+* ``spc_units`` (``str``): Computational-grid specification. Permitted values:
+  ``"cm-1"``, ``"um"``, ``"nm"``, or ``"resolving_power"``. The first three
+  produce a grid with constant additive spacing in that coordinate. Resolving
+  power produces a geometrically spaced grid which is irregular in both
+  wavelength and wavenumber.
+
+For example, this driver-table configuration calculates from 900 to 1,100
+cm\ :sup:`-1` at a constant resolving power of 20,000:
+
+.. code-block:: python
+
+   inputs.update(
+       spc_wvnmlo=900.0,
+       spc_wvnmhi=1100.0,
+       spc_res=20_000.0,
+       spc_units="resolving_power",
+   )
+
+The longer wavelength in each adjacent pair is used in
+:math:`R = \lambda / \Delta\lambda`. SRFM converts the result to matching
+cm\ :sup:`-1` and micrometre arrays, writes every wavenumber to ``grid.spc``,
+and selects RFM's irregular-grid SPC-file mode.
 
 Output geometry
 ---------------

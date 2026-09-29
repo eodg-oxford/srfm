@@ -3,7 +3,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from srfm import rfm_functions
+from srfm import rfm_functions, utilities
 
 pytestmark = pytest.mark.unit
 
@@ -181,6 +181,37 @@ def test_construct_irregular_grid_file(tmp_path):
     )
     assert lines[3] == "3 1000.0000 0 1002.0000"
     assert lines[-1] == "1002.0000 0"
+
+
+def test_resolving_power_grid_is_supplied_to_rfm_as_explicit_samples(tmp_path):
+    """Verify RFM receives a resolving-power grid in irregular SPC format.
+
+    The zero spacing in the SPC header instructs RFM to read every following
+    wavenumber instead of constructing a regular grid from driver parameters.
+
+    Args:
+        tmp_path: Pytest temporary-path fixture.
+    """
+    wavenumber, _ = utilities.calc_grids(
+        1_000.0, 1_010.0, 1_000.0, "resolving_power"
+    )
+
+    rfm_functions.construct_rfm_grid_file(wavenumber, rfm_fldr=tmp_path)
+
+    grid_lines = (
+        (tmp_path / "rfm_files" / "grid.spc")
+        .read_text(encoding="utf-8")
+        .splitlines()
+    )
+    header_fields = grid_lines[3].split()
+    written_wavenumber = np.array(
+        [float(line.split()[0]) for line in grid_lines[4:]]
+    )
+    assert int(header_fields[0]) == len(wavenumber)
+    assert float(header_fields[2]) == 0.0
+    assert not np.allclose(
+        np.diff(written_wavenumber), np.diff(written_wavenumber)[0]
+    )
 
 
 def test_atmosphere_write_read_round_trip(tiny_atmosphere):

@@ -84,7 +84,7 @@ def run_srfm(inp):
     spec_res = inp.values["spc_res"]  # model spectral resolution,[spec_units]
     low_spc = inp.values["spc_wvnmlo"]  # model start wavenumber (lower), [spec_units]
     upp_spc = inp.values["spc_wvnmhi"]  # model end wavenumber (upper), [spec_units]
-    spec_units = inp.values["spc_units"]  # accepted values "cm-1", "um", "nm"
+    spec_units = inp.values["spc_units"]  # includes constant resolving power
 
     RFM_wvnm, wvls = utilities.calc_grids(low_spc, upp_spc, spec_res, spec_units)
 

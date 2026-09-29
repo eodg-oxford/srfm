@@ -72,6 +72,44 @@ def test_existing_basic_driver_validates_without_changing_its_structure(basic_va
     } == original_layer_fields
 
 
+def test_computational_grid_accepts_resolving_power(basic_values):
+    """Accept dimensionless resolving power with wavenumber range bounds.
+
+    Args:
+        basic_values: Complete generic input mapping loaded from the example.
+    """
+    basic_values.update(
+        spc_wvnmlo=900.0,
+        spc_wvnmhi=1_100.0,
+        spc_res=20_000.0,
+        spc_units="resolving_power",
+    )
+
+    validated = validate_srfm_inputs(basic_values)
+
+    assert validated["spc_units"] == "resolving_power"
+    assert validated["spc_res"] == 20_000.0
+
+
+@pytest.mark.parametrize("resolving_power", [1.0, 0.5, 0.0])
+def test_computational_grid_rejects_invalid_resolving_power(
+    basic_values, resolving_power
+):
+    """Reject resolving powers that cannot produce a positive next wavelength.
+
+    Args:
+        basic_values: Complete generic input mapping loaded from the example.
+        resolving_power: Invalid dimensionless resolving power.
+    """
+    basic_values.update(
+        spc_res=resolving_power,
+        spc_units="resolving_power",
+    )
+
+    with pytest.raises(InputValidationError, match="resolving power must be greater"):
+        validate_srfm_inputs(basic_values)
+
+
 @pytest.mark.parametrize("empty_out", [None, [], np.array([]), ()])
 def test_empty_out_is_allowed_when_out_toa_supplies_the_only_level(
     basic_values, empty_out

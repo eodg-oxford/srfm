@@ -163,7 +163,9 @@ SRFM_INPUT_SCHEMA: dict[str, FieldSpec] = {
     "spc_wvnmhi": FieldSpec(NUMBER_TYPES, required=True),
     "spc_res": FieldSpec(NUMBER_TYPES, required=True),
     "spc_units": FieldSpec(
-        (str,), required=True, choices=frozenset({"cm-1", "um", "nm"})
+        (str,),
+        required=True,
+        choices=frozenset({"cm-1", "um", "nm", "resolving_power"}),
     ),
     # Output geometry
     "out_fmt": FieldSpec((str,), required=True, choices=frozenset({"altitude", "tau"})),
@@ -1569,7 +1571,17 @@ def _validate_inputs(
         resolution = normalized.get(f"{prefix}_res")
         if isinstance(low, Real) and isinstance(high, Real) and low >= high:
             issues.append(f"{prefix}_wvnmlo: must be less than {prefix}_wvnmhi")
-        if isinstance(resolution, Real) and resolution <= 0:
+        if (
+            prefix == "spc"
+            and normalized.get("spc_units") == "resolving_power"
+            and isinstance(resolution, Real)
+            and resolution <= 1
+        ):
+            issues.append(
+                "spc_res: resolving power must be greater than one "
+                "(R = wavelength / delta_wavelength)"
+            )
+        elif isinstance(resolution, Real) and resolution <= 0:
             issues.append(f"{prefix}_res: must be greater than zero")
 
     date = normalized.get("date")
