@@ -178,7 +178,7 @@ def _complete_input_values(results, tiny_atmosphere, tiny_altitude_grid, tiny_xs
         "earth_radius": 6371.0,
         "header": "NO HEADER",
         "btemp": 290.0,
-        "ttemp": 278.0,
+        "ttemp": 2.7,
         "disort_precision": "double",
         "adjust_maxcmu": False,
         "sun": False,

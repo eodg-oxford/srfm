@@ -569,10 +569,7 @@ def run_srfm(inp):
             model_DISORT.set_btemp(model_DISORT.disort_input["temper"][-1])
 
         # set top boundary temperature
-        if "ttemp" in inp.values:
-            model_DISORT.set_ttemp(inp.values["ttemp"])
-        else:
-            model_DISORT.set_ttemp(model_DISORT.disort_input["temper"][0])
+        model_DISORT.set_ttemp(inp.values["ttemp"])
 
         model_DISORT.set_h_lyr(
             np.zeros(shape=(model_DISORT.disort_input["maxcly"] + 1))

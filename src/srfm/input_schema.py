@@ -272,6 +272,7 @@ SRFM_INPUT_SCHEMA: dict[str, FieldSpec] = {
     ),
     "ttemp": FieldSpec(
         NUMBER_TYPES,
+        default=2.7, # cosmic background temperature
         minimum=0,
         permitted="a finite real number greater than or equal to 0 K",
     ),
