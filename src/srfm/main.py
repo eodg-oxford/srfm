@@ -1529,6 +1529,8 @@ def run_srfm(inp):
 
         # set single scatter albedo
         model_DISORT.set_ssalb(tau_g=tau_g, tau_R=tau_R, tau_p=tau_p, w_p=w_p)
+        ssalb = model_DISORT.disort_input["ssalb"]
+        ssalb[ssalb > 1.0 - 1e-12] = 0.9999
 
         particle_moments = {}
         for lyr in particle_lyrs:
