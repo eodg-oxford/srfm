@@ -57,14 +57,22 @@ def _resolve_output_geometry(output_format, requested, include_toa, rfm_output):
             upper_altitudes = rfm_output["h_upper (km)"].to_numpy(dtype=float)
         toa_altitude = float(upper_altitudes.max())
         bottom_altitude = float(lower_altitudes.min())
+        
+        # set a numerical tolerance - RFM uses single precision values for this
+        altitude_tol = np.finfo(np.float32).eps * max(
+          1.0, abs(bottom_altitude), abs(toa_altitude)
+        )
+
         if any(
-            altitude < bottom_altitude or altitude > toa_altitude
-            for altitude in output_values
+          altitude < bottom_altitude - altitude_tol
+          or altitude > toa_altitude + altitude_tol
+          for altitude in output_values
         ):
-            raise ValueError(
-                "Requested output altitudes must lie within the atmospheric grid "
-                f"({bottom_altitude:g} to {toa_altitude:g} km)."
-            )
+          raise ValueError(
+              "Requested output altitudes must lie within the atmospheric grid "
+              f"({bottom_altitude:g} to {toa_altitude:g} km)."
+          )
+
         altitude_rows = []
         matched_altitudes = []
         for altitude in output_values:
