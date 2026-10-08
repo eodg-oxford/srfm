@@ -281,8 +281,9 @@ parameters below. The same fields apply to the example's
   ``"regularised_power_law"``. The US spelling ``"regularized_power_law"`` is
   an alias. See :doc:`size_distributions` for the parameter definitions.
 * ``effective_radius`` (number or ``None``): Effective-radius alternative to
-  ``r`` for gamma and modified-gamma distributions. Supply exactly one of the
-  two.
+  ``r`` in micrometres for single-mode log-normal, gamma, and modified-gamma
+  distributions. Supply exactly one of the two; omit ``r`` or set it to
+  ``None`` when using ``effective_radius``.
 * ``alpha`` (number or ``None``): Shape exponent for inverse modified-gamma and
   regularised power-law distributions.
 * ``b`` (number or ``None``): Natural scale parameter for inverse

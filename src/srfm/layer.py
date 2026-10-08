@@ -152,7 +152,7 @@ class MieLayer(Layer):
         self.s = s
 
     def set_effective_radius(self, effective_radius):
-        """Set an effective-radius alternative for gamma distributions."""
+        """Set an effective-radius alternative for log-normal or gamma distributions."""
         self.effective_radius = effective_radius
 
     def set_alpha(self, alpha):
@@ -609,9 +609,9 @@ class MieLayer(Layer):
                 "s": getattr(self, "s", None),
                 "truncate": getattr(self, "truncate", True),
             }
-        if dist_type in {"log_normal", "multimode_log_normal"}:
+        if dist_type == "multimode_log_normal":
             return {"r": getattr(self, "r", None), "s": getattr(self, "s", None)}
-        if dist_type == "gamma":
+        if dist_type in {"log_normal", "gamma"}:
             return {
                 "r": getattr(self, "r", None),
                 "s": getattr(self, "s", None),
@@ -937,11 +937,11 @@ class MieLayer(Layer):
         if requires_s and getattr(self, "s", None) is None:
             raise RuntimeError("Size distribution parameter s must be set.")
         radius_alternative = getattr(self, "effective_radius", None)
-        if dist_type in {"gaussian", "log_normal", "multimode_log_normal"} and getattr(
+        if dist_type in {"gaussian", "multimode_log_normal"} and getattr(
             self, "r", None
         ) is None:
             raise RuntimeError("Size distribution radius r must be set.")
-        if dist_type in {"gamma", "modified_gamma"} and (
+        if dist_type in {"log_normal", "gamma", "modified_gamma"} and (
             getattr(self, "r", None) is None and radius_alternative is None
         ):
             raise RuntimeError("Set r or effective_radius for the size distribution.")

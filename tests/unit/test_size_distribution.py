@@ -167,6 +167,20 @@ def test_invalid_lognormal_parameters_rejected(kwargs):
         LogNormalDistribution(**kwargs)
 
 
+@pytest.mark.parametrize("radius_kwargs", [{}, {"r": 0.3, "effective_radius": 0.6}])
+def test_lognormal_requires_exactly_one_radius(radius_kwargs):
+    """Missing and ambiguous radius inputs fail through the public factory."""
+    with pytest.raises(ValueError, match="Provide exactly one of r or effective_radius"):
+        create_distribution("log_normal", n=1.0, s=1.7, **radius_kwargs)
+
+
+@pytest.mark.parametrize("effective_radius", [0.0, -1.0, np.nan, np.inf, [0.6]])
+def test_lognormal_rejects_invalid_effective_radius(effective_radius):
+    """The alternative radius must be a finite positive scalar."""
+    with pytest.raises(ValueError, match="effective_radius must be a finite number"):
+        LogNormalDistribution(n=1.0, effective_radius=effective_radius, s=1.7)
+
+
 def test_lognormal_parameter_precedence_is_deterministic():
     """Verify overlapping log-normal parameters have stable precedence.
 

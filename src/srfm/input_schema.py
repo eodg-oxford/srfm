@@ -1305,9 +1305,9 @@ def _validate_layers(layers: Any, issues: list[str]) -> None:
                     "s": layer.get("s"),
                     "truncate": layer.get("truncate", True),
                 }
-            elif dist_type in {"log_normal", "multimode_log_normal"}:
+            elif dist_type == "multimode_log_normal":
                 shape = {"r": layer.get("r"), "s": layer.get("s")}
-            elif dist_type == "gamma":
+            elif dist_type in {"log_normal", "gamma"}:
                 shape = {
                     "r": layer.get("r"),
                     "s": layer.get("s"),

@@ -163,14 +163,21 @@ def test_gamma_layer_uses_distribution_moments_for_density_conversions():
     assert reference.size_distribution.median_radius == pytest.approx(0.5)
 
 
-def test_gamma_layer_accepts_effective_radius_as_an_alternative():
+@pytest.mark.parametrize(
+    "shape",
+    [
+        {"dist_type": "log_normal", "s": 1.7},
+        {"dist_type": "gamma", "s": 0.1},
+        {"dist_type": "modified_gamma", "s": 0.1, "gamma": 2.0},
+    ],
+)
+def test_layer_accepts_effective_radius_as_an_alternative(shape):
     """The layer forwards an explicit effective radius without also passing r."""
     mie_layer = MieLayer(
         n=20.0,
         r=None,
         effective_radius=2.0,
-        s=0.1,
-        dist_type="gamma",
+        **shape,
     )
 
     mie_layer.n_s_v()
@@ -178,13 +185,19 @@ def test_gamma_layer_accepts_effective_radius_as_an_alternative():
     assert mie_layer.size_distribution.effective_radius == pytest.approx(2.0)
 
 
-def test_mie_layer_mass_loading_and_number_concentration_round_trip():
+@pytest.mark.parametrize("radius_parameter", ["r", "effective_radius"])
+def test_mie_layer_mass_loading_and_number_concentration_round_trip(radius_parameter):
     """Verify mass loading and number concentration round-trip.
 
     Density and thickness scaling should be reversible within tolerance.
     """
     layer = MieLayer(
-        mass_loading=0.2, rho=2300, thick=1, r=0.4, s=1.7, dist_type="log_normal"
+        mass_loading=0.2,
+        rho=2300,
+        thick=1,
+        s=1.7,
+        dist_type="log_normal",
+        **{radius_parameter: 0.4},
     )
     layer.nsv_or_ml()
     assert layer.n > 0

@@ -561,17 +561,22 @@ class LogNormalDistribution(SizeDistribution):
        \exp\left[-\frac{(\ln r-\ln r_m)^2}{2\ln^2(S)}\right],
 
     where ``r`` is the number-median radius :math:`r_m` and ``s`` is the
-    geometric standard deviation :math:`S`.
+    geometric standard deviation :math:`S`. Alternatively, supply the
+    effective radius :math:`r_e = M_3/M_2`. The corresponding median is
+    :math:`r_m = r_e\exp[-5\ln^2(S)/2]`.
 
     Args:
         n: Total number concentration in cm\ :sup:`-3`.
-        r: Number-median radius in micrometres.
+        r: Number-median radius in micrometres. Mutually exclusive with
+            ``effective_radius``.
         s: Geometric standard deviation. It must exceed one; ``s == 1``
             represents a delta distribution rather than a finite density.
         surface_area_density: Spherical surface-area density in
             :math:`\mu`\ m\ :sup:`2` cm\ :sup:`-3`, as an alternative to ``n``.
         volume_density: Spherical volume density in
             :math:`\mu`\ m\ :sup:`3` cm\ :sup:`-3`, as an alternative to ``n``.
+        effective_radius: Area-weighted mean radius in micrometres, as an
+            alternative to the number median ``r``.
 
     Attributes:
         median_radius: Number-median radius, equal to ``r``.
@@ -581,20 +586,34 @@ class LogNormalDistribution(SizeDistribution):
             ``M2 * M4 / M3**2 - 1``.
 
     Raises:
-        ValueError: If ``r`` is not positive, ``s`` does not exceed one, no
-            concentration measure is supplied, or a concentration is invalid.
+        ValueError: If the supplied radius is not positive and finite,
+            both/neither radius representations are supplied, ``s`` does not
+            exceed one, no concentration measure is supplied, or a
+            concentration is invalid.
     """
 
     def __init__(
-        self, n=None, r=None, s=None, surface_area_density=None, volume_density=None
+        self,
+        n=None,
+        r=None,
+        s=None,
+        surface_area_density=None,
+        volume_density=None,
+        *,
+        effective_radius=None,
     ):
         super().__init__("log_normal")
-        self.r = _positive_parameter("r", r)
+        if (r is None) == (effective_radius is None):
+            raise ValueError("Provide exactly one of r or effective_radius.")
         self.s = _positive_parameter("s", s)
         if self.s <= 1.0:
             raise ValueError("s must be greater than 1.")
-        self.lnr = np.log(self.r)
         self.lns = np.log(self.s)
+        if effective_radius is not None:
+            effective_radius = _positive_parameter("effective_radius", effective_radius)
+            r = _exp(np.log(effective_radius) - 2.5 * self.lns**2)
+        self.r = _positive_parameter("r", r)
+        self.lnr = np.log(self.r)
 
         second_moment = self._moment_per_particle(2)
         third_moment = self._moment_per_particle(3)

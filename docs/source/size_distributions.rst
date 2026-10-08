@@ -91,6 +91,26 @@ number-median radius and ``s`` is the geometric standard deviation::
 ``s`` must exceed one. The limiting case ``s == 1`` is a delta distribution and
 does not have a finite differential log-normal density.
 
+Supply ``effective_radius`` in micrometres instead of ``r`` to use the
+area-weighted mean radius :math:`r_e = M_3/M_2`::
+
+   mode = LogNormalDistribution(n=100.0, effective_radius=0.6, s=1.7)
+
+Exactly one of ``r`` and ``effective_radius`` must be supplied. The conversion
+uses
+
+.. math::
+
+   r_e = r_m\exp\left[\frac{5}{2}\ln^2(S)\right],
+   \qquad
+   r_m = r_e\exp\left[-\frac{5}{2}\ln^2(S)\right].
+
+The resulting ``r`` and ``median_radius`` attributes contain the number median.
+This alternative also works with ``surface_area_density`` or ``volume_density``
+as the concentration input, and with ``dist_type="log_normal"`` in a
+``MieLayer`` or driver-table scattering layer. In a driver table, omit ``r`` or
+set it to ``None`` when supplying ``effective_radius``.
+
 :class:`~srfm.size_distribution.MultimodeLogNormalDistribution` accepts one
 number concentration, median radius and geometric standard deviation for every
 mode::

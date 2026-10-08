@@ -106,6 +106,36 @@ def test_lognormal_matches_scipy_lognorm_and_frozen_values():
     assert distribution.moment(3) == pytest.approx(0.383438698601742)
 
 
+@pytest.mark.parametrize("spread", [1.01, 1.7, 3.0])
+@pytest.mark.parametrize("concentration", ["n", "surface_area_density", "volume_density"])
+def test_lognormal_effective_radius_input_matches_scipy(spread, concentration):
+    """Recover a SciPy log-normal PDF from its area-weighted radius."""
+    number, median = 4.0, 0.3
+    oracle = lognorm(s=np.log(spread), scale=median)
+    effective_radius = oracle.moment(3) / oracle.moment(2)
+    densities = {
+        "n": number,
+        "surface_area_density": 4.0 * np.pi * number * oracle.moment(2),
+        "volume_density": 4.0 * np.pi * number * oracle.moment(3) / 3.0,
+    }
+    distribution = LogNormalDistribution(
+        effective_radius=effective_radius,
+        s=spread,
+        **{concentration: densities[concentration]},
+    )
+
+    assert distribution.n == pytest.approx(number, rel=ORACLE_RTOL)
+    assert distribution.r == pytest.approx(median, rel=ORACLE_RTOL)
+    assert distribution.effective_radius == pytest.approx(
+        effective_radius, rel=ORACLE_RTOL
+    )
+    _assert_matches_scipy(distribution, oracle)
+    for probability in (0.01, 0.5, 0.99):
+        assert distribution.quantile(probability) == pytest.approx(
+            oracle.ppf(probability), rel=ORACLE_RTOL
+        )
+
+
 def test_multimode_lognormal_matches_sum_of_scipy_modes():
     """Check multimode density, moments, and median against independent modes."""
     mode_number = np.array([12.0, 3.5, 0.7])

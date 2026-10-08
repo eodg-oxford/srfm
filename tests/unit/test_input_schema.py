@@ -27,6 +27,7 @@ from srfm.input_schema import (
     validate_srfm_inputs,
 )
 from srfm.inputs import Inputs
+from srfm.layer import MieLayer
 from srfm.main import run_srfm
 
 pytestmark = pytest.mark.unit
@@ -925,6 +926,41 @@ def test_driver_schema_accepts_supported_mie_distributions(basic_values, updates
     basic_values["scat_lyrs_inputs"]["Ash_1"].update(updates)
 
     validate_srfm_inputs(basic_values)
+
+
+@pytest.mark.parametrize("omit_r", [False, True])
+def test_driver_lognormal_effective_radius_prepares_layer(basic_values, omit_r):
+    """Effective-radius driver inputs survive validation and layer preparation."""
+    layer_inputs = basic_values["scat_lyrs_inputs"]["Ash_1"]
+    layer_inputs.update(dist_type="log_normal", r=None, effective_radius=0.6, s=1.7)
+    if omit_r:
+        del layer_inputs["r"]
+
+    validate_srfm_inputs(basic_values)
+    layer = MieLayer()
+    layer.set_input_from_dict(layer_inputs)
+    layer.calc_layer_extent()
+    layer.nsv_or_ml()
+
+    assert layer.size_distribution.effective_radius == pytest.approx(0.6)
+    assert layer.n > 0.0
+
+
+@pytest.mark.parametrize("effective_radius", [0.0, -1.0, np.nan, np.inf])
+def test_driver_rejects_invalid_lognormal_effective_radius(basic_values, effective_radius):
+    """Driver validation reports an invalid alternative radius before a run."""
+    basic_values["scat_lyrs_inputs"]["Ash_1"].update(
+        dist_type="log_normal", r=None, effective_radius=effective_radius, s=1.7
+    )
+    with pytest.raises(InputValidationError, match="effective_radius"):
+        validate_srfm_inputs(basic_values)
+
+
+def test_driver_rejects_both_lognormal_radius_inputs(basic_values):
+    """An existing median must be removed when selecting effective radius."""
+    basic_values["scat_lyrs_inputs"]["Ash_1"]["effective_radius"] = 0.6
+    with pytest.raises(InputValidationError, match="exactly one of r or effective_radius"):
+        validate_srfm_inputs(basic_values)
 
 
 def test_run_srfm_revalidates_programmatic_inputs_before_side_effects(tmp_path):
