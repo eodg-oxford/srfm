@@ -87,6 +87,9 @@ def run_srfm(inp):
     spec_units = inp.values["spc_units"]  # includes constant resolving power
 
     RFM_wvnm, wvls = utilities.calc_grids(low_spc, upp_spc, spec_res, spec_units)
+    if spec_units == "resolving_power" and RFM_wvnm[-1] < upp_spc:
+        RFM_wvnm = np.append(RFM_wvnm, upp_spc)
+    wvls = 1e4 / RFM_wvnm
 
     prepared_albedo, prepared_custom_solar = _prepare_boundary_spectral_fields(
         inp.values, RFM_wvnm
