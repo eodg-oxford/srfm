@@ -27,6 +27,113 @@ section records. The complete native definitions are in the `RFM documentation
 <https://eodg.atm.ox.ac.uk/RFM/index.html>`_. The basic example contains usable
 atmosphere samples.
 
+.. _aria-refractive-indices:
+
+ARIA refractive indices
+-----------------------
+
+SRFM bundles ARIA beneath ``srfm/data/ARIA``. Set each Mie layer's ``comp`` to
+an exact ``.ri`` basename; subdirectory names are not part of the identifier.
+The October 2026 replacement contains 677 datasets, including all 450 datasets
+from the previous bundle. All 371 renamed basenames remain accepted so existing
+driver tables continue to select the same samples. Current names include more
+explicit temperatures, concentrations, relative humidities, and sample labels.
+
+The generic compositions retain their original datasets:
+
+.. list-table:: Generic composition selection
+   :header-rows: 1
+   :widths: 15 40 45
+
+   * - ``comp``
+     - Previous filename (still accepted)
+     - Current filename
+   * - ``ash``
+     - ``eyjafjallajokull-ash_Reed.ri``
+     - ``eyjafjallajokull_ash_58.5%SiO2_Reed_2018.ri``
+   * - ``ice``
+     - ``ICE_Warren_2008.ri``
+     - ``ice_266K_Warren_2008.ri``
+   * - ``sulphuric acid``
+     - ``H2SO4_75_Palmer_1975.ri``
+     - ``H2SO4_75%_300K_Palmer_1975.ri``
+
+For water, specify a dataset such as ``H2O_263K_Rowe_2020.ri``, as the basic
+example does. There is no generic ``water`` selection. Filename matching is
+case-sensitive; punctuation such as ``%`` is part of the filename.
+
+To list current filenames or resolve a legacy name::
+
+   from importlib.resources import files
+   from pathlib import Path
+   from srfm.ARIA_module import find_ri_files, get_ri_filepathname
+
+   filenames = sorted(
+       Path(path).name for path in find_ri_files(files("srfm.data") / "ARIA")
+   )
+   acid_path = get_ri_filepathname("H2SO4_75_Palmer_1975.ri")
+
+``ARIA_module.RI`` reads the file's ``FORMAT`` header and interpolates linearly
+on the requested wavelength or wavenumber grid. The scattering calculation
+uses wavelengths in micrometres and converts ARIA's extinction coefficient to
+the Mie ``n - ik`` convention. Both ``n`` and ``k`` must be present, and the
+dataset must cover the requested scattering grid. As before, archive entries
+containing only one index component cannot be used directly for Mie scattering.
+To read an external file directly, use ``ARIA_module.read_ri_file(path)``.
+
+Numerical compatibility
+~~~~~~~~~~~~~~~~~~~~~~~
+
+All stored numerical columns are identical for 448 of the 450 previous
+datasets. The supplied replacement changes the following values in two
+Peterson quartz files; SRFM retains these new values. Calculations using these
+datasets can therefore change where interpolation includes the listed samples.
+
+.. list-table:: Numerical changes in the supplied quartz datasets
+   :header-rows: 1
+
+   * - Filename
+     - Wavelength (micrometres)
+     - Component
+     - Old value
+     - New value
+   * - ``quartz_E_Peterson_1969.ri``
+     - 17.8
+     - k
+     - 0.07604
+     - 0.07904
+   * - ``quartz_O_Peterson_1969.ri``
+     - 9.0
+     - n
+     - 2.59701
+     - 0.17463
+   * - ``quartz_O_Peterson_1969.ri``
+     - 9.4
+     - n
+     - 1.37131
+     - 6.38644
+   * - ``quartz_O_Peterson_1969.ri``
+     - 9.4
+     - k
+     - 4.87845
+     - 1.37131
+   * - ``quartz_O_Peterson_1969.ri``
+     - 22.3
+     - k
+     - 3.03182
+     - 3.03132
+   * - ``quartz_O_Peterson_1969.ri``
+     - 25.4
+     - n
+     - 5.99961
+     - 5.99862
+
+Regression tests compare all original numerical data with the replacements,
+check interpolation in both spectral units for previously readable unchanged
+datasets, and compare six small example-derived RFM/Mie/DISORT runs against
+original ARIA files using exact equality for radiance, brightness temperature,
+and fluxes.
+
 Instrument and IASI files
 -------------------------
 

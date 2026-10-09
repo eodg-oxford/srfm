@@ -8,6 +8,7 @@ import pickle
 import subprocess
 import sys
 import uuid
+from zipfile import ZipFile
 
 import numpy as np
 import pytest
@@ -25,6 +26,24 @@ os.environ["PYTHONPATH"] = (
 os.environ.setdefault("MPLBACKEND", "Agg")
 os.environ.setdefault("MPLCONFIGDIR", "/tmp/srfm-matplotlib")
 os.environ.setdefault("NUMBA_CACHE_DIR", "/tmp/srfm-numba")
+
+
+@pytest.fixture(scope="session")
+def legacy_aria_directory(tmp_path_factory):
+    """Extract six original ARIA files for exact migration comparisons.
+
+    Args:
+        tmp_path_factory: Pytest factory for a shared temporary directory.
+
+    Returns:
+        Directory containing byte-for-byte copies of the old sample files.
+    """
+    destination = tmp_path_factory.mktemp("legacy-aria")
+    archive_path = REPO_ROOT / "tests/fixtures/e2e/aria_legacy_samples.zip"
+    with ZipFile(archive_path) as archive:
+        for filename in archive.namelist():
+            (destination / filename).write_bytes(archive.read(filename))
+    return destination
 
 
 @pytest.fixture

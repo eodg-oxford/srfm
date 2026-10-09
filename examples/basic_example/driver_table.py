@@ -153,6 +153,9 @@ inputs = {
     ## Layer (scattering, grey body, etc.) configuration
     # Layers are named by the keys in these dictionaries; refer to the docs for
     # layer-specific parameters. Both mappings are optional.
+    # comp accepts current and legacy ARIA basenames. Generic selections retain
+    # their datasets: sulphuric acid -> H2SO4_75%_300K_Palmer_1975.ri;
+    # ash -> eyjafjallajokull_ash_58.5%SiO2_Reed_2018.ri.
     "scat_lyrs_inputs": {
         "Sulphuric_acid_1": {
             "name": "Sulphuric_acid_1",

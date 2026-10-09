@@ -72,6 +72,10 @@ They cover:
   block;
 - strict parsing, interpolation, ascending/descending spectra, and range
   handling for tiny synthetic ARIA `.ri` files;
+- every current ARIA filename, all legacy filename mappings, full numeric
+  fingerprints of the 450 original datasets, and unchanged wavelength and
+  wavenumber interpolation (with explicit assertions for the supplied Peterson
+  quartz changes);
 - RFM output/profile/atmosphere parsing and driver, grid, level, atmosphere,
   and HITRAN cross-section writers;
 - the generic, OXHARP, and processed-IASI input schemas, including the unchanged
@@ -123,7 +127,7 @@ crash becomes an ordinary pytest failure instead of terminating the suite.
 
 ### End to end (`tests/e2e/`)
 
-Six self-contained cases follow the public user paths:
+Self-contained cases follow the public user paths:
 
 ```text
 Inputs -> main/oxharp_main/iasi_main.run_srfm -> RFM -> Mie -> DISORT
@@ -154,6 +158,22 @@ Every complete native pathway runs in a dedicated subprocess. The driver-table
 path also verifies that native `rfm.log` content is forwarded to standard output
 and its transient file is cleaned up. Unit tests verify that failed-run logs go
 to standard error and are removed after emission.
+
+Six additional cases load `examples/basic_example/driver_table.py`, retain its
+particle parameters, and reduce the grid and atmosphere to synthetic inputs.
+They exercise ash, ice, sulphuric acid, water, quartz, and malic acid. Each case
+runs with an archived original ARIA file and its replacement, including legacy
+and generic names where applicable. Radiance, brightness temperature, and all
+three retained flux fields must agree exactly. This exact equality requirement
+checks database substitution within the same environment, without assuming
+native outputs are bitwise portable across compilers or platforms.
+
+Run the ARIA migration checks with:
+
+```bash
+pytest tests/unit/test_aria_module.py tests/unit/test_aria_database.py -q
+pytest tests/e2e/test_srfm_end_to_end.py -k aria_replacement -v
+```
 
 ## Fixtures and scientific reference data
 

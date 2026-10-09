@@ -664,8 +664,10 @@ def get_ri(composition, refractive_index=None, wave=None, wave_size=None):
     Indices expected in the form (n - ik).
 
     Args:
-        composition (str): One of accepted values by
-            ``ARIA_module.get_ri_filepathname()``.
+        composition (str): Current or legacy ARIA basename, ``"ash"``,
+            ``"ice"``, or ``"sulphuric acid"``, resolved by
+            ``ARIA_module.get_ri_filepathname()``. Use ``"ri"`` for supplied
+            indices.
         refractive_index (array-like): If compositon is "ri", then refractive indices
             are required from the user. Default is None.
         wave (array-like): Wavelength grid. Default is None.

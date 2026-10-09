@@ -1,5 +1,7 @@
 from pprint import pformat
+from copy import deepcopy
 import json
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -295,6 +297,116 @@ def test_complete_srfm_pathway_with_self_contained_scientific_inputs(
     result, _ = run_native_case("e2e", {"values": values})
 
     _assert_complete_result(result, results, values)
+
+
+@pytest.mark.parametrize(
+    ("example_layer", "legacy_filename", "current_filename", "generic_name"),
+    [
+        (
+            "Ash_1", "eyjafjallajokull-ash_Reed.ri",
+            "eyjafjallajokull_ash_58.5%SiO2_Reed_2018.ri", "ash",
+        ),
+        ("Ash_1", "ICE_Warren_2008.ri", "ice_266K_Warren_2008.ri", "ice"),
+        (
+            "Sulphuric_acid_1", "H2SO4_75_Palmer_1975.ri",
+            "H2SO4_75%_300K_Palmer_1975.ri", "sulphuric acid",
+        ),
+        (
+            "Water_cloud_1", "H2O_263K_Rowe_2020.ri",
+            "H2O_263K_Rowe_2020.ri", None,
+        ),
+        ("Ash_1", "quartz100_Henning_1997.ri", "quartz_100K_Henning_1997.ri", None),
+        ("Ash_1", "malic-acid_Laskina_2014.ri", "malic_acid_Laskina_2014.ri", None),
+    ],
+    ids=["ash", "ice", "sulphuric-acid", "water", "quartz", "malic-acid"],
+)
+def test_basic_example_aria_replacement_gives_identical_native_results(
+    example_layer,
+    legacy_filename,
+    current_filename,
+    generic_name,
+    tmp_path,
+    tiny_atmosphere,
+    tiny_altitude_grid,
+    tiny_xsc_file,
+    legacy_aria_directory,
+    require_native,
+    run_native_case,
+):
+    """Compare old and new ARIA files through example-derived native runs.
+
+    The public example supplies the driver mapping and particle parameters.
+    A three-point spectral grid, synthetic F11 atmosphere, and smaller
+    quadrature keep each full RFM -> Mie -> DISORT calculation self-contained.
+    Every retained spectrum must be exactly equal to the original-file run.
+
+    Args:
+        example_layer: Example scattering layer supplying particle parameters.
+        legacy_filename: Original filename in the regression archive.
+        current_filename: Corresponding filename in the replacement database.
+        generic_name: Optional generic composition selecting the same dataset.
+        tmp_path: Pytest temporary directory for driver tables and outputs.
+        tiny_atmosphere: Synthetic atmospheric-profile fixture.
+        tiny_altitude_grid: Synthetic altitude-grid fixture.
+        tiny_xsc_file: Synthetic F11 cross-section fixture.
+        legacy_aria_directory: Extracted original refractive-index files.
+        require_native: Fixture helper for compiled-extension availability.
+        run_native_case: Fixture helper that isolates native execution.
+    """
+    _require_all_native_extensions(require_native)
+    example_inputs = Inputs()
+    example_inputs.read_srfm_drv(
+        Path(__file__).parents[2] / "examples/basic_example/driver_table.py"
+    )
+    values = deepcopy(example_inputs.values)
+    particle_layer = deepcopy(values["scat_lyrs_inputs"][example_layer])
+    synthetic_values = _complete_input_values(
+        tmp_path / "original-results", tiny_atmosphere, tiny_altitude_grid,
+        tiny_xsc_file,
+    )
+    values.update(synthetic_values)
+    particle_layer.update({
+        key: value
+        for key, value in synthetic_values["scat_lyrs_inputs"]["synthetic_aerosol"].items()
+        if key not in {
+            "r", "s", "rho", "mass_loading", "refractive_index", "phase_quad_N"
+        }
+    })
+    particle_layer["comp"] = legacy_filename
+    values["scat_lyrs_inputs"] = {"synthetic_aerosol": particle_layer}
+    values["prescribed_lyrs_inputs"] = {}
+    values["retain_outputs"] = ("bbt", "rad", "flup", "rfldir", "rfldn")
+    original_driver = tmp_path / "original_driver.py"
+    _write_driver(original_driver, values)
+    original_result, _ = run_native_case(
+        "e2e",
+        {
+            "driver_path": str(original_driver),
+            "aria_reference_file": str(legacy_aria_directory / legacy_filename),
+        },
+    )
+    _assert_complete_result(original_result, tmp_path / "original-results", values)
+
+    compositions = list(dict.fromkeys(
+        composition for composition in (current_filename, legacy_filename, generic_name)
+        if composition is not None
+    ))
+    for composition_index, composition in enumerate(compositions):
+        results_directory = tmp_path / f"replacement-results-{composition_index}"
+        values["results_fldr"] = str(results_directory)
+        particle_layer["comp"] = composition
+        replacement_driver = tmp_path / f"replacement_driver_{composition_index}.py"
+        _write_driver(replacement_driver, values)
+        replacement_result, _ = run_native_case(
+            "e2e", {"driver_path": str(replacement_driver)}
+        )
+        _assert_complete_result(replacement_result, results_directory, values)
+        for field in ("wvnm", "uu", "bbt", "flup", "rfldir", "rfldn"):
+            assert original_result[field] is not None
+            np.testing.assert_array_equal(
+                replacement_result[field], original_result[field],
+                err_msg=f"{composition}: {field} changed from the original ARIA file",
+            )
 
 
 def test_complete_driver_table_is_read_and_executed(

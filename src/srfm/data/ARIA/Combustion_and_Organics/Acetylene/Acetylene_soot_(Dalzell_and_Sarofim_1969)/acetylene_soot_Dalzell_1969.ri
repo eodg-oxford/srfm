@@ -1,0 +1,21 @@
+#DISTRIBUTEDBY=Aerosol Refractive Index Archive (https://eodg.atm.ox.ac.uk/ARIA/)
+#SUBSTANCE = Acetylene soot
+#DESCRIPTION = Refractive indices of acetylene soot for the wavelength regions 0.4-0.8 microns and 2.5-10.0 microns
+#SAMPLEFORM = Pellet
+#TEMPERATURE = Room temperature
+#REFERENCE = W.H. Dalzell and A.F. Sarofim, Optical constants of soot and their application to heat-flux calculations. Journal of Heat Transfer, 91(1), pp.100-104, 1969.
+#DOI=10.1115/1.3580063
+#FORMAT = WAVL N K
+0.4358	1.56	0.46
+0.4500	1.56	0.48
+0.5500	1.56	0.46
+0.6500	1.57	0.44
+0.8065	1.57	0.46
+2.5	2.31	1.26
+3.0	2.62	1.62
+4.0	2.74	1.64
+5.0	2.88	1.82
+6.0	3.22	1.84
+7.0	3.49	2.17
+8.5	4.22	3.46
+10.0	4.80	3.82

@@ -13,36 +13,49 @@ import os
 import numpy as np
 from importlib.resources import files, as_file
 
+from ._aria_aliases import LEGACY_RI_FILENAMES
+
+
+_GENERIC_RI_FILENAMES = {
+    "ash": "eyjafjallajokull_ash_58.5%SiO2_Reed_2018.ri",
+    "ice": "ice_266K_Warren_2008.ri",
+    "sulphuric acid": "H2SO4_75%_300K_Palmer_1975.ri",
+}
+
 
 def get_ri_filepathname(input_string):
-    """Maps an input string to a file path.
+    """Resolve a composition or filename in the bundled ARIA database.
+
+    Current and legacy filenames are matched exactly, including case. Legacy
+    names select the corresponding renamed dataset, preserving the original
+    sample, temperature, concentration, and crystal orientation.
 
     Args:
-        input_string: either an ARIA filename or any of "ash", "ice", "sulphuric acid"
+        input_string (str): Current or legacy ARIA basename, or one of
+            ``"ash"``, ``"ice"``, and ``"sulphuric acid"``.
 
     Returns:
-        path: absolute file path of the refractive indices file.
+        str: Absolute path to the refractive-index file under ``srfm/data/ARIA``.
 
+    Raises:
+        TypeError: If the composition is not a string.
+        FileNotFoundError: If no bundled dataset matches the composition.
     """
 
     if not isinstance(input_string, str):
         raise TypeError("composition must be a string.")
 
-    if input_string == "ash":
-        input_string = "eyjafjallajokull-ash_Reed.ri"
-
-    if input_string == "ice":
-        input_string = "ICE_Warren_2008.ri"
-
-    if input_string == "sulphuric acid":
-        input_string = "H2SO4_75_Palmer_1975.ri"
+    requested_filename = _GENERIC_RI_FILENAMES.get(input_string, input_string)
+    requested_filename = LEGACY_RI_FILENAMES.get(
+        requested_filename, requested_filename
+    )
 
     with as_file(files("srfm.data") / "ARIA") as path:
 
         # Recursively search for the file within the ARIA directory tree
-        for root, dirs, fls in os.walk(path):
-            if input_string in fls:
-                return os.path.join(root, input_string)  # Return the absolute file path
+        for directory, _, filenames in os.walk(path):
+            if requested_filename in filenames:
+                return os.path.join(directory, requested_filename)
 
     raise FileNotFoundError(
         f"Refractive-index file '{input_string}' was not found in bundled ARIA data."
@@ -191,18 +204,23 @@ class RI:
             ]
 
     def select(self, wave=None, mode="wavelength", out_of_range="error"):
-        """Selects requested data.
+        """Return full-resolution indices or interpolate to a spectral grid.
 
         Args:
-            wave: User input wave.
-            mode: Output mode. Can be "wavelength" or "wavenumber".
-                out_of_range: Defines how out-of-range values are handled.
-                Could be:
+            wave (array-like, optional): Target spectral coordinates. If None,
+                return the stored grid and indices without interpolation.
+            mode (str): ``"wavelength"`` for micrometres or ``"wavenumber"``
+                for inverse centimetres.
+            out_of_range (str): ``"error"`` raises for coordinates outside the
+                data range, ``"clip"`` uses the nearest endpoint, and ``"nan"``
+                returns NaN outside the range while interpolating inside it.
 
-                - error: Error is raised.
-                - clip: Data is truncated.
-                - nan: Data is interpolated.
+        Returns:
+            tuple: ``(grid, n, k)`` when wave is None, otherwise ``(n, k)``.
 
+        Raises:
+            ValueError: If the mode or range policy is invalid, the coordinate
+                data is missing, or a requested coordinate violates ``"error"``.
         """
 
         if out_of_range not in {"error", "clip", "nan"}:
@@ -278,29 +296,29 @@ class RI:
     def load_refractive_indices(
         self, composition, wave=None, mode="wavelength", out_of_range="error"
     ):
-        """Reads the refractive index data for a given ri file.
-
-        Interpolates to the wave values if provided, or returns full-resolution data if wave is None.
+        """Load a bundled ARIA dataset and optionally interpolate its indices.
 
         Args:
-            composition (str):
-                Any of:
-                    - an ARIA file name
-                    - an ARIA file group from the list below (NOT IMPLEMENTED)
-                    - "ZASETSKY", keyword temperature needs to be set so the retruned reractive indexx of water is interpolated to that temperature
-                    - a generic name from the list below:
-                        - "ash"
-                        - "ice"
-                        - "sulphuric acid"
-                        - "water". (NOT IMPLEMENTED)
-            wave (list or array, optional): The target wavelengths or wavenumbers to interpolate to. If None, returns data at full resolution.
-            mode (str): 'wavelength' for wave in µm or 'wavenumber' for wave in cm⁻¹.
-            out_of_range (str): Behavior for out-of-range values: 'error', 'clip', or 'nan'.
+            composition (str): Current or legacy ARIA basename, or ``"ash"``,
+                ``"ice"``, or ``"sulphuric acid"``. See
+                :func:`get_ri_filepathname` for filename compatibility.
+            wave (array-like, optional): Target spectral coordinates. If None,
+                return data at full resolution.
+            mode (str): ``"wavelength"`` for micrometres or ``"wavenumber"``
+                for inverse centimetres.
+            out_of_range (str): Range policy: ``"error"``, ``"clip"``, or
+                ``"nan"``. See :meth:`select`.
 
         Returns:
-            tuple: Two or three arrays:
-                   - If wave is None: (x_data, n, k), where x_data is `wavl` or `wavn`.
-                   - If wave is defined: (n, k), the interpolated real and imaginary parts of the refractive index.
+            tuple: ``(grid, n, k)`` when wave is None, otherwise interpolated
+            ``(n, k)``. The extinction coefficient ``k`` retains ARIA's sign;
+            the Mie loader converts it to the ``n - ik`` convention.
+
+        Raises:
+            TypeError: If composition is not a string.
+            FileNotFoundError: If the dataset is absent from bundled ARIA.
+            ReadError: If the file cannot be read or parsed.
+            ValueError: If spectral selection fails.
         """
 
         filepathname = get_ri_filepathname(composition)
@@ -316,23 +334,21 @@ class RI:
 
 
 def find_ri_files(ARIA_path):
-    """Finds .ri files in requested path.
+    """Find refractive-index files recursively beneath a directory.
 
     Args:
-        - ARIA_path: Requested path.
+        ARIA_path (str or path-like): Root directory to search.
 
     Returns:
-        list: Path to .ri files.
+        list[str]: Paths to files whose names end in ``.ri``. Paths retain
+        the absolute or relative form of the supplied root directory.
     """
-    import os
-
-    ri_files = []
-
-    for root, dirs, files in os.walk(ARIA_path):
-        for file in files:
-            if file.endswith(".ri"):
-                ri_files.append(os.path.join(root, file))
-    return ri_files
+    refractive_index_paths = []
+    for directory, _, filenames in os.walk(ARIA_path):
+        for filename in filenames:
+            if filename.endswith(".ri"):
+                refractive_index_paths.append(os.path.join(directory, filename))
+    return refractive_index_paths
 
 
 def read_ri_file(filepathname, wave=None, mode="wavelength", out_of_range="error"):

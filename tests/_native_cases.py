@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+from contextlib import nullcontext
 import pickle
 import sys
 import tempfile
 import traceback
+from unittest.mock import patch
 
 import numpy as np
 
@@ -165,6 +167,8 @@ def _e2e_case(payload):
 
     Args:
         payload: Mapping containing inputs and an optional runner identifier.
+            ``aria_reference_file`` overrides ARIA lookup with an original
+            database file for exact before/after migration comparisons.
 
     Returns:
         Serializable spectral results and effective input keys.
@@ -187,7 +191,13 @@ def _e2e_case(payload):
     else:
         inputs = Inputs(**payload["values"])
 
-    model = run_srfm(inputs)
+    reference_file = payload.get("aria_reference_file")
+    refractive_index_override = (
+        patch("srfm.ARIA_module.get_ri_filepathname", return_value=reference_file)
+        if reference_file else nullcontext()
+    )
+    with refractive_index_override:
+        model = run_srfm(inputs)
     return {
         "wvnm": model.wvnm,
         "uu": getattr(model, "uu", None),

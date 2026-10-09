@@ -26,3 +26,14 @@ angles. The table also demonstrates a coarse spectral Lambertian albedo, a
 custom beam-normal solar spectrum that is passed to DISORT without amplitude or
 date scaling, and a prescribed Angstrom/Henyey--Greenstein layer separated from
 the Mie and grey-body layers.
+
+Refractive indices
+------------------
+
+The ``comp`` field in each scattering layer selects bundled ARIA data.
+``"sulphuric acid"`` selects ``H2SO4_75%_300K_Palmer_1975.ri`` and ``"ash"``
+selects ``eyjafjallajokull_ash_58.5%SiO2_Reed_2018.ri``. The water cloud uses
+``H2O_263K_Rowe_2020.ri``. Existing generic names and legacy filenames remain
+valid with the updated database, so these example selections are unchanged.
+For an ice calculation, use ``"ice"`` or ``"ice_266K_Warren_2008.ri"`` and
+adjust the particle and layer parameters for the intended scene.

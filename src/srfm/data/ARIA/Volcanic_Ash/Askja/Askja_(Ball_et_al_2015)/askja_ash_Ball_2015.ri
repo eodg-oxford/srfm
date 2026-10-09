@@ -1,0 +1,9 @@
+#DISTRIBUTEDBY=Aerosol Refractive Index Archive (https://eodg.atm.ox.ac.uk/ARIA/)
+#SUBSTANCE=Askja ash
+#DESCRIPTION=Ash from Askja volcanic eruption, 1875 layer C
+#REFERENCE=J. G. C. Ball, B. E. Reed, R. G. Grainger, D. M. Peters, T. A. Mather and D. M. Pyle, Measurements of the complex refractive index of volcanic ash at 450, 546.7, and 650 nm. J. Geophys. Res. Atmos., 120, 7747–7757, 2015.
+#DOI=10.1002/2015JD023521
+#FORMAT= WAVL N DN K DK
+0.4500	1.516	0.01	0.000221	0.000083
+0.5467	1.510	0.01	0.000159	0.000044
+0.6500	1.509	0.01	0.000147	0.000039

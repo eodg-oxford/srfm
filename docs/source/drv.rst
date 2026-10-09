@@ -298,7 +298,12 @@ parameters below. The same fields apply to the example's
 * ``truncate`` (``bool`` or ``None``): Gaussian positive-radius truncation.
   Mie calculations require true; omission defaults to true.
 * ``comp`` (``str``): Refractive-index composition identifier or refractive-
-  index filename, such as ``"sulphuric acid"``, ``"ash"``, or an ``.ri`` file.
+  index basename from bundled ARIA. Accepts ``"sulphuric acid"``, ``"ash"``,
+  ``"ice"``, current filenames such as ``"H2SO4_75%_300K_Palmer_1975.ri"``,
+  and legacy filenames such as ``"H2SO4_75_Palmer_1975.ri"``. Filenames are
+  case-sensitive. See :ref:`aria-refractive-indices` for dataset selection and
+  compatibility. Use ``"ri"`` with ``refractive_index`` for supplied indices
+  in the ``n - ik`` convention.
 * ``center_alt`` (``int``, ``float``, or ``None``): Layer centre altitude in km.
   Supply it with ``thick``, or instead supply both explicit altitude bounds.
 * ``thick`` (``int``, ``float``, or ``None``): Positive layer thickness in km.

@@ -30,12 +30,35 @@ def test_find_ri_files_recurses_and_filters_extensions(tmp_path):
     assert {Path(path).name for path in find_ri_files(tmp_path)} == {"a.ri", "b.ri"}
 
 
-def test_bundled_generic_composition_resolves():
+@pytest.mark.parametrize(
+    ("composition", "filename"),
+    [
+        ("ash", "eyjafjallajokull_ash_58.5%SiO2_Reed_2018.ri"),
+        ("ice", "ice_266K_Warren_2008.ri"),
+        ("sulphuric acid", "H2SO4_75%_300K_Palmer_1975.ri"),
+    ],
+)
+def test_bundled_generic_composition_resolves(composition, filename):
     """Verify a bundled generic composition resolves to a data file.
 
     This protects package-resource lookup for standard refractive indices.
+
+    Args:
+        composition: Supported generic composition name.
+        filename: Current filename for the original reference dataset.
     """
-    assert Path(get_ri_filepathname("ash")).name == "eyjafjallajokull-ash_Reed.ri"
+    assert Path(get_ri_filepathname(composition)).name == filename
+
+
+@pytest.mark.parametrize("composition", [None, 42, Path("ice.ri")])
+def test_non_string_composition_rejected(composition):
+    """Preserve the string-only contract for composition identifiers.
+
+    Args:
+        composition: Unsupported composition value.
+    """
+    with pytest.raises(TypeError, match="composition must be a string"):
+        get_ri_filepathname(composition)
 
 
 def test_unknown_bundled_composition_fails_clearly():
