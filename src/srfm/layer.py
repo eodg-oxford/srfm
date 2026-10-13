@@ -125,10 +125,24 @@ class MieLayer(Layer):
         """Set particle number concentration.
 
         Args:
-            n (int, float): Particle number concentration, units [cm\ :sup:`-1`].
+            n (int, float): Particle number concentration, units [cm\ :sup:`-3`].
 
         """
         self.n = n
+
+    def set_reference_optical_depth(self, tau_ref, tau_ref_at, tau_ref_at_units):
+        """Set a reference optical depth as the particle concentration input.
+
+        Args:
+            tau_ref (float): Positive vertical particle extinction optical depth
+                through the complete layer, including absorption and scattering.
+            tau_ref_at (float): Positive reference wavelength or wavenumber.
+            tau_ref_at_units (str): Reference coordinate units: ``"cm-1"``,
+                ``"um"``, or ``"nm"``, independently of ``spec_units``.
+        """
+        self.tau_ref = tau_ref
+        self.tau_ref_at = tau_ref_at
+        self.tau_ref_at_units = tau_ref_at_units
 
     def set_r(self, r):
         """Set the distribution radius parameter.
@@ -179,9 +193,9 @@ class MieLayer(Layer):
         """Set particle mean density.
 
         Args:
-            rho (str, int, float): Particle mean density units [kg m\ :sup:`-3`\ ] or one
-                of strings accepted by
-                ``srfm.utilities.number_conc_from_mass_loading()``.
+            rho (str, int, float, None): Particle material density in kg m-3,
+                a supported named density, or None. Required when mass loading
+                sets the concentration; otherwise used only to derive mass loading.
 
         """
         self.rho = rho
@@ -355,8 +369,11 @@ class MieLayer(Layer):
                     - upp_spc
                     - spec_units
                     - res
-                    - mass_loading
-                    - n
+                    - mass_loading (optional concentration input)
+                    - n (optional concentration input)
+                    - tau_ref (optional concentration input)
+                    - tau_ref_at (required with tau_ref)
+                    - tau_ref_at_units (required with tau_ref)
                     - r
                     - s
                     - effective_radius (distribution-specific, optional)
@@ -365,7 +382,7 @@ class MieLayer(Layer):
                     - gamma (distribution-specific, optional)
                     - median_radius (distribution-specific, optional)
                     - truncate (Gaussian only, optional)
-                    - rho
+                    - rho (required only when mass_loading sets concentration)
                     - s_a_den
                     - v_den
                     - dist_type
@@ -379,6 +396,9 @@ class MieLayer(Layer):
                     - leg_coeffs_type
                     - multiprocess
 
+                ``tau_ref`` is mutually exclusive with ``n``, ``s_a_den``,
+                ``v_den``, and ``mass_loading``. Its reference coordinate uses
+                ``"cm-1"``, ``"um"``, or ``"nm"`` independently of the layer grid.
                 For explanation of each of those parameters please refer to the
                 respective function which set them explicitly (set_{parameter name}).
 
@@ -390,9 +410,13 @@ class MieLayer(Layer):
         self.res = inp_dict["res"]
         self.mass_loading = inp_dict.get("mass_loading")
         self.n = inp_dict.get("n")
+        self.tau_ref = inp_dict.get("tau_ref")
+        self.tau_ref_at = inp_dict.get("tau_ref_at")
+        self.tau_ref_at_units = inp_dict.get("tau_ref_at_units")
+        self._optical_depth_derived_concentrations = {}
         self.r = inp_dict.get("r")
         self.s = inp_dict.get("s")
-        self.rho = inp_dict["rho"]
+        self.rho = inp_dict.get("rho")
         self.s_a_den = inp_dict.get("s_a_den")
         self.v_den = inp_dict.get("v_den")
         self.dist_type = inp_dict["dist_type"]
@@ -467,7 +491,7 @@ class MieLayer(Layer):
                     "sequence."
                 )
 
-        if not isinstance(self.rho, (int, float, str, type(None))):
+        if not isinstance(getattr(self, "rho", None), (int, float, str, type(None))):
             raise TypeError("rho must be int, float or type(None).")
 
         for attribute_name in ("s_a_den", "v_den"):
@@ -579,7 +603,10 @@ class MieLayer(Layer):
             and then fail."""
             )
 
-        distribution = self._build_size_distribution()
+        self._validate_reference_optical_depth_inputs()
+        distribution = self._build_size_distribution(
+            number_concentration=1.0 if getattr(self, "tau_ref", None) is not None else None
+        )
         if getattr(distribution, "truncate", True) is False:
             raise ValueError(
                 "MieLayer requires truncate=True for a Gaussian distribution."
@@ -691,14 +718,174 @@ class MieLayer(Layer):
             "volume density (v_den), or mass loading (mass_loading) must be set."
         )
 
-    def _build_size_distribution(self):
-        """Construct the configured analytic size distribution."""
+    def _build_size_distribution(self, number_concentration=None):
+        """Construct the configured analytic size distribution.
+
+        Args:
+            number_concentration (float | None): Optional trial concentration in
+                cm-3, replacing the configured concentration for this construction.
+                None selects the existing number/area/volume/mass precedence.
+
+        Returns:
+            SizeDistribution: Distribution with the configured particle shape.
+        """
         dist_type = getattr(self, "dist_type", "log_normal")
         if dist_type not in MIE_DISTRIBUTION_TYPES:
             raise ValueError(f"Unknown distribution type: {dist_type}")
         kwargs = self._distribution_shape_kwargs()
-        kwargs.update(self._distribution_concentration_kwargs())
+        if number_concentration is None:
+            kwargs.update(self._distribution_concentration_kwargs())
+        elif dist_type == "multimode_log_normal":
+            kwargs["n"] = np.full(np.size(self.r), number_concentration)
+        else:
+            kwargs["n"] = number_concentration
         return sz.create_distribution(dist_type=dist_type, **kwargs)
+
+    def _validate_reference_optical_depth_inputs(self):
+        """Check the optional reference specification without calculating Mie optics.
+
+        Concentrations derived by a previous calculation are allowed unchanged so
+        the same layer can be recalculated after changing its optical depth or
+        particle shape. Explicit conflicting concentration inputs are rejected.
+
+        Raises:
+            ValueError: If reference inputs are incomplete, invalid, conflicting,
+                or cannot determine the relative concentrations of multiple modes.
+        """
+        reference_optical_depth = getattr(self, "tau_ref", None)
+        reference_coordinate = getattr(self, "tau_ref_at", None)
+        reference_units = getattr(self, "tau_ref_at_units", None)
+        if reference_optical_depth is None:
+            if reference_coordinate is not None or reference_units is not None:
+                raise ValueError("tau_ref is required with tau_ref_at or tau_ref_at_units.")
+            return
+        for attribute_name in ("tau_ref", "tau_ref_at"):
+            value = getattr(self, attribute_name, None)
+            if (
+                not isinstance(value, Real)
+                or isinstance(value, (bool, np.bool_))
+                or not np.isfinite(value)
+                or value <= 0.0
+            ):
+                raise ValueError(f"{attribute_name} must be finite and greater than zero.")
+        if not isinstance(reference_units, str) or reference_units not in {
+            "cm-1", "um", "nm"
+        }:
+            raise ValueError("tau_ref_at_units must be one of 'cm-1', 'um', or 'nm'.")
+        derived_concentrations = getattr(self, "_optical_depth_derived_concentrations", {})
+        for attribute_name in ("n", "s_a_den", "v_den", "mass_loading"):
+            concentration = getattr(self, attribute_name, None)
+            if concentration is not None and not (
+                attribute_name in derived_concentrations
+                and np.array_equal(concentration, derived_concentrations[attribute_name])
+            ):
+                raise ValueError(f"tau_ref cannot be supplied together with {attribute_name}.")
+        if (
+            getattr(self, "dist_type", None) == "multimode_log_normal"
+            and np.size(getattr(self, "r", None)) > 1
+        ):
+            raise ValueError(
+                "tau_ref cannot determine relative mode concentrations for a "
+                "multimode distribution; supply per-mode concentrations instead."
+            )
+
+    def _reference_refractive_index(self, reference_wavelength_micrometres):
+        """Resolve a supplied refractive index at the optical-depth reference.
+
+        Args:
+            reference_wavelength_micrometres (float): Reference wavelength in um.
+
+        Returns:
+            complex | None: Constant or interpolated supplied index. None lets
+                the existing optical-property calculation read the ARIA dataset.
+
+        Raises:
+            ValueError: If an index array does not match the layer grid or does
+                not cover the reference wavelength. Extrapolation is forbidden.
+        """
+        if self.comp != "ri":
+            return None
+        supplied_refractive_index = getattr(self, "refractive_index", None)
+        if supplied_refractive_index is None:
+            raise ValueError("refractive_index is required when comp is 'ri'.")
+        refractive_indices = np.asarray(supplied_refractive_index, dtype=complex)
+        if refractive_indices.ndim == 0:
+            return complex(refractive_indices)
+        _, wavelengths_micrometres = utils.calc_grids(
+            lo=self.low_spc, hi=self.upp_spc, res=self.res, units=self.spec_units
+        )
+        if refractive_indices.shape != wavelengths_micrometres.shape:
+            raise ValueError("refractive_index must be scalar or match the layer grid.")
+        wavelength_order = np.argsort(wavelengths_micrometres)
+        wavelengths_micrometres = wavelengths_micrometres[wavelength_order]
+        minimum_wavelength = wavelengths_micrometres[0]
+        maximum_wavelength = wavelengths_micrometres[-1]
+        if (
+            reference_wavelength_micrometres < minimum_wavelength
+            and not np.isclose(reference_wavelength_micrometres, minimum_wavelength,
+                               rtol=1e-12, atol=0.0)
+        ) or (
+            reference_wavelength_micrometres > maximum_wavelength
+            and not np.isclose(reference_wavelength_micrometres, maximum_wavelength,
+                               rtol=1e-12, atol=0.0)
+        ):
+            raise ValueError("tau_ref_at is outside the supplied refractive_index grid.")
+        return complex(np.interp(
+            reference_wavelength_micrometres,
+            wavelengths_micrometres,
+            refractive_indices[wavelength_order],
+        ))
+
+    def _prepare_number_concentration_from_optical_depth(self):
+        """Convert reference optical depth into the ordinary concentration input.
+
+        A single reference calculation uses a trial concentration of 1 cm-3 and
+        the existing radius quadrature and Mie solver. The resulting extinction
+        coefficient determines one concentration for the entire layer spectrum.
+        The full optical calculation subsequently runs through the normal path.
+
+        Raises:
+            ValueError: If the reference inputs, extinction coefficient, or
+                inferred number concentration are invalid or non-positive.
+        """
+        self._validate_reference_optical_depth_inputs()
+        reference_wavelength_micrometres = float(self.tau_ref_at)
+        if self.tau_ref_at_units == "cm-1":
+            reference_wavelength_micrometres = 1.0e4 / self.tau_ref_at
+        elif self.tau_ref_at_units == "nm":
+            reference_wavelength_micrometres = self.tau_ref_at / 1.0e3
+        if not np.isfinite(reference_wavelength_micrometres) or reference_wavelength_micrometres <= 0:
+            raise ValueError("tau_ref_at must convert to a finite positive wavelength.")
+        trial_number_concentration = 1.0  # cm-3
+        trial_distribution = self._build_size_distribution(
+            number_concentration=trial_number_concentration
+        )
+        reference_properties = op.ewp_hs(
+            wavelengths=np.array([reference_wavelength_micrometres]),
+            composition=self.comp,
+            distribution=trial_distribution,
+            refractive_index=self._reference_refractive_index(reference_wavelength_micrometres),
+            angle=np.array([0.0]),
+            legendre_coefficients_flag=False,
+            radii=self.radii,
+            eta=self.eta,
+            radii_quad_type=self.radii_quad_type,
+            multiprocess=False,
+        )
+        reference_extinction_coefficient = float(reference_properties["beta_ext"][0])
+        if not np.isfinite(reference_extinction_coefficient) or reference_extinction_coefficient <= 0:
+            raise ValueError("Reference extinction coefficient must be finite and greater than zero.")
+        layer_thickness_metres = 1.0e3 * (self.alt_upp - self.alt_low)
+        trial_optical_depth = reference_extinction_coefficient * layer_thickness_metres
+        number_concentration = trial_number_concentration * self.tau_ref / trial_optical_depth
+        if not np.isfinite(number_concentration) or number_concentration <= 0:
+            raise ValueError("Inferred number concentration must be finite and greater than zero.")
+        self.n = (
+            np.array([number_concentration])
+            if self.dist_type == "multimode_log_normal" else number_concentration
+        )
+        # Remove any mass derived on a previous run, including when rho was removed.
+        self.mass_loading = None
 
     def _sync_distribution_concentrations(self, distribution):
         """Copy equivalent concentration measures from a distribution."""
@@ -762,6 +949,7 @@ class MieLayer(Layer):
             RuntimeError: If the vertical extent or particle loading is incomplete.
         """
         self.calc_layer_extent()
+        self._validate_reference_optical_depth_inputs()
         if not isinstance(self.name, str) or not self.name:
             raise TypeError("Name must be a non-empty string.")
         for attribute_name in ("low_spc", "upp_spc", "res", "eta"):
@@ -817,17 +1005,22 @@ class MieLayer(Layer):
                 )
         if all(
             getattr(self, attribute_name, None) is None
-            for attribute_name in ("mass_loading", "n", "s_a_den", "v_den")
+            for attribute_name in ("mass_loading", "n", "s_a_den", "v_den", "tau_ref")
         ):
             raise RuntimeError(
-                "One of mass_loading, n, s_a_den, or v_den must be supplied."
+                "One of mass_loading, n, s_a_den, v_den, or tau_ref must be supplied."
             )
         density = getattr(self, "rho", None)
         if isinstance(density, Real) and not isinstance(density, (bool, np.bool_)):
             if not np.isfinite(density) or density <= 0:
                 raise ValueError("rho must be finite and greater than zero.")
-        elif not isinstance(density, str):
-            raise TypeError("rho must be a finite real number or supported name.")
+        elif density is not None and not isinstance(density, str):
+            raise TypeError("rho must be a finite real number, supported name, or None.")
+        if density is None and mass_loading is not None and all(
+            getattr(self, attribute_name, None) is None
+            for attribute_name in ("n", "s_a_den", "v_den", "tau_ref")
+        ):
+            raise ValueError("rho is required when mass_loading sets the concentration.")
         for attribute_name in ("alt_low", "alt_upp", "center_alt", "thick"):
             value = getattr(self, attribute_name, None)
             if (
@@ -840,7 +1033,9 @@ class MieLayer(Layer):
             raise ValueError("alt_low must be less than alt_upp.")
         if self.thick < 0.002:
             raise ValueError("Mie layer thickness must be at least 0.002 km.")
-        distribution = self._build_size_distribution()
+        distribution = self._build_size_distribution(
+            number_concentration=1.0 if getattr(self, "tau_ref", None) is not None else None
+        )
         if self.dist_type == "gaussian" and not distribution.truncate:
             raise ValueError(
                 "MieLayer requires truncate=True for a Gaussian distribution."
@@ -853,29 +1048,36 @@ class MieLayer(Layer):
         return True
 
     def calculate_op(self, validate=True):
-        """Used to calculate the optical properties for the MieLayer class.
+        """Calculate Mie properties using the configured concentration input.
 
-        The function calls specialized functions to perform the actual calculations.
+        Reference optical depth is first converted to number concentration. The
+        existing distribution, optional mass-loading conversion, spectral grid,
+        and full Mie calculation then use that fixed concentration. Call
+        ``add_op_calc_output()`` afterwards to collect the optical results.
 
-        The structure is the following:
-            1. Checks the inputs consistency and format and calculates what is missing.
-            2. Checks the inputs format (this is a little logically inconsistent
-               because some checks must be performed in step one before missing
-               properties are calculated).
-            3. Calculate size distribution.
-            4. Calculate spectral calculation grid.
-            5. Calculate the optical properties, which are returned as class attributes.
+        Args:
+            validate (bool): Validate inputs and resolve layer boundaries before
+                calculation. False is intended for already validated layers.
 
         Raises:
-            RuntimeError: Raised when input fails the format or input tests.
-
+            TypeError: If an input has an unsupported type.
+            ValueError: If inputs or reference extinction are invalid.
+            RuntimeError: If required geometry or concentration inputs are missing.
         """
 
         # Calculate layer vertical-extent properties and validate raw inputs before
         # deriving concentration or optical quantities.
         if validate:
             self.validate_inputs()
+        if getattr(self, "tau_ref", None) is not None:
+            self._prepare_number_concentration_from_optical_depth()
         self.nsv_or_ml()
+        if getattr(self, "tau_ref", None) is not None:
+            self._optical_depth_derived_concentrations = {
+                attribute_name: np.copy(getattr(self, attribute_name))
+                for attribute_name in ("n", "s_a_den", "v_den", "mass_loading")
+                if getattr(self, attribute_name, None) is not None
+            }
         self.calc_grids()
         self.calc_optical_properties()
 

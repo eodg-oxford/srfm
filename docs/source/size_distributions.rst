@@ -42,6 +42,13 @@ more than one is supplied, precedence is number, surface area, then volume.
 The multimode class accepts the corresponding quantity separately for every
 mode because a mixture total does not determine the component proportions.
 
+At the ``MieLayer`` level, ``tau_ref``, ``tau_ref_at``, and
+``tau_ref_at_units`` provide an optional alternative concentration input for
+a distribution with one component. A reference Mie calculation converts the
+requested layer optical depth to number concentration before constructing the
+ordinary distribution. Material density is needed only for mass loading.
+See :doc:`drv` for reference units, refractive-index coverage, and an example.
+
 Gaussian distribution
 ---------------------
 

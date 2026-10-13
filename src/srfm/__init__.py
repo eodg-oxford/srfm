@@ -42,6 +42,11 @@ __all__ = [
 ]
 
 
+def __dir__():
+    """Return module attributes and all public submodule names."""
+    return sorted(set(globals()) | set(__all__))
+
+
 def _safe_import(name: str, optional: bool = False):
     """Import a package submodule while tolerating missing optional extensions.
 

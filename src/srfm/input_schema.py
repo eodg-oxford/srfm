@@ -444,9 +444,14 @@ LAYER_SCHEMA: dict[str, FieldSpec] = {
     ),
     "mass_loading": FieldSpec(NUMBER_TYPES, nullable=True),
     "n": FieldSpec(SIZE_PARAMETER_TYPES, nullable=True),
+    "tau_ref": FieldSpec(NUMBER_TYPES, nullable=True, minimum=0, minimum_inclusive=False),
+    "tau_ref_at": FieldSpec(NUMBER_TYPES, nullable=True, minimum=0, minimum_inclusive=False),
+    "tau_ref_at_units": FieldSpec(
+        (str,), nullable=True, choices=frozenset({"cm-1", "um", "nm"})
+    ),
     "r": FieldSpec(SIZE_PARAMETER_TYPES, nullable=True),
     "s": FieldSpec(SIZE_PARAMETER_TYPES, nullable=True),
-    "rho": FieldSpec((Real, str), required=True),
+    "rho": FieldSpec((Real, str), nullable=True),
     "s_a_den": FieldSpec(SIZE_PARAMETER_TYPES, nullable=True),
     "v_den": FieldSpec(SIZE_PARAMETER_TYPES, nullable=True),
     "dist_type": FieldSpec(
@@ -1274,11 +1279,28 @@ def _validate_layers(layers: Any, issues: list[str]) -> None:
             value = layer.get(key)
             if isinstance(value, Real) and value < 0:
                 issues.append(f"{path}{key}: must be non-negative")
+        reference_optical_depth = layer.get("tau_ref")
+        if reference_optical_depth is not None:
+            for reference_field in ("tau_ref_at", "tau_ref_at_units"):
+                if layer.get(reference_field) is None:
+                    issues.append(f"{path}{reference_field}: required with tau_ref")
+            for concentration_field in ("n", "s_a_den", "v_den", "mass_loading"):
+                if layer.get(concentration_field) is not None:
+                    issues.append(
+                        f"{path}tau_ref: cannot be supplied together with {concentration_field}"
+                    )
+        elif layer.get("tau_ref_at") is not None or layer.get("tau_ref_at_units") is not None:
+            issues.append(f"{path}tau_ref: required with tau_ref_at or tau_ref_at_units")
+        if density is None and layer.get("mass_loading") is not None and all(
+            layer.get(key) is None for key in ("n", "s_a_den", "v_den", "tau_ref")
+        ):
+            issues.append(f"{path}rho: required when mass_loading sets the concentration")
         if all(
-            layer.get(key) is None for key in ("mass_loading", "n", "s_a_den", "v_den")
+            layer.get(key) is None
+            for key in ("mass_loading", "n", "s_a_den", "v_den", "tau_ref")
         ):
             issues.append(
-                f"{path}mass_loading: one of mass_loading, n, s_a_den, or v_den is required"
+                f"{path}mass_loading: one of mass_loading, n, s_a_den, v_den, or tau_ref is required"
             )
         dist_type = layer.get("dist_type")
         if isinstance(dist_type, str) and dist_type in MIE_DISTRIBUTION_TYPES:
@@ -1292,8 +1314,11 @@ def _validate_layers(layers: Any, issues: list[str]) -> None:
                 radii = np.atleast_1d(layer.get("r"))
                 concentration = {"n": np.ones(radii.size)}
                 if radii.size > 1:
+                    concentration_field = (
+                        "tau_ref" if reference_optical_depth is not None else "mass_loading"
+                    )
                     issues.append(
-                        f"{path}mass_loading: a multimode distribution requires "
+                        f"{path}{concentration_field}: a multimode distribution requires "
                         "per-mode n, s_a_den, or v_den to define mode fractions"
                     )
             else:

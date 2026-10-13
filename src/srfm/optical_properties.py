@@ -22,7 +22,7 @@ import time
 import matplotlib.pyplot as plt
 
 
-@jit(nopython=True, error_model="numpy", parallel=False, fastmath=True)
+@jit(nopython=True, error_model="numpy", parallel=False, fastmath=True, cache=True)
 def legendre_polynomial_expansion(inp, qv, qw, phase):
     """Expands a function as a Legendre series.
 
@@ -92,7 +92,7 @@ def legendre_polynomial_expansion(inp, qv, qw, phase):
     return lc, inlc
 
 
-@jit(nopython=True, error_model="numpy", parallel=False, fastmath=True)
+@jit(nopython=True, error_model="numpy", parallel=False, fastmath=True, cache=True)
 def normalised_legendre_polynomial_expansion(inp, qv, qw, phase):
     """Expands a function as a Legendre series.
 

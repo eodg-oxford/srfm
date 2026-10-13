@@ -156,6 +156,10 @@ inputs = {
     # comp accepts current and legacy ARIA basenames. Generic selections retain
     # their datasets: sulphuric acid -> H2SO4_75%_300K_Palmer_1975.ri;
     # ash -> eyjafjallajokull_ash_58.5%SiO2_Reed_2018.ri.
+    # Optional Mie concentration alternative: omit/set None for n, mass_loading,
+    # s_a_den, and v_den; supply tau_ref=0.5, tau_ref_at=900.0,
+    # tau_ref_at_units="cm-1". Reference wavelength units "um" and "nm" also work.
+    # rho is optional unless mass_loading is used to set the concentration.
     "scat_lyrs_inputs": {
         "Sulphuric_acid_1": {
             "name": "Sulphuric_acid_1",

@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from srfm import ARIA_module
 from srfm.ARIA_module import (
     RI,
     ReadError,
@@ -68,6 +69,35 @@ def test_unknown_bundled_composition_fails_clearly():
     """
     with pytest.raises(FileNotFoundError, match="not found"):
         get_ri_filepathname("not-a-real-composition")
+
+
+def test_filename_lookups_share_one_database_scan(monkeypatch, tmp_path):
+    """Different names, aliases, and missing files reuse one directory traversal."""
+    database_directory = tmp_path / "ARIA"
+    nested_directory = database_directory / "nested"
+    nested_directory.mkdir(parents=True)
+    ash_path = nested_directory / "eyjafjallajokull_ash_58.5%SiO2_Reed_2018.ri"
+    other_path = database_directory / "another.ri"
+    for path in (ash_path, other_path):
+        path.write_text("", encoding="utf-8")
+
+    scanned_directories = []
+    original_walk = ARIA_module.os.walk
+
+    def record_directory_scan(directory):
+        scanned_directories.append(directory)
+        return original_walk(directory)
+
+    monkeypatch.setattr(ARIA_module, "files", lambda package: tmp_path)
+    monkeypatch.setattr(ARIA_module.os, "walk", record_directory_scan)
+
+    for name in ("ash", "eyjafjallajokull-ash_Reed.ri", ash_path.name):
+        assert Path(get_ri_filepathname(name)) == ash_path
+    assert Path(get_ri_filepathname(other_path.name)) == other_path
+    for name in ("missing.ri", "ASH"):
+        with pytest.raises(FileNotFoundError, match="not found"):
+            get_ri_filepathname(name)
+    assert scanned_directories == [database_directory]
 
 
 def test_read_wavelength_file_and_derive_wavenumber(tiny_ri_file):

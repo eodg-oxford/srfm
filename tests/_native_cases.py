@@ -111,6 +111,62 @@ def _mie_case(payload):
     )
 
 
+def _mie_optical_depth_round_trip_case(payload):
+    """Reconstruct a native Mie layer from its calculated reference optical depth.
+
+    Args:
+        payload: Number-concentration layer inputs, a reference grid index, and
+            reference configurations selecting units, density, and multiprocessing.
+
+    Returns:
+        dict: Baseline and reconstructed concentrations and full optical spectra.
+    """
+    from srfm.layer import MieLayer
+
+    def calculate_layer(layer_inputs):
+        """Calculate one layer through the public dictionary and optical APIs."""
+        layer = MieLayer()
+        layer.set_input_from_dict(layer_inputs)
+        layer.calculate_op()
+        layer.add_op_calc_output()
+        layer.calc_tau()
+        return layer
+
+    def collect_results(layer):
+        """Collect physical quantities used for independent comparisons."""
+        return {
+            attribute: getattr(layer, attribute, None)
+            for attribute in (
+                "n", "mass_loading", "s_a_den", "v_den", "wvls", "beta_ext",
+                "tau", "ssalb", "phase_function", "legendre_coefficient",
+            )
+        }
+
+    baseline = calculate_layer(payload["inputs"])
+    reference_index = payload["reference_index"]
+    reference_wavelength = baseline.wvls[reference_index]
+    reconstructed_results = []
+    for reference_configuration in payload["references"]:
+        layer_inputs = dict(payload["inputs"])
+        layer_inputs.pop("n")
+        reference_units = reference_configuration["units"]
+        reference_coordinate = {
+            "um": reference_wavelength,
+            "nm": reference_wavelength * 1.0e3,
+            "cm-1": 1.0e4 / reference_wavelength,
+        }[reference_units]
+        layer_inputs.update(
+            tau_ref=float(baseline.tau[reference_index]),
+            tau_ref_at=float(reference_coordinate),
+            tau_ref_at_units=reference_units,
+            multiprocess=reference_configuration.get("multiprocess", False),
+        )
+        if not reference_configuration.get("include_density", True):
+            layer_inputs.pop("rho", None)
+        reconstructed_results.append(collect_results(calculate_layer(layer_inputs)))
+    return {"baseline": collect_results(baseline), "reconstructed": reconstructed_results}
+
+
 def _rfm_flag_matrix_case(payload):
     """Exercise many RFM ``*FLG`` configurations in one native process.
 
@@ -210,10 +266,34 @@ def _e2e_case(payload):
     }
 
 
+def _batch_case(payload):
+    """Run related native checks in one child, returning every named result.
+
+    Args:
+        payload: Mapping whose ``cases`` maps identifiers to ``case`` names and
+            their individual ``payload`` mappings.
+
+    Returns:
+        dict: Results keyed by case identifier. Each identifier is also printed
+        before execution so native crashes or Fortran STOP identify the subcase.
+
+    Notes:
+        E2E cases retain the production RFM subprocess boundary for each run.
+        Imports and Mie JIT compilation are shared within this outer child only.
+    """
+    results = {}
+    for identifier, configuration in payload["cases"].items():
+        print(f"Running native batch case: {identifier}", flush=True)
+        results[identifier] = CASES[configuration["case"]](configuration["payload"])
+    return results
+
+
 CASES = {
+    "batch": _batch_case,
     "disort": _disort_case,
     "getmom": _getmom_case,
     "mie": _mie_case,
+    "mie_optical_depth_round_trip": _mie_optical_depth_round_trip_case,
     "rfm_flag_matrix": _rfm_flag_matrix_case,
     "e2e": _e2e_case,
 }

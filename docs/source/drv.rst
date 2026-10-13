@@ -261,12 +261,29 @@ parameters below. The same fields apply to the example's
   grid, in ``spec_units``.
 * ``spec_units`` (``str``): Units of the layer optical-property grid. Permitted
   values: ``"cm-1"``, ``"um"``, or ``"nm"``.
-* ``rho`` (``int``, ``float``, or ``str``): Particle density in kg m\ :sup:`-3`,
+* ``rho`` (**optional** ``int``, ``float``, ``str``, or ``None``): Particle
+  material density in kg m\ :sup:`-3`,
   or a supported named ash density. Named values: ``"pumice"``, ``"glass"``,
-  ``"mineral"``, or ``"rock"``.
+  ``"mineral"``, or ``"rock"``. Required when ``mass_loading`` sets the
+  concentration. Other concentration inputs and ``tau_ref`` work without
+  density; mass loading can then be left uncalculated.
 * ``n`` (number, one-dimensional sequence, or ``None``): Particle number
-  concentration. A multimode log-normal layer supplies one value per mode. At
-  least one of ``mass_loading``, ``n``, ``s_a_den``, or ``v_den`` must be set.
+  concentration in cm\ :sup:`-3`. A multimode log-normal layer supplies one
+  value per mode. At least one of ``mass_loading``, ``n``, ``s_a_den``,
+  ``v_den``, or ``tau_ref`` must be set.
+* ``tau_ref`` (**optional** number or ``None``): Positive finite vertical
+  particle extinction optical depth through the complete layer at
+  ``tau_ref_at``. It includes particle absorption and scattering, before
+  DISORT delta scaling, and excludes gas absorption and molecular Rayleigh
+  scattering. Supply it instead of ``n``, ``mass_loading``, ``s_a_den``, or
+  ``v_den``; those fields must be omitted or ``None``.
+* ``tau_ref_at`` (**optional** number or ``None``): Positive finite reference
+  wavelength or wavenumber. Required with ``tau_ref``.
+* ``tau_ref_at_units`` (**optional** ``str`` or ``None``): Units of
+  ``tau_ref_at``: ``"cm-1"`` for wavenumber, ``"um"`` for wavelength in
+  micrometres, or ``"nm"`` for wavelength in nanometres. Required with
+  ``tau_ref`` and independent of ``spec_units``. Reference coordinate fields
+  must be omitted or ``None`` when ``tau_ref`` is not supplied.
 * ``s`` (number, one-dimensional sequence, or ``None``): Distribution spread.
   It is a standard deviation in micrometres for ``"gaussian"``, a geometric
   standard deviation greater than one for log-normal distributions, and a
@@ -339,6 +356,62 @@ parameters below. The same fields apply to the example's
 The unused altitude pair may be omitted entirely. If all four altitude values
 are supplied, both pairs must describe the same boundaries after SRFM's
 0.001-km layer-boundary rounding.
+
+Using reference optical depth
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For example, adapt an existing Mie-layer input dictionary as follows:
+
+.. code-block:: python
+
+   layer_inputs.update(
+       n=None,
+       mass_loading=None,
+       s_a_den=None,
+       v_den=None,
+       tau_ref=0.5,
+       tau_ref_at=1000.0,
+       tau_ref_at_units="cm-1",
+   )
+
+The equivalent wavelength specifications are ``tau_ref_at=10.0`` with
+``tau_ref_at_units="um"`` or ``tau_ref_at=10000.0`` with
+``tau_ref_at_units="nm"``. Density may be omitted or set to ``None``; the
+existing mass-loading conversion warns that loading cannot be calculated.
+
+SRFM calculates extinction at the exact reference coordinate using a trial
+number concentration :math:`N_0=1\ \mathrm{cm}^{-3}` and the configured size
+distribution, refractive index, radius quadrature, and tail cutoff. For layer
+thickness :math:`H` in metres and trial extinction coefficient
+:math:`\beta_{\mathrm{ext},0}` in m\ :sup:`-1`, it derives
+
+.. math::
+
+   N = N_0\frac{\tau_{\mathrm{ref}}}{\beta_{\mathrm{ext},0} H}.
+
+The resulting concentration is fixed across the spectrum. The ordinary
+``calculate_op()`` flow then constructs the distribution, derives mass loading
+when density and a finite third radius moment are available, and calculates
+the complete optical spectrum. The reference specification and derived
+concentration are retained in the effective input metadata of all runners.
+
+The reference need not lie on the layer calculation grid. An ARIA composition
+must cover that wavelength; a constant supplied refractive index can also be
+used outside the output band. For a supplied ``refractive_index`` array, the
+reference must lie within its layer grid: real and imaginary parts are
+interpolated linearly in wavelength, with no extrapolation. The reference
+extinction must be positive and finite. Output interpolation still has its
+ordinary grid-resolution error when the reference is between grid points.
+
+Reference optical depth supports the existing distribution families with one
+component. A multimode log-normal distribution with more than one mode must
+use per-mode concentrations because one total optical depth cannot determine
+the relative abundances. Zero optical depth is not a Mie concentration input;
+omit an empty particle layer instead.
+
+The reproducible ``examples/optical_depth_input/compare_layers.py`` example
+calculates a random layer from ``n``, then reproduces it using optical depth at
+one calculated wavelength and compares the complete spectra.
 
 ``gbc_lyrs_inputs`` is likewise optional and accepts omission, ``None``, or an
 empty dictionary. Its grey-body layers use the same alternative altitude pairs:

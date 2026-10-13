@@ -11,6 +11,7 @@ For details see https://eodg.atm.ox.ac.uk/ARIA/.
 
 import os
 import numpy as np
+from functools import lru_cache
 from importlib.resources import files, as_file
 
 from ._aria_aliases import LEGACY_RI_FILENAMES
@@ -23,12 +24,35 @@ _GENERIC_RI_FILENAMES = {
 }
 
 
+@lru_cache(maxsize=1)
+def _get_ri_filename_index(database_directory):
+    """Index bundled filenames once for the active database directory.
+
+    Args:
+        database_directory (path-like): Directory containing the bundled ARIA data.
+
+    Returns:
+        dict[str, str]: Basenames mapped to their full paths. The first match
+        in traversal order is retained, matching the previous lookup behavior.
+
+    Notes:
+        The bundled database is treated as fixed during a process. File contents
+        are still read normally; only the directory index is cached.
+    """
+    filename_index = {}
+    for directory, _, filenames in os.walk(database_directory):
+        for filename in filenames:
+            filename_index.setdefault(filename, os.path.join(directory, filename))
+    return filename_index
+
+
 def get_ri_filepathname(input_string):
     """Resolve a composition or filename in the bundled ARIA database.
 
     Current and legacy filenames are matched exactly, including case. Legacy
     names select the corresponding renamed dataset, preserving the original
-    sample, temperature, concentration, and crystal orientation.
+    sample, temperature, concentration, and crystal orientation. The first
+    lookup builds a filename index reused by subsequent calls in the process.
 
     Args:
         input_string (str): Current or legacy ARIA basename, or one of
@@ -50,16 +74,14 @@ def get_ri_filepathname(input_string):
         requested_filename, requested_filename
     )
 
-    with as_file(files("srfm.data") / "ARIA") as path:
-
-        # Recursively search for the file within the ARIA directory tree
-        for directory, _, filenames in os.walk(path):
-            if requested_filename in filenames:
-                return os.path.join(directory, requested_filename)
-
-    raise FileNotFoundError(
-        f"Refractive-index file '{input_string}' was not found in bundled ARIA data."
-    )
+    with as_file(files("srfm.data") / "ARIA") as database_directory:
+        filename_index = _get_ri_filename_index(database_directory)
+        try:
+            return filename_index[requested_filename]
+        except KeyError:
+            raise FileNotFoundError(
+                f"Refractive-index file '{input_string}' was not found in bundled ARIA data."
+            ) from None
 
 
 class ReadError(Exception):

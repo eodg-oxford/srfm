@@ -946,6 +946,102 @@ def test_driver_lognormal_effective_radius_prepares_layer(basic_values, omit_r):
     assert layer.n > 0.0
 
 
+@pytest.mark.parametrize("reference_units", ["cm-1", "um", "nm"])
+@pytest.mark.parametrize("include_density", [False, True])
+def test_driver_accepts_optional_reference_optical_depth(
+    basic_values, reference_units, include_density
+):
+    """Optical-depth inputs reach Mie validation without requiring a concentration."""
+    layer_inputs = basic_values["scat_lyrs_inputs"]["Ash_1"]
+    for field in ("n", "mass_loading", "s_a_den", "v_den"):
+        layer_inputs.pop(field)
+    if not include_density:
+        layer_inputs.pop("rho")
+    layer_inputs.update(tau_ref=0.2, tau_ref_at=1000.0, tau_ref_at_units=reference_units)
+
+    validate_srfm_inputs(basic_values)
+    layer = MieLayer()
+    layer.set_input_from_dict(layer_inputs)
+    assert layer.validate_inputs()
+    assert layer.n is None
+
+
+@pytest.mark.parametrize("concentration_field", ["n", "s_a_den", "v_den"])
+@pytest.mark.parametrize("explicit_none", [False, True])
+def test_driver_density_is_optional_for_direct_concentrations(
+    basic_values, concentration_field, explicit_none
+):
+    """Number, area, and volume inputs require no density through the full schema."""
+    layer_inputs = basic_values["scat_lyrs_inputs"]["Ash_1"]
+    layer_inputs.pop("mass_loading")
+    layer_inputs[concentration_field] = 10.0
+    if explicit_none:
+        layer_inputs["rho"] = None
+    else:
+        layer_inputs.pop("rho")
+    validate_srfm_inputs(basic_values)
+    layer = MieLayer()
+    layer.set_input_from_dict(layer_inputs)
+    assert layer.validate_inputs()
+
+
+@pytest.mark.parametrize("explicit_none", [False, True])
+def test_driver_mass_loading_requires_density(basic_values, explicit_none):
+    """Only mass loading as the concentration input requires material density."""
+    layer_inputs = basic_values["scat_lyrs_inputs"]["Ash_1"]
+    if explicit_none:
+        layer_inputs["rho"] = None
+    else:
+        layer_inputs.pop("rho")
+    with pytest.raises(InputValidationError, match="Ash_1.rho: required when mass_loading"):
+        validate_srfm_inputs(basic_values)
+
+
+@pytest.mark.parametrize(
+    ("updates", "error_message"),
+    [
+        ({"tau_ref": None}, "tau_ref: required"),
+        ({"tau_ref": 0.0}, "tau_ref:"),
+        ({"tau_ref": -1.0}, "tau_ref:"),
+        ({"tau_ref": np.nan}, "tau_ref:"),
+        ({"tau_ref": np.inf}, "tau_ref:"),
+        ({"tau_ref": True}, "tau_ref:"),
+        ({"tau_ref": [0.1]}, "tau_ref:"),
+        ({"tau_ref_at": None}, "tau_ref_at: required"),
+        ({"tau_ref_at": 0.0}, "tau_ref_at:"),
+        ({"tau_ref_at": np.nan}, "tau_ref_at:"),
+        ({"tau_ref_at": np.inf}, "tau_ref_at:"),
+        ({"tau_ref_at_units": None}, "tau_ref_at_units: required"),
+        ({"tau_ref_at_units": "m"}, "tau_ref_at_units:"),
+        ({"n": 10.0}, "tau_ref: cannot be supplied together with n"),
+        ({"mass_loading": 0.2}, "tau_ref: cannot be supplied together with mass_loading"),
+        ({"s_a_den": 1.0}, "tau_ref: cannot be supplied together with s_a_den"),
+        ({"v_den": 1.0}, "tau_ref: cannot be supplied together with v_den"),
+        ({"dist_type": "multimode_log_normal", "r": [0.1, 0.5], "s": [1.5, 1.8]},
+         "tau_ref: a multimode distribution requires"),
+    ],
+)
+def test_driver_reference_optical_depth_errors_include_field_paths(
+    basic_values, updates, error_message
+):
+    """Invalid references and competing normalizations produce actionable errors."""
+    layer_inputs = basic_values["scat_lyrs_inputs"]["Ash_1"]
+    layer_inputs.update(
+        mass_loading=None, tau_ref=0.2, tau_ref_at=10.0, tau_ref_at_units="um"
+    )
+    layer_inputs.update(updates)
+    with pytest.raises(InputValidationError, match=error_message):
+        validate_srfm_inputs(basic_values)
+
+
+def test_driver_accepts_unused_reference_fields_set_to_none(basic_values):
+    """Explicitly empty optional reference fields preserve ordinary layer inputs."""
+    basic_values["scat_lyrs_inputs"]["Ash_1"].update(
+        tau_ref=None, tau_ref_at=None, tau_ref_at_units=None
+    )
+    validate_srfm_inputs(basic_values)
+
+
 @pytest.mark.parametrize("effective_radius", [0.0, -1.0, np.nan, np.inf])
 def test_driver_rejects_invalid_lognormal_effective_radius(basic_values, effective_radius):
     """Driver validation reports an invalid alternative radius before a run."""

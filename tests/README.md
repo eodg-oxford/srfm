@@ -57,6 +57,20 @@ the test that needs it is skipped with a message identifying
 `python build_extensions.py` as the remedy. Such a skip is an environmental
 result, not evidence that the native calculation passed.
 
+### Reusing compiled code
+
+The two Numba Legendre-expansion functions cache compiled code between Python
+processes. Tests default `NUMBA_CACHE_DIR` to `/tmp/srfm-numba`; set that variable
+before running pytest to use a different cache directory. The numerical
+calculations and comparisons still run on every invocation.
+
+The DISORT validation driver executable is stored under pytest's cache directory
+in `d/srfm-disort`. Its cache key includes all nine source files' contents and
+paths, the compiler path and version, compiler flags, and platform. A changed
+build input triggers recompilation. Every test run executes the driver and
+checks all 57 cases and its 47 reference comparisons. Use `pytest --cache-clear`
+to force this executable to be rebuilt; this does not clear the Numba cache.
+
 ## Test levels
 
 ### Unit (`tests/unit/`)
@@ -84,6 +98,9 @@ They cover:
 - `Inputs`, structured RFM helper dataclasses and driver generation;
 - layer construction, extent/grid/concentration/mass-loading preparation, and
   size-distribution configuration without invoking Mie;
+- optional reference optical-depth inputs in cm-1, um, and nm, density
+  requirements, conflict detection, reference index interpolation, and repeated
+  layer calculations;
 - scalar and spectral albedo, custom beam-normal solar spectra, common
   in-memory/file-backed spectral fields, prescribed Angstrom or tabulated
   optics, analytic HG moments, normalized tabulated moments, and cross-type
@@ -103,6 +120,10 @@ Integration coverage includes:
 
 - size distribution -> quadrature -> optical properties -> compiled Mie;
 - synthetic ARIA refractive indices -> compiled Mie optical calculation;
+- reproducible random number-concentration layers -> reference optical depth ->
+  recovered concentration, mass loading, extinction, albedo, phase functions,
+  and Legendre coefficients, including gamma distributions, refractive-index
+  arrays, ARIA composition lookup, optional density, and multiprocessing;
 - `Inputs` -> `MieLayer` Python-side preparation;
 - structured RFM driver -> compiled RFM -> parsed optical-depth output, using
   a three-level atmosphere and three-point F11 cross section;
@@ -113,7 +134,7 @@ Integration coverage includes:
   transient-log removal;
 - Python DISORT configuration -> compiled single- and double-precision DISORT;
 - analytic Henyey--Greenstein moments -> native ``getmom(iphas=3)`` convention
-  oracle;
+  oracle, with all eight configurations checked in one isolated subprocess;
 - all 17 families and 57 cases from the authoritative DISORT Fortran driver,
   including its 47 embedded reference comparisons;
   and
@@ -138,6 +159,9 @@ All use a tiny synthetic F11 atmosphere/cross section and aerosol layer. The
 matrix comprises:
 
 - a direct `Inputs` run with no file or plotting output;
+- matching radiance and brightness temperature from number-concentration and
+  reference-optical-depth Mie inputs without density, including retained
+  reference coordinates and recovered concentration in NetCDF metadata;
 - a complete basic-example-style `driver_table.py` loaded by
   `Inputs.read_srfm_drv()`;
 - an OXHARP-tailored run using precomputed cosine/secant geometry;
@@ -167,6 +191,11 @@ and generic names where applicable. Radiance, brightness temperature, and all
 three retained flux fields must agree exactly. This exact equality requirement
 checks database substitution within the same environment, without assuming
 native outputs are bitwise portable across compilers or platforms.
+
+Each material's comparisons share one outer subprocess to reuse imports and
+Mie compilation. Each complete model calculation retains its own RFM worker
+subprocess. Named batch progress messages identify the active comparison if a
+native call crashes or stops before returning a complete result.
 
 Run the ARIA migration checks with:
 

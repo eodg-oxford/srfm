@@ -299,6 +299,64 @@ def test_complete_srfm_pathway_with_self_contained_scientific_inputs(
     _assert_complete_result(result, results, values)
 
 
+def test_reference_optical_depth_recovers_complete_run_without_density(
+    tmp_path,
+    tiny_atmosphere,
+    tiny_altitude_grid,
+    tiny_xsc_file,
+    require_native,
+    run_native_case,
+):
+    """Recover radiative outputs and preserve reference metadata without density."""
+    _require_all_native_extensions(require_native)
+    concentration_results = tmp_path / "concentration-results"
+    concentration_inputs = _complete_input_values(
+        concentration_results, tiny_atmosphere, tiny_altitude_grid, tiny_xsc_file
+    )
+    concentration_inputs["out_mode"] = "netcdf"
+    concentration_layer = concentration_inputs["scat_lyrs_inputs"]["synthetic_aerosol"]
+    concentration_layer.pop("mass_loading")
+    concentration_layer.pop("rho")
+    concentration_layer["n"] = 12.0
+    original_result, _ = run_native_case("e2e", {"values": concentration_inputs})
+
+    with Dataset(concentration_results / "srfm.nc") as dataset:
+        aerosol_index = list(dataset.variables["layer_names"][:]).index("synthetic_aerosol")
+        original_optical_depth = dataset.variables["tau"][aerosol_index, :].copy()
+        reference_index = int(np.flatnonzero(
+            dataset.variables["wavenumber_op"][:] == 1000.0
+        )[0])
+        reference_optical_depth = float(original_optical_depth[reference_index])
+
+    optical_depth_results = tmp_path / "optical-depth-results"
+    optical_depth_inputs = deepcopy(concentration_inputs)
+    optical_depth_inputs["results_fldr"] = str(optical_depth_results)
+    optical_depth_layer = optical_depth_inputs["scat_lyrs_inputs"]["synthetic_aerosol"]
+    optical_depth_layer.pop("n")
+    optical_depth_layer.update(
+        tau_ref=reference_optical_depth, tau_ref_at=10.0, tau_ref_at_units="um"
+    )
+    recovered_result, _ = run_native_case("e2e", {"values": optical_depth_inputs})
+
+    _assert_complete_result(recovered_result, optical_depth_results, optical_depth_inputs)
+    for quantity in ("uu", "bbt"):
+        np.testing.assert_allclose(
+            recovered_result[quantity], original_result[quantity], rtol=1e-10, atol=1e-13
+        )
+    with Dataset(optical_depth_results / "srfm.nc") as dataset:
+        aerosol_index = list(dataset.variables["layer_names"][:]).index("synthetic_aerosol")
+        np.testing.assert_allclose(
+            dataset.variables["tau"][aerosol_index, :], original_optical_depth, rtol=1e-10
+        )
+        effective_layer = json.loads(dataset.srfm_params)["scat_lyrs_inputs"]["synthetic_aerosol"]
+        assert effective_layer["tau_ref"] == reference_optical_depth
+        assert effective_layer["tau_ref_at"] == 10.0
+        assert effective_layer["tau_ref_at_units"] == "um"
+        assert effective_layer["n"] == pytest.approx(12.0, rel=1e-10)
+        assert effective_layer["rho"] is None
+        assert effective_layer["mass_loading"] is None
+
+
 @pytest.mark.parametrize(
     ("example_layer", "legacy_filename", "current_filename", "generic_name"),
     [
@@ -339,6 +397,8 @@ def test_basic_example_aria_replacement_gives_identical_native_results(
     A three-point spectral grid, synthetic F11 atmosphere, and smaller
     quadrature keep each full RFM -> Mie -> DISORT calculation self-contained.
     Every retained spectrum must be exactly equal to the original-file run.
+    All comparisons for one material share an outer child process; each model
+    run still starts its own RFM worker.
 
     Args:
         example_layer: Example scattering layer supplying particle parameters.
@@ -378,14 +438,15 @@ def test_basic_example_aria_replacement_gives_identical_native_results(
     values["retain_outputs"] = ("bbt", "rad", "flup", "rfldir", "rfldn")
     original_driver = tmp_path / "original_driver.py"
     _write_driver(original_driver, values)
-    original_result, _ = run_native_case(
-        "e2e",
-        {
-            "driver_path": str(original_driver),
-            "aria_reference_file": str(legacy_aria_directory / legacy_filename),
+    cases = {
+        "original": {
+            "case": "e2e",
+            "payload": {
+                "driver_path": str(original_driver),
+                "aria_reference_file": str(legacy_aria_directory / legacy_filename),
+            },
         },
-    )
-    _assert_complete_result(original_result, tmp_path / "original-results", values)
+    }
 
     compositions = list(dict.fromkeys(
         composition for composition in (current_filename, legacy_filename, generic_name)
@@ -397,9 +458,17 @@ def test_basic_example_aria_replacement_gives_identical_native_results(
         particle_layer["comp"] = composition
         replacement_driver = tmp_path / f"replacement_driver_{composition_index}.py"
         _write_driver(replacement_driver, values)
-        replacement_result, _ = run_native_case(
-            "e2e", {"driver_path": str(replacement_driver)}
-        )
+        cases[composition] = {
+            "case": "e2e", "payload": {"driver_path": str(replacement_driver)}
+        }
+
+    results, _ = run_native_case("batch", {"cases": cases})
+    assert results.keys() == cases.keys()
+    original_result = results["original"]
+    _assert_complete_result(original_result, tmp_path / "original-results", values)
+    for composition_index, composition in enumerate(compositions):
+        results_directory = tmp_path / f"replacement-results-{composition_index}"
+        replacement_result = results[composition]
         _assert_complete_result(replacement_result, results_directory, values)
         for field in ("wvnm", "uu", "bbt", "flup", "rfldir", "rfldn"):
             assert original_result[field] is not None
