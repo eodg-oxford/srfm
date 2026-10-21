@@ -2280,6 +2280,12 @@ class GreyBodyCloud(Layer):
             4. Calculate spectral grid.
             5. Calculate the optical properties, which are returned as class attributes.
 
+        Args:
+            validate (bool): Resolve and validate caller inputs before calculation.
+                False accepts already validated, evaluation-local geometry,
+                including positive thickness adjusted by RFM altitude matching.
+                The object is modified with spectral grids and optical depths.
+
         Raises:
             RuntimeError: Raised when input fails the format or input tests.
 
@@ -2288,16 +2294,10 @@ class GreyBodyCloud(Layer):
         # Resolve and validate geometry before calculating any optical quantities.
         if validate:
             self.validate_inputs()
-
-        if self.test_complete_input_format():
-            pass
-        else:
-            raise RuntimeError("Input did not pass format test.")
-
-        if self.test_input_values():
-            pass
-        else:
-            raise RuntimeError("Input did not pass value test.")
+            if not self.test_complete_input_format():
+                raise RuntimeError("Input did not pass format test.")
+            if not self.test_input_values():
+                raise RuntimeError("Input did not pass value test.")
 
         self.calc_grids()
         self.calc_optical_properties()

@@ -583,6 +583,23 @@ def _load_driver_lines(driver_path: Path) -> list[str]:
         return [line.rstrip("\r\n") for line in handle]
 
 
+def _driver_with_output_levels(driver_path, levels):
+    """Read an existing driver and replace *LEV in memory with canonical km levels.
+
+    The source file is not modified. All other records retain their original
+    order, including any atmospheric insertions before *LEV. Raises ValueError
+    if the driver has no output-level section.
+    """
+    lines = _load_driver_lines(driver_path)
+    start = next((index for index, line in enumerate(lines)
+                  if line.strip().upper().startswith("*LEV") and index > 5), None)
+    if start is None:
+        raise ValueError("An existing SRFM driver must contain a *LEV output section.")
+    end = next((index for index in range(start + 1, len(lines))
+                if lines[index].lstrip().startswith("*")), len(lines))
+    return lines[:start + 1] + ["  " + " ".join(str(value) for value in levels)] + lines[end:]
+
+
 def get_captured_optical_depth_grid(
     levels: Sequence[float],
     *,
@@ -1256,7 +1273,10 @@ def rfm_main(
         driver_inputs (Mapping[str, Any]): Structured representation of driver
             sections mirroring :func:`run_rfm_with_parameters`.
         levels (Sequence[float]): Altitude levels (km) used when optical-depth
-            capture is enabled via the ``OPT`` and ``LEV`` flags.
+            capture is enabled via the ``OPT`` and ``LEV`` flags. Top-level SRFM
+            runners supply canonical R4 altitudes reconciled with ATMLEV. These
+            also replace *LEV in an existing driver in memory, preserving its
+            file contents and the order of all other sections.
         rfm_out_fldr (Path | str): Directory in which the run should take place
             and where RFM writes its outputs.
 
@@ -1501,6 +1521,11 @@ def rfm_main(
         if include_levels and levels_list:
             run_kwargs["optical_levels"] = levels_list
         if driver_path is not None:
+            if include_levels and levels_list:
+                return run_rfm(
+                    driver_lines=_driver_with_output_levels(driver_path, levels_list),
+                    **run_kwargs,
+                )
             return run_rfm(driver_path=driver_path, **run_kwargs)
         return run_rfm_with_parameters(
             **base_kwargs,

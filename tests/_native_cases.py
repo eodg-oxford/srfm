@@ -263,6 +263,9 @@ def _e2e_case(payload):
         "rfldn": getattr(model, "rfldn", None),
         "output_values": getattr(model, "output_values", None),
         "input_keys": tuple(inputs.values),
+        "input_levels": inputs.values.get("levels"),
+        "input_layers": inputs.values.get("scat_lyrs_inputs"),
+        "input_driver": inputs.values.get("driver_inputs"),
     }
 
 

@@ -479,6 +479,53 @@ with its lower and upper boundaries. It therefore occupies exactly one model
 cell and contributes its complete column optical depth to that cell. SRFM does
 not fractionally split, combine, or mix configured optical objects.
 
+Effective altitude levels
+-------------------------
+
+``main.run_srfm``, ``oxharp_main.run_srfm`` and ``iasi_main.run_srfm`` reconcile
+requested output levels and optical-layer boundaries with the atmospheric grid
+that RFM actually uses. The first atmospheric file establishes that grid; a later
+composition profile may use a different grid. The ``LAY`` flag inserts midpoints
+before matching, and preceding height or Jacobian sections can insert more levels.
+SRFM reads the existing grid once per evaluation, before calculating particle
+optics. It adds no spectral-loop work or radiative-transfer calls.
+
+RFM's ``ATMLEV`` matches in single precision with a **relative** tolerance of
+0.001. It chooses the nearest atmospheric level (the first on a distance tie).
+At the endpoints, distance is divided by the adjacent interval; internally it
+is divided by half the span between the two neighbouring levels. A fraction
+less than or equal to 0.001 snaps to the existing level. Otherwise, RFM inserts
+the requested altitude, changing the spacing used for subsequent requests.
+This is not a fixed 0.001 km tolerance. It is also separate from
+``rfm_config.optical_match_tol``, the absolute tolerance in km used to locate
+already reconciled levels in captured optical-depth output.
+
+For example, on a 1 km atmospheric grid, 3.000 and 3.001 km can both resolve
+to 3.000 km. SRFM removes this collision and maps a layer requested at
+3.001--3.101 km to the effective boundaries before rebuilding layer assignments.
+The same levels then drive RFM capture, gas calculations and particle columns.
+A second, bounded replay checks that the canonical level sequence remains
+distinct under RFM's matching rules.
+
+Effective centre and thickness can change slightly. Concentrations derived
+from mass loading use the effective thickness, preserving column mass in
+g m\ :sup:`-2`. Number, surface-area and volume densities retain their density
+interpretation; their column loading changes with thickness. A reference optical
+depth continues to specify column optical depth. Prescribed and grey-body
+optical depths also remain column quantities. Caller definitions are retained;
+NetCDF metadata records effective geometry and levels for the evaluation.
+
+Collapsed layers, or snapping that creates an overlap or shared boundary, raise
+an exception naming the affected layers and their original and effective bounds.
+The existing restriction against overlapping or touching optical layers still
+applies. Small discontinuities remain when a boundary crosses a snapping
+threshold; retrievals should not assume smooth geometry across those thresholds.
+
+Generated drivers place observer and surface sections after ``*LEV``, so those
+sections do not change the grid used for output-level matching. Existing driver
+files retain their section order, and their ``*LEV`` contents are replaced only
+in memory. Altitude insertions preceding that section are included in matching.
+
 Solar and viewing geometry
 --------------------------
 

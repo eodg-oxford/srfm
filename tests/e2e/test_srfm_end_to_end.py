@@ -214,6 +214,66 @@ def _require_all_native_extensions(require_native, precision="double"):
         require_native(disort_module_d, "double-precision DISORT")
 
 
+@pytest.mark.parametrize("runner, concentration", [
+    ("main", "mass_loading"), ("oxharp", "mass_loading"), ("iasi", "mass_loading"),
+    ("main", "n"), ("main", "tau_ref"),
+])
+def test_runner_reconciles_collision_and_preserves_inputs(
+    runner, concentration, tmp_path, tiny_iasi_atmosphere, tiny_altitude_grid, tiny_xsc_file,
+    tiny_iasi_ils, tiny_iasi_observation, tiny_iasi_nedt, require_native, run_native_case,
+):
+    """All public runners use effective geometry for gas and particle calculations."""
+    from srfm.rfm_functions import write_atm_file
+
+    _require_all_native_extensions(require_native)
+    write_atm_file({"HGT [km]": [0, 1, 2, 3, 4]}, tiny_altitude_grid)
+    results = tmp_path / f"{runner}-collision"
+    values = _complete_input_values(results, tiny_iasi_atmosphere, tiny_altitude_grid, tiny_xsc_file)
+    values.update(levels=[0, 1, 2, 3, 4], out=[0, 3], out_mode="netcdf", gbc_lyrs_inputs={})
+    particle = values["scat_lyrs_inputs"]["synthetic_aerosol"]
+    particle.pop("center_alt")
+    particle.pop("thick")
+    particle.update(alt_low=3.001, alt_upp=3.101)
+    if concentration != "mass_loading":
+        particle.pop("mass_loading")
+        if concentration == "n":
+            particle["n"] = 15.
+        else:
+            particle.update(tau_ref=.1, tau_ref_at=1000., tau_ref_at_units="cm-1")
+    if runner == "oxharp":
+        values.update(sza_cos=1., zen_cos=1., zen_sec=1.)
+    if runner == "iasi":
+        values.update(iasi_spc_fldr=str(tiny_iasi_observation.parent),
+                      iasi_fl=tiny_iasi_observation.name, px=0,
+                      nedt=str(tiny_iasi_nedt), ils=str(tiny_iasi_ils))
+    original = deepcopy(values)
+    result, _ = run_native_case("e2e", {"runner": runner, "values": values})
+    assert result["input_levels"] == original["levels"]
+    assert result["input_layers"] == original["scat_lyrs_inputs"]
+    assert result["input_driver"] == original["driver_inputs"]
+    assert np.all(np.isfinite(result["uu"]))
+    output_files = list(results.glob("*.nc"))
+    assert len(output_files) == 1
+    with Dataset(output_files[0]) as dataset:
+        metadata = json.loads(dataset.srfm_params)
+    effective = metadata["scat_lyrs_inputs"]["synthetic_aerosol"]
+    assert effective["alt_low"] == 3
+    assert effective["alt_upp"] == float(np.float32(3.101))
+    assert effective["thick"] == effective["alt_upp"] - 3
+    assert effective["center_alt"] == (effective["alt_upp"] + 3) / 2
+    assert effective[concentration] == particle[concentration]
+    assert metadata["levels"] == [0, 1, 2, 3, effective["alt_upp"], 4]
+    assert list(map(float, metadata["driver_inputs"]["lev"])) == metadata["levels"]
+
+    # An explicitly configured snapped layer must yield the same column optical
+    # properties and radiance as the near-grid request, with the same loading.
+    values["results_fldr"] = str(tmp_path / f"{runner}-canonical")
+    particle.update(alt_low=3., alt_upp=effective["alt_upp"])
+    canonical, _ = run_native_case("e2e", {"runner": runner, "values": values})
+    np.testing.assert_array_equal(result["uu"], canonical["uu"])
+    np.testing.assert_array_equal(result["bbt"], canonical["bbt"])
+
+
 def _assert_complete_result(result, results, values, num_output_levels=3):
     """Assert shared spectral and physical invariants for an E2E result.
 

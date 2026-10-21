@@ -27,6 +27,7 @@ import copy
 from collections.abc import Mapping
 from numbers import Real
 from .spectral_fields import SpectralField
+from .rfm_levels import read_matching_grid, reconcile_levels
 
 
 def _resolve_output_geometry(output_format, requested, include_toa, rfm_output):
@@ -315,7 +316,12 @@ def _construct_and_validate_optical_layers(values, computational_wavenumber_cm_i
 
 
 def _calculate_optical_layers(mie_layers, grey_body_layers, retain_phase_functions):
-    """Calculate validated Mie and grey-body optical properties."""
+    """Calculate optical properties once, after resolving effective geometry.
+
+    The local validated layer objects are modified. Mass loading and reference
+    optical depth are converted using effective thickness in km; directly
+    supplied number, area, or volume densities retain their original meaning.
+    """
     for mie_layer in mie_layers.values():
         mie_layer.calculate_op(validate=False)
         mie_layer.add_op_calc_output()
@@ -323,6 +329,43 @@ def _calculate_optical_layers(mie_layers, grey_body_layers, retain_phase_functio
             mie_layer.discard_phase_function()
     for grey_body_layer in grey_body_layers.values():
         grey_body_layer.calculate_op(validate=False)
+
+
+def _reconcile_optical_layers(levels, driver_inputs, configuration, directory, *layer_groups):
+    """Resolve RFM output levels and update only evaluation-local layer objects.
+
+    Args:
+        levels (sequence): Requested output altitudes in km, not modified.
+        driver_inputs (Mapping): RFM inputs, not modified.
+        configuration (Mapping): RFM execution options, not modified.
+        directory (path-like): RFM working directory for resolving input files.
+        *layer_groups (dict): Freshly constructed optical layers, before any
+            concentration conversion or optical calculation. Objects are updated
+            with effective R4 boundary altitudes, centre and thickness in km.
+
+    Returns:
+        tuple: Canonical output levels and top-down interval tracking. Tolerance
+        matching uses R4 and relative 0.001; subsequent calculations use float.
+
+    Raises:
+        ValueError: If reconciliation collapses a layer or creates incompatible
+            overlap/assignments, with original and effective bounds in the error.
+        OSError: If an existing atmospheric grid file cannot be read.
+    """
+    layers = {name: configured for group in layer_groups for name, configured in group.items()}
+    atmospheric_levels = read_matching_grid(driver_inputs, configuration, directory)
+    levels, tracking, effective_boundaries = reconcile_levels(
+        atmospheric_levels, levels,
+        {name: (configured.alt_low, configured.alt_upp) for name, configured in layers.items()},
+    )
+    for name, (lower, upper) in effective_boundaries.items():
+        configured = layers[name]
+        configured.alt_low, configured.alt_upp = lower, upper
+        # The public geometry conversion helpers round to 0.001 km. Reapplying
+        # that rounding here would undo RFM matching and break column loading.
+        configured.thick = upper - lower
+        configured.center_alt = lower + configured.thick / 2.0
+    return levels, tracking
 
 
 _GREY_BODY_LAYER_ATTRIBUTES = (
@@ -943,6 +986,12 @@ def run_srfm(inp):
 
     Generic srfm  run.
 
+    Output and optical-layer boundaries are reconciled in RFM single precision
+    using its relative 0.001 tolerance before optical calculations. Effective
+    centre/thickness (km) may change slightly; mass loading is preserved and
+    caller-supplied layer definitions and driver configuration are not modified.
+    Collapsed layers or new incompatible boundaries raise ValueError.
+
     Args:
         inp (obj): Instance of inputs.Inputs.
 
@@ -1013,11 +1062,6 @@ def run_srfm(inp):
     scat_lyrs, prescribed_lyrs, gbc_lyrs = _construct_and_validate_optical_layers(
         inp.values, RFM_wvnm
     )
-    _calculate_optical_layers(
-        scat_lyrs,
-        gbc_lyrs,
-        inp.values.get("retain_phase_functions", False),
-    )
     particle_lyrs = {**scat_lyrs, **prescribed_lyrs}
 
     # Keep all run-generated files outside the installed package tree.
@@ -1025,67 +1069,6 @@ def run_srfm(inp):
     rfm_grid_fname = rfm_functions.construct_rfm_grid_file(
         RFM_wvnm, filename="grid.spc", rfm_fldr=inp.values["results_fldr"]
     )
-
-    # Prepare dict with layer parameters to be saved in the output
-    layer_attrs = (
-        "name",
-        "low_spc",
-        "upp_spc",
-        "spec_units",
-        "res",
-        "mass_loading",
-        "n",
-        "tau_ref",
-        "tau_ref_at",
-        "tau_ref_at_units",
-        "r",
-        "s",
-        "effective_radius",
-        "alpha",
-        "b",
-        "gamma",
-        "median_radius",
-        "truncate",
-        "rho",
-        "s_a_den",
-        "v_den",
-        "dist_type",
-        "comp",
-        "center_alt",
-        "thick",
-        "alt_low",
-        "alt_upp",
-        "radii",
-        "eta",
-        "phase_quad_N",
-        "phase_quad_type",
-        "radii_quad_type",
-        "leg_coeffs",
-        "leg_coeffs_type",
-        "multiprocess",
-    )
-
-    effective_params = dict(inp.values)
-    effective_params["scat_lyrs_inputs"] = {
-        lyr: {"layer_type": "mie"}
-        | {
-            attr: getattr(scat_lyrs[lyr], attr)
-            for attr in layer_attrs
-            if hasattr(scat_lyrs[lyr], attr)
-        }
-        for lyr in scat_lyrs
-    }
-    effective_params["prescribed_lyrs_inputs"] = {
-        lyr: prescribed_lyrs[lyr].source_metadata() for lyr in prescribed_lyrs
-    }
-    effective_params["gbc_lyrs_inputs"] = _grey_body_effective_parameters(gbc_lyrs)
-    effective_params["albedo"] = (
-        prepared_albedo
-        if isinstance(prepared_albedo, float)
-        else prepared_albedo.provenance()
-    )
-    if prepared_custom_solar is not None:
-        effective_params["solar_spectrum"] = prepared_custom_solar.provenance()
 
     ########################################################################################
     # prepare atmospheric layer structure
@@ -1146,28 +1129,86 @@ def run_srfm(inp):
             120.0,
         ]
 
-    # define tracker array for atmospheric structure
-    track_lev = [None for i in levels]
+    # The same geometry feeds both pre-LEV grid preparation and RFM execution.
+    zen_rad = np.deg2rad(inp.values["zen"])
+    zen_cos = np.cos(zen_rad).item()
+    zen_sec = 1 / zen_cos
+    driver_inputs = copy.deepcopy(inp.values["driver_inputs"])
+    driver_inputs["tangent"] = (str(zen_sec),)
+    levels, track_lyr = _reconcile_optical_layers(
+        levels, driver_inputs, inp.values["rfm_config"], inp.values["results_fldr"],
+        scat_lyrs, prescribed_lyrs, gbc_lyrs,
+    )
+    _calculate_optical_layers(
+        scat_lyrs,
+        gbc_lyrs,
+        inp.values.get("retain_phase_functions", False),
+    )
 
-    # add upper and lower particle layer boundaries, delete any levels "within" the layer
-    for lyr in scat_lyrs:
-        levels, track_lev = utilities.add_lyr_from_Layer(
-            lev=levels, track_lev=track_lev, new_lyr=scat_lyrs[lyr]
-        )
+    # Prepare dict with layer parameters to be saved in the output
+    layer_attrs = (
+        "name",
+        "low_spc",
+        "upp_spc",
+        "spec_units",
+        "res",
+        "mass_loading",
+        "n",
+        "tau_ref",
+        "tau_ref_at",
+        "tau_ref_at_units",
+        "r",
+        "s",
+        "effective_radius",
+        "alpha",
+        "b",
+        "gamma",
+        "median_radius",
+        "truncate",
+        "rho",
+        "s_a_den",
+        "v_den",
+        "dist_type",
+        "comp",
+        "center_alt",
+        "thick",
+        "alt_low",
+        "alt_upp",
+        "radii",
+        "eta",
+        "phase_quad_N",
+        "phase_quad_type",
+        "radii_quad_type",
+        "leg_coeffs",
+        "leg_coeffs_type",
+        "multiprocess",
+    )
 
-    for lyr in prescribed_lyrs:
-        levels, track_lev = utilities.add_lyr_from_Layer(
-            lev=levels, track_lev=track_lev, new_lyr=prescribed_lyrs[lyr]
-        )
+    effective_params = dict(inp.values)
+    effective_params["levels"] = list(levels)
+    effective_params["driver_inputs"] = driver_inputs
+    effective_params["scat_lyrs_inputs"] = {
+        lyr: {"layer_type": "mie"}
+        | {
+            attr: getattr(scat_lyrs[lyr], attr)
+            for attr in layer_attrs
+            if hasattr(scat_lyrs[lyr], attr)
+        }
+        for lyr in scat_lyrs
+    }
+    effective_params["prescribed_lyrs_inputs"] = {
+        lyr: prescribed_lyrs[lyr].source_metadata() for lyr in prescribed_lyrs
+    }
+    effective_params["gbc_lyrs_inputs"] = _grey_body_effective_parameters(gbc_lyrs)
+    effective_params["albedo"] = (
+        prepared_albedo
+        if isinstance(prepared_albedo, float)
+        else prepared_albedo.provenance()
+    )
+    if prepared_custom_solar is not None:
+        effective_params["solar_spectrum"] = prepared_custom_solar.provenance()
 
-    for lyr in gbc_lyrs:
-        levels, track_lev = utilities.add_lyr_from_Layer(
-            lev=levels, track_lev=track_lev, new_lyr=gbc_lyrs[lyr]
-        )
 
-    # convert the tracking levels array to a tracking layers array
-    track_lyr = utilities.track_lev_to_track_lyr(track_lev)
-    track_lyr = track_lyr[::-1]
     
 #    # insert "aerosol" into RFM: prepare xsc file and atm file
 #    rfm_prf = rfm_functions.read_atm_file(inp.values["driver_inputs"]["atmosphere"][1])
@@ -1207,19 +1248,12 @@ def run_srfm(inp):
     ########################################################################################
     # prepare and call RFM
     ########################################################################################
-    # precalculate angles
-    zen_rad = np.deg2rad(inp.values["zen"])  # zenith angle to rad
-    zen_cos = np.cos(zen_rad).item()  # cosine of zenith angle
-    zen_sec = 1 / zen_cos  # secant of zenith angle
-
     # RFM global config
     rfm_config = inp.values["rfm_config"]
 
     # RFM driver table
-    driver_inputs = copy.deepcopy(inp.values["driver_inputs"])
     driver_inputs["spectral"] = (rfm_helper.SpectralFile(rfm_grid_fname),)
     driver_inputs["lev"] = tuple(str(val) for val in levels)
-    driver_inputs["tangent"] = (str(zen_sec),)
     
     if "btemp" in inp.values:
         driver_inputs["sfc"] = (f"TEMSFC={inp.values['btemp']}",)

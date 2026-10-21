@@ -124,6 +124,12 @@ srfm.rfm\_helper
    :members:
    :show-inheritance:
 
+srfm.rfm\_levels
+----------------
+
+.. automodule:: srfm.rfm_levels
+   :members:
+
 srfm.size\_distribution
 -----------------------
 

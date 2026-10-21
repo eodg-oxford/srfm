@@ -416,18 +416,20 @@ def calc_layer_bounds(u, l):
 
 
 def add_lyr_from_Layer(lev, track_lev, new_lyr):
-    """Adds a layer to an existing atmoshperic level structure.
+    """Insert exact layer boundaries into an atmospheric level structure.
 
     Used to add layer properties from the *srfm.layer.Layer()* object
     Deletes any levels from the existing structure that would fall within the new layer.
-    Updates a tracking array.
+    Updates both input lists in place, without atmospheric tolerance matching.
+    Top-level runners instead use :func:`srfm.rfm_levels.reconcile_levels` to
+    resolve RFM single precision matching and rebuild interval assignments.
 
     Args:
-        lev (list): List of current layers.
+        lev (list): Increasing altitude levels in km; modified in place.
         track_lev (list): Helper list to track inserted levels, None for all levels
             except those inserted from a scattering layer.
         new_lyr (obj): ``srfm.Layer.MieLayer`` object, which contains upper and lower
-            layer boundary altitudes, alt_upp and alt_low.
+            layer boundary altitudes in km, alt_upp and alt_low. Not modified.
 
     Returns:
          lev (list): New atmospheric level structure.

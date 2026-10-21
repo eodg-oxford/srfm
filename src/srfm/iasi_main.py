@@ -15,6 +15,7 @@
 """
 
 from __future__ import annotations
+import copy
 import numpy as np
 import matplotlib.pyplot as plt
 from . import utilities
@@ -38,6 +39,7 @@ from .main import (
     _add_grey_body_optical_depth,
     _calculate_output_utau,
     _calculate_optical_layers,
+    _reconcile_optical_layers,
     _construct_and_validate_optical_layers,
     _grey_body_effective_parameters,
     _interpolate_grey_body_optical_depths,
@@ -69,6 +71,12 @@ def run_srfm(inp):
 
     Optimized for IASI data.
 
+    Output and optical-layer boundaries are reconciled in RFM single precision
+    using its relative 0.001 tolerance before optical calculations. Effective
+    centre/thickness (km) may change slightly; mass loading is preserved and
+    caller-supplied layer definitions and driver configuration are not modified.
+    Collapsed layers or new incompatible boundaries raise ValueError.
+
     Args:
         inp (obj): Instance of inputs.Inputs.
 
@@ -96,11 +104,6 @@ def run_srfm(inp):
     )
     scat_lyrs, prescribed_lyrs, gbc_lyrs = _construct_and_validate_optical_layers(
         inp.values, requested_wavenumber
-    )
-    _calculate_optical_layers(
-        scat_lyrs,
-        gbc_lyrs,
-        inp.values.get("retain_phase_functions", False),
     )
     particle_lyrs = {**scat_lyrs, **prescribed_lyrs}
     ########################################################################################
@@ -457,28 +460,20 @@ def run_srfm(inp):
             120.0,
         ]
 
-    # define tracker array for atmospheric structure
-    track_lev = [None for i in levels]
-
-    # add upper and lower particle layer boundaries, delete any levels "within" the layer
-    for lyr in scat_lyrs.keys():
-        levels, track_lev = utilities.add_lyr_from_Layer(
-            lev=levels, track_lev=track_lev, new_lyr=scat_lyrs[lyr]
-        )
-
-    for lyr in prescribed_lyrs:
-        levels, track_lev = utilities.add_lyr_from_Layer(
-            lev=levels, track_lev=track_lev, new_lyr=prescribed_lyrs[lyr]
-        )
-
-    for lyr in gbc_lyrs:
-        levels, track_lev = utilities.add_lyr_from_Layer(
-            lev=levels, track_lev=track_lev, new_lyr=gbc_lyrs[lyr]
-        )
-
-    # convert the tracking levels array to a tracking layers array
-    track_lyr = utilities.track_lev_to_track_lyr(track_lev)
-    track_lyr = track_lyr[::-1]
+    driver_inputs = copy.deepcopy(inp.values["driver_inputs"])
+    driver_inputs["tangent"] = (str(iasi_zen_sec),)
+    driver_inputs["atmosphere"] = tuple(driver_inputs["atmosphere"]) + (
+        f"{inp.values['results_fldr']}/{keystr}.atm",
+    )
+    levels, track_lyr = _reconcile_optical_layers(
+        levels, driver_inputs, inp.values["rfm_config"], inp.values["results_fldr"],
+        scat_lyrs, prescribed_lyrs, gbc_lyrs,
+    )
+    _calculate_optical_layers(
+        scat_lyrs,
+        gbc_lyrs,
+        inp.values.get("retain_phase_functions", False),
+    )
 
     ########################################################################################
     # prepare and call RFM
@@ -487,12 +482,7 @@ def run_srfm(inp):
     rfm_config = inp.values["rfm_config"]
 
     # RFM driver table
-    driver_inputs = inp.values["driver_inputs"]
-    driver_inputs["tangent"] = (str(iasi_zen_sec),)
     driver_inputs["lev"] = tuple(str(val) for val in levels)
-    driver_inputs["atmosphere"] = list(driver_inputs["atmosphere"])
-    driver_inputs["atmosphere"].append(f"{inp.values['results_fldr']}/{keystr}.atm")
-    driver_inputs["atmosphere"] = tuple(driver_inputs["atmosphere"])
 
     if "btemp" in inp.values:
         driver_inputs["sfc"] = (f"TEMSFC={inp.values['btemp']}",)
@@ -567,6 +557,8 @@ def run_srfm(inp):
     )
 
     effective_params = dict(inp.values)
+    effective_params["levels"] = list(levels)
+    effective_params["driver_inputs"] = driver_inputs
     effective_params["scat_lyrs_inputs"] = {
         lyr: {"layer_type": "mie"}
         | {

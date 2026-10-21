@@ -114,6 +114,18 @@ They cover:
 Temporary files are produced with pytest's `tmp_path`; no user's filesystem is
 assumed.
 
+Altitude reconciliation regressions cover RFM's single precision relative
+tolerance, sequential insertions, grid subdivision, effective particle geometry
+and concentration conversion. A native RFM regression checks the 3.000/3.001 km
+collision, and all three complete runners compare a near-grid layer against its
+explicitly snapped equivalent while checking input preservation and metadata.
+Run these focused cases with:
+
+```bash
+pytest tests/unit/test_rfm_levels.py tests/integration/test_native_rfm.py -q
+pytest tests/e2e/test_srfm_end_to_end.py -k reconciles_collision -q
+```
+
 ### Integration (`tests/integration/`)
 
 Integration coverage includes:

@@ -72,7 +72,7 @@ inputs = {
     "driver_inputs": dict(
         # mandatory sections
         header="SRFM_standard_run",
-        flags=("OPT", "NAD", "SFC", "PRF", "LEV", "DBL", "CHI", "MIX"),
+        flags=("OPT", "NAD", "SFC", "PRF", "LEV", "DBL", "CHI", "MIX", "CTM"),
         spectral=[rfm_helper.SpectralRange(SPC_WVNMLO, SPC_WVNMHI, SPC_RES)],
         gases=(
             "N2",
