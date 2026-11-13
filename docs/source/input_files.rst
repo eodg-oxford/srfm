@@ -134,8 +134,8 @@ datasets, and compare six small example-derived RFM/Mie/DISORT runs against
 original ARIA files using exact equality for radiance, brightness temperature,
 and fluxes.
 
-Instrument and IASI files
--------------------------
+Instrument response and noise files
+-----------------------------------
 
 The optional ``iasi_ils`` field and the IASI runner's ``ils`` field override
 the IASI response distributed with SRFM. An override is an RFM ILS text file.
@@ -165,6 +165,38 @@ keys are ``spec_bbt``, ``zen``, ``azi``, ``sza``, ``saa``, ``ecmwf_z``,
 pixels; ``spec_bbt`` uses the fixed 645--2760 cm\ :sup:`-1` IASI grid at
 0.25 cm\ :sup:`-1`, and every ECMWF field contains one vertical profile per
 pixel. Because pickle can execute code while loading, use only trusted files.
+
+CrIS, HIRAS-I, and HIRAS-II convolution use native channels at 0.625
+cm\ :sup:`-1` spacing. CrIS and HIRAS-I use a nominal sinc response integrated
+directly against the calculated radiance. HIRAS-II uses bundled spectral
+response samples for the available bands and a nominal sinc elsewhere. The
+bundled HIRAS-II response data are in ``srfm/data/hiras2_srf.npz``. This is a
+nominal channel model; a particular calibrated product can have additional
+processing beyond it. See :doc:`drv` for platform, FOV, Hamming, and grid
+selection.
+
+Bundled radiance-noise profiles are ``cris_j2_noise.npz`` for CrIS J2/NOAA-21,
+``hiras_fy3d_noise.npz`` for HIRAS-I FY-3D, and
+``hiras2_fy3e_noise.npz`` for HIRAS-II FY-3E. They are FOV-specific NEdN
+estimates from the example September 2026 granules, so their amplitudes should
+be checked against the observation being simulated. FY-3F and FY-3H HIRAS-II
+noise needs a matching external file. The FY-3D HIRAS-I product does not state
+its NEdN units; SRFM requires explicit ``hiras_noise_units="mW"`` before using
+the bundled profile, after the user has confirmed its physical units.
+
+The ``cris_noise_file``, ``hiras_noise_file``, and ``hiras2_noise_file``
+inputs accept a matching L1 NetCDF/HDF product or a compact ``.npz`` profile.
+For ``.npz``, include string fields ``platform`` and ``units`` and, for each
+instrument band, ``<BAND>_wnum`` and ``<BAND>_sigma`` arrays. The wavenumber
+array has one entry per native channel in cm\ :sup:`-1`. The sigma array has
+shape ``(number_of_FOVs, number_of_channels)`` and contains radiance NEdN in
+mW/(m² sr cm\ :sup:`-1`). Band names are ``LW``, ``MW``, and ``SW`` for CrIS;
+``LW``, ``MW1``, and ``MW2`` for both HIRAS generations. ``platform`` must
+match the selected platform (``J2``, ``FY3D``, ``FY3E``, ``FY3F``, or
+``FY3H``). SRFM checks platform, FOV count, coordinates, and units before
+adding noise. Noise is independently drawn for every output-angle and
+output-level spectrum. With Hamming processing, the native-channel noise is
+filtered along with the radiance, which creates adjacent-channel correlation.
 
 Common spectral text format
 ---------------------------

@@ -165,6 +165,21 @@ SRFM_INPUT_SCHEMA: dict[str, FieldSpec] = {
     ),
     "iasi_instrument": FieldSpec((str,), default="M03"),
     "iasi_ifov": FieldSpec(INTEGER_TYPES, default=1),
+    "apodization": FieldSpec(
+        (str,), nullable=True, choices=frozenset({"Hamming"})
+    ),
+    "cris_platform": FieldSpec((str,)),
+    "cris_fov": FieldSpec(INTEGER_TYPES),
+    "cris_noise_file": FieldSpec(PATH_TYPES, nullable=True),
+    "cris_noise_units": FieldSpec((str,), nullable=True),
+    "hiras_fov": FieldSpec(INTEGER_TYPES),
+    "hiras_noise_file": FieldSpec(PATH_TYPES, nullable=True),
+    "hiras_noise_units": FieldSpec((str,), nullable=True),
+    "hiras2_platform": FieldSpec((str,)),
+    "hiras2_fov": FieldSpec(INTEGER_TYPES),
+    "hiras2_noise_file": FieldSpec(PATH_TYPES, nullable=True),
+    "hiras2_noise_units": FieldSpec((str,), nullable=True),
+    "noise_seed": FieldSpec(INTEGER_TYPES, nullable=True),
     # Memory controls.
     "scattering_block_size": FieldSpec(INTEGER_TYPES, default=10000),
     "retain_phase_functions": FieldSpec((bool,), default=False),
@@ -646,9 +661,11 @@ def _check_mapping(
                 continue
         if spec.choices is not None and item not in spec.choices:
             if spec.permitted is None:
-                choices = ", ".join(
-                    repr(choice) for choice in sorted(spec.choices, key=str)
-                )
+                ordered = sorted(spec.choices, key=str)
+                if field_path in ("convolve", "add_noise") and "iasi" in ordered:
+                    ordered.remove("iasi")
+                    ordered.insert(0, "iasi")
+                choices = ", ".join(repr(choice) for choice in ordered)
                 issues.append(f"{field_path}: expected one of {choices}, got {item!r}")
             else:
                 _append_value_issue(issues, field_path, item, spec.permitted)
@@ -1605,14 +1622,34 @@ def _validate_inputs(
             normalized[key] = spec.default
 
     issues: list[str] = []
-    iasi_convolution_selected = normalized.get("convolve") == "iasi"
+    for selector in ("convolve", "add_noise"):
+        selected_name = normalized.get(selector)
+        if isinstance(selected_name, str):
+            normalized[selector] = selected_name.strip().lower()
+    selected_convolution = normalized.get("convolve")
+    if isinstance(normalized.get("apodization"), str):
+        if normalized["apodization"].strip().lower() == "hamming":
+            normalized["apodization"] = "Hamming"
+    iasi_convolution_selected = selected_convolution == "iasi"
     if normalized.get("add_noise") == "iasi" and not iasi_convolution_selected:
         issues.append(
             "add_noise: IASI noise requires convolve='iasi' so the spectrum "
             "is convolved and sampled at IASI channel locations before noise "
             "is added"
         )
-    if not iasi_convolution_selected:
+    if (normalized.get("add_noise") in INSTRUMENT_NAMES - {"iasi"} and
+            normalized.get("add_noise") != selected_convolution):
+        issues.append(
+            "add_noise: the selected instrument must match convolve so noise "
+            "is applied on its native channel grid"
+        )
+    if normalized.get("apodization") is not None and selected_convolution not in (
+        "cris", "hiras", "hiras-2"
+    ):
+        issues.append(
+            "apodization: Hamming requires convolve='CrIS', 'HIRAS' or 'HIRAS-2'"
+        )
+    if selected_convolution is None:
         for final_grid_field in ("fin_wvnmlo", "fin_wvnmhi", "fin_res"):
             if normalized.get(final_grid_field) is None:
                 issues.append(
@@ -1641,7 +1678,7 @@ def _validate_inputs(
             )
     _check_mapping(normalized, schema, "", issues)
 
-    grid_prefixes = ("spc",) if iasi_convolution_selected else ("fin", "spc")
+    grid_prefixes = ("spc",) if selected_convolution is not None else ("fin", "spc")
     for prefix in grid_prefixes:
         low = normalized.get(f"{prefix}_wvnmlo")
         high = normalized.get(f"{prefix}_wvnmhi")

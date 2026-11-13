@@ -1,0 +1,61 @@
+
+
+.. _sphx_glr_auto_examples_optical_depth_input:
+
+Reference optical depth
+=======================
+
+``compare_layers.py`` generates a reproducible random particle layer from number
+concentration, then reconstructs its optical properties using the optical depth
+at one wavelength. It compares concentration, mass loading, extinction, optical
+depth, single-scattering albedo, phase functions, and Legendre coefficients.
+
+Run from an installed SRFM environment with the compiled Mie extension::
+
+   python examples/optical_depth_input/compare_layers.py
+
+For a source checkout, use ``PYTHONPATH=src`` with that command. The script prints
+its physical inputs and numerical comparison errors and writes no files. No
+HITRAN data, RFM calculation, or DISORT calculation is required.
+
+
+.. raw:: html
+
+  <div id='sg-tag-list' class='sphx-glr-tag-list'></div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbnails">
+
+.. thumbnail-parent-div-open
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="The fixed random seed makes the example reproducible. Only the compiled Mie extension is needed; no atmospheric profiles or external spectroscopy are used.">
+
+.. only:: html
+
+  .. image:: /auto_examples/optical_depth_input/images/thumb/sphx_glr_compare_layers_thumb.png
+    :alt:
+
+  :doc:`/auto_examples/optical_depth_input/compare_layers`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Recover a randomly chosen Mie layer from one reference optical depth.</div>
+    </div>
+
+
+.. thumbnail-parent-div-close
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   /auto_examples/optical_depth_input/compare_layers
+

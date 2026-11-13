@@ -656,11 +656,14 @@ def run_srfm(inp):
             )
 
     # Apply the selected instrument convolution to the high-resolution result.
-    if instrument_processor is not None:
-        instrument_processor.convolve(model_SRFM)
+    if instrument_processor is not None and hasattr(instrument_processor, "process_to_grid"):
+        instrument_processor.process_to_grid(model_SRFM, fin_grid)
+    else:
+        if instrument_processor is not None:
+            instrument_processor.convolve(model_SRFM)
 
-    # interpolate resulting bbt and radiances to final grid
-    model_SRFM.interp(fin_grid)
+        # interpolate resulting bbt and radiances to final grid
+        model_SRFM.interp(fin_grid)
 
     if noise_processor is not None:
         noise_processor.add_noise(model_SRFM)

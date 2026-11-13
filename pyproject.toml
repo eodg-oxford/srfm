@@ -9,7 +9,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "SRFM"
-version = "1.5.4"
+version = "1.5.5"
 authors = [
   { name="Antonin Knizek", email="antonin.knizek@physics.ox.ac.uk" },
   { name="Roy Grainger", email="don.grainger@physics.ox.ac.uk"}
@@ -57,6 +57,10 @@ exclude = [
     ".conda",
     "build",
     ".pip-install-tests",
+    "src/srfm/data/FY-3E_HIRAS-II_NEDT/**",
+    "src/srfm/data/FY-3E_HIRAS-II_SRF/**",
+    "src/srfm/data/FY-3F_HIRAS-II_SRF/**",
+    "src/srfm/data/FY3H-SRF-HIRAS/**",
 ]
 
 [tool.hatch.build.targets.wheel]

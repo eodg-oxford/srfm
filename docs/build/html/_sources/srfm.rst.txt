@@ -40,6 +40,20 @@ srfm.input\_schema
    :members:
    :show-inheritance:
 
+srfm.instruments
+----------------
+
+.. automodule:: srfm.instruments
+   :members:
+   :show-inheritance:
+
+srfm.instruments.iasi
+---------------------
+
+.. automodule:: srfm.instruments.iasi
+   :members:
+   :show-inheritance:
+
 srfm.inputs
 -----------
 
@@ -124,8 +138,17 @@ srfm.rfm\_helper
    :members:
    :show-inheritance:
 
+srfm.rfm\_levels
+----------------
+
+.. automodule:: srfm.rfm_levels
+   :members:
+
 srfm.size\_distribution
 -----------------------
+
+See :doc:`size_distributions` for formulas, parameter domains, examples, and
+the distinction between the direct distribution API and Mie-layer support.
 
 .. automodule:: srfm.size_distribution
    :members:

@@ -1,0 +1,453 @@
+PLAN: CrIS, HIRAS-I and HIRAS-II convolution and instrument noise in SRFM
+13 November 2026
+
+Scope and conclusion
+====================
+
+Add convolve="CrIS", "HIRAS" or "HIRAS-2" and matching add_noise values to the
+existing Python driver-table interface. Keep the present result and output
+formats, and leave the path with both selectors omitted/None unchanged. This
+document is a plan; no package implementation is proposed as part of this edit.
+
+The conversation in /home/k/knizek/Documents/conv_noi.txt is not a reliable
+implementation recipe. Most importantly, standard NASA CrIS L1B radiances are
+unapodized, and the supplied FY-3D and FY-3E HIRAS L1 radiances are also native
+unapodized spectra. “Unapodized” does not mean “unconvolved”: finite optical path
+difference already gives every measured channel an instrument response (roughly
+a sinc). Hamming is a useful *additional* processing choice for some comparisons,
+including the output of cris_l1c_class.py, but it must not be the default when
+trying to reproduce these native L1 products. NASA's CrIS L1B algorithm document
+states this explicitly. The FY-3H SRF readme likewise says that Hamming may be
+applied to L1 subsequently and that doing so changes the response.
+
+A Fourier transform of every synthetic spectrum is unnecessary. A Fourier
+spectrometer's output channel is a linear spectral integral. Evaluate that
+integral directly, using the released SRF where it matches the target product
+or an analytic sinc with the correct maximum path difference. This provides a
+straightforward, memory-bounded first implementation and is mathematically
+equivalent to the idealized interferogram model when the same response and
+spectral support are used. A Fourier implementation remains useful as a
+reference calculation or when reproducing detailed on-board/ground processing.
+No fixed SRF file by itself captures all field-of-view (FOV), spectral
+calibration, guard-band, and processing-version effects in CrIS or HIRAS.
+
+Evidence inspected
+==================
+
+Current SRFM:
+* The actual package directory is src/srfm/instruments/, containing base.py,
+  iasi.py and registry.py. The requested new Python modules should live there.
+* src/srfm/input_schema.py admits only the current instrument registry names;
+  its final-grid and noise validation is explicitly IASI-specific. The three
+  runners (main.py, oxharp_main.py and iasi_main.py) all call instrument
+  convolution, then result.interp(final_grid), then add_noise. The no-selector
+  path therefore already exists and should be preserved verbatim.
+* SRFM radiance result.uu is in W m-2 sr-1 (cm-1)-1. Satellite NEdN/NEDR
+  values in mW m-2 sr-1 (cm-1)-1 must be multiplied by 1e-3 before addition.
+  The coefficient 100 in cris_l1c_class.py converts to a different MORSE unit.
+* IASI currently convolves in place on the computational grid and subsequently
+  interpolates. Its bundled covariance factor is specific to IASI and must not
+  be reused for these instruments.
+
+CrIS example: /network/group/aopp/eodg/RGG008_GRAINGER_IASIVOLC/knizek/
+Anak_Krakatau_Sep2026/data/CrIS_data/
+SNDR.J2.CRIS.20260905T1836.m06.g187.L1B.beta.v03_27.G.260906020035.nc
+* NASA/J2 (NOAA-21) L1B, beta v03_27, algorithm v4.0-r20230922.180436,
+  spectral_resolution=FSR and interferogram_resolution=XSRP. NetCDF-4.
+* rad_lw/rad_mw/rad_sw have dimensions [45 along track, 30 cross track,
+  9 FOV, channel] and units mW/(m2 sr cm-1). The matching wnum vectors are
+  717 points 648.75..1096.25, 869 points 1208.75..1751.25, and 637 points
+  2153.75..2551.25 cm-1, all spaced by 0.625 cm-1. The channels include
+  guard/edge samples outside the nominal science intervals.
+* nedn_lw/mw/sw are [9 FOV, channel] in the same radiance units. Thus this
+  granule supplies a FOV-specific *standard deviation*, not a covariance
+  matrix. Product quality flags should be checked before deriving profiles.
+* NASA's L1B algorithm specification says standard radiances are unapodized.
+  Its version 3 user guide reports a weak cosine interferogram rolloff to
+  reduce ringing, so a pure sinc is a nominal approximation rather than an
+  exact reproduction of every NASA L1B processing version.
+
+HIRAS-I FY-3D example: /network/group/aopp/eodg/RGG008_GRAINGER_IASIVOLC/
+knizek/Anak_Krakatau_Sep2026/data/Feng_Yun_data/
+FY3D_HIRAS_GBAL_L1_20260905_0815_016KM_MS.HDF
+* HDF5 /Data/ES_RealLW, ES_RealMW1, ES_RealMW2 are [30 scan, 29 FOR,
+  4 FOV, channel]; /Data/WL_LW/MW1/MW2 give actual channel coordinates:
+  781 points 648.75..1136.25, 869 points 1208.75..1751.25, and 637 points
+  2153.75..2551.25 cm-1, all at 0.625 cm-1. The official current HIRAS-I
+  page also describes 2,287 channels at 0.625 cm-1. The L1 real spectra are
+  described as unapodized in the NSMC product documentation.
+* /Data/DS_NEdN_* and ICT_NEdN_* are [2 sweep directions, channel, 4 FOV],
+  estimated from a five-minute calibration window. Their units attributes are
+  blank. Do not silently equate these with a vetted physical noise profile
+  until units and scene-noise interpretation have been checked against NSMC
+  documentation or a calibration specialist.
+* This file's global Spectral_Resolution=[0.625,1.25,2.5] and legacy SDR
+  counts conflict with its actual 2,287-channel arrays and per-dataset
+  0.625 cm-1 descriptions. Its WL datasets also carry a bogus valid_range
+  [-200,200], so netCDF4 automatic masking hides every valid wavenumber.
+  Read raw values, apply fill and finite-value checks yourself, and use the
+  actual WL arrays plus the target product specification. Record this
+  metadata conflict as an outstanding validation item.
+
+HIRAS-II FY-3E examples: the three FY3E_HIRAS_GRAN_L1_20260905_*_014KM_V0.HDF
+files in the same Feng_Yun_data directory.
+* HDF5, Dataset Name="HIRAS L1_FR Data". /Data/ES_RealLW/MW1/MW2 have
+  [scan, 28 FOR, 9 FOV, channel], with 37 or 38 scans in the examples.
+  /Data/WL_LW/MW1/MW2 contain 834 channels 648.75..1169.375, 1207 channels
+  1167.5..1921.25, and 1012 channels 1919.375..2551.25 cm-1. Each band is
+  sampled at 0.625 cm-1; /Data/Spectral_Resolution=[0.625,0.625,0.625].
+  The first band is explicitly labelled “Unapodized” in its dataset
+  description, and Begin/End_Wavenumber_Ua/a distinguish full native from
+  later apodized channel ranges. The NSMC FR guide lists MPD=0.8 cm.
+* The two band pairs overlap at four channel coordinates each. All 3,053
+  native band samples contain only 3,045 unique wavenumbers. The existing
+  SRFM result has one wavenumber dimension, so it cannot carry two distinct
+  radiances or noise values at the same coordinate without a band identity.
+* /Data/DS_NEdN_* and ICT_NEdN_* are [2 sweep directions, channel, 9 FOV],
+  explicitly in mW/(m2 sr cm-1). They provide dated, FOV-specific empirical
+  noise amplitudes. The three sample granules show noticeable variation.
+
+Downloaded files already present, untracked, under src/srfm/data/:
+* FY-3E_HIRAS-II_SRF/{srf-LW,srf-MW,srf-SW}.txt each contains 3,001
+  signed response samples at relative offsets -15..+15 cm-1, step 0.01.
+  Their first sinc zeros are at about 0.625, 1.25 and 2.5 cm-1 respectively.
+  Thus these are LW/MW/SW *design resolution* kernels; the MW and SW files
+  do not match the supplied FY-3E full-resolution L1 product. They must not
+  be applied to that product just because they are labelled FY-3E.
+* FY-3F_HIRAS-II_SRF/srf-LW-MW-SW.txt is a 0.625 cm-1 sinc for all bands.
+  The FY3H-SRF-HIRAS text file has the same numerical kernel. Its English
+  and Chinese DOCX readmes say that the two columns are relative offset in
+  cm-1 and response, peak-normalized to 1, and that Hamming changes the
+  native sinc response. These files are finite at +/-15; retain their
+  negative sidelobes. The peak of 1 is not an area normalization.
+* FY-3E_HIRAS-II_NEDT/FY3E_HIRAS_GRAN_1B_20211208_2010_NEdR.HDF has
+  /Data/NEdR_LW/MW/SW and NEdT_LW/MW/SW, each [9 FOV, channel], plus
+  WNLW/WNMW/WNSW on the FY-3E full-resolution grids. It has no useful
+  variable units/description attributes and no accompanying readme. Direct
+  NEdR is the preferred radiance-noise quantity if its units are confirmed.
+  As a sanity check, NEdR/NEdT equals the 280 K Planck derivative times
+  approximately 1, sqrt(2), and 2 for LW/MW/SW. The differing factors
+  must be understood before converting NEdT to NEdR or treating NEdT as a
+  per-channel noise amplitude. This 2021 archive is also not a direct
+  substitute for 2026 in-flight NEdN values.
+* The NSMC SRF page offers these FY-3E/F/H HIRAS-II resources but lists
+  no HIRAS-I FY-3D SRF/NEDT archive or FY-3F/H NEDT archive. Do not
+  silently apply FY-3E noise to FY-3F/H.
+
+The alternative cris_l1c_class.py module:
+* It reads the correct CrIS L1B radiance and NEdN variable families and
+  performs a three-point 0.23/0.54/0.23 spectral Hamming operation.
+  Its MORSE output is intentionally apodized; this does not prove that the
+  input L1B is apodized. Its .noi writer averages NEdN over FOVs, losing
+  FOV information, and does not actually draw random noise.
+* It applies the filter after slicing a requested spectral range. The first
+  and last samples omit one 0.23 neighbour, which attenuates a flat
+  spectrum there. If matching this MORSE output, apodize whole bands
+  before slicing, use explicit edge handling, and state whether the aim is
+  to reproduce the file's current edge convention or an unbiased product.
+  The module's bottom-level example runs on import, so do not import it
+  into SRFM as a processing component.
+
+Recommended scientific model
+============================
+
+1. Native product by default. Use a band-specific, signed kernel K_b(u) and
+   compute channel radiance R_j = integral R(ν) K_b(ν-ν_j) dν / integral K_b(u) du,
+   with consistent finite support and quadrature. For the nominal native
+   full-resolution sinc, K_b(u)=sinc(u/0.625), where NumPy's sinc convention
+   is sin(pi*x)/(pi*x) and MPD=1/(2*0.625)=0.8 cm. For design resolution
+   1.25 or 2.5 cm-1, set MPD to 0.4 or 0.2 cm. Do not confuse channel
+   spacing with the width of the response, particularly for a file with
+   inconsistent metadata. The exact actual-response calculation may need
+   FOV-specific ILS, spectral offsets, bandpass and processing-version LUTs.
+
+   Explanation: R(ν) is the high-resolution radiance predicted by SRFM at
+   wavenumber ν; ν_j is one satellite channel centre; u=ν-ν_j is the offset
+   from that centre. The channel does not measure just R(ν_j). It receives a
+   weighted contribution from nearby wavenumbers, including contributions
+   from the negative sinc side lobes. For a channel centred at 1000 cm-1
+   with a 0.625 cm-1 nominal response, the weight is highest at 1000,
+   reaches its first zero at 999.375 and 1000.625, and alternates in sign
+   outside those points. Integrating this weighted high-resolution spectrum
+   gives the synthetic channel radiance. The denominator gives unit response
+   to a flat spectrum when the same complete response is integrated in both
+   places; with a truncated response it is an approximation that needs an
+   explicit edge/support policy (step 4). Thus a narrow spectral feature
+   contributes to several channels even though adjacent channel centres
+   happen to sit at sinc zero crossings.
+
+   The sinc arises because the instrument records an interferogram only out
+   to a finite maximum optical path difference. For an ideal symmetric,
+   unapodized interferogram, that cutoff produces sinc zeros separated by
+   Δν=1/(2 MPD): 0.625 cm-1 for 0.8 cm MPD. Here “unapodized” means no
+   extra Hamming window; it does not mean a channel is a perfect point
+   sample of the atmosphere. A 1.25 or 2.5 cm-1 design-resolution response
+   has a wider sinc because its effective MPD is shorter. Use the kernel
+   appropriate to the actual L1 product and band, even if its channel grid
+   is sampled more densely than the response width.
+
+2. Use the released FY-3F/H tabulated 0.625 kernel for those platforms, and
+   the FY-3E LW tabulation where the product is FR. For FY-3E FR MW/SW,
+   use the same nominal 0.625 sinc only after checking it against FY-3F/H
+   and the FY-3E FR guide; the supplied FY-3E MW/SW kernels describe the
+   1.25/2.5 design-resolution option. Select those only for a confirmed DR
+   product. FY-3D lacks a suitable released SRF here; use the nominal
+   0.625 sinc on its observed full-resolution grids and record that this
+   is a nominal rather than measured FOV-dependent ILS.
+
+3. For CrIS L1B FSR, start with the nominal 0.625 sinc in each band and
+   document the remaining differences: self-apodization correction,
+   spectral resampling, guard-band damping, weak cosine rolloff and
+   per-FOV effects. Provide an optional, later high-fidelity response
+   operator when an authoritative response/LUT for the exact platform,
+   FOV and processing version is available. A CrIS CMO is a correction
+   between instrument spectra, not automatically a high-resolution
+   synthetic-spectrum-to-L1B convolution operator.
+
+4. Evaluate the channel integrals without transforming the spectrum to an
+   interferogram. Keep direct quadrature on the actual, strictly increasing
+   computational wavenumber grid as the accuracy reference. In production,
+   process one band and one spectrum at a time with reusable sliding-window
+   response weights; never allocate a dense Nchannel x Ninput matrix.
+   Use the signed SRF, a physically consistent discrete area normalization,
+   and no clipping of negative sidelobes. Start by requiring cm-1 input
+   and enough high-resolution coverage around every requested channel;
+   derive a margin from each response's support, not IASI's fixed 2 cm-1.
+   For the tabulated SRFs, +/-15 cm-1 is their available support. For an
+   analytic sinc, choose a configurable wider support and demonstrate
+   convergence because sinc tails decay slowly.
+
+   Performance at a 0.0005 cm-1 computational step: a +/-15 cm-1 response
+   spans about 60,000 input samples per output channel. The inspected CrIS
+   grid has 2,223 channel samples, or about 133 million weighted samples
+   per spectrum; the proposed unique FY-3E/F HIRAS-II grid has 3,045,
+   or about 183 million. Direct windowed evaluation is feasible for a
+   small number of spectra but costly for large batches. A full matrix
+   would require excessive memory. A candidate faster path is to integrate
+   the 0.0005 cm-1 radiance into area-preserving bins, initially around
+   0.01 cm-1, optionally retaining the within-bin first spectral moment so
+   a narrow line's sub-bin position is represented. This gives about
+   3,000 bins per +/-15 cm-1 window and roughly 20 times fewer weighted
+   terms. It must be checked against direct quadrature for line-rich and
+   smooth spectra, then refined or bypassed if the required accuracy is
+   not met. The 0.01 cm-1 bin width is a starting point, not a fixed
+   scientific resolution limit. The cost of generating the high-resolution
+   SRFM spectrum remains separate from this instrument-processing cost.
+
+   Avoid extrapolation, crossing the FY-3D/CrIS band gaps, and silently
+   renormalizing a truncated edge kernel as though missing radiance were
+   known. Mark or exclude edge channels when coverage/bandpass is
+   insufficient.
+
+5. Include Hamming in the first implementation as an explicit optional
+   driver-table product setting, for example apodization="Hamming";
+   default apodization=None preserves native output and the no-selector
+   path. First calculate the native channel radiances, then apply the
+   product's documented apodization in radiance space. On a native
+   0.625 cm-1 Nyquist grid, the standard three-point CrIS Hamming operation
+   is R'_i=0.23 R_(i-1)+0.54 R_i+0.23 R_(i+1). This may also be used for a
+   FengYun product only after confirming its stated processing and grid.
+   Process each band independently; compute the neighbouring native
+   channels even if the requested output is a smaller subset, then follow
+   the target product's guard-channel and edge-trimming convention. For a
+   genuinely coarser DR spectrum, oversampled grid, or different vendor
+   apodization, derive the operation from that product's actual sampling
+   and processing rather than assuming these three coefficients. Convert
+   to brightness temperature after apodization. Never label a Hamming
+   result as native CrIS/HIRAS L1B/L1, or apodize observed data twice.
+
+Noise model:
+* Draw zero-mean Gaussian noise in radiance units, independently for each
+  SRFM spectrum/FOV and with an optional explicit NumPy RNG/seed for
+  reproducibility. Use per-channel, per-platform, per-FOV NEdN/NEDR values
+  from a matching L1 granule when available. For native unapodized output,
+  diagonal covariance is a defensible first approximation, not a guarantee
+  of exactly zero channel correlations; spectral calibration and resampling
+  can create residual correlations. Do not invent a full covariance matrix
+  from NEdN, or assume the claimed NOAA/RTTOV covariance files in the
+  transcript exist without finding and validating them.
+* Prepare small, versioned default profiles from the inspected 2026 CrIS
+  J2, FY-3D and FY-3E granules, preserving each FOV and recording the file
+  name/date, band grid, units, sweep treatment, QC rules and source type.
+  CrIS's product NEdN is already [FOV,channel]. For HIRAS, derive a
+  transparent profile from valid DS or ICT NEdN sweeps; choose and document
+  one calibration source rather than averaging incompatible quantities.
+  Verify the FY-3D physical units before making its default noise profile.
+  Keep the 2021 FY-3E NEdR archive as an explicitly labelled alternative.
+  These profiles are illustrative epoch-specific instrument noise, not an
+  exact estimate for another observation date.
+* For FY-3F/H, noise addition requires an explicit matching L1 NEdN file or
+  validated user profile until platform-specific calibration data are
+  available. Convolution can work from their SRFs immediately. Reject a
+  missing/noisy/misaligned profile with an actionable error; do not default
+  to FY-3E noise. A user-supplied covariance or calibrated correlation
+  model can be supported later. For explicit Hamming processing, transform
+  a native noise draw with the same spectral operator A used on the signal.
+  Under the initial diagonal native-noise approximation,
+  C_out=A diag(sigma^2) A^T; if a validated native covariance C is supplied,
+  use C_out=A C A^T. Add the transformed draw only after channel convolution.
+  The three-point filter gives neighbouring-channel noise correlation and,
+  for equal independent native sigma, an output standard deviation of about
+  0.630 sigma. This avoids a large Cholesky factor for the diagonal case.
+  For comparison with an actual observed spectrum, normally leave
+  add_noise=None because the observation already contains noise; use its
+  noise profile as uncertainty. Request add_noise only to generate noisy
+  synthetic realizations. Check whether a supplied NEdN describes the
+  native or already-apodized product so it is not transformed twice.
+* Convert every external radiance-noise profile from mW to SRFM's W with
+  factor 1e-3; validate units, nonnegative finite sigma, channel matching
+  and fill values. Add in radiance space, then recompute BBT. A noisy sinc
+  channel can be nonpositive; make the existing BBT conversion's handling
+  explicit rather than clipping radiance or silently changing the draw.
+
+Implementation sequence
+=======================
+
+A. API and grids. Register canonical internal names cris, hiras, hiras-2;
+   normalize accepted driver spellings case-insensitively, including exactly
+   "CrIS", "HIRAS" and "HIRAS-2", before schema choice validation. Keep
+   convolve, add_noise and apodization defaults None. Reject apodization
+   without a selected convolution instrument or for an unsupported product.
+   Generalize the existing IASI-only rule to require add_noise to match
+   convolve for driver-table runs; a standalone
+   add_noise(result) may accept an already channel-convolved result after
+   checking its instrument identity and exact grid. Instrument processing
+   obtains the channel grid from the selected platform/product and the
+   computational-range intersection. A partial band is allowed only with
+   enough convolution margin and, when Hamming is chosen, its neighbouring
+   native channels. Accept a fine computational grid such as
+   spc_res=0.0005 cm-1 when it has sufficient coverage. Fix output channel
+   coordinates to the selected instrument and product. Use fin_wvnmlo/hi
+   to choose a subset of native channels; require fin_res=None or a value
+   compatible with that product's native grid, and reject incompatible
+   settings instead of silently resampling. Preserve IASI's existing
+   final-grid behavior. Validate cm-1 units, coverage including SRF support,
+   channel availability, product resolution, and band boundaries. Every
+   rejected grid setting must report the instrument/platform/product,
+   supplied value, permitted grid or range, reason, and a concrete fix.
+   Example: "CrIS J2 FSR: fin_res=0.25 cm-1 is incompatible with its
+   0.625 cm-1 channel grid; set fin_res=None and use fin_wvnmlo/hi to
+   select channels." If a computational range lacks a convolution margin
+   or Hamming neighbour, report the missing wavenumber interval explicitly.
+
+   Set satellite and FOV via optional instrument-specific inputs. Defaults
+   are CrIS J2/NOAA-21 with central FOV 5, HIRAS FY-3D with FOV 1, and
+   HIRAS-2 FY-3E with FOV 1, matching the packaged example profiles.
+   FengYun FOV 1 is a reproducible convention, not a claim that it is
+   representative of all four FOVs. Record resolved defaults in output
+   metadata and require the user to select the observed platform/FOV when
+   making a precise comparison. For FY-3F/H, a default FOV still does not
+   supply a missing platform-specific noise profile. Reject an out-of-range
+   FOV with the valid values (1..9 for CrIS and HIRAS-II; 1..4 for HIRAS-I).
+   Permit a per-instrument noise_file/profile and SRF override with checks.
+
+B. Files and ownership. Add src/srfm/instruments/cris.py, hiras.py and
+   hiras_2.py, with the public selector name "hiras-2". A literal
+   hiras-2.py cannot be imported as an ordinary Python module, so the
+   underscore filename is the Python-safe implementation of that request.
+   Put all new convolution, response loading, profile loading and noise
+   functions in src/srfm/instruments/ (shared helper(s) may also live
+   there). Keep only necessary registry, input-schema and runner dispatch
+   changes outside it. Treat the already present FY-3E/F/H downloads as
+   user data: preserve them; generate compact packaged calibration arrays
+   with provenance instead of copying full L1 granules. Check pyproject
+   resource inclusion in an installed wheel and keep optional external
+   files lazy-loaded so no-selector runs never touch them.
+
+C. Sampling integration. The current runner convolve -> interp ordering
+   evaluates a response on every dense computational point before sampling.
+   Add an instrument method that computes directly at requested channel
+   centers, while leaving IASI's old method unchanged. The runner should
+   interpolate non-radiance outputs by its established path and then
+   substitute the directly computed channel radiances. Apply any requested
+   Hamming operation on the native channel grid before selecting the final
+   subset, and keep all arrays and BBT synchronized. This requires a small,
+   backward-compatible dispatch extension in all three runners or their
+   shared helper. The high-resolution in-place convolution used by IASI is
+   unsuitable as the production path for these instruments at a 0.0005
+   cm-1 computational step.
+
+D. Band overlap and file output. Default SRFM's one-dimensional channel
+   output must be strictly increasing and unique. For FY-3E/F, select one
+   declared owner for each of the eight duplicated overlap coordinates,
+   retain a band-ID coordinate/metadata, and document that the native
+   3,053 band samples become 3,045 unique spectral coordinates. Preserve
+   the ability to select a single band, including its guard samples. An
+   exact 3,053-sample multi-band replica needs a future band-aware output
+   representation; never silently merge two different observed values.
+   FY-3H has different official band limits from FY-3E/F, so configure its
+   own grid. For CrIS/FY-3D use the sample WL/wnum vectors and make
+   NSR/DR support conditional on a verified target product, not just the
+   instrument name.
+
+E. Metadata and documentation. Record instrument, platform, FOV, native
+   product type, spectral grid, SRF or analytic response, support/truncation,
+   noise source/date/units and any optional apodization in processing_history
+   and NetCDF global attributes. Update the driver-table reference, README
+   and example to show independent convolve and add_noise selectors, their
+   matching requirement, native versus Hamming output, the recommended
+   add_noise=None setting for observed-spectrum comparison, and explicit
+   F/H noise source requirement. Keep
+   old IASI settings, behavior and no-selector output identical.
+
+F. Verification before release. Compare direct quadrature against a
+   reference interferogram implementation for flat, impulse and narrow-line
+   spectra at each supported resolution; check signed sidelobes, kernel
+   area, support convergence and edge policy. Check exact native channel
+   coordinates against the inspected L1 files, including FY-3E overlaps.
+   Compare noiseless synthetic radiances with representative clear-sky
+   observed spectra only after matching geometry and atmospheric state.
+   For stochastic noise, check seeded repeatability, each channel's
+   standard deviation and any deliberately modelled covariance; check
+   FOV/platform separation and BBT refresh. Verify default None/None runs,
+   IASI regression, all three runners, partial-band inputs, bad units and
+   missing resources. Compare area-preserving binned convolution with
+   direct 0.0005 cm-1 quadrature and tighten the bins until the stated
+   accuracy target is met. Check Hamming radiances, band/guard edges, and
+   transformed noise correlation. Exercise invalid-grid errors and defaults.
+   Run the entire pre-existing test suite unchanged and require every test
+   to pass; add new instrument tests separately. Build and inspect a wheel
+   for the calibration data.
+   Instrument-model agreement cannot be proved by a single Earth-scene
+   comparison because scene mismatch and radiative-transfer error remain.
+
+Open scientific checks before calling the implementation an exact L1 emulator
+=============================================================================
+
+* Obtain the exact processing-version-specific CrIS J2 response/rolloff and
+  determine whether the beta v03_27 file uses the same unapodized convention
+  as the documented NASA standard. The available documentation and file
+  structure strongly indicate it, but the file has no explicit apodization
+  flag. Exact CrIS edge channels need the product's guard-band treatment.
+* Resolve the contradictory FY-3D root metadata against additional FY-3D
+  granules and NSMC product notes. Prioritize the observed 2,287 channel
+  arrays and official current HIRAS-I page for this example, but record the
+  discrepancy and avoid inferring physical resolution from sample spacing
+  alone.
+* Verify FY-3D NEdN units and the meaning of the two sweep axes. Verify
+  the FY-3E NEdR archive's units and its unusual band-dependent NEdR/NEdT
+  conversion before using it as a standard profile. Obtain FY-3F/H L1
+  noise data for platform-specific add_noise defaults.
+* Decide whether a future exact HIRAS-II band-aware result (all 3,053
+  samples) is needed. The proposed unique-grid output is appropriate for
+  the present SRFM interface but cannot distinguish duplicate band samples.
+
+Primary references
+==================
+
+NASA CrIS L1B Delta ATBD, especially section 3.7:
+https://docserver.gesdisc.eosdis.nasa.gov/public/project/SNPP/CrIS_L1B_SNPP.DeltaATBD_V2.0.pdf
+NASA CrIS L1B v3 User Guide, including version-3 weak rolloff and variables:
+https://docserver.gesdisc.eosdis.nasa.gov/public/project/Sounder/NASA_CrIS_L1B_Product_Users_Guide_v3RevC.pdf
+NOAA CrIS SDR ATBD, sections 3.6-3.7 on ILS, sinc and selectable apodization:
+https://www.star.nesdis.noaa.gov/JPSS/documents/ATBD/D0001-M01-S01-002_JPSS_ATBD_CRIS-SDR_fsr_20180614.pdf
+NSMC HIRAS-I instrument/grid:
+https://nsmc.org.cn/nsmc/cn/instrument/HIRAS-1.html
+NSMC FY-3D HIRAS L1 product description:
+https://img.nsmc.org.cn/PORTAL/NSMC/DATASERVICE/DataFormat/FY3D/%E7%BA%A2%E5%A4%96%E9%AB%98%E5%85%89%E8%B0%B1%E5%A4%A7%E6%B0%94%E6%8E%A2%E6%B5%8B%E4%BB%AAL1%E6%95%B0%E6%8D%AE.pdf
+NSMC HIRAS-II instrument and satellite-specific grids:
+https://www.nsmc.org.cn/nsmc/en/instrument/HIRAS-2.html
+NSMC FY-3E HIRAS-II FR L1 guide, particularly sections 2 and 4:
+https://img.nsmc.org.cn/PORTAL/NSMC/DATASERVICE/OperatingGuide/FY3E/FY-3E_L1_Data_Instruction_HIRAS-II.pdf
+NSMC released SRF and FY-3E NEDT resource index:
+https://www.nsmc.org.cn/portal/en/fycv/srf.html

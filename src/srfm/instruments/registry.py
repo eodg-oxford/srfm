@@ -7,11 +7,17 @@ from typing import Any, Callable
 
 from .base import Instrument
 from .iasi import IASI
+from .cris import CrIS
+from .hiras import HIRAS
+from .hiras_2 import HIRAS2
 
 InstrumentConstructor = Callable[..., Instrument]
 
 _INSTRUMENTS: dict[str, InstrumentConstructor] = {
     "iasi": IASI,
+    "cris": CrIS,
+    "hiras": HIRAS,
+    "hiras-2": HIRAS2,
 }
 INSTRUMENT_NAMES = frozenset(_INSTRUMENTS)
 
@@ -24,7 +30,7 @@ def _get_constructor(name: str) -> InstrumentConstructor:
     try:
         return _INSTRUMENTS[normalized_name]
     except KeyError as exc:
-        available = ", ".join(sorted(_INSTRUMENTS))
+        available = ", ".join(("iasi",) + tuple(sorted(set(_INSTRUMENTS) - {"iasi"})))
         raise ValueError(
             f"Unknown instrument {name!r}. Available instruments: {available}."
         ) from exc

@@ -36,19 +36,22 @@ General run and output
   ``srfm.nc``. The value is used as supplied, including its extension, and
   applies only when ``out_mode`` is ``"netcdf"``.
 * ``convolve`` (**optional** ``str`` or ``None``): Select a registered
-  instrument convolution. The current accepted value is ``"iasi"``. Omitting
-  the field or setting it to ``None`` disables convolution. IASI convolution
-  samples the result only at IASI channels after removing a 2 cm\ :sup:`-1`
-  margin from each computational boundary. The computational range must be at
-  least 4 cm\ :sup:`-1` wide and must lie within 643--2762 cm\ :sup:`-1`.
+  instrument convolution: ``"iasi"``, ``"CrIS"``, ``"HIRAS"``, or
+  ``"HIRAS-2"`` (case-insensitive). Omitting the field or setting it to
+  ``None`` disables convolution. IASI convolution samples the result only at
+  IASI channels after removing a 2 cm\ :sup:`-1` margin from each
+  computational boundary. The computational range must be at least 4
+  cm\ :sup:`-1` wide and must lie within 643--2762 cm\ :sup:`-1`.
 * ``iasi_ils`` (path-like or ``None``): RFM-format IASI instrument-line-shape
   override. When omitted or ``None``, the ILS distributed with SRFM is used.
 * ``add_noise`` (**optional** ``str`` or ``None``): Select a registered
-  instrument noise model. The current accepted value ``"iasi"`` adds correlated
-  IASI radiance noise after interpolation to the final grid and before
-  brightness-temperature calculation. Omitting the field or setting it to
-  ``None`` disables noise. IASI noise requires ``convolve="iasi"`` and supports
-  the complete grid or any contiguous partial IASI channel range.
+  instrument noise model: ``"iasi"``, ``"CrIS"``, ``"HIRAS"``, or
+  ``"HIRAS-2"`` (case-insensitive). It must match ``convolve`` so noise is
+  added on that instrument's channel grid before brightness-temperature
+  calculation. Omitting the field or setting it to ``None`` disables noise.
+  IASI adds correlated radiance noise and supports the complete grid or any
+  contiguous partial IASI channel range. The other instruments draw
+  FOV-specific native-channel noise, then apply Hamming processing if selected.
 * ``iasi_instrument`` (**optional** ``str``): IASI instrument used by the noise
   model. The default is ``"M03"``. Accepted identifiers and aliases are
   ``"M01"``/``"b"``/``"IASI-B"``, ``"M02"``/``"a"``/``"IASI-A"``, and
@@ -57,6 +60,39 @@ General run and output
 * ``iasi_ifov`` (**optional** ``int``): IASI instantaneous field of view used
   by the noise model. Accepted values are ``1``, ``2``, ``3``, and ``4``. The
   default is ``1`` when ``add_noise`` selects ``"iasi"``.
+* ``apodization`` (**optional** ``str`` or ``None``): ``"Hamming"`` or ``None``
+  (default) for CrIS, HIRAS, and HIRAS-2 convolution. Hamming applies the
+  three-channel weights ``[0.23, 0.54, 0.23]`` within each band and removes
+  two guard channels at each band edge. Use it when matching a Hamming
+  processed observation.
+* ``cris_platform`` (**optional** ``str``): CrIS platform, ``"J2"`` or
+  ``"NOAA-21"``; both select the J2 full-spectral-resolution channel grid.
+  Default: ``"J2"``.
+* ``cris_fov`` (**optional** ``int``): CrIS FOV, 1--9. Default: 5.
+* ``cris_noise_file`` (**optional** path-like or ``None``): Matching CrIS L1B
+  product or noise-profile ``.npz``. Default: bundled J2 profile.
+* ``cris_noise_units`` (**optional** ``str`` or ``None``): Confirm the supplied
+  noise amplitudes are in mW/(m² sr cm\ :sup:`-1`) when source units are
+  missing or unclear; ``"mW"`` is accepted after this check.
+* ``hiras_fov`` (**optional** ``int``): FY-3D HIRAS-I FOV, 1--4. Default: 1.
+* ``hiras_noise_file`` (**optional** path-like or ``None``): Matching HIRAS-I
+  L1 product or noise-profile ``.npz``. Default: bundled FY-3D profile.
+* ``hiras_noise_units`` (**optional** ``str`` or ``None``): Units confirmation
+  for HIRAS-I noise. The bundled FY-3D product has blank unit metadata; adding
+  its noise requires explicitly setting ``"mW"`` after checking that its
+  amplitudes are in mW/(m² sr cm\ :sup:`-1`).
+* ``hiras2_platform`` (**optional** ``str``): HIRAS-II platform: ``"FY3E"``,
+  ``"FY3F"``, or ``"FY3H"`` (hyphens are accepted). Default: ``"FY3E"``.
+* ``hiras2_fov`` (**optional** ``int``): HIRAS-II FOV, 1--9. Default: 1.
+* ``hiras2_noise_file`` (**optional** path-like or ``None``): Matching HIRAS-II
+  L1 product or noise-profile ``.npz``. The bundled default covers FY-3E;
+  FY-3F and FY-3H require a matching file to add noise.
+* ``hiras2_noise_units`` (**optional** ``str`` or ``None``): Confirm a supplied
+  HIRAS-II noise profile's radiance units when its metadata is missing or
+  unclear, as for ``cris_noise_units``.
+* ``noise_seed`` (**optional** ``int`` or ``None``): Seed for reproducible
+  CrIS or HIRAS noise realizations. With ``None``, each run draws new noise.
+  Instrument noise file formats are described in :doc:`input_files`.
 * ``retain_outputs`` (required sequence of ``str``): Full-grid values kept on
   the returned model. Supported names are ``"rad"``/``"radiance"``/``"uu"``,
   ``"bbt"``, ``"rfldir"``, ``"rfldn"``, ``"flup"``, ``"dfdt"``,
@@ -83,15 +119,19 @@ Spectral grids
 --------------
 
 * ``fin_wvnmlo`` (``int`` or ``float``): Lower wavenumber of the final output
-  grid in cm\ :sup:`-1`. This field is required unless ``convolve`` is
-  ``"iasi"``. IASI convolution ignores a supplied value and emits a warning.
+  grid in cm\ :sup:`-1`. Required when ``convolve`` is ``None``. IASI ignores
+  a supplied value with a warning. For CrIS or HIRAS, this optional bound
+  selects instrument channels at or above it.
 * ``fin_wvnmhi`` (``int`` or ``float``): Upper wavenumber of the final output
   grid in cm\ :sup:`-1`; must be greater than ``fin_wvnmlo``. This field is
-  required unless ``convolve`` is ``"iasi"`` and is ignored with a warning in
-  IASI mode.
-* ``fin_res`` (``int`` or ``float``): Positive final-grid spacing in
-  cm\ :sup:`-1`. This field is required unless ``convolve`` is ``"iasi"``;
-  IASI mode always uses the 0.25 cm\ :sup:`-1` instrument channels.
+  required when ``convolve`` is ``None``. IASI ignores it with a warning.
+  For CrIS or HIRAS, this optional bound selects instrument channels at or
+  below it.
+* ``fin_res`` (``int``, ``float``, or ``None``): Final-grid spacing in
+  cm\ :sup:`-1`, required and positive when ``convolve`` is ``None``. IASI
+  uses its 0.25 cm\ :sup:`-1` channels. For CrIS or HIRAS, omit it, set it
+  to ``None``, or set it to 0.625 cm\ :sup:`-1`; those instrument channels
+  cannot be changed to a user-defined spacing.
 * ``spc_wvnmlo`` (``int`` or ``float``): Lower bound of the computational
   spectral grid, in ``spc_units``. For ``"resolving_power"``, this bound is a
   wavenumber in cm\ :sup:`-1`.
@@ -107,6 +147,16 @@ Spectral grids
   produce a grid with constant additive spacing in that coordinate. Resolving
   power produces a geometrically spaced grid which is irregular in both
   wavelength and wavenumber.
+
+For CrIS and HIRAS, ``spc_units`` must be ``"cm-1"`` and ``spc_res`` must be
+at most 0.05 cm\ :sup:`-1`; a finer grid may be needed for line-rich spectra.
+The computed spectrum must cover each selected channel plus its response
+support on both sides: 30 cm\ :sup:`-1` for the nominal sinc response or
+15 cm\ :sup:`-1` for the supplied HIRAS-II tabulated response. Hamming needs
+another 0.625 cm\ :sup:`-1` of support for adjacent channels. An invalid
+resolution, range, or support produces an error identifying the setting and
+required coverage. Without instrument processing, the final grid retains its
+existing user-defined behavior.
 
 For example, this driver-table configuration calculates from 900 to 1,100
 cm\ :sup:`-1` at a constant resolving power of 20,000:

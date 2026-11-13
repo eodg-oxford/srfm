@@ -6,10 +6,10 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Input files &mdash; SRFM 1.2.3 documentation</title>
+  <title>Input files &mdash; SRFM 1.5.4 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
-      <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css?v=fd6457a4" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css?v=c83e6b79" />
       <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css?v=f4aeca0c" />
       <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css?v=2082cf3c" />
       <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css?v=1277b6f3" />
@@ -17,7 +17,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=590429e0"></script>
+      <script src="_static/documentation_options.js?v=1cd648e3"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/sg-tags.js?v=d80f6fa4"></script>
@@ -25,7 +25,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Memory-efficient calculations" href="memory.html" />
+    <link rel="next" title="Particle size distributions" href="size_distributions.html" />
     <link rel="prev" title="Driver table" href="drv.html" />
    
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-M598215MF0"></script>
@@ -89,7 +89,8 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html#basic-examples">Basic examples</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html#basic-examples">Basic examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html#reference-optical-depth">Reference optical depth</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="auto_examples/basic_example/index.html">Basic examples</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="auto_examples/basic_example/run_srfm.html">Run SRFM with a driver table</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="auto_examples/basic_example/run_srfm.html#external-spectroscopy-data">External spectroscopy data</a></li>
@@ -97,6 +98,9 @@
 <li class="toctree-l4"><a class="reference internal" href="auto_examples/basic_example/run_srfm.html#example-output">Example output</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="auto_examples/optical_depth_input/index.html">Reference optical depth</a><ul class="simple">
 </ul>
 </li>
 </ul>
@@ -109,19 +113,41 @@
 <li class="toctree-l2"><a class="reference internal" href="drv.html#rfm-execution-configuration">RFM execution configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="drv.html#rfm-driver-sections">RFM driver sections</a></li>
 <li class="toctree-l2"><a class="reference internal" href="drv.html#disort-configuration">DISORT configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="drv.html#scattering-layer-configuration">Scattering-layer configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drv.html#scattering-layer-configuration">Scattering-layer configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drv.html#using-reference-optical-depth">Using reference optical depth</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="drv.html#prescribed-optical-layers">Prescribed optical layers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="drv.html#vertical-optical-layer-restrictions">Vertical optical-layer restrictions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drv.html#effective-altitude-levels">Effective altitude levels</a></li>
 <li class="toctree-l2"><a class="reference internal" href="drv.html#solar-and-viewing-geometry">Solar and viewing geometry</a></li>
 </ul>
 </li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Input files</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#driver-and-atmospheric-files">Driver and atmospheric files</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#instrument-and-iasi-files">Instrument and IASI files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#aria-refractive-indices">ARIA refractive indices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#numerical-compatibility">Numerical compatibility</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#instrument-response-and-noise-files">Instrument response and noise files</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#common-spectral-text-format">Common spectral text format</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#surface-albedo-files">Surface albedo files</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#custom-solar-spectrum-files">Custom solar-spectrum files</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#prescribed-optical-property-files">Prescribed optical-property files</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="size_distributions.html">Particle size distributions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#common-interface">Common interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#gaussian-distribution">Gaussian distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#log-normal-distributions">Log-normal distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#gamma-distribution">Gamma distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#modified-gamma-distribution">Modified gamma distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#inverse-modified-gamma-distribution">Inverse modified gamma distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#regularised-power-law">Regularised power law</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#factory-construction">Factory construction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#numerical-validation">Numerical validation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#mie-layer-integration">Mie-layer integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#reference">Reference</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="memory.html">Memory-efficient calculations</a><ul>
@@ -259,6 +285,44 @@
 <li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.input_schema.validate_srfm_inputs"><code class="docutils literal notranslate"><span class="pre">validate_srfm_inputs()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.instruments">srfm.instruments</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.ConvolvingInstrument"><code class="docutils literal notranslate"><span class="pre">ConvolvingInstrument</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.ConvolvingInstrument.convolve"><code class="docutils literal notranslate"><span class="pre">ConvolvingInstrument.convolve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.ConvolvingInstrument.output_grid"><code class="docutils literal notranslate"><span class="pre">ConvolvingInstrument.output_grid()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.IASI"><code class="docutils literal notranslate"><span class="pre">IASI</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.IASI.add_noise"><code class="docutils literal notranslate"><span class="pre">IASI.add_noise()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.IASI.convolve"><code class="docutils literal notranslate"><span class="pre">IASI.convolve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.IASI.from_inputs"><code class="docutils literal notranslate"><span class="pre">IASI.from_inputs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.IASI.ils_source"><code class="docutils literal notranslate"><span class="pre">IASI.ils_source</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.IASI.output_grid"><code class="docutils literal notranslate"><span class="pre">IASI.output_grid()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.Instrument"><code class="docutils literal notranslate"><span class="pre">Instrument</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.NoiseInstrument"><code class="docutils literal notranslate"><span class="pre">NoiseInstrument</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.NoiseInstrument.add_noise"><code class="docutils literal notranslate"><span class="pre">NoiseInstrument.add_noise()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.apply_banded_factor"><code class="docutils literal notranslate"><span class="pre">apply_banded_factor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.create_instrument"><code class="docutils literal notranslate"><span class="pre">create_instrument()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.create_instrument_from_inputs"><code class="docutils literal notranslate"><span class="pre">create_instrument_from_inputs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.normalize_iasi_instrument"><code class="docutils literal notranslate"><span class="pre">normalize_iasi_instrument()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.instruments.iasi">srfm.instruments.iasi</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.iasi.IASI"><code class="docutils literal notranslate"><span class="pre">IASI</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.iasi.IASI.add_noise"><code class="docutils literal notranslate"><span class="pre">IASI.add_noise()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.iasi.IASI.convolve"><code class="docutils literal notranslate"><span class="pre">IASI.convolve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.iasi.IASI.from_inputs"><code class="docutils literal notranslate"><span class="pre">IASI.from_inputs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.iasi.IASI.ils_source"><code class="docutils literal notranslate"><span class="pre">IASI.ils_source</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.iasi.IASI.output_grid"><code class="docutils literal notranslate"><span class="pre">IASI.output_grid()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.iasi.apply_banded_factor"><code class="docutils literal notranslate"><span class="pre">apply_banded_factor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.iasi.normalize_iasi_instrument"><code class="docutils literal notranslate"><span class="pre">normalize_iasi_instrument()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.inputs">srfm.inputs</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.inputs.Inputs"><code class="docutils literal notranslate"><span class="pre">Inputs</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.inputs.Inputs.read_oxharp_drv"><code class="docutils literal notranslate"><span class="pre">Inputs.read_oxharp_drv()</span></code></a></li>
@@ -310,15 +374,20 @@
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.plot_diff"><code class="docutils literal notranslate"><span class="pre">MieLayer.plot_diff()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.regrid"><code class="docutils literal notranslate"><span class="pre">MieLayer.regrid()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.required_nmom"><code class="docutils literal notranslate"><span class="pre">MieLayer.required_nmom</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_alpha"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_alpha()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_alt_lim"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_alt_lim()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_b"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_b()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_center_alt"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_center_alt()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_comp"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_comp()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_dist_type"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_dist_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_effective_radius"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_effective_radius()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_eta"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_eta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_gamma"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_gamma()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_input_from_dict"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_input_from_dict()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_leg_coeffs"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_leg_coeffs()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_leg_coeffs_type"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_leg_coeffs_type()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_mass_loading"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_mass_loading()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_median_radius"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_median_radius()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_multiproccess"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_multiproccess()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_n"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_n()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_name"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_name()</span></code></a></li>
@@ -327,6 +396,7 @@
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_r"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_r()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_radii"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_radii()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_radii_quad_type"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_radii_quad_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_reference_optical_depth"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_reference_optical_depth()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_res"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_res()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_rho"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_rho()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_s"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_s()</span></code></a></li>
@@ -334,6 +404,7 @@
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_spc_lim"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_spc_lim()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_spec_units"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_spec_units()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_thick"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_thick()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_truncate"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_truncate()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_v_den"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_v_den()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.test_complete_input_format"><code class="docutils literal notranslate"><span class="pre">MieLayer.test_complete_input_format()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.test_input_values"><code class="docutils literal notranslate"><span class="pre">MieLayer.test_input_values()</span></code></a></li>
@@ -499,18 +570,93 @@
 <li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_helper.run_rfm_with_parameters"><code class="docutils literal notranslate"><span class="pre">run_rfm_with_parameters()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.size_distribution">srfm.size_distribution</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.rfm_levels">srfm.rfm_levels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_levels.match_altitude"><code class="docutils literal notranslate"><span class="pre">match_altitude()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_levels.read_matching_grid"><code class="docutils literal notranslate"><span class="pre">read_matching_grid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_levels.reconcile_levels"><code class="docutils literal notranslate"><span class="pre">reconcile_levels()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#srfm-size-distribution">srfm.size_distribution</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.GammaDistribution"><code class="docutils literal notranslate"><span class="pre">GammaDistribution</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution.median_radius"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.median_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution.mode_radius"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.mode_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution.effective_radius"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.effective_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution.effective_variance"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.effective_variance</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution.mean"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution.moment"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.moment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.quantile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution.value"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.value()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.median_radius"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.median_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.mode_radius"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.mode_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.effective_radius"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.effective_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.effective_variance"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.effective_variance</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.mean"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.moment"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.moment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.quantile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.value"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.value()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution.median_radius"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.median_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution.mode_radius"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.mode_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution.effective_radius"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.effective_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution.effective_variance"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.effective_variance</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution.mean"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution.moment"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.moment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.quantile()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution.value"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.value()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.alpha"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.alpha</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.b"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.b</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.median_radius"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.median_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.mode_radius"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.mode_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.effective_radius"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.effective_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.effective_variance"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.effective_variance</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.mean"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.moment"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.moment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.quantile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.value"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.value()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultiModeLogNormalDistribution"><code class="docutils literal notranslate"><span class="pre">MultiModeLogNormalDistribution</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.number_of_modes"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.number_of_modes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.mode_number_densities"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.mode_number_densities</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.mode_surface_area_densities"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.mode_surface_area_densities</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.mode_volume_densities"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.mode_volume_densities</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.component_mode_radii"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.component_mode_radii</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.median_radius"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.median_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.effective_radius"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.effective_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.effective_variance"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.effective_variance</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.cdf"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.cdf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.mean"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.moment"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.moment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.quantile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.value"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.value()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.median_radius"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.median_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.mode_radius"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.mode_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.effective_radius"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.effective_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.effective_variance"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.effective_variance</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.mean"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.moment"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.moment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.quantile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.value"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.value()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularizedPowerLawDistribution"><code class="docutils literal notranslate"><span class="pre">RegularizedPowerLawDistribution</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.SizeDistribution"><code class="docutils literal notranslate"><span class="pre">SizeDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.SizeDistribution.integration_bounds"><code class="docutils literal notranslate"><span class="pre">SizeDistribution.integration_bounds()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.SizeDistribution.mean"><code class="docutils literal notranslate"><span class="pre">SizeDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.SizeDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">SizeDistribution.quantile()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.create_distribution"><code class="docutils literal notranslate"><span class="pre">create_distribution()</span></code></a></li>
@@ -625,13 +771,144 @@ Generated or existing RFM driver files use its <code class="docutils literal not
 section records. The complete native definitions are in the <a class="reference external" href="https://eodg.atm.ox.ac.uk/RFM/index.html">RFM documentation</a>. The basic example contains usable
 atmosphere samples.</p>
 </section>
-<section id="instrument-and-iasi-files">
-<h2>Instrument and IASI files<a class="headerlink" href="#instrument-and-iasi-files" title="Link to this heading"></a></h2>
-<p>The optional <code class="docutils literal notranslate"><span class="pre">iasi_ils</span></code> field and the IASI runner’s <code class="docutils literal notranslate"><span class="pre">ils</span></code> field name an RFM
-ILS text file. After three comment/header lines, its fourth line contains the
-number of points, first spectral offset, and offset spacing. The following
-whitespace-separated values are the line-shape samples. See the example
-<code class="docutils literal notranslate"><span class="pre">iasi.ils</span></code> file and the <a class="reference external" href="https://eodg.atm.ox.ac.uk/RFM/sum/ilsfil.html">RFM ILS specification</a>.</p>
+<section id="aria-refractive-indices">
+<span id="id1"></span><h2>ARIA refractive indices<a class="headerlink" href="#aria-refractive-indices" title="Link to this heading"></a></h2>
+<p>SRFM bundles ARIA beneath <code class="docutils literal notranslate"><span class="pre">srfm/data/ARIA</span></code>. Set each Mie layer’s <code class="docutils literal notranslate"><span class="pre">comp</span></code> to
+an exact <code class="docutils literal notranslate"><span class="pre">.ri</span></code> basename; subdirectory names are not part of the identifier.
+The October 2026 replacement contains 677 datasets, including all 450 datasets
+from the previous bundle. All 371 renamed basenames remain accepted so existing
+driver tables continue to select the same samples. Current names include more
+explicit temperatures, concentrations, relative humidities, and sample labels.</p>
+<p>The generic compositions retain their original datasets:</p>
+<table class="docutils align-default" id="id2">
+<caption><span class="caption-text">Generic composition selection</span><a class="headerlink" href="#id2" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 15.0%" />
+<col style="width: 40.0%" />
+<col style="width: 45.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">comp</span></code></p></th>
+<th class="head"><p>Previous filename (still accepted)</p></th>
+<th class="head"><p>Current filename</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ash</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">eyjafjallajokull-ash_Reed.ri</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">eyjafjallajokull_ash_58.5%SiO2_Reed_2018.ri</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ice</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ICE_Warren_2008.ri</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ice_266K_Warren_2008.ri</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sulphuric</span> <span class="pre">acid</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">H2SO4_75_Palmer_1975.ri</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">H2SO4_75%_300K_Palmer_1975.ri</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>For water, specify a dataset such as <code class="docutils literal notranslate"><span class="pre">H2O_263K_Rowe_2020.ri</span></code>, as the basic
+example does. There is no generic <code class="docutils literal notranslate"><span class="pre">water</span></code> selection. Filename matching is
+case-sensitive; punctuation such as <code class="docutils literal notranslate"><span class="pre">%</span></code> is part of the filename.</p>
+<p>To list current filenames or resolve a legacy name:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">importlib.resources</span><span class="w"> </span><span class="kn">import</span> <span class="n">files</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">srfm.ARIA_module</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_ri_files</span><span class="p">,</span> <span class="n">get_ri_filepathname</span>
+
+<span class="n">filenames</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+    <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">find_ri_files</span><span class="p">(</span><span class="n">files</span><span class="p">(</span><span class="s2">&quot;srfm.data&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;ARIA&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">acid_path</span> <span class="o">=</span> <span class="n">get_ri_filepathname</span><span class="p">(</span><span class="s2">&quot;H2SO4_75_Palmer_1975.ri&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">ARIA_module.RI</span></code> reads the file’s <code class="docutils literal notranslate"><span class="pre">FORMAT</span></code> header and interpolates linearly
+on the requested wavelength or wavenumber grid. The scattering calculation
+uses wavelengths in micrometres and converts ARIA’s extinction coefficient to
+the Mie <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">-</span> <span class="pre">ik</span></code> convention. Both <code class="docutils literal notranslate"><span class="pre">n</span></code> and <code class="docutils literal notranslate"><span class="pre">k</span></code> must be present, and the
+dataset must cover the requested scattering grid. As before, archive entries
+containing only one index component cannot be used directly for Mie scattering.
+To read an external file directly, use <code class="docutils literal notranslate"><span class="pre">ARIA_module.read_ri_file(path)</span></code>.</p>
+<section id="numerical-compatibility">
+<h3>Numerical compatibility<a class="headerlink" href="#numerical-compatibility" title="Link to this heading"></a></h3>
+<p>All stored numerical columns are identical for 448 of the 450 previous
+datasets. The supplied replacement changes the following values in two
+Peterson quartz files; SRFM retains these new values. Calculations using these
+datasets can therefore change where interpolation includes the listed samples.</p>
+<table class="docutils align-default" id="id3">
+<caption><span class="caption-text">Numerical changes in the supplied quartz datasets</span><a class="headerlink" href="#id3" title="Link to this table"></a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>Filename</p></th>
+<th class="head"><p>Wavelength (micrometres)</p></th>
+<th class="head"><p>Component</p></th>
+<th class="head"><p>Old value</p></th>
+<th class="head"><p>New value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">quartz_E_Peterson_1969.ri</span></code></p></td>
+<td><p>17.8</p></td>
+<td><p>k</p></td>
+<td><p>0.07604</p></td>
+<td><p>0.07904</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">quartz_O_Peterson_1969.ri</span></code></p></td>
+<td><p>9.0</p></td>
+<td><p>n</p></td>
+<td><p>2.59701</p></td>
+<td><p>0.17463</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">quartz_O_Peterson_1969.ri</span></code></p></td>
+<td><p>9.4</p></td>
+<td><p>n</p></td>
+<td><p>1.37131</p></td>
+<td><p>6.38644</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">quartz_O_Peterson_1969.ri</span></code></p></td>
+<td><p>9.4</p></td>
+<td><p>k</p></td>
+<td><p>4.87845</p></td>
+<td><p>1.37131</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">quartz_O_Peterson_1969.ri</span></code></p></td>
+<td><p>22.3</p></td>
+<td><p>k</p></td>
+<td><p>3.03182</p></td>
+<td><p>3.03132</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">quartz_O_Peterson_1969.ri</span></code></p></td>
+<td><p>25.4</p></td>
+<td><p>n</p></td>
+<td><p>5.99961</p></td>
+<td><p>5.99862</p></td>
+</tr>
+</tbody>
+</table>
+<p>Regression tests compare all original numerical data with the replacements,
+check interpolation in both spectral units for previously readable unchanged
+datasets, and compare six small example-derived RFM/Mie/DISORT runs against
+original ARIA files using exact equality for radiance, brightness temperature,
+and fluxes.</p>
+</section>
+</section>
+<section id="instrument-response-and-noise-files">
+<h2>Instrument response and noise files<a class="headerlink" href="#instrument-response-and-noise-files" title="Link to this heading"></a></h2>
+<p>The optional <code class="docutils literal notranslate"><span class="pre">iasi_ils</span></code> field and the IASI runner’s <code class="docutils literal notranslate"><span class="pre">ils</span></code> field override
+the IASI response distributed with SRFM. An override is an RFM ILS text file.
+After three comment/header lines, its fourth line contains the number of points,
+first spectral offset, and offset spacing. The following whitespace-separated
+values are the line-shape samples. See the example <code class="docutils literal notranslate"><span class="pre">iasi.ils</span></code> file and the
+<a class="reference external" href="https://eodg.atm.ox.ac.uk/RFM/sum/ilsfil.html">RFM ILS specification</a>.</p>
+<p>SRFM also distributes <code class="docutils literal notranslate"><span class="pre">srfm/data/iasi_noise.npz</span></code>. The archive contains one
+compact lower-banded radiance-noise factor for every IASI instrument and IFOV,
+plus the corresponding wavenumber coordinate in m<sup>-1</sup>. SRFM converts
+that coordinate to cm<sup>-1</sup> for validation without changing the result’s
+<code class="docutils literal notranslate"><span class="pre">wvnm</span></code> coordinate. Noise application accepts the complete 8461-channel grid
+from 645 to 2760 cm<sup>-1</sup> at 0.25 cm<sup>-1</sup> or a contiguous subset
+created by IASI convolution. The full factor is sampled so correlations at a
+partial range’s boundaries are retained. The correlated noise has the same
+<code class="docutils literal notranslate"><span class="pre">W</span> <span class="pre">m-2</span> <span class="pre">sr-1</span> <span class="pre">cm</span></code> units as SRFM radiance. A separate realization is generated
+for every output-angle and output-level spectrum.</p>
 <p>The IASI runner’s <code class="docutils literal notranslate"><span class="pre">nedt</span></code> file is whitespace-delimited text with three header
 rows followed by <code class="docutils literal notranslate"><span class="pre">wavenumber_cm-1</span> <span class="pre">NEDT_K</span></code> pairs. Its <code class="docutils literal notranslate"><span class="pre">iasi_spc_fldr</span></code> and
 <code class="docutils literal notranslate"><span class="pre">iasi_fl</span></code> fields select a Python pickle containing per-pixel arrays. Required
@@ -641,6 +918,35 @@ keys are <code class="docutils literal notranslate"><span class="pre">spec_bbt</
 pixels; <code class="docutils literal notranslate"><span class="pre">spec_bbt</span></code> uses the fixed 645–2760 cm<sup>-1</sup> IASI grid at
 0.25 cm<sup>-1</sup>, and every ECMWF field contains one vertical profile per
 pixel. Because pickle can execute code while loading, use only trusted files.</p>
+<p>CrIS, HIRAS-I, and HIRAS-II convolution use native channels at 0.625
+cm<sup>-1</sup> spacing. CrIS and HIRAS-I use a nominal sinc response integrated
+directly against the calculated radiance. HIRAS-II uses bundled spectral
+response samples for the available bands and a nominal sinc elsewhere. The
+bundled HIRAS-II response data are in <code class="docutils literal notranslate"><span class="pre">srfm/data/hiras2_srf.npz</span></code>. This is a
+nominal channel model; a particular calibrated product can have additional
+processing beyond it. See <a class="reference internal" href="drv.html"><span class="doc">Driver table</span></a> for platform, FOV, Hamming, and grid
+selection.</p>
+<p>Bundled radiance-noise profiles are <code class="docutils literal notranslate"><span class="pre">cris_j2_noise.npz</span></code> for CrIS J2/NOAA-21,
+<code class="docutils literal notranslate"><span class="pre">hiras_fy3d_noise.npz</span></code> for HIRAS-I FY-3D, and
+<code class="docutils literal notranslate"><span class="pre">hiras2_fy3e_noise.npz</span></code> for HIRAS-II FY-3E. They are FOV-specific NEdN
+estimates from the example September 2026 granules, so their amplitudes should
+be checked against the observation being simulated. FY-3F and FY-3H HIRAS-II
+noise needs a matching external file. The FY-3D HIRAS-I product does not state
+its NEdN units; SRFM requires explicit <code class="docutils literal notranslate"><span class="pre">hiras_noise_units=&quot;mW&quot;</span></code> before using
+the bundled profile, after the user has confirmed its physical units.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">cris_noise_file</span></code>, <code class="docutils literal notranslate"><span class="pre">hiras_noise_file</span></code>, and <code class="docutils literal notranslate"><span class="pre">hiras2_noise_file</span></code>
+inputs accept a matching L1 NetCDF/HDF product or a compact <code class="docutils literal notranslate"><span class="pre">.npz</span></code> profile.
+For <code class="docutils literal notranslate"><span class="pre">.npz</span></code>, include string fields <code class="docutils literal notranslate"><span class="pre">platform</span></code> and <code class="docutils literal notranslate"><span class="pre">units</span></code> and, for each
+instrument band, <code class="docutils literal notranslate"><span class="pre">&lt;BAND&gt;_wnum</span></code> and <code class="docutils literal notranslate"><span class="pre">&lt;BAND&gt;_sigma</span></code> arrays. The wavenumber
+array has one entry per native channel in cm<sup>-1</sup>. The sigma array has
+shape <code class="docutils literal notranslate"><span class="pre">(number_of_FOVs,</span> <span class="pre">number_of_channels)</span></code> and contains radiance NEdN in
+mW/(m² sr cm<sup>-1</sup>). Band names are <code class="docutils literal notranslate"><span class="pre">LW</span></code>, <code class="docutils literal notranslate"><span class="pre">MW</span></code>, and <code class="docutils literal notranslate"><span class="pre">SW</span></code> for CrIS;
+<code class="docutils literal notranslate"><span class="pre">LW</span></code>, <code class="docutils literal notranslate"><span class="pre">MW1</span></code>, and <code class="docutils literal notranslate"><span class="pre">MW2</span></code> for both HIRAS generations. <code class="docutils literal notranslate"><span class="pre">platform</span></code> must
+match the selected platform (<code class="docutils literal notranslate"><span class="pre">J2</span></code>, <code class="docutils literal notranslate"><span class="pre">FY3D</span></code>, <code class="docutils literal notranslate"><span class="pre">FY3E</span></code>, <code class="docutils literal notranslate"><span class="pre">FY3F</span></code>, or
+<code class="docutils literal notranslate"><span class="pre">FY3H</span></code>). SRFM checks platform, FOV count, coordinates, and units before
+adding noise. Noise is independently drawn for every output-angle and
+output-level spectrum. With Hamming processing, the native-channel noise is
+filtered along with the radiance, which creates adjacent-channel correlation.</p>
 </section>
 <section id="common-spectral-text-format">
 <h2>Common spectral text format<a class="headerlink" href="#common-spectral-text-format" title="Link to this heading"></a></h2>
@@ -756,7 +1062,7 @@ layer may omit <code class="docutils literal notranslate"><span class="pre">phas
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="drv.html" class="btn btn-neutral float-left" title="Driver table" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="memory.html" class="btn btn-neutral float-right" title="Memory-efficient calculations" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="size_distributions.html" class="btn btn-neutral float-right" title="Particle size distributions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

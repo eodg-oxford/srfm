@@ -29,5 +29,6 @@ parameter formats.
    auto_examples/index
    drv
    input_files
+   size_distributions
    memory
    srfm

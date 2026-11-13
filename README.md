@@ -203,6 +203,56 @@ applied to that convolved result with
 ``IASI(iasi_instrument="M03", iasi_ifov=1).add_noise(result)``. An optional
 NumPy random generator provides reproducible realizations.
 
+CrIS, HIRAS-I, and HIRAS-II are selected with `"CrIS"`, `"HIRAS"`, and
+`"HIRAS-2"`. Their native FSR channels are fixed at 0.625 cm⁻¹ spacing. The
+high-resolution calculation uses `spc_*`; `fin_wvnmlo` and `fin_wvnmhi` may
+select a smaller set of instrument channels, while `fin_res` should be `None`
+(or 0.625 cm⁻¹). Provide enough computed spectrum on both sides of every
+selected channel for the response: 30 cm⁻¹ for the nominal sinc or 15 cm⁻¹
+for the supplied HIRAS-II tabulated response. The code integrates the
+high-resolution radiance directly in the spectral domain. The nominal sinc
+is an approximation to the complete calibrated product response.
+
+The default products are CrIS J2/NOAA-21 FSR (FOV 5), HIRAS-I FY-3D FSR
+(FOV 1), and HIRAS-II FY-3E FSR (FOV 1). Select a different platform/FOV
+with `cris_platform`, `cris_fov`, `hiras_fov`, `hiras2_platform`, or
+`hiras2_fov`. HIRAS-II FY-3F and FY-3H are supported for convolution;
+their noise requires a matching `hiras2_noise_file`. HIRAS-II has nine FOVs;
+HIRAS-I has four. FY-3E/F bands have eight duplicated overlap coordinates,
+so the current one-dimensional output keeps the earlier band's value at
+each duplicate and contains 3,045 unique channels.
+
+Set `apodization="Hamming"` to simulate a Hamming processed product. On
+these native 0.625 cm⁻¹ grids this applies the three-channel radiance
+filter `[0.23, 0.54, 0.23]` within each band and removes two guard
+channels from each band edge. Its default is `None`, giving native output.
+For comparison to an observed spectrum, normally leave `add_noise=None`;
+the observation already contains noise. To generate a noisy synthetic
+spectrum, set `add_noise` to the same instrument as `convolve`. The noise
+draw is made on native channels, then Hamming processed when selected.
+
+```python
+inputs.values["convolve"] = "CrIS"
+inputs.values["add_noise"] = None
+inputs.values["apodization"] = "Hamming"
+inputs.values["cris_platform"] = "J2"
+inputs.values["cris_fov"] = 5
+inputs.values["fin_res"] = None
+result = run_srfm(inputs)
+```
+
+Bundled CrIS J2 and HIRAS-II FY-3E noise profiles are FOV-specific NEdN
+estimates from the example September 2026 granules; they are illustrative
+for that epoch. The FY-3D example's noise units are blank in the HDF file
+and inconsistent in published documentation. Its bundled raw amplitudes
+are used only if `hiras_noise_units="mW"` explicitly confirms that those
+values are radiance noise in mW/(m² sr cm⁻¹). A matching external profile
+can be supplied through `cris_noise_file`, `hiras_noise_file`, or
+`hiras2_noise_file`. Supported files are the corresponding L1 NetCDF/HDF
+products or `.npz` files containing `platform`, `units`, and each band's
+`<BAND>_wnum` and `<BAND>_sigma` arrays. Sigma has shape `(FOV, channel)`
+and must be in mW/(m² sr cm⁻¹). Set `noise_seed` for reproducible draws.
+
 Alternatively, the package can be easily imported by
     `from srfm import *`
     or

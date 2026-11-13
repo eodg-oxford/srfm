@@ -42,13 +42,29 @@ inputs = {
     "scattering_block_size": 10000,  # optional: interpolation block size
     "retain_phase_functions": False,  # optional: retain large phase arrays
     # Instrument operations are selected independently by registered name.
-    "convolve": None,  # set to "iasi" to apply the IASI line shape
+    "convolve": None,  # None, "iasi", "CrIS", "HIRAS", or "HIRAS-2"
     "iasi_ils": None,  # optional override; packaged IASI ILS is the default
     # IASI convolution derives output channels from the computational range after
     # removing 2 cm-1 at each edge; configured fin_* values are then ignored.
-    "add_noise": None,  # set to "iasi" to add correlated IASI noise
+    "add_noise": None,  # same name as convolve to add instrument noise
     "iasi_instrument": "M03",  # M01/IASI-B, M02/IASI-A, or M03/IASI-C
     "iasi_ifov": 1,  # select IASI field of view 1, 2, 3, or 4
+    # CrIS and HIRAS use native 0.625 cm-1 channels. Set fin_res=None (or
+    # 0.625), spc_units="cm-1", and spc_res<=0.05 when selecting one.
+    # Their computational grid also needs response support around each channel.
+    "apodization": None,  # "Hamming" to match a Hamming processed spectrum
+    "cris_platform": "J2",  # J2/NOAA-21 full spectral resolution
+    "cris_fov": 5,  # 1-9; default 5
+    "cris_noise_file": None,  # matching L1 product or NPZ; None uses J2 profile
+    "cris_noise_units": None,  # optional explicit radiance-unit confirmation
+    "hiras_fov": 1,  # FY-3D HIRAS-I FOV 1-4; default 1
+    "hiras_noise_file": None,  # None uses bundled FY-3D profile
+    "hiras_noise_units": None,  # set "mW" only after checking FY-3D NEdN units
+    "hiras2_platform": "FY3E",  # FY3E, FY3F, or FY3H
+    "hiras2_fov": 1,  # 1-9; default 1
+    "hiras2_noise_file": None,  # FY3F/H require a matching external noise file
+    "hiras2_noise_units": None,  # optional explicit radiance-unit confirmation
+    "noise_seed": None,  # integer for reproducible CrIS/HIRAS noise
     ## Grids
     "fin_wvnmlo": FIN_WVNMLO,
     "fin_wvnmhi": FIN_WVNMHI,

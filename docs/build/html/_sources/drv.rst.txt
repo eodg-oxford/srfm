@@ -35,10 +35,64 @@ General run and output
   NetCDF output file. Omitting it or setting it to ``None`` selects
   ``srfm.nc``. The value is used as supplied, including its extension, and
   applies only when ``out_mode`` is ``"netcdf"``.
-* ``convolve_iasi`` (``bool``): Convolve every output radiance spectrum with
-  the IASI instrument line shape. Permitted values: ``True`` or ``False``.
+* ``convolve`` (**optional** ``str`` or ``None``): Select a registered
+  instrument convolution: ``"iasi"``, ``"CrIS"``, ``"HIRAS"``, or
+  ``"HIRAS-2"`` (case-insensitive). Omitting the field or setting it to
+  ``None`` disables convolution. IASI convolution samples the result only at
+  IASI channels after removing a 2 cm\ :sup:`-1` margin from each
+  computational boundary. The computational range must be at least 4
+  cm\ :sup:`-1` wide and must lie within 643--2762 cm\ :sup:`-1`.
 * ``iasi_ils`` (path-like or ``None``): RFM-format IASI instrument-line-shape
-  file; required when ``convolve_iasi`` is ``True``.
+  override. When omitted or ``None``, the ILS distributed with SRFM is used.
+* ``add_noise`` (**optional** ``str`` or ``None``): Select a registered
+  instrument noise model: ``"iasi"``, ``"CrIS"``, ``"HIRAS"``, or
+  ``"HIRAS-2"`` (case-insensitive). It must match ``convolve`` so noise is
+  added on that instrument's channel grid before brightness-temperature
+  calculation. Omitting the field or setting it to ``None`` disables noise.
+  IASI adds correlated radiance noise and supports the complete grid or any
+  contiguous partial IASI channel range. The other instruments draw
+  FOV-specific native-channel noise, then apply Hamming processing if selected.
+* ``iasi_instrument`` (**optional** ``str``): IASI instrument used by the noise
+  model. The default is ``"M03"``. Accepted identifiers and aliases are
+  ``"M01"``/``"b"``/``"IASI-B"``, ``"M02"``/``"a"``/``"IASI-A"``, and
+  ``"M03"``/``"c"``/``"IASI-C"``. Matching is case-insensitive and validated
+  aliases are stored as ``"M01"``, ``"M02"``, or ``"M03"``.
+* ``iasi_ifov`` (**optional** ``int``): IASI instantaneous field of view used
+  by the noise model. Accepted values are ``1``, ``2``, ``3``, and ``4``. The
+  default is ``1`` when ``add_noise`` selects ``"iasi"``.
+* ``apodization`` (**optional** ``str`` or ``None``): ``"Hamming"`` or ``None``
+  (default) for CrIS, HIRAS, and HIRAS-2 convolution. Hamming applies the
+  three-channel weights ``[0.23, 0.54, 0.23]`` within each band and removes
+  two guard channels at each band edge. Use it when matching a Hamming
+  processed observation.
+* ``cris_platform`` (**optional** ``str``): CrIS platform, ``"J2"`` or
+  ``"NOAA-21"``; both select the J2 full-spectral-resolution channel grid.
+  Default: ``"J2"``.
+* ``cris_fov`` (**optional** ``int``): CrIS FOV, 1--9. Default: 5.
+* ``cris_noise_file`` (**optional** path-like or ``None``): Matching CrIS L1B
+  product or noise-profile ``.npz``. Default: bundled J2 profile.
+* ``cris_noise_units`` (**optional** ``str`` or ``None``): Confirm the supplied
+  noise amplitudes are in mW/(m² sr cm\ :sup:`-1`) when source units are
+  missing or unclear; ``"mW"`` is accepted after this check.
+* ``hiras_fov`` (**optional** ``int``): FY-3D HIRAS-I FOV, 1--4. Default: 1.
+* ``hiras_noise_file`` (**optional** path-like or ``None``): Matching HIRAS-I
+  L1 product or noise-profile ``.npz``. Default: bundled FY-3D profile.
+* ``hiras_noise_units`` (**optional** ``str`` or ``None``): Units confirmation
+  for HIRAS-I noise. The bundled FY-3D product has blank unit metadata; adding
+  its noise requires explicitly setting ``"mW"`` after checking that its
+  amplitudes are in mW/(m² sr cm\ :sup:`-1`).
+* ``hiras2_platform`` (**optional** ``str``): HIRAS-II platform: ``"FY3E"``,
+  ``"FY3F"``, or ``"FY3H"`` (hyphens are accepted). Default: ``"FY3E"``.
+* ``hiras2_fov`` (**optional** ``int``): HIRAS-II FOV, 1--9. Default: 1.
+* ``hiras2_noise_file`` (**optional** path-like or ``None``): Matching HIRAS-II
+  L1 product or noise-profile ``.npz``. The bundled default covers FY-3E;
+  FY-3F and FY-3H require a matching file to add noise.
+* ``hiras2_noise_units`` (**optional** ``str`` or ``None``): Confirm a supplied
+  HIRAS-II noise profile's radiance units when its metadata is missing or
+  unclear, as for ``cris_noise_units``.
+* ``noise_seed`` (**optional** ``int`` or ``None``): Seed for reproducible
+  CrIS or HIRAS noise realizations. With ``None``, each run draws new noise.
+  Instrument noise file formats are described in :doc:`input_files`.
 * ``retain_outputs`` (required sequence of ``str``): Full-grid values kept on
   the returned model. Supported names are ``"rad"``/``"radiance"``/``"uu"``,
   ``"bbt"``, ``"rfldir"``, ``"rfldn"``, ``"flup"``, ``"dfdt"``,
@@ -65,19 +119,61 @@ Spectral grids
 --------------
 
 * ``fin_wvnmlo`` (``int`` or ``float``): Lower wavenumber of the final output
-  grid in cm\ :sup:`-1`.
+  grid in cm\ :sup:`-1`. Required when ``convolve`` is ``None``. IASI ignores
+  a supplied value with a warning. For CrIS or HIRAS, this optional bound
+  selects instrument channels at or above it.
 * ``fin_wvnmhi`` (``int`` or ``float``): Upper wavenumber of the final output
-  grid in cm\ :sup:`-1`; must be greater than ``fin_wvnmlo``.
-* ``fin_res`` (``int`` or ``float``): Positive final-grid spacing in
-  cm\ :sup:`-1`.
+  grid in cm\ :sup:`-1`; must be greater than ``fin_wvnmlo``. This field is
+  required when ``convolve`` is ``None``. IASI ignores it with a warning.
+  For CrIS or HIRAS, this optional bound selects instrument channels at or
+  below it.
+* ``fin_res`` (``int``, ``float``, or ``None``): Final-grid spacing in
+  cm\ :sup:`-1`, required and positive when ``convolve`` is ``None``. IASI
+  uses its 0.25 cm\ :sup:`-1` channels. For CrIS or HIRAS, omit it, set it
+  to ``None``, or set it to 0.625 cm\ :sup:`-1`; those instrument channels
+  cannot be changed to a user-defined spacing.
 * ``spc_wvnmlo`` (``int`` or ``float``): Lower bound of the computational
-  spectral grid, in ``spc_units``.
+  spectral grid, in ``spc_units``. For ``"resolving_power"``, this bound is a
+  wavenumber in cm\ :sup:`-1`.
 * ``spc_wvnmhi`` (``int`` or ``float``): Upper bound of the computational
-  spectral grid, in ``spc_units``; must be greater than ``spc_wvnmlo``.
-* ``spc_res`` (``int`` or ``float``): Positive computational-grid spacing, in
-  ``spc_units``.
-* ``spc_units`` (``str``): Units of the computational grid. Permitted values:
-  ``"cm-1"``, ``"um"``, or ``"nm"``.
+  spectral grid, in ``spc_units``; must be greater than ``spc_wvnmlo``. For
+  ``"resolving_power"``, this bound is a wavenumber in cm\ :sup:`-1`.
+* ``spc_res`` (``int`` or ``float``): Positive computational-grid spacing in
+  ``spc_units``. When ``spc_units`` is ``"resolving_power"``, this is the
+  dimensionless resolving power :math:`R = \lambda / \Delta\lambda` and must
+  be greater than one.
+* ``spc_units`` (``str``): Computational-grid specification. Permitted values:
+  ``"cm-1"``, ``"um"``, ``"nm"``, or ``"resolving_power"``. The first three
+  produce a grid with constant additive spacing in that coordinate. Resolving
+  power produces a geometrically spaced grid which is irregular in both
+  wavelength and wavenumber.
+
+For CrIS and HIRAS, ``spc_units`` must be ``"cm-1"`` and ``spc_res`` must be
+at most 0.05 cm\ :sup:`-1`; a finer grid may be needed for line-rich spectra.
+The computed spectrum must cover each selected channel plus its response
+support on both sides: 30 cm\ :sup:`-1` for the nominal sinc response or
+15 cm\ :sup:`-1` for the supplied HIRAS-II tabulated response. Hamming needs
+another 0.625 cm\ :sup:`-1` of support for adjacent channels. An invalid
+resolution, range, or support produces an error identifying the setting and
+required coverage. Without instrument processing, the final grid retains its
+existing user-defined behavior.
+
+For example, this driver-table configuration calculates from 900 to 1,100
+cm\ :sup:`-1` at a constant resolving power of 20,000:
+
+.. code-block:: python
+
+   inputs.update(
+       spc_wvnmlo=900.0,
+       spc_wvnmhi=1100.0,
+       spc_res=20_000.0,
+       spc_units="resolving_power",
+   )
+
+The longer wavelength in each adjacent pair is used in
+:math:`R = \lambda / \Delta\lambda`. SRFM converts the result to matching
+cm\ :sup:`-1` and micrometre arrays, writes every wavenumber to ``grid.spc``,
+and selects RFM's irregular-grid SPC-file mode.
 
 Output geometry
 ---------------
@@ -237,20 +333,66 @@ parameters below. The same fields apply to the example's
   grid, in ``spec_units``.
 * ``spec_units`` (``str``): Units of the layer optical-property grid. Permitted
   values: ``"cm-1"``, ``"um"``, or ``"nm"``.
-* ``rho`` (``int``, ``float``, or ``str``): Particle density in kg m\ :sup:`-3`,
+* ``rho`` (**optional** ``int``, ``float``, ``str``, or ``None``): Particle
+  material density in kg m\ :sup:`-3`,
   or a supported named ash density. Named values: ``"pumice"``, ``"glass"``,
-  ``"mineral"``, or ``"rock"``.
-* ``n`` (``int``, ``float``, or ``None``): Particle number concentration. At
-  least one of ``mass_loading``, ``n``, ``s_a_den``, or ``v_den`` must be set.
-* ``s`` (``int`` or ``float``): Particle-size distribution spread. A
-  log-normal distribution requires a value greater than 1.
-* ``s_a_den`` (``int``, ``float``, or ``None``): Particle surface-area density.
-* ``v_den`` (``int``, ``float``, or ``None``): Particle volume density.
-* ``dist_type`` (``str``): Particle-size distribution. Permitted value for a
-  complete calculation: ``"log_normal"``. ``"gaussian"`` is recognized but
-  not implemented by the full Mie-layer pathway.
+  ``"mineral"``, or ``"rock"``. Required when ``mass_loading`` sets the
+  concentration. Other concentration inputs and ``tau_ref`` work without
+  density; mass loading can then be left uncalculated.
+* ``n`` (number, one-dimensional sequence, or ``None``): Particle number
+  concentration in cm\ :sup:`-3`. A multimode log-normal layer supplies one
+  value per mode. At least one of ``mass_loading``, ``n``, ``s_a_den``,
+  ``v_den``, or ``tau_ref`` must be set.
+* ``tau_ref`` (**optional** number or ``None``): Positive finite vertical
+  particle extinction optical depth through the complete layer at
+  ``tau_ref_at``. It includes particle absorption and scattering, before
+  DISORT delta scaling, and excludes gas absorption and molecular Rayleigh
+  scattering. Supply it instead of ``n``, ``mass_loading``, ``s_a_den``, or
+  ``v_den``; those fields must be omitted or ``None``.
+* ``tau_ref_at`` (**optional** number or ``None``): Positive finite reference
+  wavelength or wavenumber. Required with ``tau_ref``.
+* ``tau_ref_at_units`` (**optional** ``str`` or ``None``): Units of
+  ``tau_ref_at``: ``"cm-1"`` for wavenumber, ``"um"`` for wavelength in
+  micrometres, or ``"nm"`` for wavelength in nanometres. Required with
+  ``tau_ref`` and independent of ``spec_units``. Reference coordinate fields
+  must be omitted or ``None`` when ``tau_ref`` is not supplied.
+* ``s`` (number, one-dimensional sequence, or ``None``): Distribution spread.
+  It is a standard deviation in micrometres for ``"gaussian"``, a geometric
+  standard deviation greater than one for log-normal distributions, and a
+  positive effective variance for ``"gamma"`` and ``"modified_gamma"``.
+* ``s_a_den`` (number, one-dimensional sequence, or ``None``): Particle
+  surface-area density. Multimode values are supplied per mode.
+* ``v_den`` (number, one-dimensional sequence, or ``None``): Particle volume
+  density. Multimode values are supplied per mode.
+* ``dist_type`` (``str``): Particle-size distribution. Permitted values are
+  ``"gaussian"``, ``"log_normal"``, ``"multimode_log_normal"``, ``"gamma"``,
+  ``"modified_gamma"``, ``"inverse_modified_gamma"``, and
+  ``"regularised_power_law"``. The US spelling ``"regularized_power_law"`` is
+  an alias. See :doc:`size_distributions` for the parameter definitions.
+* ``effective_radius`` (number or ``None``): Effective-radius alternative to
+  ``r`` in micrometres for single-mode log-normal, gamma, and modified-gamma
+  distributions. Supply exactly one of the two; omit ``r`` or set it to
+  ``None`` when using ``effective_radius``.
+* ``alpha`` (number or ``None``): Shape exponent for inverse modified-gamma and
+  regularised power-law distributions.
+* ``b`` (number or ``None``): Natural scale parameter for inverse
+  modified-gamma and regularised power-law distributions. If omitted, ``r``
+  supplies their number median.
+* ``gamma`` (number or ``None``): Required positive cutoff exponent for
+  modified-gamma and inverse modified-gamma distributions, or tail parameter
+  greater than one for the regularised power law.
+* ``median_radius`` (number or ``None``): Explicit spelling of the number-median
+  radius for inverse modified-gamma and regularised power-law distributions.
+  It is an alternative to both ``r`` and ``b``.
+* ``truncate`` (``bool`` or ``None``): Gaussian positive-radius truncation.
+  Mie calculations require true; omission defaults to true.
 * ``comp`` (``str``): Refractive-index composition identifier or refractive-
-  index filename, such as ``"sulphuric acid"``, ``"ash"``, or an ``.ri`` file.
+  index basename from bundled ARIA. Accepts ``"sulphuric acid"``, ``"ash"``,
+  ``"ice"``, current filenames such as ``"H2SO4_75%_300K_Palmer_1975.ri"``,
+  and legacy filenames such as ``"H2SO4_75_Palmer_1975.ri"``. Filenames are
+  case-sensitive. See :ref:`aria-refractive-indices` for dataset selection and
+  compatibility. Use ``"ri"`` with ``refractive_index`` for supplied indices
+  in the ``n - ik`` convention.
 * ``center_alt`` (``int``, ``float``, or ``None``): Layer centre altitude in km.
   Supply it with ``thick``, or instead supply both explicit altitude bounds.
 * ``thick`` (``int``, ``float``, or ``None``): Positive layer thickness in km.
@@ -261,8 +403,8 @@ parameters below. The same fields apply to the example's
 
 * ``radii`` (``int``): Positive number of particle radii used to integrate the
   size distribution.
-* ``eta`` (``float``): Relative size-distribution tail cutoff. Permitted range:
-  greater than 0 and less than 1.
+* ``eta`` (``float``): Total number-probability fraction omitted from the two
+  radius-integration tails. Permitted range: greater than 0 and less than 1.
 * ``phase_quad_N`` (``int``): Positive number of phase-function quadrature
   points.
 * ``phase_quad_type`` (``str``): Phase-function quadrature rule. Permitted
@@ -276,12 +418,72 @@ parameters below. The same fields apply to the example's
 * ``multiprocess`` (``bool``): Enable the experimental multiprocessing path for
   optical-property calculations. Permitted values: ``True`` or ``False``.
 * ``mass_loading`` (``int``, ``float``, or ``None``): Column particle mass in
-  g m\ :sup:`-2` used to derive layer optical depth.
-* ``r`` (``int`` or ``float``): Positive mean particle radius in micrometres.
+  g m\ :sup:`-2` used to derive layer optical depth. A multimode log-normal
+  layer must instead provide per-mode ``n``, ``s_a_den``, or ``v_den`` because
+  one total mass does not determine the relative mode concentrations.
+* ``r`` (number, one-dimensional sequence, or ``None``): Distribution radius
+  in micrometres. It is a Gaussian mean, a number median for log-normal and
+  gamma-family inputs, and one number median per multimode log-normal mode.
 
 The unused altitude pair may be omitted entirely. If all four altitude values
 are supplied, both pairs must describe the same boundaries after SRFM's
 0.001-km layer-boundary rounding.
+
+Using reference optical depth
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For example, adapt an existing Mie-layer input dictionary as follows:
+
+.. code-block:: python
+
+   layer_inputs.update(
+       n=None,
+       mass_loading=None,
+       s_a_den=None,
+       v_den=None,
+       tau_ref=0.5,
+       tau_ref_at=1000.0,
+       tau_ref_at_units="cm-1",
+   )
+
+The equivalent wavelength specifications are ``tau_ref_at=10.0`` with
+``tau_ref_at_units="um"`` or ``tau_ref_at=10000.0`` with
+``tau_ref_at_units="nm"``. Density may be omitted or set to ``None``; the
+existing mass-loading conversion warns that loading cannot be calculated.
+
+SRFM calculates extinction at the exact reference coordinate using a trial
+number concentration :math:`N_0=1\ \mathrm{cm}^{-3}` and the configured size
+distribution, refractive index, radius quadrature, and tail cutoff. For layer
+thickness :math:`H` in metres and trial extinction coefficient
+:math:`\beta_{\mathrm{ext},0}` in m\ :sup:`-1`, it derives
+
+.. math::
+
+   N = N_0\frac{\tau_{\mathrm{ref}}}{\beta_{\mathrm{ext},0} H}.
+
+The resulting concentration is fixed across the spectrum. The ordinary
+``calculate_op()`` flow then constructs the distribution, derives mass loading
+when density and a finite third radius moment are available, and calculates
+the complete optical spectrum. The reference specification and derived
+concentration are retained in the effective input metadata of all runners.
+
+The reference need not lie on the layer calculation grid. An ARIA composition
+must cover that wavelength; a constant supplied refractive index can also be
+used outside the output band. For a supplied ``refractive_index`` array, the
+reference must lie within its layer grid: real and imaginary parts are
+interpolated linearly in wavelength, with no extrapolation. The reference
+extinction must be positive and finite. Output interpolation still has its
+ordinary grid-resolution error when the reference is between grid points.
+
+Reference optical depth supports the existing distribution families with one
+component. A multimode log-normal distribution with more than one mode must
+use per-mode concentrations because one total optical depth cannot determine
+the relative abundances. Zero optical depth is not a Mie concentration input;
+omit an empty particle layer instead.
+
+The reproducible ``examples/optical_depth_input/compare_layers.py`` example
+calculates a random layer from ``n``, then reproduces it using optical depth at
+one calculated wavelength and compares the complete spectra.
 
 ``gbc_lyrs_inputs`` is likewise optional and accepts omission, ``None``, or an
 empty dictionary. Its grey-body layers use the same alternative altitude pairs:
@@ -348,6 +550,53 @@ Each accepted object replaces every requested internal level inside its bounds
 with its lower and upper boundaries. It therefore occupies exactly one model
 cell and contributes its complete column optical depth to that cell. SRFM does
 not fractionally split, combine, or mix configured optical objects.
+
+Effective altitude levels
+-------------------------
+
+``main.run_srfm``, ``oxharp_main.run_srfm`` and ``iasi_main.run_srfm`` reconcile
+requested output levels and optical-layer boundaries with the atmospheric grid
+that RFM actually uses. The first atmospheric file establishes that grid; a later
+composition profile may use a different grid. The ``LAY`` flag inserts midpoints
+before matching, and preceding height or Jacobian sections can insert more levels.
+SRFM reads the existing grid once per evaluation, before calculating particle
+optics. It adds no spectral-loop work or radiative-transfer calls.
+
+RFM's ``ATMLEV`` matches in single precision with a **relative** tolerance of
+0.001. It chooses the nearest atmospheric level (the first on a distance tie).
+At the endpoints, distance is divided by the adjacent interval; internally it
+is divided by half the span between the two neighbouring levels. A fraction
+less than or equal to 0.001 snaps to the existing level. Otherwise, RFM inserts
+the requested altitude, changing the spacing used for subsequent requests.
+This is not a fixed 0.001 km tolerance. It is also separate from
+``rfm_config.optical_match_tol``, the absolute tolerance in km used to locate
+already reconciled levels in captured optical-depth output.
+
+For example, on a 1 km atmospheric grid, 3.000 and 3.001 km can both resolve
+to 3.000 km. SRFM removes this collision and maps a layer requested at
+3.001--3.101 km to the effective boundaries before rebuilding layer assignments.
+The same levels then drive RFM capture, gas calculations and particle columns.
+A second, bounded replay checks that the canonical level sequence remains
+distinct under RFM's matching rules.
+
+Effective centre and thickness can change slightly. Concentrations derived
+from mass loading use the effective thickness, preserving column mass in
+g m\ :sup:`-2`. Number, surface-area and volume densities retain their density
+interpretation; their column loading changes with thickness. A reference optical
+depth continues to specify column optical depth. Prescribed and grey-body
+optical depths also remain column quantities. Caller definitions are retained;
+NetCDF metadata records effective geometry and levels for the evaluation.
+
+Collapsed layers, or snapping that creates an overlap or shared boundary, raise
+an exception naming the affected layers and their original and effective bounds.
+The existing restriction against overlapping or touching optical layers still
+applies. Small discontinuities remain when a boundary crosses a snapping
+threshold; retrievals should not assume smooth geometry across those thresholds.
+
+Generated drivers place observer and surface sections after ``*LEV``, so those
+sections do not change the grid used for output-level matching. Existing driver
+files retain their section order, and their ``*LEV`` contents are replaced only
+in memory. Altitude insertions preceding that section are included in matching.
 
 Solar and viewing geometry
 --------------------------

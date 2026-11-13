@@ -6,10 +6,10 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Run SRFM with a driver table &mdash; SRFM 1.2.3 documentation</title>
+  <title>Run SRFM with a driver table &mdash; SRFM 1.5.4 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
-      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css?v=fd6457a4" />
+      <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css?v=c83e6b79" />
       <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css?v=f4aeca0c" />
       <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
       <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
@@ -17,14 +17,14 @@
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=590429e0"></script>
+      <script src="../../_static/documentation_options.js?v=1cd648e3"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/sg-tags.js?v=d80f6fa4"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Driver table" href="../../drv.html" />
+    <link rel="next" title="Reference optical depth" href="../optical_depth_input/index.html" />
     <link rel="prev" title="Basic examples" href="index.html" />
    
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-M598215MF0"></script>
@@ -88,7 +88,8 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../index.html">Examples</a></li>
-<li class="toctree-l1 current"><a class="reference internal" href="../index.html#basic-examples">Basic examples</a><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html#basic-examples">Basic examples</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html#reference-optical-depth">Reference optical depth</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="index.html">Basic examples</a><ul class="current">
 <li class="toctree-l3 current"><a class="current reference internal" href="#">Run SRFM with a driver table</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#external-spectroscopy-data">External spectroscopy data</a></li>
@@ -96,6 +97,9 @@
 <li class="toctree-l4"><a class="reference internal" href="#example-output">Example output</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../optical_depth_input/index.html">Reference optical depth</a><ul class="simple">
 </ul>
 </li>
 </ul>
@@ -108,18 +112,41 @@
 <li class="toctree-l2"><a class="reference internal" href="../../drv.html#rfm-execution-configuration">RFM execution configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../drv.html#rfm-driver-sections">RFM driver sections</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../drv.html#disort-configuration">DISORT configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../drv.html#scattering-layer-configuration">Scattering-layer configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../drv.html#scattering-layer-configuration">Scattering-layer configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../drv.html#using-reference-optical-depth">Using reference optical depth</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../drv.html#prescribed-optical-layers">Prescribed optical layers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../drv.html#vertical-optical-layer-restrictions">Vertical optical-layer restrictions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../drv.html#effective-altitude-levels">Effective altitude levels</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../drv.html#solar-and-viewing-geometry">Solar and viewing geometry</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../input_files.html">Input files</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../input_files.html#driver-and-atmospheric-files">Driver and atmospheric files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../input_files.html#aria-refractive-indices">ARIA refractive indices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../input_files.html#numerical-compatibility">Numerical compatibility</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../input_files.html#instrument-response-and-noise-files">Instrument response and noise files</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../input_files.html#common-spectral-text-format">Common spectral text format</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../input_files.html#surface-albedo-files">Surface albedo files</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../input_files.html#custom-solar-spectrum-files">Custom solar-spectrum files</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../input_files.html#prescribed-optical-property-files">Prescribed optical-property files</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../size_distributions.html">Particle size distributions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../size_distributions.html#common-interface">Common interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../size_distributions.html#gaussian-distribution">Gaussian distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../size_distributions.html#log-normal-distributions">Log-normal distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../size_distributions.html#gamma-distribution">Gamma distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../size_distributions.html#modified-gamma-distribution">Modified gamma distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../size_distributions.html#inverse-modified-gamma-distribution">Inverse modified gamma distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../size_distributions.html#regularised-power-law">Regularised power law</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../size_distributions.html#factory-construction">Factory construction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../size_distributions.html#numerical-validation">Numerical validation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../size_distributions.html#mie-layer-integration">Mie-layer integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../size_distributions.html#reference">Reference</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../memory.html">Memory-efficient calculations</a><ul>
@@ -257,6 +284,44 @@
 <li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.input_schema.validate_srfm_inputs"><code class="docutils literal notranslate"><span class="pre">validate_srfm_inputs()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="../../srfm.html#module-srfm.instruments">srfm.instruments</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.instruments.ConvolvingInstrument"><code class="docutils literal notranslate"><span class="pre">ConvolvingInstrument</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.instruments.ConvolvingInstrument.convolve"><code class="docutils literal notranslate"><span class="pre">ConvolvingInstrument.convolve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.instruments.ConvolvingInstrument.output_grid"><code class="docutils literal notranslate"><span class="pre">ConvolvingInstrument.output_grid()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.instruments.IASI"><code class="docutils literal notranslate"><span class="pre">IASI</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.instruments.IASI.add_noise"><code class="docutils literal notranslate"><span class="pre">IASI.add_noise()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.instruments.IASI.convolve"><code class="docutils literal notranslate"><span class="pre">IASI.convolve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.instruments.IASI.from_inputs"><code class="docutils literal notranslate"><span class="pre">IASI.from_inputs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.instruments.IASI.ils_source"><code class="docutils literal notranslate"><span class="pre">IASI.ils_source</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.instruments.IASI.output_grid"><code class="docutils literal notranslate"><span class="pre">IASI.output_grid()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.instruments.Instrument"><code class="docutils literal notranslate"><span class="pre">Instrument</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.instruments.NoiseInstrument"><code class="docutils literal notranslate"><span class="pre">NoiseInstrument</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.instruments.NoiseInstrument.add_noise"><code class="docutils literal notranslate"><span class="pre">NoiseInstrument.add_noise()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.instruments.apply_banded_factor"><code class="docutils literal notranslate"><span class="pre">apply_banded_factor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.instruments.create_instrument"><code class="docutils literal notranslate"><span class="pre">create_instrument()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.instruments.create_instrument_from_inputs"><code class="docutils literal notranslate"><span class="pre">create_instrument_from_inputs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.instruments.normalize_iasi_instrument"><code class="docutils literal notranslate"><span class="pre">normalize_iasi_instrument()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../srfm.html#module-srfm.instruments.iasi">srfm.instruments.iasi</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.instruments.iasi.IASI"><code class="docutils literal notranslate"><span class="pre">IASI</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.instruments.iasi.IASI.add_noise"><code class="docutils literal notranslate"><span class="pre">IASI.add_noise()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.instruments.iasi.IASI.convolve"><code class="docutils literal notranslate"><span class="pre">IASI.convolve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.instruments.iasi.IASI.from_inputs"><code class="docutils literal notranslate"><span class="pre">IASI.from_inputs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.instruments.iasi.IASI.ils_source"><code class="docutils literal notranslate"><span class="pre">IASI.ils_source</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.instruments.iasi.IASI.output_grid"><code class="docutils literal notranslate"><span class="pre">IASI.output_grid()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.instruments.iasi.apply_banded_factor"><code class="docutils literal notranslate"><span class="pre">apply_banded_factor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.instruments.iasi.normalize_iasi_instrument"><code class="docutils literal notranslate"><span class="pre">normalize_iasi_instrument()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../../srfm.html#module-srfm.inputs">srfm.inputs</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.inputs.Inputs"><code class="docutils literal notranslate"><span class="pre">Inputs</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.inputs.Inputs.read_oxharp_drv"><code class="docutils literal notranslate"><span class="pre">Inputs.read_oxharp_drv()</span></code></a></li>
@@ -308,15 +373,20 @@
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.plot_diff"><code class="docutils literal notranslate"><span class="pre">MieLayer.plot_diff()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.regrid"><code class="docutils literal notranslate"><span class="pre">MieLayer.regrid()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.required_nmom"><code class="docutils literal notranslate"><span class="pre">MieLayer.required_nmom</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_alpha"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_alpha()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_alt_lim"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_alt_lim()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_b"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_b()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_center_alt"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_center_alt()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_comp"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_comp()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_dist_type"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_dist_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_effective_radius"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_effective_radius()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_eta"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_eta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_gamma"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_gamma()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_input_from_dict"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_input_from_dict()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_leg_coeffs"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_leg_coeffs()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_leg_coeffs_type"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_leg_coeffs_type()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_mass_loading"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_mass_loading()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_median_radius"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_median_radius()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_multiproccess"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_multiproccess()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_n"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_n()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_name"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_name()</span></code></a></li>
@@ -325,6 +395,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_r"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_r()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_radii"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_radii()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_radii_quad_type"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_radii_quad_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_reference_optical_depth"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_reference_optical_depth()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_res"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_res()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_rho"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_rho()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_s"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_s()</span></code></a></li>
@@ -332,6 +403,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_spc_lim"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_spc_lim()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_spec_units"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_spec_units()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_thick"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_thick()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_truncate"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_truncate()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.set_v_den"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_v_den()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.test_complete_input_format"><code class="docutils literal notranslate"><span class="pre">MieLayer.test_complete_input_format()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.layer.MieLayer.test_input_values"><code class="docutils literal notranslate"><span class="pre">MieLayer.test_input_values()</span></code></a></li>
@@ -497,18 +569,93 @@
 <li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.rfm_helper.run_rfm_with_parameters"><code class="docutils literal notranslate"><span class="pre">run_rfm_with_parameters()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../../srfm.html#module-srfm.size_distribution">srfm.size_distribution</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../srfm.html#module-srfm.rfm_levels">srfm.rfm_levels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.rfm_levels.match_altitude"><code class="docutils literal notranslate"><span class="pre">match_altitude()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.rfm_levels.read_matching_grid"><code class="docutils literal notranslate"><span class="pre">read_matching_grid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.rfm_levels.reconcile_levels"><code class="docutils literal notranslate"><span class="pre">reconcile_levels()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../srfm.html#srfm-size-distribution">srfm.size_distribution</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.GammaDistribution"><code class="docutils literal notranslate"><span class="pre">GammaDistribution</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.GaussianDistribution"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.GaussianDistribution.median_radius"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.median_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.GaussianDistribution.mode_radius"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.mode_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.GaussianDistribution.effective_radius"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.effective_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.GaussianDistribution.effective_variance"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.effective_variance</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.GaussianDistribution.mean"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.GaussianDistribution.moment"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.moment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.GaussianDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.quantile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.GaussianDistribution.value"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.value()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.median_radius"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.median_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.mode_radius"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.mode_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.effective_radius"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.effective_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.effective_variance"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.effective_variance</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.mean"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.moment"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.moment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.quantile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.value"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.value()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.LogNormalDistribution"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.LogNormalDistribution.median_radius"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.median_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.LogNormalDistribution.mode_radius"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.mode_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.LogNormalDistribution.effective_radius"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.effective_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.LogNormalDistribution.effective_variance"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.effective_variance</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.LogNormalDistribution.mean"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.LogNormalDistribution.moment"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.moment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.LogNormalDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.quantile()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.LogNormalDistribution.value"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.value()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.ModifiedGammaDistribution"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.ModifiedGammaDistribution.alpha"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.alpha</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.ModifiedGammaDistribution.b"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.b</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.ModifiedGammaDistribution.median_radius"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.median_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.ModifiedGammaDistribution.mode_radius"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.mode_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.ModifiedGammaDistribution.effective_radius"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.effective_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.ModifiedGammaDistribution.effective_variance"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.effective_variance</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.ModifiedGammaDistribution.mean"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.ModifiedGammaDistribution.moment"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.moment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.ModifiedGammaDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.quantile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.ModifiedGammaDistribution.value"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.value()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.MultiModeLogNormalDistribution"><code class="docutils literal notranslate"><span class="pre">MultiModeLogNormalDistribution</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.number_of_modes"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.number_of_modes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.mode_number_densities"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.mode_number_densities</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.mode_surface_area_densities"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.mode_surface_area_densities</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.mode_volume_densities"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.mode_volume_densities</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.component_mode_radii"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.component_mode_radii</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.median_radius"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.median_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.effective_radius"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.effective_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.effective_variance"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.effective_variance</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.cdf"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.cdf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.mean"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.moment"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.moment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.quantile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.value"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.value()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.median_radius"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.median_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.mode_radius"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.mode_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.effective_radius"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.effective_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.effective_variance"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.effective_variance</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.mean"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.moment"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.moment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.quantile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.value"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.value()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.RegularizedPowerLawDistribution"><code class="docutils literal notranslate"><span class="pre">RegularizedPowerLawDistribution</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.SizeDistribution"><code class="docutils literal notranslate"><span class="pre">SizeDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.SizeDistribution.integration_bounds"><code class="docutils literal notranslate"><span class="pre">SizeDistribution.integration_bounds()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.SizeDistribution.mean"><code class="docutils literal notranslate"><span class="pre">SizeDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.SizeDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">SizeDistribution.quantile()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../../srfm.html#srfm.size_distribution.create_distribution"><code class="docutils literal notranslate"><span class="pre">create_distribution()</span></code></a></li>
@@ -625,290 +772,320 @@ adapt. In particular, review the spectral grids, atmosphere, gases, scattering
 layers, and output geometry before running a scientific calculation.</p>
 <div class="literal-block-wrapper docutils container" id="id1">
 <div class="code-block-caption"><span class="caption-text">driver_table.py</span><a class="headerlink" href="#id1" title="Link to this code"></a></div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">srfm</span><span class="w"> </span><span class="kn">import</span> <span class="n">rfm_helper</span>
-
-<span class="n">EXAMPLE_DIR</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span>
-<span class="n">HITRAN_FILE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;INPUT_PATH_TO_HITRAN_HERE&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
-<span class="n">XSC_DIR</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;INPUT_PATH_TO_XSC_DIRECTORY_HERE&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span>
-
-<span class="c1"># Final output grid, in cm-1</span>
-<span class="n">FIN_WVNMLO</span> <span class="o">=</span> <span class="mf">850.0</span>  <span class="c1"># min</span>
-<span class="n">FIN_WVNMHI</span> <span class="o">=</span> <span class="mf">1000.0</span>  <span class="c1"># max</span>
-<span class="n">FIN_RES</span> <span class="o">=</span> <span class="mf">0.25</span>  <span class="c1"># resolution</span>
-
-<span class="c1"># Computational grid</span>
-<span class="n">SPC_RES</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># resolution</span>
-<span class="n">SPC_WVNMLO</span> <span class="o">=</span> <span class="n">FIN_WVNMLO</span> <span class="o">-</span> <span class="mf">2.0</span>  <span class="c1"># min</span>
-<span class="n">SPC_WVNMHI</span> <span class="o">=</span> <span class="n">FIN_WVNMHI</span> <span class="o">+</span> <span class="mf">2.0</span>  <span class="c1"># max</span>
-<span class="n">SPC_UNITS</span> <span class="o">=</span> <span class="s2">&quot;cm-1&quot;</span>  <span class="c1"># units (cm-1, nm, um)</span>
-
-<span class="c1"># Compact in-memory fields may use a coarser grid than the main calculation.</span>
-<span class="c1"># SRFM validates complete coverage and interpolates linearly in wavenumber.</span>
-<span class="n">BOUNDARY_WAVENUMBER</span> <span class="o">=</span> <span class="p">[</span><span class="n">SPC_WVNMLO</span><span class="p">,</span> <span class="p">(</span><span class="n">SPC_WVNMLO</span> <span class="o">+</span> <span class="n">SPC_WVNMHI</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">SPC_WVNMHI</span><span class="p">]</span>
-
-<span class="n">inputs</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="c1">## General</span>
-    <span class="c1"># Every optional input consumed by main.run_srfm is shown explicitly in</span>
-    <span class="c1"># this example. Optional fields may be removed to use their documented</span>
-    <span class="c1"># defaults or the corresponding automatically derived value.</span>
-    <span class="s2">&quot;date&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>  <span class="c1"># optional: UTC date used for Sun-Earth distance</span>
-    <span class="s2">&quot;base_plots&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># plot output spectrum</span>
-    <span class="s2">&quot;out_mode&quot;</span><span class="p">:</span> <span class="s2">&quot;netcdf&quot;</span><span class="p">,</span>  <span class="c1"># file format to save output to, netcdf, txt or None</span>
-    <span class="s2">&quot;out_fname&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># optional: NetCDF filename; None uses &quot;srfm.nc&quot;</span>
-    <span class="s2">&quot;show_plots&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># show plots on screen</span>
-    <span class="s2">&quot;results_fldr&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">EXAMPLE_DIR</span> <span class="o">/</span> <span class="s2">&quot;results&quot;</span><span class="p">),</span>  <span class="c1"># where to save results</span>
-    <span class="c1"># Retained values are saved to srfm.nc; retained bbt/rad are also plotted.</span>
-    <span class="s2">&quot;retain_outputs&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;bbt&quot;</span><span class="p">,),</span>
-    <span class="s2">&quot;scattering_block_size&quot;</span><span class="p">:</span> <span class="mi">10000</span><span class="p">,</span>  <span class="c1"># optional: interpolation block size</span>
-    <span class="s2">&quot;retain_phase_functions&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># optional: retain large phase arrays</span>
-    <span class="c1"># instrument line shape (ILS)</span>
-    <span class="s2">&quot;convolve_iasi&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># if True, convolves spectrum with IASI ILS below</span>
-    <span class="s2">&quot;iasi_ils&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">EXAMPLE_DIR</span> <span class="o">/</span> <span class="s2">&quot;iasi.ils&quot;</span><span class="p">),</span>  <span class="c1"># optional path to ILS</span>
-    <span class="c1"># file</span>
-    <span class="c1">## Grids</span>
-    <span class="s2">&quot;fin_wvnmlo&quot;</span><span class="p">:</span> <span class="n">FIN_WVNMLO</span><span class="p">,</span>
-    <span class="s2">&quot;fin_wvnmhi&quot;</span><span class="p">:</span> <span class="n">FIN_WVNMHI</span><span class="p">,</span>
-    <span class="s2">&quot;fin_res&quot;</span><span class="p">:</span> <span class="n">FIN_RES</span><span class="p">,</span>
-    <span class="s2">&quot;spc_res&quot;</span><span class="p">:</span> <span class="n">SPC_RES</span><span class="p">,</span>
-    <span class="s2">&quot;spc_wvnmlo&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMLO</span><span class="p">,</span>
-    <span class="s2">&quot;spc_wvnmhi&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMHI</span><span class="p">,</span>
-    <span class="s2">&quot;spc_units&quot;</span><span class="p">:</span> <span class="n">SPC_UNITS</span><span class="p">,</span>
-    <span class="c1">## Output geometry</span>
-    <span class="s2">&quot;out_fmt&quot;</span><span class="p">:</span> <span class="s2">&quot;altitude&quot;</span><span class="p">,</span>  <span class="c1"># &quot;altitude&quot; (km) or &quot;tau&quot; (optical depth)</span>
-    <span class="s2">&quot;out&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">],</span>  <span class="c1"># output altitudes; a number or one-dimensional sequence</span>
-    <span class="s2">&quot;out_toa&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># also return output at the top of the atmosphere</span>
-    <span class="c1">## RFM configuration:</span>
-    <span class="c1"># RFM global config</span>
-    <span class="s2">&quot;rfm_config&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;output_mode&quot;</span><span class="p">:</span> <span class="s2">&quot;capture&quot;</span><span class="p">,</span>  <span class="c1"># &quot;capture&quot; or &quot;files&quot;</span>
-        <span class="s2">&quot;driver_path&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># e.g. Path(&quot;drvs/example.drv&quot;)</span>
-        <span class="s2">&quot;generate_driver&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># Set True to overwrite driver_path contents</span>
-        <span class="s2">&quot;verbose&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="s2">&quot;capture_files_content&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># True - store output files content in result</span>
-        <span class="c1"># the logic is to save memory if processed outputs, such as dataframes are requested</span>
-        <span class="c1"># and not capture the raw files as well.</span>
-    <span class="p">},</span>
-    <span class="c1"># inputs that mirror the standard RFM driver table https://eodg.atm.ox.ac.uk/RFM/index.html</span>
-    <span class="s2">&quot;driver_inputs&quot;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span>
-        <span class="c1"># mandatory sections</span>
-        <span class="n">header</span><span class="o">=</span><span class="s2">&quot;SRFM_standard_run&quot;</span><span class="p">,</span>
-        <span class="n">flags</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;OPT&quot;</span><span class="p">,</span> <span class="s2">&quot;NAD&quot;</span><span class="p">,</span> <span class="s2">&quot;SFC&quot;</span><span class="p">,</span> <span class="s2">&quot;PRF&quot;</span><span class="p">,</span> <span class="s2">&quot;LEV&quot;</span><span class="p">,</span> <span class="s2">&quot;DBL&quot;</span><span class="p">,</span> <span class="s2">&quot;CHI&quot;</span><span class="p">,</span> <span class="s2">&quot;MIX&quot;</span><span class="p">),</span>
-        <span class="n">spectral</span><span class="o">=</span><span class="p">[</span><span class="n">rfm_helper</span><span class="o">.</span><span class="n">SpectralRange</span><span class="p">(</span><span class="n">SPC_WVNMLO</span><span class="p">,</span> <span class="n">SPC_WVNMHI</span><span class="p">,</span> <span class="n">SPC_RES</span><span class="p">)],</span>
-        <span class="n">gases</span><span class="o">=</span><span class="p">(</span>
-            <span class="s2">&quot;N2&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;O2&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;CO2&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;O3&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;H2O&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;CH4&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;N2O&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;HNO3&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;CO&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;NO2&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;N2O5&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;ClO&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;HOCl&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;ClONO2&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;NO&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;HNO4&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;HCN&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;NH3&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;F11&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;F12&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;F14&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;F22&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;CCl4&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;COF2&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;H2O2&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;C2H2&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;C2H6&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;OCS&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;SO2&quot;</span><span class="p">,</span>
-        <span class="p">),</span>
-        <span class="n">atmosphere</span><span class="o">=</span><span class="p">(</span>
-            <span class="nb">str</span><span class="p">(</span><span class="n">EXAMPLE_DIR</span> <span class="o">/</span> <span class="s2">&quot;hgt_std.atm&quot;</span><span class="p">),</span>
-            <span class="nb">str</span><span class="p">(</span><span class="n">EXAMPLE_DIR</span> <span class="o">/</span> <span class="s2">&quot;day.atm&quot;</span><span class="p">),</span>
-            <span class="c1"># Keep the actual profile as the second item in this tuple.</span>
-            <span class="c1"># TODO change the reliance on positions</span>
-        <span class="p">),</span>
-        <span class="n">hit</span><span class="o">=</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">HITRAN_FILE</span><span class="p">),),</span>
-        <span class="n">xsc</span><span class="o">=</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">XSC_DIR</span> <span class="o">/</span> <span class="s2">&quot;*.xsc&quot;</span><span class="p">),),</span>
-    <span class="p">),</span>
-    <span class="c1"># Optional internal calculation levels (km); omit to use the standard grid.</span>
-    <span class="s2">&quot;levels&quot;</span><span class="p">:</span> <span class="p">[</span>
-        <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">,</span> <span class="mf">7.0</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">,</span> <span class="mf">9.0</span><span class="p">,</span>
-        <span class="mf">10.0</span><span class="p">,</span> <span class="mf">11.0</span><span class="p">,</span> <span class="mf">12.0</span><span class="p">,</span> <span class="mf">13.0</span><span class="p">,</span> <span class="mf">14.0</span><span class="p">,</span> <span class="mf">15.0</span><span class="p">,</span> <span class="mf">16.0</span><span class="p">,</span> <span class="mf">17.0</span><span class="p">,</span> <span class="mf">18.0</span><span class="p">,</span>
-        <span class="mf">19.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">,</span> <span class="mf">21.0</span><span class="p">,</span> <span class="mf">22.0</span><span class="p">,</span> <span class="mf">23.0</span><span class="p">,</span> <span class="mf">24.0</span><span class="p">,</span> <span class="mf">25.0</span><span class="p">,</span> <span class="mf">27.5</span><span class="p">,</span> <span class="mf">30.0</span><span class="p">,</span>
-        <span class="mf">32.5</span><span class="p">,</span> <span class="mf">35.0</span><span class="p">,</span> <span class="mf">37.5</span><span class="p">,</span> <span class="mf">40.0</span><span class="p">,</span> <span class="mf">42.5</span><span class="p">,</span> <span class="mf">45.0</span><span class="p">,</span> <span class="mf">47.5</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">,</span> <span class="mf">55.0</span><span class="p">,</span>
-        <span class="mf">60.0</span><span class="p">,</span> <span class="mf">65.0</span><span class="p">,</span> <span class="mf">70.0</span><span class="p">,</span> <span class="mf">75.0</span><span class="p">,</span> <span class="mf">80.0</span><span class="p">,</span> <span class="mf">85.0</span><span class="p">,</span> <span class="mf">90.0</span><span class="p">,</span> <span class="mf">95.0</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">,</span>
-        <span class="mf">105.0</span><span class="p">,</span> <span class="mf">110.0</span><span class="p">,</span> <span class="mf">115.0</span><span class="p">,</span> <span class="mf">120.0</span><span class="p">,</span>
-    <span class="p">],</span>
-    <span class="c1">## DISORT configuration</span>
-    <span class="s2">&quot;fisot&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>  <span class="c1"># isotropic illumination at the top of the atmosphere</span>
-    <span class="s2">&quot;albedo&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;grid&quot;</span><span class="p">:</span> <span class="n">BOUNDARY_WAVENUMBER</span><span class="p">,</span>
-        <span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.08</span><span class="p">,</span> <span class="mf">0.12</span><span class="p">,</span> <span class="mf">0.18</span><span class="p">],</span>
-        <span class="s2">&quot;grid_units&quot;</span><span class="p">:</span> <span class="s2">&quot;cm-1&quot;</span><span class="p">,</span>
-    <span class="p">},</span>  <span class="c1"># spectral Lambertian bottom-boundary albedo; a scalar remains supported</span>
-    <span class="s2">&quot;temis&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>  <span class="c1"># top boundary emissivity</span>
-    <span class="s2">&quot;earth_radius&quot;</span><span class="p">:</span> <span class="mf">6371.0</span><span class="p">,</span>  <span class="c1"># optional: Earth radius (km); defaults to 6371</span>
-    <span class="s2">&quot;nmom&quot;</span><span class="p">:</span> <span class="mi">17</span><span class="p">,</span>  <span class="c1"># requested phase moments; SRFM raises this when required</span>
-    <span class="s2">&quot;maxcmu&quot;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>  <span class="c1"># computational streams; even and at least 4</span>
-    <span class="s2">&quot;maxumu&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># number of user output polar angles</span>
-    <span class="s2">&quot;maxphi&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># number of user azimuth angles</span>
-    <span class="s2">&quot;usrang&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># return output at user angles?</span>
-    <span class="s2">&quot;usrtau&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># return output at user optical depths?</span>
-    <span class="s2">&quot;ibcnd&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># boundary conditions</span>
-    <span class="s2">&quot;onlyfl&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># return only fluxes?</span>
-    <span class="s2">&quot;prnt&quot;</span><span class="p">:</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span>  <span class="c1"># what gets prints to terminal</span>
-    <span class="s2">&quot;planck&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># include internal Planck function?</span>
-    <span class="s2">&quot;lamber&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># Lambertian reflector surface</span>
-    <span class="s2">&quot;deltamplus&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># Delta-M+ approximation to phase functions</span>
-    <span class="s2">&quot;do_pseudo_sphere&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># spherical correction</span>
-    <span class="s2">&quot;disort_precision&quot;</span><span class="p">:</span> <span class="s2">&quot;double&quot;</span><span class="p">,</span>  <span class="c1"># Fortran precision</span>
-    <span class="s2">&quot;header&quot;</span><span class="p">:</span> <span class="s2">&quot;NO HEADER&quot;</span><span class="p">,</span>  <span class="c1"># optional: DISORT terminal header</span>
-    <span class="s2">&quot;adjust_maxcmu&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># if DISORT output intensity is negative, rerun with more streams</span>
-    <span class="s2">&quot;btemp&quot;</span><span class="p">:</span> <span class="mf">300.0</span><span class="p">,</span>  <span class="c1"># optional: lower-boundary temperature (K)</span>
-    <span class="s2">&quot;ttemp&quot;</span><span class="p">:</span> <span class="mf">295.0</span><span class="p">,</span>  <span class="c1"># optional: upper-boundary temperature (K)</span>
-    <span class="c1">## Layer (scattering, grey body, etc.) configuration</span>
-    <span class="c1"># Layers are named by the keys in these dictionaries; refer to the docs for</span>
-    <span class="c1"># layer-specific parameters. Both mappings are optional.</span>
-    <span class="s2">&quot;scat_lyrs_inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;Sulphuric_acid_1&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Sulphuric_acid_1&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;low_spc&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMLO</span><span class="p">,</span>
-            <span class="s2">&quot;upp_spc&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMHI</span><span class="p">,</span>
-            <span class="s2">&quot;res&quot;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span>
-            <span class="s2">&quot;spec_units&quot;</span><span class="p">:</span> <span class="n">SPC_UNITS</span><span class="p">,</span>
-            <span class="s2">&quot;rho&quot;</span><span class="p">:</span> <span class="mf">1670.0</span><span class="p">,</span>  <span class="c1"># scatterer density</span>
-            <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># number concentration</span>
-            <span class="s2">&quot;s&quot;</span><span class="p">:</span> <span class="mf">1.75</span><span class="p">,</span>  <span class="c1"># size distribution spread</span>
-            <span class="s2">&quot;s_a_den&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># surface area density</span>
-            <span class="s2">&quot;v_den&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># volume density</span>
-            <span class="s2">&quot;dist_type&quot;</span><span class="p">:</span> <span class="s2">&quot;log_normal&quot;</span><span class="p">,</span>  <span class="c1"># size distribution type</span>
-            <span class="s2">&quot;comp&quot;</span><span class="p">:</span> <span class="s2">&quot;sulphuric acid&quot;</span><span class="p">,</span>  <span class="c1"># refractive index</span>
-            <span class="s2">&quot;center_alt&quot;</span><span class="p">:</span> <span class="mf">14.0</span><span class="p">,</span>  <span class="c1"># scattering layer center altitude</span>
-            <span class="s2">&quot;thick&quot;</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">,</span>  <span class="c1"># scattering layer thickness</span>
-            <span class="s2">&quot;radii&quot;</span><span class="p">:</span> <span class="mi">181</span><span class="p">,</span>  <span class="c1"># number of particle radii in particle size distribution</span>
-            <span class="s2">&quot;eta&quot;</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">,</span>  <span class="c1"># size distribution cut-off</span>
-            <span class="s2">&quot;phase_quad_N&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>  <span class="c1"># number of quadrature points in the phase function</span>
-            <span class="s2">&quot;phase_quad_type&quot;</span><span class="p">:</span> <span class="s2">&quot;L&quot;</span><span class="p">,</span>  <span class="c1"># phase function quadrature type</span>
-            <span class="s2">&quot;radii_quad_type&quot;</span><span class="p">:</span> <span class="s2">&quot;T&quot;</span><span class="p">,</span>  <span class="c1"># size distribution quadrature type</span>
-            <span class="s2">&quot;leg_coeffs&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># return Legendre expansion coefficients</span>
-            <span class="s2">&quot;leg_coeffs_type&quot;</span><span class="p">:</span> <span class="s2">&quot;normalised&quot;</span><span class="p">,</span>  <span class="c1"># what type of coefficients</span>
-            <span class="s2">&quot;multiprocess&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># attempt to parallelize calculations, EXPERIMENTAL</span>
-            <span class="s2">&quot;mass_loading&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span>  <span class="c1"># scatterer mass loading (g m-2)</span>
-            <span class="s2">&quot;r&quot;</span><span class="p">:</span> <span class="mf">0.4</span><span class="p">,</span>  <span class="c1"># particle mean radius</span>
-        <span class="p">},</span>
-        <span class="s2">&quot;Ash_1&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Ash_1&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;low_spc&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMLO</span><span class="p">,</span>
-            <span class="s2">&quot;upp_spc&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMHI</span><span class="p">,</span>
-            <span class="s2">&quot;res&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
-            <span class="s2">&quot;spec_units&quot;</span><span class="p">:</span> <span class="n">SPC_UNITS</span><span class="p">,</span>
-            <span class="s2">&quot;rho&quot;</span><span class="p">:</span> <span class="mf">2300.0</span><span class="p">,</span>
-            <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="s2">&quot;s&quot;</span><span class="p">:</span> <span class="mf">1.8</span><span class="p">,</span>
-            <span class="s2">&quot;s_a_den&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="s2">&quot;v_den&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="s2">&quot;dist_type&quot;</span><span class="p">:</span> <span class="s2">&quot;log_normal&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;comp&quot;</span><span class="p">:</span> <span class="s2">&quot;ash&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;center_alt&quot;</span><span class="p">:</span> <span class="mf">9.0</span><span class="p">,</span>
-            <span class="s2">&quot;thick&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
-            <span class="s2">&quot;radii&quot;</span><span class="p">:</span> <span class="mi">181</span><span class="p">,</span>
-            <span class="s2">&quot;eta&quot;</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">,</span>
-            <span class="s2">&quot;phase_quad_N&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>
-            <span class="s2">&quot;phase_quad_type&quot;</span><span class="p">:</span> <span class="s2">&quot;L&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;radii_quad_type&quot;</span><span class="p">:</span> <span class="s2">&quot;T&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;leg_coeffs&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-            <span class="s2">&quot;leg_coeffs_type&quot;</span><span class="p">:</span> <span class="s2">&quot;normalised&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;multiprocess&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-            <span class="s2">&quot;mass_loading&quot;</span><span class="p">:</span> <span class="mf">0.21</span><span class="p">,</span>
-            <span class="s2">&quot;r&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span>
-        <span class="p">},</span>
-        <span class="s2">&quot;Water_cloud_1&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Water_cloud_1&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;low_spc&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMLO</span><span class="p">,</span>
-            <span class="s2">&quot;upp_spc&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMHI</span><span class="p">,</span>
-            <span class="s2">&quot;res&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
-            <span class="s2">&quot;spec_units&quot;</span><span class="p">:</span> <span class="n">SPC_UNITS</span><span class="p">,</span>
-            <span class="s2">&quot;rho&quot;</span><span class="p">:</span> <span class="mf">997.0</span><span class="p">,</span>
-            <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="s2">&quot;s&quot;</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">,</span>
-            <span class="s2">&quot;s_a_den&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="s2">&quot;v_den&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
-            <span class="s2">&quot;dist_type&quot;</span><span class="p">:</span> <span class="s2">&quot;log_normal&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;comp&quot;</span><span class="p">:</span> <span class="s2">&quot;H2O_263K_Rowe_2020.ri&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;center_alt&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-            <span class="s2">&quot;thick&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-            <span class="s2">&quot;radii&quot;</span><span class="p">:</span> <span class="mi">181</span><span class="p">,</span>
-            <span class="s2">&quot;eta&quot;</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">,</span>
-            <span class="s2">&quot;phase_quad_N&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>
-            <span class="s2">&quot;phase_quad_type&quot;</span><span class="p">:</span> <span class="s2">&quot;L&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;radii_quad_type&quot;</span><span class="p">:</span> <span class="s2">&quot;T&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;leg_coeffs&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-            <span class="s2">&quot;leg_coeffs_type&quot;</span><span class="p">:</span> <span class="s2">&quot;normalised&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;multiprocess&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-            <span class="s2">&quot;mass_loading&quot;</span><span class="p">:</span> <span class="mf">100.0</span><span class="p">,</span>
-            <span class="s2">&quot;r&quot;</span><span class="p">:</span> <span class="mf">15.0</span><span class="p">,</span>
-        <span class="p">},</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;gbc_lyrs_inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;GBC_1&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;GBC_1&quot;</span><span class="p">,</span>  <span class="c1"># GreyBodyCloud layer name</span>
-            <span class="s2">&quot;low_spc&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMLO</span><span class="p">,</span>  <span class="c1"># spectral calculation grid lower limit</span>
-            <span class="s2">&quot;upp_spc&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMHI</span><span class="p">,</span>  <span class="c1"># spectral calculation grid upper limit</span>
-            <span class="s2">&quot;res&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>  <span class="c1"># spectral calculation grid resolution</span>
-            <span class="s2">&quot;spec_units&quot;</span><span class="p">:</span> <span class="n">SPC_UNITS</span><span class="p">,</span>  <span class="c1"># spectral calculation grid units</span>
-            <span class="s2">&quot;center_alt&quot;</span><span class="p">:</span> <span class="mf">5.0</span><span class="p">,</span>  <span class="c1"># layer center altitude (km)</span>
-            <span class="s2">&quot;thick&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span>  <span class="c1"># layer thickness (km)</span>
-            <span class="s2">&quot;emis&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>  <span class="c1"># grey-body emissivity; currently a stub</span>
-            <span class="s2">&quot;inp_tau&quot;</span><span class="p">:</span> <span class="mf">1e4</span><span class="p">,</span>  <span class="c1"># cloud optical depth</span>
-        <span class="p">},</span>
-    <span class="p">},</span>
-    <span class="c1"># Prescribed particle optics participate in the same non-overlapping vertical</span>
-    <span class="c1"># structure as Mie and grey-body layers. This layer spans 6.0--6.4 km.</span>
-    <span class="s2">&quot;prescribed_lyrs_inputs&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;prescribed_aerosol&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;prescribed_aerosol&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;alt_low&quot;</span><span class="p">:</span> <span class="mf">6.0</span><span class="p">,</span>
-            <span class="s2">&quot;alt_upp&quot;</span><span class="p">:</span> <span class="mf">6.4</span><span class="p">,</span>
-            <span class="s2">&quot;optical_depth&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;angstrom&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;reference_value&quot;</span><span class="p">:</span> <span class="mf">0.00058</span><span class="p">,</span>
-                <span class="s2">&quot;reference_wavelength_um&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
-                <span class="s2">&quot;angstrom_exponent&quot;</span><span class="p">:</span> <span class="mf">1.48</span><span class="p">,</span>
-            <span class="p">},</span>
-            <span class="s2">&quot;ssalb&quot;</span><span class="p">:</span> <span class="mf">0.822</span><span class="p">,</span>
-            <span class="s2">&quot;phase_function&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;henyey_greenstein&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;asymmetry&quot;</span><span class="p">:</span> <span class="mf">0.490</span><span class="p">,</span>
-            <span class="p">},</span>
-        <span class="p">},</span>
-    <span class="p">},</span>
-    <span class="c1">## solar reflection</span>
-    <span class="s2">&quot;sun&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># if True, include solar reflection</span>
-    <span class="c1"># Values are beam-normal DISORT FBEAM spectral irradiance. A custom spectrum</span>
-    <span class="c1"># receives unit conversion and interpolation only: no date, cosine, or amplitude</span>
-    <span class="c1"># scaling is applied.</span>
-    <span class="s2">&quot;solar_spectrum&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;grid&quot;</span><span class="p">:</span> <span class="n">BOUNDARY_WAVENUMBER</span><span class="p">,</span>
-        <span class="s2">&quot;values&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.75</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="mf">1.10</span><span class="p">],</span>
-        <span class="s2">&quot;grid_units&quot;</span><span class="p">:</span> <span class="s2">&quot;cm-1&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;value_units&quot;</span><span class="p">:</span> <span class="s2">&quot;W m-2 (cm-1)-1&quot;</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="c1"># With sun=True, sza is in [0, 90); set sun=False for a night-side scene.</span>
-    <span class="s2">&quot;sza&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># solar zenith angle; 0 is directly overhead</span>
-    <span class="s2">&quot;saa&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># solar azimuth angle, 0-360</span>
-    <span class="c1">## Angles</span>
-    <span class="s2">&quot;zen&quot;</span><span class="p">:</span> <span class="mi">40</span><span class="p">,</span>  <span class="c1"># satellite zenith angle, 0-180 (not 90 for angular output)</span>
-    <span class="s2">&quot;azi&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span>  <span class="c1"># satellite azimuth angle, 0-360</span>
-<span class="p">}</span>
-</pre></div>
-</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="w">
+</span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span><span class="w">
+</span><span class="w">
+</span><span class="kn">from</span><span class="w"> </span><span class="nn">srfm</span><span class="w"> </span><span class="kn">import</span> <span class="n">rfm_helper</span><span class="w">
+</span><span class="w">
+</span><span class="n">EXAMPLE_DIR</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="w">
+</span><span class="n">HITRAN_FILE</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;</span><span class="s2">INPUT_PATH_TO_HITRAN_HERE</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="p">)</span><span class="w">
+</span><span class="n">XSC_DIR</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;</span><span class="s2">INPUT_PATH_TO_XSC_DIRECTORY_HERE</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="c1"># Final output grid, in cm-1</span><span class="w">
+</span><span class="n">FIN_WVNMLO</span> <span class="o">=</span> <span class="mf">850.0</span>  <span class="c1"># min</span><span class="w">
+</span><span class="n">FIN_WVNMHI</span> <span class="o">=</span> <span class="mf">1000.0</span>  <span class="c1"># max</span><span class="w">
+</span><span class="n">FIN_RES</span> <span class="o">=</span> <span class="mf">0.25</span>  <span class="c1"># resolution</span><span class="w">
+</span><span class="w">
+</span><span class="c1"># Computational grid</span><span class="w">
+</span><span class="n">SPC_RES</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># resolution</span><span class="w">
+</span><span class="n">SPC_WVNMLO</span> <span class="o">=</span> <span class="n">FIN_WVNMLO</span> <span class="o">-</span> <span class="mf">2.0</span>  <span class="c1"># min</span><span class="w">
+</span><span class="n">SPC_WVNMHI</span> <span class="o">=</span> <span class="n">FIN_WVNMHI</span> <span class="o">+</span> <span class="mf">2.0</span>  <span class="c1"># max</span><span class="w">
+</span><span class="n">SPC_UNITS</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="s2">cm-1</span><span class="s2">&quot;</span>  <span class="c1"># grid specification (cm-1, nm, um, resolving_power)</span><span class="w">
+</span><span class="w">
+</span><span class="c1"># Constant resolving-power alternative (bounds remain wavenumbers in cm-1):</span><span class="w">
+</span><span class="c1"># SPC_RES = 20_000.0  # R = wavelength / delta_wavelength</span><span class="w">
+</span><span class="c1"># SPC_UNITS = &quot;resolving_power&quot;</span><span class="w">
+</span><span class="w">
+</span><span class="c1"># Compact in-memory fields may use a coarser grid than the main calculation.</span><span class="w">
+</span><span class="c1"># SRFM validates complete coverage and interpolates linearly in wavenumber.</span><span class="w">
+</span><span class="n">BOUNDARY_WAVENUMBER</span> <span class="o">=</span> <span class="p">[</span><span class="n">SPC_WVNMLO</span><span class="p">,</span> <span class="p">(</span><span class="n">SPC_WVNMLO</span> <span class="o">+</span> <span class="n">SPC_WVNMHI</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">SPC_WVNMHI</span><span class="p">]</span><span class="w">
+</span><span class="w">
+</span><span class="n">inputs</span> <span class="o">=</span> <span class="p">{</span><span class="w">
+</span>    <span class="c1">## General</span><span class="w">
+</span>    <span class="c1"># Every optional input consumed by main.run_srfm is shown explicitly in</span><span class="w">
+</span>    <span class="c1"># this example. Optional fields may be removed to use their documented</span><span class="w">
+</span>    <span class="c1"># defaults or the corresponding automatically derived value.</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">date</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="p">,</span>  <span class="c1"># optional: UTC date used for Sun-Earth distance</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">base_plots</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># plot output spectrum</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">out_mode</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">netcdf</span><span class="s2">&quot;</span><span class="p">,</span>  <span class="c1"># file format to save output to, netcdf, txt or None</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">out_fname</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># optional: NetCDF filename; None uses &quot;srfm.nc&quot;</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">show_plots</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># show plots on screen</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">results_fldr</span><span class="s2">&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">EXAMPLE_DIR</span> <span class="o">/</span> <span class="s2">&quot;</span><span class="s2">results</span><span class="s2">&quot;</span><span class="p">)</span><span class="p">,</span>  <span class="c1"># where to save results</span><span class="w">
+</span>    <span class="c1"># Retained values are saved to srfm.nc; retained bbt/rad are also plotted.</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">retain_outputs</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">(</span><span class="s2">&quot;</span><span class="s2">bbt</span><span class="s2">&quot;</span><span class="p">,</span><span class="p">)</span><span class="p">,</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">scattering_block_size</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">10000</span><span class="p">,</span>  <span class="c1"># optional: interpolation block size</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">retain_phase_functions</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># optional: retain large phase arrays</span><span class="w">
+</span>    <span class="c1"># Instrument operations are selected independently by registered name.</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">convolve</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># None, &quot;iasi&quot;, &quot;CrIS&quot;, &quot;HIRAS&quot;, or &quot;HIRAS-2&quot;</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">iasi_ils</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># optional override; packaged IASI ILS is the default</span><span class="w">
+</span>    <span class="c1"># IASI convolution derives output channels from the computational range after</span><span class="w">
+</span>    <span class="c1"># removing 2 cm-1 at each edge; configured fin_* values are then ignored.</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">add_noise</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># same name as convolve to add instrument noise</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">iasi_instrument</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">M03</span><span class="s2">&quot;</span><span class="p">,</span>  <span class="c1"># M01/IASI-B, M02/IASI-A, or M03/IASI-C</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">iasi_ifov</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># select IASI field of view 1, 2, 3, or 4</span><span class="w">
+</span>    <span class="c1"># CrIS and HIRAS use native 0.625 cm-1 channels. Set fin_res=None (or</span><span class="w">
+</span>    <span class="c1"># 0.625), spc_units=&quot;cm-1&quot;, and spc_res&lt;=0.05 when selecting one.</span><span class="w">
+</span>    <span class="c1"># Their computational grid also needs response support around each channel.</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">apodization</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># &quot;Hamming&quot; to match a Hamming processed spectrum</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">cris_platform</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">J2</span><span class="s2">&quot;</span><span class="p">,</span>  <span class="c1"># J2/NOAA-21 full spectral resolution</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">cris_fov</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>  <span class="c1"># 1-9; default 5</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">cris_noise_file</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># matching L1 product or NPZ; None uses J2 profile</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">cris_noise_units</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># optional explicit radiance-unit confirmation</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">hiras_fov</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># FY-3D HIRAS-I FOV 1-4; default 1</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">hiras_noise_file</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># None uses bundled FY-3D profile</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">hiras_noise_units</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># set &quot;mW&quot; only after checking FY-3D NEdN units</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">hiras2_platform</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">FY3E</span><span class="s2">&quot;</span><span class="p">,</span>  <span class="c1"># FY3E, FY3F, or FY3H</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">hiras2_fov</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># 1-9; default 1</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">hiras2_noise_file</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># FY3F/H require a matching external noise file</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">hiras2_noise_units</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># optional explicit radiance-unit confirmation</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">noise_seed</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># integer for reproducible CrIS/HIRAS noise</span><span class="w">
+</span>    <span class="c1">## Grids</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">fin_wvnmlo</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">FIN_WVNMLO</span><span class="p">,</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">fin_wvnmhi</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">FIN_WVNMHI</span><span class="p">,</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">fin_res</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">FIN_RES</span><span class="p">,</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">spc_res</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">SPC_RES</span><span class="p">,</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">spc_wvnmlo</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMLO</span><span class="p">,</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">spc_wvnmhi</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMHI</span><span class="p">,</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">spc_units</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">SPC_UNITS</span><span class="p">,</span><span class="w">
+</span>    <span class="c1">## Output geometry</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">out_fmt</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">altitude</span><span class="s2">&quot;</span><span class="p">,</span>  <span class="c1"># &quot;altitude&quot; (km) or &quot;tau&quot; (optical depth)</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">out</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">]</span><span class="p">,</span>  <span class="c1"># output altitudes; a number or one-dimensional sequence</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">out_toa</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># also return output at the top of the atmosphere</span><span class="w">
+</span>    <span class="c1">## RFM configuration:</span><span class="w">
+</span>    <span class="c1"># RFM global config</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">rfm_config</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">{</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">output_mode</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">capture</span><span class="s2">&quot;</span><span class="p">,</span>  <span class="c1"># &quot;capture&quot; or &quot;files&quot;</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">driver_path</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># e.g. Path(&quot;drvs/example.drv&quot;)</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">generate_driver</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># Set True to overwrite driver_path contents</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">verbose</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">capture_files_content</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># True - store output files content in result</span><span class="w">
+</span>        <span class="c1"># the logic is to save memory if processed outputs, such as dataframes are requested</span><span class="w">
+</span>        <span class="c1"># and not capture the raw files as well.</span><span class="w">
+</span>    <span class="p">}</span><span class="p">,</span><span class="w">
+</span>    <span class="c1"># inputs that mirror the standard RFM driver table https://eodg.atm.ox.ac.uk/RFM/index.html</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">driver_inputs</span><span class="s2">&quot;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="w">
+</span>        <span class="c1"># mandatory sections</span><span class="w">
+</span>        <span class="n">header</span><span class="o">=</span><span class="s2">&quot;</span><span class="s2">SRFM_standard_run</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>        <span class="n">flags</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;</span><span class="s2">OPT</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s2">NAD</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s2">SFC</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s2">PRF</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s2">LEV</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s2">DBL</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s2">CHI</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s2">MIX</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="s2">CTM</span><span class="s2">&quot;</span><span class="p">)</span><span class="p">,</span><span class="w">
+</span>        <span class="n">spectral</span><span class="o">=</span><span class="p">[</span><span class="n">rfm_helper</span><span class="o">.</span><span class="n">SpectralRange</span><span class="p">(</span><span class="n">SPC_WVNMLO</span><span class="p">,</span> <span class="n">SPC_WVNMHI</span><span class="p">,</span> <span class="n">SPC_RES</span><span class="p">)</span><span class="p">]</span><span class="p">,</span><span class="w">
+</span>        <span class="n">gases</span><span class="o">=</span><span class="p">(</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">N2</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">O2</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">CO2</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">O3</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">H2O</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">CH4</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">N2O</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">HNO3</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">CO</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">NO2</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">N2O5</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">ClO</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">HOCl</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">ClONO2</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">NO</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">HNO4</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">HCN</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">NH3</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">F11</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">F12</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">F14</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">F22</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">CCl4</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">COF2</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">H2O2</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">C2H2</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">C2H6</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">OCS</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">SO2</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>        <span class="p">)</span><span class="p">,</span><span class="w">
+</span>        <span class="n">atmosphere</span><span class="o">=</span><span class="p">(</span><span class="w">
+</span>            <span class="nb">str</span><span class="p">(</span><span class="n">EXAMPLE_DIR</span> <span class="o">/</span> <span class="s2">&quot;</span><span class="s2">hgt_std.atm</span><span class="s2">&quot;</span><span class="p">)</span><span class="p">,</span><span class="w">
+</span>            <span class="nb">str</span><span class="p">(</span><span class="n">EXAMPLE_DIR</span> <span class="o">/</span> <span class="s2">&quot;</span><span class="s2">day.atm</span><span class="s2">&quot;</span><span class="p">)</span><span class="p">,</span><span class="w">
+</span>            <span class="c1"># Keep the actual profile as the second item in this tuple.</span><span class="w">
+</span>            <span class="c1"># TODO change the reliance on positions</span><span class="w">
+</span>        <span class="p">)</span><span class="p">,</span><span class="w">
+</span>        <span class="n">hit</span><span class="o">=</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">HITRAN_FILE</span><span class="p">)</span><span class="p">,</span><span class="p">)</span><span class="p">,</span><span class="w">
+</span>        <span class="n">xsc</span><span class="o">=</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">XSC_DIR</span> <span class="o">/</span> <span class="s2">&quot;</span><span class="s2">*.xsc</span><span class="s2">&quot;</span><span class="p">)</span><span class="p">,</span><span class="p">)</span><span class="p">,</span><span class="w">
+</span>    <span class="p">)</span><span class="p">,</span><span class="w">
+</span>    <span class="c1"># Optional internal calculation levels (km); omit to use the standard grid.</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">levels</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">[</span><span class="w">
+</span>        <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">,</span> <span class="mf">7.0</span><span class="p">,</span> <span class="mf">8.0</span><span class="p">,</span> <span class="mf">9.0</span><span class="p">,</span><span class="w">
+</span>        <span class="mf">10.0</span><span class="p">,</span> <span class="mf">11.0</span><span class="p">,</span> <span class="mf">12.0</span><span class="p">,</span> <span class="mf">13.0</span><span class="p">,</span> <span class="mf">14.0</span><span class="p">,</span> <span class="mf">15.0</span><span class="p">,</span> <span class="mf">16.0</span><span class="p">,</span> <span class="mf">17.0</span><span class="p">,</span> <span class="mf">18.0</span><span class="p">,</span><span class="w">
+</span>        <span class="mf">19.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">,</span> <span class="mf">21.0</span><span class="p">,</span> <span class="mf">22.0</span><span class="p">,</span> <span class="mf">23.0</span><span class="p">,</span> <span class="mf">24.0</span><span class="p">,</span> <span class="mf">25.0</span><span class="p">,</span> <span class="mf">27.5</span><span class="p">,</span> <span class="mf">30.0</span><span class="p">,</span><span class="w">
+</span>        <span class="mf">32.5</span><span class="p">,</span> <span class="mf">35.0</span><span class="p">,</span> <span class="mf">37.5</span><span class="p">,</span> <span class="mf">40.0</span><span class="p">,</span> <span class="mf">42.5</span><span class="p">,</span> <span class="mf">45.0</span><span class="p">,</span> <span class="mf">47.5</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">,</span> <span class="mf">55.0</span><span class="p">,</span><span class="w">
+</span>        <span class="mf">60.0</span><span class="p">,</span> <span class="mf">65.0</span><span class="p">,</span> <span class="mf">70.0</span><span class="p">,</span> <span class="mf">75.0</span><span class="p">,</span> <span class="mf">80.0</span><span class="p">,</span> <span class="mf">85.0</span><span class="p">,</span> <span class="mf">90.0</span><span class="p">,</span> <span class="mf">95.0</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">,</span><span class="w">
+</span>        <span class="mf">105.0</span><span class="p">,</span> <span class="mf">110.0</span><span class="p">,</span> <span class="mf">115.0</span><span class="p">,</span> <span class="mf">120.0</span><span class="p">,</span><span class="w">
+</span>    <span class="p">]</span><span class="p">,</span><span class="w">
+</span>    <span class="c1">## DISORT configuration</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">fisot</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>  <span class="c1"># isotropic illumination at the top of the atmosphere</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">albedo</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">{</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">grid</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">BOUNDARY_WAVENUMBER</span><span class="p">,</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">values</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.08</span><span class="p">,</span> <span class="mf">0.12</span><span class="p">,</span> <span class="mf">0.18</span><span class="p">]</span><span class="p">,</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">grid_units</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">cm-1</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>    <span class="p">}</span><span class="p">,</span>  <span class="c1"># spectral Lambertian bottom-boundary albedo; a scalar remains supported</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">temis</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>  <span class="c1"># top boundary emissivity</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">earth_radius</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">6371.0</span><span class="p">,</span>  <span class="c1"># optional: Earth radius (km); defaults to 6371</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">nmom</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">17</span><span class="p">,</span>  <span class="c1"># requested phase moments; SRFM raises this when required</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">maxcmu</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>  <span class="c1"># computational streams; even and at least 4</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">maxumu</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># number of user output polar angles</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">maxphi</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># number of user azimuth angles</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">usrang</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># return output at user angles?</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">usrtau</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># return output at user optical depths?</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">ibcnd</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># boundary conditions</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">onlyfl</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># return only fluxes?</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">prnt</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">]</span><span class="p">,</span>  <span class="c1"># what gets prints to terminal</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">planck</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># include internal Planck function?</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">lamber</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># Lambertian reflector surface</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">deltamplus</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># Delta-M+ approximation to phase functions</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">do_pseudo_sphere</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># spherical correction</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">disort_precision</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">double</span><span class="s2">&quot;</span><span class="p">,</span>  <span class="c1"># Fortran precision</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">header</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">NO HEADER</span><span class="s2">&quot;</span><span class="p">,</span>  <span class="c1"># optional: DISORT terminal header</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">adjust_maxcmu</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># if DISORT output intensity is negative, rerun with more streams</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">btemp</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">300.0</span><span class="p">,</span>  <span class="c1"># optional: lower-boundary temperature (K)</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">ttemp</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">295.0</span><span class="p">,</span>  <span class="c1"># optional: upper-boundary temperature (K)</span><span class="w">
+</span>    <span class="c1">## Layer (scattering, grey body, etc.) configuration</span><span class="w">
+</span>    <span class="c1"># Layers are named by the keys in these dictionaries; refer to the docs for</span><span class="w">
+</span>    <span class="c1"># layer-specific parameters. Both mappings are optional.</span><span class="w">
+</span>    <span class="c1"># comp accepts current and legacy ARIA basenames. Generic selections retain</span><span class="w">
+</span>    <span class="c1"># their datasets: sulphuric acid -&gt; H2SO4_75%_300K_Palmer_1975.ri;</span><span class="w">
+</span>    <span class="c1"># ash -&gt; eyjafjallajokull_ash_58.5%SiO2_Reed_2018.ri.</span><span class="w">
+</span>    <span class="c1"># Optional Mie concentration alternative: omit/set None for n, mass_loading,</span><span class="w">
+</span>    <span class="c1"># s_a_den, and v_den; supply tau_ref=0.5, tau_ref_at=900.0,</span><span class="w">
+</span>    <span class="c1"># tau_ref_at_units=&quot;cm-1&quot;. Reference wavelength units &quot;um&quot; and &quot;nm&quot; also work.</span><span class="w">
+</span>    <span class="c1"># rho is optional unless mass_loading is used to set the concentration.</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">scat_lyrs_inputs</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">{</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">Sulphuric_acid_1</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">{</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">name</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">Sulphuric_acid_1</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">low_spc</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMLO</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">upp_spc</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMHI</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">res</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">spec_units</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">SPC_UNITS</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">rho</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">1670.0</span><span class="p">,</span>  <span class="c1"># scatterer density</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">n</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># number concentration</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">s</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">1.75</span><span class="p">,</span>  <span class="c1"># size distribution spread</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">s_a_den</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># surface area density</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">v_den</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># volume density</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">dist_type</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">log_normal</span><span class="s2">&quot;</span><span class="p">,</span>  <span class="c1"># size distribution type</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">comp</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">sulphuric acid</span><span class="s2">&quot;</span><span class="p">,</span>  <span class="c1"># refractive index</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">center_alt</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">14.0</span><span class="p">,</span>  <span class="c1"># scattering layer center altitude</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">thick</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">,</span>  <span class="c1"># scattering layer thickness</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">radii</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">181</span><span class="p">,</span>  <span class="c1"># number of particle radii in particle size distribution</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">eta</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">,</span>  <span class="c1"># omitted number probability across both radius tails</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">phase_quad_N</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span>  <span class="c1"># number of quadrature points in the phase function</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">phase_quad_type</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">L</span><span class="s2">&quot;</span><span class="p">,</span>  <span class="c1"># phase function quadrature type</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">radii_quad_type</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">T</span><span class="s2">&quot;</span><span class="p">,</span>  <span class="c1"># size distribution quadrature type</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">leg_coeffs</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># return Legendre expansion coefficients</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">leg_coeffs_type</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">normalised</span><span class="s2">&quot;</span><span class="p">,</span>  <span class="c1"># what type of coefficients</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">multiprocess</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># attempt to parallelize calculations, EXPERIMENTAL</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">mass_loading</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span>  <span class="c1"># scatterer mass loading (g m-2)</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">r</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">0.4</span><span class="p">,</span>  <span class="c1"># particle mean radius</span><span class="w">
+</span>        <span class="p">}</span><span class="p">,</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">Ash_1</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">{</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">name</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">Ash_1</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">low_spc</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMLO</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">upp_spc</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMHI</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">res</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">spec_units</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">SPC_UNITS</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">rho</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">2300.0</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">n</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">s</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">1.8</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">s_a_den</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">v_den</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">dist_type</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">log_normal</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">comp</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">ash</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">center_alt</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">9.0</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">thick</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">radii</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">181</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">eta</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">phase_quad_N</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">phase_quad_type</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">L</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">radii_quad_type</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">T</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">leg_coeffs</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">leg_coeffs_type</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">normalised</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">multiprocess</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">mass_loading</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">0.21</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">r</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span><span class="w">
+</span>        <span class="p">}</span><span class="p">,</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">Water_cloud_1</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">{</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">name</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">Water_cloud_1</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">low_spc</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMLO</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">upp_spc</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMHI</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">res</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">spec_units</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">SPC_UNITS</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">rho</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">997.0</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">n</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">s</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">s_a_den</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">v_den</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">dist_type</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">log_normal</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">comp</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">H2O_263K_Rowe_2020.ri</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">center_alt</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">thick</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">radii</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">181</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">eta</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">phase_quad_N</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">phase_quad_type</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">L</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">radii_quad_type</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">T</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">leg_coeffs</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">leg_coeffs_type</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">normalised</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">multiprocess</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">mass_loading</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">100.0</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">r</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">15.0</span><span class="p">,</span><span class="w">
+</span>        <span class="p">}</span><span class="p">,</span><span class="w">
+</span>    <span class="p">}</span><span class="p">,</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">gbc_lyrs_inputs</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">{</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">GBC_1</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">{</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">name</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">GBC_1</span><span class="s2">&quot;</span><span class="p">,</span>  <span class="c1"># GreyBodyCloud layer name</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">low_spc</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMLO</span><span class="p">,</span>  <span class="c1"># spectral calculation grid lower limit</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">upp_spc</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">SPC_WVNMHI</span><span class="p">,</span>  <span class="c1"># spectral calculation grid upper limit</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">res</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>  <span class="c1"># spectral calculation grid resolution</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">spec_units</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">SPC_UNITS</span><span class="p">,</span>  <span class="c1"># spectral calculation grid units</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">center_alt</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">5.0</span><span class="p">,</span>  <span class="c1"># layer center altitude (km)</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">thick</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span>  <span class="c1"># layer thickness (km)</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">emis</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>  <span class="c1"># grey-body emissivity; currently a stub</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">inp_tau</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">1e4</span><span class="p">,</span>  <span class="c1"># cloud optical depth</span><span class="w">
+</span>        <span class="p">}</span><span class="p">,</span><span class="w">
+</span>    <span class="p">}</span><span class="p">,</span><span class="w">
+</span>    <span class="c1"># Prescribed particle optics participate in the same non-overlapping vertical</span><span class="w">
+</span>    <span class="c1"># structure as Mie and grey-body layers. This layer spans 6.0--6.4 km.</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">prescribed_lyrs_inputs</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">{</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">prescribed_aerosol</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">{</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">name</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">prescribed_aerosol</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">alt_low</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">6.0</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">alt_upp</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">6.4</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">optical_depth</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">{</span><span class="w">
+</span>                <span class="s2">&quot;</span><span class="s2">type</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">angstrom</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>                <span class="s2">&quot;</span><span class="s2">reference_value</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">0.00058</span><span class="p">,</span><span class="w">
+</span>                <span class="s2">&quot;</span><span class="s2">reference_wavelength_um</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span><span class="w">
+</span>                <span class="s2">&quot;</span><span class="s2">angstrom_exponent</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">1.48</span><span class="p">,</span><span class="w">
+</span>            <span class="p">}</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">ssalb</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">0.822</span><span class="p">,</span><span class="w">
+</span>            <span class="s2">&quot;</span><span class="s2">phase_function</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">{</span><span class="w">
+</span>                <span class="s2">&quot;</span><span class="s2">type</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">henyey_greenstein</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>                <span class="s2">&quot;</span><span class="s2">asymmetry</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mf">0.490</span><span class="p">,</span><span class="w">
+</span>            <span class="p">}</span><span class="p">,</span><span class="w">
+</span>        <span class="p">}</span><span class="p">,</span><span class="w">
+</span>    <span class="p">}</span><span class="p">,</span><span class="w">
+</span>    <span class="c1">## solar reflection</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">sun</span><span class="s2">&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># if True, include solar reflection</span><span class="w">
+</span>    <span class="c1"># Values are beam-normal DISORT FBEAM spectral irradiance. A custom spectrum</span><span class="w">
+</span>    <span class="c1"># receives unit conversion and interpolation only: no date, cosine, or amplitude</span><span class="w">
+</span>    <span class="c1"># scaling is applied.</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">solar_spectrum</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">{</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">grid</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">BOUNDARY_WAVENUMBER</span><span class="p">,</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">values</span><span class="s2">&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.75</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="mf">1.10</span><span class="p">]</span><span class="p">,</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">grid_units</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">cm-1</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>        <span class="s2">&quot;</span><span class="s2">value_units</span><span class="s2">&quot;</span><span class="p">:</span> <span class="s2">&quot;</span><span class="s2">W m-2 (cm-1)-1</span><span class="s2">&quot;</span><span class="p">,</span><span class="w">
+</span>    <span class="p">}</span><span class="p">,</span><span class="w">
+</span>    <span class="c1"># With sun=True, sza is in [0, 90); set sun=False for a night-side scene.</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">sza</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># solar zenith angle; 0 is directly overhead</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">saa</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># solar azimuth angle, 0-360</span><span class="w">
+</span>    <span class="c1">## Angles</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">zen</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">40</span><span class="p">,</span>  <span class="c1"># satellite zenith angle, 0-180 (not 90 for angular output)</span><span class="w">
+</span>    <span class="s2">&quot;</span><span class="s2">azi</span><span class="s2">&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span>  <span class="c1"># satellite azimuth angle, 0-360</span><span class="w">
+</span><span class="p">}</span><span class="w">
+</span></pre></div></div>
 </div>
 </section>
 <section id="example-output">
@@ -918,24 +1095,23 @@ documentation does not rerun the model because its external spectroscopy data
 is not available on Read the Docs.</p>
 <a class="reference internal image-reference" href="../../_images/example_output.png"><img alt="Example SRFM brightness-temperature spectrum" src="../../_images/example_output.png" style="width: 100%;" />
 </a>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">srfm</span><span class="w"> </span><span class="kn">import</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">main</span>
-
-<span class="c1"># Use the script location rather than the caller&#39;s working directory so that</span>
-<span class="c1"># the downloaded example can be run from anywhere.</span>
-<span class="n">EXAMPLE_DIR</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parent</span>
-
-<span class="n">srfm_inputs</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">Inputs</span><span class="p">()</span>
-<span class="n">srfm_inputs</span><span class="o">.</span><span class="n">read_srfm_drv</span><span class="p">(</span><span class="n">EXAMPLE_DIR</span> <span class="o">/</span> <span class="s2">&quot;driver_table.py&quot;</span><span class="p">)</span>
-
-<span class="n">result</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">run_srfm</span><span class="p">(</span><span class="n">srfm_inputs</span><span class="p">)</span>
-
-<span class="c1"># Use ``result`` for further analysis in the same Python process. Files and</span>
-<span class="c1"># plots requested by the driver table are written beneath ``results/``.</span>
-</pre></div>
-</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="w">
+</span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span><span class="w">
+</span><span class="w">
+</span><span class="kn">from</span><span class="w"> </span><span class="nn">srfm</span><span class="w"> </span><span class="kn">import</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">main</span><span class="w">
+</span><span class="w">
+</span><span class="c1"># Use the script location rather than the caller's working directory so that</span><span class="w">
+</span><span class="c1"># the downloaded example can be run from anywhere.</span><span class="w">
+</span><span class="n">EXAMPLE_DIR</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span><span class="w">
+</span><span class="w">
+</span><span class="n">srfm_inputs</span> <span class="o">=</span> <a class="sphx-glr-backref-module-srfm-inputs sphx-glr-backref-type-py-class sphx-glr-backref-instance reference internal" href="../../srfm.html#srfm.inputs.Inputs" title="srfm.inputs.Inputs"><span class="n">inputs</span><span class="o">.</span><span class="n">Inputs</span></a><span class="p">(</span><span class="p">)</span><span class="w">
+</span><span class="n">srfm_inputs</span><span class="o">.</span><span class="n">read_srfm_drv</span><span class="p">(</span><span class="n">EXAMPLE_DIR</span> <span class="o">/</span> <span class="s2">&quot;</span><span class="s2">driver_table.py</span><span class="s2">&quot;</span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="n">result</span> <span class="o">=</span> <a class="sphx-glr-backref-module-srfm-main sphx-glr-backref-type-py-function reference internal" href="../../srfm.html#srfm.main.run_srfm" title="srfm.main.run_srfm"><span class="n">main</span><span class="o">.</span><span class="n">run_srfm</span></a><span class="p">(</span><span class="n">srfm_inputs</span><span class="p">)</span><span class="w">
+</span><span class="w">
+</span><span class="c1"># Use ``result`` for further analysis in the same Python process. Files and</span><span class="w">
+</span><span class="c1"># plots requested by the driver table are written beneath ``results/``.</span><span class="w">
+</span></pre></div></div>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-basic-example-run-srfm-py">
 <div class="sphx-glr-download sphx-glr-download-python docutils container">
 <p><a class="reference download internal" download="" href="../../_downloads/ed047971a9522c2ba09eceda82f6ae66/run_srfm.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">run_srfm.py</span></code></a></p>
@@ -953,7 +1129,7 @@ is not available on Read the Docs.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="index.html" class="btn btn-neutral float-left" title="Basic examples" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="../../drv.html" class="btn btn-neutral float-right" title="Driver table" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../optical_depth_input/index.html" class="btn btn-neutral float-right" title="Reference optical depth" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

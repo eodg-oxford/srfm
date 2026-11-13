@@ -1,0 +1,78 @@
+SRFM instrument convolution and noise options
+=============================================
+
+Documentation build
+-------------------
+
+The Sphinx HTML documentation was rebuilt successfully with:
+
+    sphinx-build -b html docs/source docs/build/html
+
+Open docs/build/html/index.html for the rebuilt documentation. The generated
+driver reference and downloadable basic example contain the new instrument
+options. Sphinx reported 23 warnings from existing RFM docstrings and an
+optical-depth gallery page; none pointed to the instrument documentation.
+
+Driver-table selectors
+----------------------
+
+The inputs dictionary accepts these case-insensitive values for both
+"convolve" and "add_noise":
+
+    None, "iasi", "CrIS", "HIRAS", "HIRAS-2"
+
+None disables the corresponding operation. To add instrument noise,
+"add_noise" must select the same instrument as "convolve". With both set to
+None, existing calculations retain their previous behavior.
+
+Instrument options
+------------------
+
+IASI
+    Convolution uses the packaged IASI line shape, with an optional RFM ILS
+    file supplied through "iasi_ils". Output is sampled on the 0.25 cm-1
+    IASI channel grid. Noise is correlated radiance noise; select the
+    instrument with "iasi_instrument" (default M03/IASI-C) and the field of
+    view with "iasi_ifov" (default 1; accepted values 1-4). Noise supports
+    the complete or a contiguous partial IASI channel grid.
+
+CrIS
+    Convolution supports the J2/NOAA-21 full-spectral-resolution channel
+    grid. Select it with "cris_platform" (default J2) and "cris_fov"
+    (default 5; accepted values 1-9). The packaged J2 noise profile is used
+    by default. "cris_noise_file" can supply a matching external L1 product
+    or NPZ profile; "cris_noise_units" can confirm radiance units when needed.
+
+HIRAS
+    Convolution supports FY-3D HIRAS-I. Select "hiras_fov" (default 1;
+    accepted values 1-4). The packaged FY-3D noise profile can be used, or
+    "hiras_noise_file" can supply a matching external product/profile. The
+    bundled profile has blank NEdN unit metadata: adding its noise requires
+    an explicit "hiras_noise_units" value of "mW" after confirming that the
+    amplitudes are in mW/(m2 sr cm-1).
+
+HIRAS-2
+    Convolution supports FY-3E, FY-3F, and FY-3H. Select the platform with
+    "hiras2_platform" (default FY3E) and field of view with "hiras2_fov"
+    (default 1; accepted values 1-9). A packaged noise profile is available
+    for FY-3E. FY-3F and FY-3H noise requires a matching "hiras2_noise_file".
+    "hiras2_noise_units" can confirm radiance units when needed.
+
+CrIS and both HIRAS options have native channel spacing of 0.625 cm-1.
+"fin_wvnmlo" and "fin_wvnmhi" select a subset of instrument channels;
+"fin_res" must be omitted, None, or 0.625 cm-1. Their calculated spectrum
+must use "spc_units" = "cm-1" and "spc_res" <= 0.05 cm-1, with enough
+coverage around every selected channel for its response. The nominal sinc
+response needs 30 cm-1 on either side; supplied HIRAS-II tabulated responses
+need 15 cm-1. Hamming needs another 0.625 cm-1 for adjacent channels.
+
+Set "apodization" = "Hamming" for CrIS or either HIRAS option to match a
+Hamming processed observation. This applies the three-channel filter
+[0.23, 0.54, 0.23] within each band and removes two guard channels at each
+band edge. When noise is requested, it is drawn on native channels and then
+Hamming processed. For comparison with an observed spectrum that already
+contains noise, "add_noise" can remain None. "noise_seed" accepts an integer
+for reproducible CrIS or HIRAS noise draws.
+
+The complete parameter reference is docs/source/drv.rst. Instrument response
+and noise file formats are described in docs/source/input_files.rst.

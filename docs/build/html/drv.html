@@ -6,10 +6,10 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Driver table &mdash; SRFM 1.2.3 documentation</title>
+  <title>Driver table &mdash; SRFM 1.5.4 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
-      <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css?v=fd6457a4" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css?v=c83e6b79" />
       <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css?v=f4aeca0c" />
       <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css?v=2082cf3c" />
       <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css?v=1277b6f3" />
@@ -17,7 +17,7 @@
   
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=590429e0"></script>
+      <script src="_static/documentation_options.js?v=1cd648e3"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/sg-tags.js?v=d80f6fa4"></script>
@@ -26,7 +26,7 @@
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Input files" href="input_files.html" />
-    <link rel="prev" title="Run SRFM with a driver table" href="auto_examples/basic_example/run_srfm.html" />
+    <link rel="prev" title="&lt;no title&gt;" href="auto_examples/optical_depth_input/compare_layers.html" />
    
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-M598215MF0"></script>
   <script>
@@ -89,7 +89,8 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html#basic-examples">Basic examples</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html#basic-examples">Basic examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html#reference-optical-depth">Reference optical depth</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="auto_examples/basic_example/index.html">Basic examples</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="auto_examples/basic_example/run_srfm.html">Run SRFM with a driver table</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="auto_examples/basic_example/run_srfm.html#external-spectroscopy-data">External spectroscopy data</a></li>
@@ -97,6 +98,9 @@
 <li class="toctree-l4"><a class="reference internal" href="auto_examples/basic_example/run_srfm.html#example-output">Example output</a></li>
 </ul>
 </li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="auto_examples/optical_depth_input/index.html">Reference optical depth</a><ul class="simple">
 </ul>
 </li>
 </ul>
@@ -109,18 +113,41 @@
 <li class="toctree-l2"><a class="reference internal" href="#rfm-execution-configuration">RFM execution configuration</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#rfm-driver-sections">RFM driver sections</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#disort-configuration">DISORT configuration</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#scattering-layer-configuration">Scattering-layer configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scattering-layer-configuration">Scattering-layer configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#using-reference-optical-depth">Using reference optical depth</a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#prescribed-optical-layers">Prescribed optical layers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#vertical-optical-layer-restrictions">Vertical optical-layer restrictions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#effective-altitude-levels">Effective altitude levels</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#solar-and-viewing-geometry">Solar and viewing geometry</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="input_files.html">Input files</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="input_files.html#driver-and-atmospheric-files">Driver and atmospheric files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input_files.html#aria-refractive-indices">ARIA refractive indices</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="input_files.html#numerical-compatibility">Numerical compatibility</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="input_files.html#instrument-response-and-noise-files">Instrument response and noise files</a></li>
 <li class="toctree-l2"><a class="reference internal" href="input_files.html#common-spectral-text-format">Common spectral text format</a></li>
 <li class="toctree-l2"><a class="reference internal" href="input_files.html#surface-albedo-files">Surface albedo files</a></li>
 <li class="toctree-l2"><a class="reference internal" href="input_files.html#custom-solar-spectrum-files">Custom solar-spectrum files</a></li>
 <li class="toctree-l2"><a class="reference internal" href="input_files.html#prescribed-optical-property-files">Prescribed optical-property files</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="size_distributions.html">Particle size distributions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#common-interface">Common interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#gaussian-distribution">Gaussian distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#log-normal-distributions">Log-normal distributions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#gamma-distribution">Gamma distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#modified-gamma-distribution">Modified gamma distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#inverse-modified-gamma-distribution">Inverse modified gamma distribution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#regularised-power-law">Regularised power law</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#factory-construction">Factory construction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#numerical-validation">Numerical validation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#mie-layer-integration">Mie-layer integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="size_distributions.html#reference">Reference</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="memory.html">Memory-efficient calculations</a><ul>
@@ -258,6 +285,44 @@
 <li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.input_schema.validate_srfm_inputs"><code class="docutils literal notranslate"><span class="pre">validate_srfm_inputs()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.instruments">srfm.instruments</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.ConvolvingInstrument"><code class="docutils literal notranslate"><span class="pre">ConvolvingInstrument</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.ConvolvingInstrument.convolve"><code class="docutils literal notranslate"><span class="pre">ConvolvingInstrument.convolve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.ConvolvingInstrument.output_grid"><code class="docutils literal notranslate"><span class="pre">ConvolvingInstrument.output_grid()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.IASI"><code class="docutils literal notranslate"><span class="pre">IASI</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.IASI.add_noise"><code class="docutils literal notranslate"><span class="pre">IASI.add_noise()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.IASI.convolve"><code class="docutils literal notranslate"><span class="pre">IASI.convolve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.IASI.from_inputs"><code class="docutils literal notranslate"><span class="pre">IASI.from_inputs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.IASI.ils_source"><code class="docutils literal notranslate"><span class="pre">IASI.ils_source</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.IASI.output_grid"><code class="docutils literal notranslate"><span class="pre">IASI.output_grid()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.Instrument"><code class="docutils literal notranslate"><span class="pre">Instrument</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.NoiseInstrument"><code class="docutils literal notranslate"><span class="pre">NoiseInstrument</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.NoiseInstrument.add_noise"><code class="docutils literal notranslate"><span class="pre">NoiseInstrument.add_noise()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.apply_banded_factor"><code class="docutils literal notranslate"><span class="pre">apply_banded_factor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.create_instrument"><code class="docutils literal notranslate"><span class="pre">create_instrument()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.create_instrument_from_inputs"><code class="docutils literal notranslate"><span class="pre">create_instrument_from_inputs()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.normalize_iasi_instrument"><code class="docutils literal notranslate"><span class="pre">normalize_iasi_instrument()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.instruments.iasi">srfm.instruments.iasi</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.iasi.IASI"><code class="docutils literal notranslate"><span class="pre">IASI</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.iasi.IASI.add_noise"><code class="docutils literal notranslate"><span class="pre">IASI.add_noise()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.iasi.IASI.convolve"><code class="docutils literal notranslate"><span class="pre">IASI.convolve()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.iasi.IASI.from_inputs"><code class="docutils literal notranslate"><span class="pre">IASI.from_inputs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.iasi.IASI.ils_source"><code class="docutils literal notranslate"><span class="pre">IASI.ils_source</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.instruments.iasi.IASI.output_grid"><code class="docutils literal notranslate"><span class="pre">IASI.output_grid()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.iasi.apply_banded_factor"><code class="docutils literal notranslate"><span class="pre">apply_banded_factor()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.instruments.iasi.normalize_iasi_instrument"><code class="docutils literal notranslate"><span class="pre">normalize_iasi_instrument()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.inputs">srfm.inputs</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.inputs.Inputs"><code class="docutils literal notranslate"><span class="pre">Inputs</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.inputs.Inputs.read_oxharp_drv"><code class="docutils literal notranslate"><span class="pre">Inputs.read_oxharp_drv()</span></code></a></li>
@@ -309,15 +374,20 @@
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.plot_diff"><code class="docutils literal notranslate"><span class="pre">MieLayer.plot_diff()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.regrid"><code class="docutils literal notranslate"><span class="pre">MieLayer.regrid()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.required_nmom"><code class="docutils literal notranslate"><span class="pre">MieLayer.required_nmom</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_alpha"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_alpha()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_alt_lim"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_alt_lim()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_b"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_b()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_center_alt"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_center_alt()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_comp"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_comp()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_dist_type"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_dist_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_effective_radius"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_effective_radius()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_eta"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_eta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_gamma"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_gamma()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_input_from_dict"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_input_from_dict()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_leg_coeffs"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_leg_coeffs()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_leg_coeffs_type"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_leg_coeffs_type()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_mass_loading"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_mass_loading()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_median_radius"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_median_radius()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_multiproccess"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_multiproccess()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_n"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_n()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_name"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_name()</span></code></a></li>
@@ -326,6 +396,7 @@
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_r"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_r()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_radii"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_radii()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_radii_quad_type"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_radii_quad_type()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_reference_optical_depth"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_reference_optical_depth()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_res"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_res()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_rho"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_rho()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_s"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_s()</span></code></a></li>
@@ -333,6 +404,7 @@
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_spc_lim"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_spc_lim()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_spec_units"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_spec_units()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_thick"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_thick()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_truncate"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_truncate()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.set_v_den"><code class="docutils literal notranslate"><span class="pre">MieLayer.set_v_den()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.test_complete_input_format"><code class="docutils literal notranslate"><span class="pre">MieLayer.test_complete_input_format()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.layer.MieLayer.test_input_values"><code class="docutils literal notranslate"><span class="pre">MieLayer.test_input_values()</span></code></a></li>
@@ -498,18 +570,93 @@
 <li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_helper.run_rfm_with_parameters"><code class="docutils literal notranslate"><span class="pre">run_rfm_with_parameters()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.size_distribution">srfm.size_distribution</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#module-srfm.rfm_levels">srfm.rfm_levels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_levels.match_altitude"><code class="docutils literal notranslate"><span class="pre">match_altitude()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_levels.read_matching_grid"><code class="docutils literal notranslate"><span class="pre">read_matching_grid()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.rfm_levels.reconcile_levels"><code class="docutils literal notranslate"><span class="pre">reconcile_levels()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="srfm.html#srfm-size-distribution">srfm.size_distribution</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.GammaDistribution"><code class="docutils literal notranslate"><span class="pre">GammaDistribution</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution.median_radius"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.median_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution.mode_radius"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.mode_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution.effective_radius"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.effective_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution.effective_variance"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.effective_variance</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution.mean"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution.moment"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.moment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.quantile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.GaussianDistribution.value"><code class="docutils literal notranslate"><span class="pre">GaussianDistribution.value()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.median_radius"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.median_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.mode_radius"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.mode_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.effective_radius"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.effective_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.effective_variance"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.effective_variance</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.mean"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.moment"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.moment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.quantile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.InverseModifiedGammaDistribution.value"><code class="docutils literal notranslate"><span class="pre">InverseModifiedGammaDistribution.value()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution.median_radius"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.median_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution.mode_radius"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.mode_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution.effective_radius"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.effective_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution.effective_variance"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.effective_variance</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution.mean"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution.moment"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.moment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.quantile()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.LogNormalDistribution.value"><code class="docutils literal notranslate"><span class="pre">LogNormalDistribution.value()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.alpha"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.alpha</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.b"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.b</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.median_radius"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.median_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.mode_radius"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.mode_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.effective_radius"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.effective_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.effective_variance"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.effective_variance</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.mean"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.moment"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.moment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.quantile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.ModifiedGammaDistribution.value"><code class="docutils literal notranslate"><span class="pre">ModifiedGammaDistribution.value()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultiModeLogNormalDistribution"><code class="docutils literal notranslate"><span class="pre">MultiModeLogNormalDistribution</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.number_of_modes"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.number_of_modes</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.mode_number_densities"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.mode_number_densities</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.mode_surface_area_densities"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.mode_surface_area_densities</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.mode_volume_densities"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.mode_volume_densities</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.component_mode_radii"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.component_mode_radii</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.median_radius"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.median_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.effective_radius"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.effective_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.effective_variance"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.effective_variance</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.cdf"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.cdf()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.mean"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.moment"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.moment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.quantile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.MultimodeLogNormalDistribution.value"><code class="docutils literal notranslate"><span class="pre">MultimodeLogNormalDistribution.value()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.median_radius"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.median_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.mode_radius"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.mode_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.effective_radius"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.effective_radius</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.effective_variance"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.effective_variance</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.mean"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.moment"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.moment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.quantile()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularisedPowerLawDistribution.value"><code class="docutils literal notranslate"><span class="pre">RegularisedPowerLawDistribution.value()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.RegularizedPowerLawDistribution"><code class="docutils literal notranslate"><span class="pre">RegularizedPowerLawDistribution</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.SizeDistribution"><code class="docutils literal notranslate"><span class="pre">SizeDistribution</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.SizeDistribution.integration_bounds"><code class="docutils literal notranslate"><span class="pre">SizeDistribution.integration_bounds()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.SizeDistribution.mean"><code class="docutils literal notranslate"><span class="pre">SizeDistribution.mean()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="srfm.html#srfm.size_distribution.SizeDistribution.quantile"><code class="docutils literal notranslate"><span class="pre">SizeDistribution.quantile()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="srfm.html#srfm.size_distribution.create_distribution"><code class="docutils literal notranslate"><span class="pre">create_distribution()</span></code></a></li>
@@ -633,10 +780,64 @@ spectra, and plots.</p></li>
 NetCDF output file. Omitting it or setting it to <code class="docutils literal notranslate"><span class="pre">None</span></code> selects
 <code class="docutils literal notranslate"><span class="pre">srfm.nc</span></code>. The value is used as supplied, including its extension, and
 applies only when <code class="docutils literal notranslate"><span class="pre">out_mode</span></code> is <code class="docutils literal notranslate"><span class="pre">&quot;netcdf&quot;</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">convolve_iasi</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Convolve every output radiance spectrum with
-the IASI instrument line shape. Permitted values: <code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">convolve</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">str</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Select a registered
+instrument convolution: <code class="docutils literal notranslate"><span class="pre">&quot;iasi&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;CrIS&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;HIRAS&quot;</span></code>, or
+<code class="docutils literal notranslate"><span class="pre">&quot;HIRAS-2&quot;</span></code> (case-insensitive). Omitting the field or setting it to
+<code class="docutils literal notranslate"><span class="pre">None</span></code> disables convolution. IASI convolution samples the result only at
+IASI channels after removing a 2 cm<sup>-1</sup> margin from each
+computational boundary. The computational range must be at least 4
+cm<sup>-1</sup> wide and must lie within 643–2762 cm<sup>-1</sup>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">iasi_ils</span></code> (path-like or <code class="docutils literal notranslate"><span class="pre">None</span></code>): RFM-format IASI instrument-line-shape
-file; required when <code class="docutils literal notranslate"><span class="pre">convolve_iasi</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p></li>
+override. When omitted or <code class="docutils literal notranslate"><span class="pre">None</span></code>, the ILS distributed with SRFM is used.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">add_noise</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">str</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Select a registered
+instrument noise model: <code class="docutils literal notranslate"><span class="pre">&quot;iasi&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;CrIS&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;HIRAS&quot;</span></code>, or
+<code class="docutils literal notranslate"><span class="pre">&quot;HIRAS-2&quot;</span></code> (case-insensitive). It must match <code class="docutils literal notranslate"><span class="pre">convolve</span></code> so noise is
+added on that instrument’s channel grid before brightness-temperature
+calculation. Omitting the field or setting it to <code class="docutils literal notranslate"><span class="pre">None</span></code> disables noise.
+IASI adds correlated radiance noise and supports the complete grid or any
+contiguous partial IASI channel range. The other instruments draw
+FOV-specific native-channel noise, then apply Hamming processing if selected.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">iasi_instrument</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">str</span></code>): IASI instrument used by the noise
+model. The default is <code class="docutils literal notranslate"><span class="pre">&quot;M03&quot;</span></code>. Accepted identifiers and aliases are
+<code class="docutils literal notranslate"><span class="pre">&quot;M01&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;b&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;IASI-B&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;M02&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;a&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;IASI-A&quot;</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">&quot;M03&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;c&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;IASI-C&quot;</span></code>. Matching is case-insensitive and validated
+aliases are stored as <code class="docutils literal notranslate"><span class="pre">&quot;M01&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;M02&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;M03&quot;</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">iasi_ifov</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">int</span></code>): IASI instantaneous field of view used
+by the noise model. Accepted values are <code class="docutils literal notranslate"><span class="pre">1</span></code>, <code class="docutils literal notranslate"><span class="pre">2</span></code>, <code class="docutils literal notranslate"><span class="pre">3</span></code>, and <code class="docutils literal notranslate"><span class="pre">4</span></code>. The
+default is <code class="docutils literal notranslate"><span class="pre">1</span></code> when <code class="docutils literal notranslate"><span class="pre">add_noise</span></code> selects <code class="docutils literal notranslate"><span class="pre">&quot;iasi&quot;</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">apodization</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">str</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code>): <code class="docutils literal notranslate"><span class="pre">&quot;Hamming&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code>
+(default) for CrIS, HIRAS, and HIRAS-2 convolution. Hamming applies the
+three-channel weights <code class="docutils literal notranslate"><span class="pre">[0.23,</span> <span class="pre">0.54,</span> <span class="pre">0.23]</span></code> within each band and removes
+two guard channels at each band edge. Use it when matching a Hamming
+processed observation.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cris_platform</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">str</span></code>): CrIS platform, <code class="docutils literal notranslate"><span class="pre">&quot;J2&quot;</span></code> or
+<code class="docutils literal notranslate"><span class="pre">&quot;NOAA-21&quot;</span></code>; both select the J2 full-spectral-resolution channel grid.
+Default: <code class="docutils literal notranslate"><span class="pre">&quot;J2&quot;</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cris_fov</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">int</span></code>): CrIS FOV, 1–9. Default: 5.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cris_noise_file</span></code> (<strong>optional</strong> path-like or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Matching CrIS L1B
+product or noise-profile <code class="docutils literal notranslate"><span class="pre">.npz</span></code>. Default: bundled J2 profile.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cris_noise_units</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">str</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Confirm the supplied
+noise amplitudes are in mW/(m² sr cm<sup>-1</sup>) when source units are
+missing or unclear; <code class="docutils literal notranslate"><span class="pre">&quot;mW&quot;</span></code> is accepted after this check.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hiras_fov</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">int</span></code>): FY-3D HIRAS-I FOV, 1–4. Default: 1.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hiras_noise_file</span></code> (<strong>optional</strong> path-like or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Matching HIRAS-I
+L1 product or noise-profile <code class="docutils literal notranslate"><span class="pre">.npz</span></code>. Default: bundled FY-3D profile.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hiras_noise_units</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">str</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Units confirmation
+for HIRAS-I noise. The bundled FY-3D product has blank unit metadata; adding
+its noise requires explicitly setting <code class="docutils literal notranslate"><span class="pre">&quot;mW&quot;</span></code> after checking that its
+amplitudes are in mW/(m² sr cm<sup>-1</sup>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hiras2_platform</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">str</span></code>): HIRAS-II platform: <code class="docutils literal notranslate"><span class="pre">&quot;FY3E&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;FY3F&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;FY3H&quot;</span></code> (hyphens are accepted). Default: <code class="docutils literal notranslate"><span class="pre">&quot;FY3E&quot;</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hiras2_fov</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">int</span></code>): HIRAS-II FOV, 1–9. Default: 1.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hiras2_noise_file</span></code> (<strong>optional</strong> path-like or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Matching HIRAS-II
+L1 product or noise-profile <code class="docutils literal notranslate"><span class="pre">.npz</span></code>. The bundled default covers FY-3E;
+FY-3F and FY-3H require a matching file to add noise.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">hiras2_noise_units</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">str</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Confirm a supplied
+HIRAS-II noise profile’s radiance units when its metadata is missing or
+unclear, as for <code class="docutils literal notranslate"><span class="pre">cris_noise_units</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">noise_seed</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Seed for reproducible
+CrIS or HIRAS noise realizations. With <code class="docutils literal notranslate"><span class="pre">None</span></code>, each run draws new noise.
+Instrument noise file formats are described in <a class="reference internal" href="input_files.html"><span class="doc">Input files</span></a>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">retain_outputs</span></code> (required sequence of <code class="docutils literal notranslate"><span class="pre">str</span></code>): Full-grid values kept on
 the returned model. Supported names are <code class="docutils literal notranslate"><span class="pre">&quot;rad&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;radiance&quot;</span></code>/<code class="docutils literal notranslate"><span class="pre">&quot;uu&quot;</span></code>,
 <code class="docutils literal notranslate"><span class="pre">&quot;bbt&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;rfldir&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;rfldn&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;flup&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;dfdt&quot;</span></code>,
@@ -664,20 +865,58 @@ phase functions after Legendre expansion for inspection. The default is
 <h2>Spectral grids<a class="headerlink" href="#spectral-grids" title="Link to this heading"></a></h2>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">fin_wvnmlo</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Lower wavenumber of the final output
-grid in cm<sup>-1</sup>.</p></li>
+grid in cm<sup>-1</sup>. Required when <code class="docutils literal notranslate"><span class="pre">convolve</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>. IASI ignores
+a supplied value with a warning. For CrIS or HIRAS, this optional bound
+selects instrument channels at or above it.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">fin_wvnmhi</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Upper wavenumber of the final output
-grid in cm<sup>-1</sup>; must be greater than <code class="docutils literal notranslate"><span class="pre">fin_wvnmlo</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">fin_res</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Positive final-grid spacing in
-cm<sup>-1</sup>.</p></li>
+grid in cm<sup>-1</sup>; must be greater than <code class="docutils literal notranslate"><span class="pre">fin_wvnmlo</span></code>. This field is
+required when <code class="docutils literal notranslate"><span class="pre">convolve</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>. IASI ignores it with a warning.
+For CrIS or HIRAS, this optional bound selects instrument channels at or
+below it.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fin_res</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Final-grid spacing in
+cm<sup>-1</sup>, required and positive when <code class="docutils literal notranslate"><span class="pre">convolve</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>. IASI
+uses its 0.25 cm<sup>-1</sup> channels. For CrIS or HIRAS, omit it, set it
+to <code class="docutils literal notranslate"><span class="pre">None</span></code>, or set it to 0.625 cm<sup>-1</sup>; those instrument channels
+cannot be changed to a user-defined spacing.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">spc_wvnmlo</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Lower bound of the computational
-spectral grid, in <code class="docutils literal notranslate"><span class="pre">spc_units</span></code>.</p></li>
+spectral grid, in <code class="docutils literal notranslate"><span class="pre">spc_units</span></code>. For <code class="docutils literal notranslate"><span class="pre">&quot;resolving_power&quot;</span></code>, this bound is a
+wavenumber in cm<sup>-1</sup>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">spc_wvnmhi</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Upper bound of the computational
-spectral grid, in <code class="docutils literal notranslate"><span class="pre">spc_units</span></code>; must be greater than <code class="docutils literal notranslate"><span class="pre">spc_wvnmlo</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">spc_res</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Positive computational-grid spacing, in
-<code class="docutils literal notranslate"><span class="pre">spc_units</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">spc_units</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>): Units of the computational grid. Permitted values:
-<code class="docutils literal notranslate"><span class="pre">&quot;cm-1&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;um&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;nm&quot;</span></code>.</p></li>
+spectral grid, in <code class="docutils literal notranslate"><span class="pre">spc_units</span></code>; must be greater than <code class="docutils literal notranslate"><span class="pre">spc_wvnmlo</span></code>. For
+<code class="docutils literal notranslate"><span class="pre">&quot;resolving_power&quot;</span></code>, this bound is a wavenumber in cm<sup>-1</sup>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spc_res</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Positive computational-grid spacing in
+<code class="docutils literal notranslate"><span class="pre">spc_units</span></code>. When <code class="docutils literal notranslate"><span class="pre">spc_units</span></code> is <code class="docutils literal notranslate"><span class="pre">&quot;resolving_power&quot;</span></code>, this is the
+dimensionless resolving power <span class="math notranslate nohighlight">\(R = \lambda / \Delta\lambda\)</span> and must
+be greater than one.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">spc_units</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>): Computational-grid specification. Permitted values:
+<code class="docutils literal notranslate"><span class="pre">&quot;cm-1&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;um&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;nm&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;resolving_power&quot;</span></code>. The first three
+produce a grid with constant additive spacing in that coordinate. Resolving
+power produces a geometrically spaced grid which is irregular in both
+wavelength and wavenumber.</p></li>
 </ul>
+<p>For CrIS and HIRAS, <code class="docutils literal notranslate"><span class="pre">spc_units</span></code> must be <code class="docutils literal notranslate"><span class="pre">&quot;cm-1&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">spc_res</span></code> must be
+at most 0.05 cm<sup>-1</sup>; a finer grid may be needed for line-rich spectra.
+The computed spectrum must cover each selected channel plus its response
+support on both sides: 30 cm<sup>-1</sup> for the nominal sinc response or
+15 cm<sup>-1</sup> for the supplied HIRAS-II tabulated response. Hamming needs
+another 0.625 cm<sup>-1</sup> of support for adjacent channels. An invalid
+resolution, range, or support produces an error identifying the setting and
+required coverage. Without instrument processing, the final grid retains its
+existing user-defined behavior.</p>
+<p>For example, this driver-table configuration calculates from 900 to 1,100
+cm<sup>-1</sup> at a constant resolving power of 20,000:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">inputs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+    <span class="n">spc_wvnmlo</span><span class="o">=</span><span class="mf">900.0</span><span class="p">,</span>
+    <span class="n">spc_wvnmhi</span><span class="o">=</span><span class="mf">1100.0</span><span class="p">,</span>
+    <span class="n">spc_res</span><span class="o">=</span><span class="mf">20_000.0</span><span class="p">,</span>
+    <span class="n">spc_units</span><span class="o">=</span><span class="s2">&quot;resolving_power&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The longer wavelength in each adjacent pair is used in
+<span class="math notranslate nohighlight">\(R = \lambda / \Delta\lambda\)</span>. SRFM converts the result to matching
+cm<sup>-1</sup> and micrometre arrays, writes every wavenumber to <code class="docutils literal notranslate"><span class="pre">grid.spc</span></code>,
+and selects RFM’s irregular-grid SPC-file mode.</p>
 </section>
 <section id="output-geometry">
 <h2>Output geometry<a class="headerlink" href="#output-geometry" title="Link to this heading"></a></h2>
@@ -837,20 +1076,66 @@ calculation, in <code class="docutils literal notranslate"><span class="pre">spe
 grid, in <code class="docutils literal notranslate"><span class="pre">spec_units</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">spec_units</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>): Units of the layer optical-property grid. Permitted
 values: <code class="docutils literal notranslate"><span class="pre">&quot;cm-1&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;um&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;nm&quot;</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">rho</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, or <code class="docutils literal notranslate"><span class="pre">str</span></code>): Particle density in kg m<sup>-3</sup>,
+<li><p><code class="docutils literal notranslate"><span class="pre">rho</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, <code class="docutils literal notranslate"><span class="pre">str</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Particle
+material density in kg m<sup>-3</sup>,
 or a supported named ash density. Named values: <code class="docutils literal notranslate"><span class="pre">&quot;pumice&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;glass&quot;</span></code>,
-<code class="docutils literal notranslate"><span class="pre">&quot;mineral&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;rock&quot;</span></code>.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">n</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Particle number concentration. At
-least one of <code class="docutils literal notranslate"><span class="pre">mass_loading</span></code>, <code class="docutils literal notranslate"><span class="pre">n</span></code>, <code class="docutils literal notranslate"><span class="pre">s_a_den</span></code>, or <code class="docutils literal notranslate"><span class="pre">v_den</span></code> must be set.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">s</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Particle-size distribution spread. A
-log-normal distribution requires a value greater than 1.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">s_a_den</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Particle surface-area density.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">v_den</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Particle volume density.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">dist_type</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>): Particle-size distribution. Permitted value for a
-complete calculation: <code class="docutils literal notranslate"><span class="pre">&quot;log_normal&quot;</span></code>. <code class="docutils literal notranslate"><span class="pre">&quot;gaussian&quot;</span></code> is recognized but
-not implemented by the full Mie-layer pathway.</p></li>
+<code class="docutils literal notranslate"><span class="pre">&quot;mineral&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;rock&quot;</span></code>. Required when <code class="docutils literal notranslate"><span class="pre">mass_loading</span></code> sets the
+concentration. Other concentration inputs and <code class="docutils literal notranslate"><span class="pre">tau_ref</span></code> work without
+density; mass loading can then be left uncalculated.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">n</span></code> (number, one-dimensional sequence, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Particle number
+concentration in cm<sup>-3</sup>. A multimode log-normal layer supplies one
+value per mode. At least one of <code class="docutils literal notranslate"><span class="pre">mass_loading</span></code>, <code class="docutils literal notranslate"><span class="pre">n</span></code>, <code class="docutils literal notranslate"><span class="pre">s_a_den</span></code>,
+<code class="docutils literal notranslate"><span class="pre">v_den</span></code>, or <code class="docutils literal notranslate"><span class="pre">tau_ref</span></code> must be set.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tau_ref</span></code> (<strong>optional</strong> number or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Positive finite vertical
+particle extinction optical depth through the complete layer at
+<code class="docutils literal notranslate"><span class="pre">tau_ref_at</span></code>. It includes particle absorption and scattering, before
+DISORT delta scaling, and excludes gas absorption and molecular Rayleigh
+scattering. Supply it instead of <code class="docutils literal notranslate"><span class="pre">n</span></code>, <code class="docutils literal notranslate"><span class="pre">mass_loading</span></code>, <code class="docutils literal notranslate"><span class="pre">s_a_den</span></code>, or
+<code class="docutils literal notranslate"><span class="pre">v_den</span></code>; those fields must be omitted or <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tau_ref_at</span></code> (<strong>optional</strong> number or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Positive finite reference
+wavelength or wavenumber. Required with <code class="docutils literal notranslate"><span class="pre">tau_ref</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tau_ref_at_units</span></code> (<strong>optional</strong> <code class="docutils literal notranslate"><span class="pre">str</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Units of
+<code class="docutils literal notranslate"><span class="pre">tau_ref_at</span></code>: <code class="docutils literal notranslate"><span class="pre">&quot;cm-1&quot;</span></code> for wavenumber, <code class="docutils literal notranslate"><span class="pre">&quot;um&quot;</span></code> for wavelength in
+micrometres, or <code class="docutils literal notranslate"><span class="pre">&quot;nm&quot;</span></code> for wavelength in nanometres. Required with
+<code class="docutils literal notranslate"><span class="pre">tau_ref</span></code> and independent of <code class="docutils literal notranslate"><span class="pre">spec_units</span></code>. Reference coordinate fields
+must be omitted or <code class="docutils literal notranslate"><span class="pre">None</span></code> when <code class="docutils literal notranslate"><span class="pre">tau_ref</span></code> is not supplied.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">s</span></code> (number, one-dimensional sequence, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Distribution spread.
+It is a standard deviation in micrometres for <code class="docutils literal notranslate"><span class="pre">&quot;gaussian&quot;</span></code>, a geometric
+standard deviation greater than one for log-normal distributions, and a
+positive effective variance for <code class="docutils literal notranslate"><span class="pre">&quot;gamma&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;modified_gamma&quot;</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">s_a_den</span></code> (number, one-dimensional sequence, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Particle
+surface-area density. Multimode values are supplied per mode.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">v_den</span></code> (number, one-dimensional sequence, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Particle volume
+density. Multimode values are supplied per mode.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dist_type</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>): Particle-size distribution. Permitted values are
+<code class="docutils literal notranslate"><span class="pre">&quot;gaussian&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;log_normal&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;multimode_log_normal&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;gamma&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;modified_gamma&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;inverse_modified_gamma&quot;</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">&quot;regularised_power_law&quot;</span></code>. The US spelling <code class="docutils literal notranslate"><span class="pre">&quot;regularized_power_law&quot;</span></code> is
+an alias. See <a class="reference internal" href="size_distributions.html"><span class="doc">Particle size distributions</span></a> for the parameter definitions.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">effective_radius</span></code> (number or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Effective-radius alternative to
+<code class="docutils literal notranslate"><span class="pre">r</span></code> in micrometres for single-mode log-normal, gamma, and modified-gamma
+distributions. Supply exactly one of the two; omit <code class="docutils literal notranslate"><span class="pre">r</span></code> or set it to
+<code class="docutils literal notranslate"><span class="pre">None</span></code> when using <code class="docutils literal notranslate"><span class="pre">effective_radius</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">alpha</span></code> (number or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Shape exponent for inverse modified-gamma and
+regularised power-law distributions.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">b</span></code> (number or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Natural scale parameter for inverse
+modified-gamma and regularised power-law distributions. If omitted, <code class="docutils literal notranslate"><span class="pre">r</span></code>
+supplies their number median.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gamma</span></code> (number or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Required positive cutoff exponent for
+modified-gamma and inverse modified-gamma distributions, or tail parameter
+greater than one for the regularised power law.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">median_radius</span></code> (number or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Explicit spelling of the number-median
+radius for inverse modified-gamma and regularised power-law distributions.
+It is an alternative to both <code class="docutils literal notranslate"><span class="pre">r</span></code> and <code class="docutils literal notranslate"><span class="pre">b</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">truncate</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code> or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Gaussian positive-radius truncation.
+Mie calculations require true; omission defaults to true.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">comp</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>): Refractive-index composition identifier or refractive-
-index filename, such as <code class="docutils literal notranslate"><span class="pre">&quot;sulphuric</span> <span class="pre">acid&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;ash&quot;</span></code>, or an <code class="docutils literal notranslate"><span class="pre">.ri</span></code> file.</p></li>
+index basename from bundled ARIA. Accepts <code class="docutils literal notranslate"><span class="pre">&quot;sulphuric</span> <span class="pre">acid&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;ash&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;ice&quot;</span></code>, current filenames such as <code class="docutils literal notranslate"><span class="pre">&quot;H2SO4_75%_300K_Palmer_1975.ri&quot;</span></code>,
+and legacy filenames such as <code class="docutils literal notranslate"><span class="pre">&quot;H2SO4_75_Palmer_1975.ri&quot;</span></code>. Filenames are
+case-sensitive. See <a class="reference internal" href="input_files.html#aria-refractive-indices"><span class="std std-ref">ARIA refractive indices</span></a> for dataset selection and
+compatibility. Use <code class="docutils literal notranslate"><span class="pre">&quot;ri&quot;</span></code> with <code class="docutils literal notranslate"><span class="pre">refractive_index</span></code> for supplied indices
+in the <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">-</span> <span class="pre">ik</span></code> convention.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">center_alt</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Layer centre altitude in km.
 Supply it with <code class="docutils literal notranslate"><span class="pre">thick</span></code>, or instead supply both explicit altitude bounds.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">thick</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Positive layer thickness in km.</p></li>
@@ -860,8 +1145,8 @@ in km; must exceed <code class="docutils literal notranslate"><span class="pre">
 in km.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">radii</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>): Positive number of particle radii used to integrate the
 size distribution.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">eta</span></code> (<code class="docutils literal notranslate"><span class="pre">float</span></code>): Relative size-distribution tail cutoff. Permitted range:
-greater than 0 and less than 1.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">eta</span></code> (<code class="docutils literal notranslate"><span class="pre">float</span></code>): Total number-probability fraction omitted from the two
+radius-integration tails. Permitted range: greater than 0 and less than 1.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">phase_quad_N</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>): Positive number of phase-function quadrature
 points.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">phase_quad_type</span></code> (<code class="docutils literal notranslate"><span class="pre">str</span></code>): Phase-function quadrature rule. Permitted
@@ -875,16 +1160,66 @@ values: <code class="docutils literal notranslate"><span class="pre">&quot;regul
 <li><p><code class="docutils literal notranslate"><span class="pre">multiprocess</span></code> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>): Enable the experimental multiprocessing path for
 optical-property calculations. Permitted values: <code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">mass_loading</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code>, <code class="docutils literal notranslate"><span class="pre">float</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Column particle mass in
-g m<sup>-2</sup> used to derive layer optical depth.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">r</span></code> (<code class="docutils literal notranslate"><span class="pre">int</span></code> or <code class="docutils literal notranslate"><span class="pre">float</span></code>): Positive mean particle radius in micrometres.</p></li>
+g m<sup>-2</sup> used to derive layer optical depth. A multimode log-normal
+layer must instead provide per-mode <code class="docutils literal notranslate"><span class="pre">n</span></code>, <code class="docutils literal notranslate"><span class="pre">s_a_den</span></code>, or <code class="docutils literal notranslate"><span class="pre">v_den</span></code> because
+one total mass does not determine the relative mode concentrations.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">r</span></code> (number, one-dimensional sequence, or <code class="docutils literal notranslate"><span class="pre">None</span></code>): Distribution radius
+in micrometres. It is a Gaussian mean, a number median for log-normal and
+gamma-family inputs, and one number median per multimode log-normal mode.</p></li>
 </ul>
 <p>The unused altitude pair may be omitted entirely. If all four altitude values
 are supplied, both pairs must describe the same boundaries after SRFM’s
 0.001-km layer-boundary rounding.</p>
+<section id="using-reference-optical-depth">
+<h3>Using reference optical depth<a class="headerlink" href="#using-reference-optical-depth" title="Link to this heading"></a></h3>
+<p>For example, adapt an existing Mie-layer input dictionary as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">layer_inputs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+    <span class="n">n</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">mass_loading</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">s_a_den</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">v_den</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">tau_ref</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">tau_ref_at</span><span class="o">=</span><span class="mf">1000.0</span><span class="p">,</span>
+    <span class="n">tau_ref_at_units</span><span class="o">=</span><span class="s2">&quot;cm-1&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The equivalent wavelength specifications are <code class="docutils literal notranslate"><span class="pre">tau_ref_at=10.0</span></code> with
+<code class="docutils literal notranslate"><span class="pre">tau_ref_at_units=&quot;um&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">tau_ref_at=10000.0</span></code> with
+<code class="docutils literal notranslate"><span class="pre">tau_ref_at_units=&quot;nm&quot;</span></code>. Density may be omitted or set to <code class="docutils literal notranslate"><span class="pre">None</span></code>; the
+existing mass-loading conversion warns that loading cannot be calculated.</p>
+<p>SRFM calculates extinction at the exact reference coordinate using a trial
+number concentration <span class="math notranslate nohighlight">\(N_0=1\ \mathrm{cm}^{-3}\)</span> and the configured size
+distribution, refractive index, radius quadrature, and tail cutoff. For layer
+thickness <span class="math notranslate nohighlight">\(H\)</span> in metres and trial extinction coefficient
+<span class="math notranslate nohighlight">\(\beta_{\mathrm{ext},0}\)</span> in m<sup>-1</sup>, it derives</p>
+<div class="math notranslate nohighlight">
+\[N = N_0\frac{\tau_{\mathrm{ref}}}{\beta_{\mathrm{ext},0} H}.\]</div>
+<p>The resulting concentration is fixed across the spectrum. The ordinary
+<code class="docutils literal notranslate"><span class="pre">calculate_op()</span></code> flow then constructs the distribution, derives mass loading
+when density and a finite third radius moment are available, and calculates
+the complete optical spectrum. The reference specification and derived
+concentration are retained in the effective input metadata of all runners.</p>
+<p>The reference need not lie on the layer calculation grid. An ARIA composition
+must cover that wavelength; a constant supplied refractive index can also be
+used outside the output band. For a supplied <code class="docutils literal notranslate"><span class="pre">refractive_index</span></code> array, the
+reference must lie within its layer grid: real and imaginary parts are
+interpolated linearly in wavelength, with no extrapolation. The reference
+extinction must be positive and finite. Output interpolation still has its
+ordinary grid-resolution error when the reference is between grid points.</p>
+<p>Reference optical depth supports the existing distribution families with one
+component. A multimode log-normal distribution with more than one mode must
+use per-mode concentrations because one total optical depth cannot determine
+the relative abundances. Zero optical depth is not a Mie concentration input;
+omit an empty particle layer instead.</p>
+<p>The reproducible <code class="docutils literal notranslate"><span class="pre">examples/optical_depth_input/compare_layers.py</span></code> example
+calculates a random layer from <code class="docutils literal notranslate"><span class="pre">n</span></code>, then reproduces it using optical depth at
+one calculated wavelength and compares the complete spectra.</p>
 <p><code class="docutils literal notranslate"><span class="pre">gbc_lyrs_inputs</span></code> is likewise optional and accepts omission, <code class="docutils literal notranslate"><span class="pre">None</span></code>, or an
 empty dictionary. Its grey-body layers use the same alternative altitude pairs:
 <code class="docutils literal notranslate"><span class="pre">center_alt</span></code> with <code class="docutils literal notranslate"><span class="pre">thick</span></code>, or <code class="docutils literal notranslate"><span class="pre">alt_low</span></code> with <code class="docutils literal notranslate"><span class="pre">alt_upp</span></code>. When all four
 are supplied they must describe the same layer.</p>
+</section>
 </section>
 <section id="prescribed-optical-layers">
 <h2>Prescribed optical layers<a class="headerlink" href="#prescribed-optical-layers" title="Link to this heading"></a></h2>
@@ -940,6 +1275,47 @@ with its lower and upper boundaries. It therefore occupies exactly one model
 cell and contributes its complete column optical depth to that cell. SRFM does
 not fractionally split, combine, or mix configured optical objects.</p>
 </section>
+<section id="effective-altitude-levels">
+<h2>Effective altitude levels<a class="headerlink" href="#effective-altitude-levels" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">main.run_srfm</span></code>, <code class="docutils literal notranslate"><span class="pre">oxharp_main.run_srfm</span></code> and <code class="docutils literal notranslate"><span class="pre">iasi_main.run_srfm</span></code> reconcile
+requested output levels and optical-layer boundaries with the atmospheric grid
+that RFM actually uses. The first atmospheric file establishes that grid; a later
+composition profile may use a different grid. The <code class="docutils literal notranslate"><span class="pre">LAY</span></code> flag inserts midpoints
+before matching, and preceding height or Jacobian sections can insert more levels.
+SRFM reads the existing grid once per evaluation, before calculating particle
+optics. It adds no spectral-loop work or radiative-transfer calls.</p>
+<p>RFM’s <code class="docutils literal notranslate"><span class="pre">ATMLEV</span></code> matches in single precision with a <strong>relative</strong> tolerance of
+0.001. It chooses the nearest atmospheric level (the first on a distance tie).
+At the endpoints, distance is divided by the adjacent interval; internally it
+is divided by half the span between the two neighbouring levels. A fraction
+less than or equal to 0.001 snaps to the existing level. Otherwise, RFM inserts
+the requested altitude, changing the spacing used for subsequent requests.
+This is not a fixed 0.001 km tolerance. It is also separate from
+<code class="docutils literal notranslate"><span class="pre">rfm_config.optical_match_tol</span></code>, the absolute tolerance in km used to locate
+already reconciled levels in captured optical-depth output.</p>
+<p>For example, on a 1 km atmospheric grid, 3.000 and 3.001 km can both resolve
+to 3.000 km. SRFM removes this collision and maps a layer requested at
+3.001–3.101 km to the effective boundaries before rebuilding layer assignments.
+The same levels then drive RFM capture, gas calculations and particle columns.
+A second, bounded replay checks that the canonical level sequence remains
+distinct under RFM’s matching rules.</p>
+<p>Effective centre and thickness can change slightly. Concentrations derived
+from mass loading use the effective thickness, preserving column mass in
+g m<sup>-2</sup>. Number, surface-area and volume densities retain their density
+interpretation; their column loading changes with thickness. A reference optical
+depth continues to specify column optical depth. Prescribed and grey-body
+optical depths also remain column quantities. Caller definitions are retained;
+NetCDF metadata records effective geometry and levels for the evaluation.</p>
+<p>Collapsed layers, or snapping that creates an overlap or shared boundary, raise
+an exception naming the affected layers and their original and effective bounds.
+The existing restriction against overlapping or touching optical layers still
+applies. Small discontinuities remain when a boundary crosses a snapping
+threshold; retrievals should not assume smooth geometry across those thresholds.</p>
+<p>Generated drivers place observer and surface sections after <code class="docutils literal notranslate"><span class="pre">*LEV</span></code>, so those
+sections do not change the grid used for output-level matching. Existing driver
+files retain their section order, and their <code class="docutils literal notranslate"><span class="pre">*LEV</span></code> contents are replaced only
+in memory. Altitude insertions preceding that section are included in matching.</p>
+</section>
 <section id="solar-and-viewing-geometry">
 <h2>Solar and viewing geometry<a class="headerlink" href="#solar-and-viewing-geometry" title="Link to this heading"></a></h2>
 <ul class="simple">
@@ -971,7 +1347,7 @@ range: 0 to 360.</p></li>
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="auto_examples/basic_example/run_srfm.html" class="btn btn-neutral float-left" title="Run SRFM with a driver table" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="auto_examples/optical_depth_input/compare_layers.html" class="btn btn-neutral float-left" title="&lt;no title&gt;" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
         <a href="input_files.html" class="btn btn-neutral float-right" title="Input files" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
