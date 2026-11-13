@@ -257,13 +257,15 @@ def test_runner_schemas_require_the_inputs_each_runner_consumes(basic_values):
         iasi_fl="scene_20250323_A.pkl",
         px=0,
         nedt="synthetic-nedt.txt",
-        ils="synthetic.ils",
     )
-    validate_iasi_inputs(iasi_values)
+    validated_iasi = validate_iasi_inputs(iasi_values)
 
     assert OXHARP_INPUT_SCHEMA["zen_cos"].required
     assert not IASI_INPUT_SCHEMA["zen"].required
-    assert IASI_INPUT_SCHEMA["ils"].required
+    assert not IASI_INPUT_SCHEMA["ils"].required
+    assert validated_iasi["convolve"] is None
+    assert validated_iasi["add_noise"] is None
+    assert validated_iasi["ils"] is None
     assert OXHARP_INPUT_SCHEMA["out"].required
     assert IASI_INPUT_SCHEMA["out"].required
     assert "utau" not in OXHARP_INPUT_SCHEMA
@@ -610,7 +612,6 @@ def test_empty_disort_header_validates(basic_values):
         ({"fin_res": 0}, "fin_res: must be greater than zero"),
         ({"fin_res": np.nan}, "fin_res: must be finite"),
         ({"spc_wvnmlo": 900, "spc_wvnmhi": 800}, "spc_wvnmlo"),
-        ({"convolve_iasi": True, "iasi_ils": None}, "iasi_ils"),
         ({"out_mode": "txt", "retain_outputs": ("flup",)}, "out_mode"),
         ({"usrtau": False}, "usrtau: current value False"),
         ({"date": (2025, 2, 29)}, "date: day is out of range"),
@@ -658,6 +659,165 @@ def test_all_radiance_retention_aliases_are_accepted(basic_values, radiance_name
     basic_values["out_mode"] = "netcdf"
 
     validate_srfm_inputs(basic_values)
+
+
+@pytest.mark.parametrize("selector", ["convolve", "add_noise"])
+def test_instrument_operation_selectors_accept_registered_names(
+    basic_values, selector
+):
+    """Convolution and noise independently accept registered instruments."""
+    basic_values[selector] = "iasi"
+    if selector == "add_noise":
+        basic_values["convolve"] = "iasi"
+    basic_values["iasi_ils"] = "synthetic.ils"
+
+    validated = validate_srfm_inputs(basic_values)
+
+    assert validated[selector] == "iasi"
+    basic_values[selector] = "descriptive-only-value"
+    with pytest.raises(
+        InputValidationError,
+        match=rf"{selector}: expected one of 'iasi'",
+    ):
+        validate_srfm_inputs(basic_values)
+
+
+@pytest.mark.parametrize(
+    ("removed_key", "removed_value", "replacement_hint"),
+    [
+        (
+            "instrument",
+            "iasi",
+            "use 'convolve' with a registered instrument name instead",
+        ),
+        ("convolve_iasi", True, "use convolve='iasi' instead"),
+        ("add_iasi_noise", True, "use add_noise='iasi' instead"),
+    ],
+)
+def test_removed_instrument_selectors_are_rejected(
+    basic_values, removed_key, removed_value, replacement_hint
+):
+    """Only convolve and add_noise remain in the public driver interface."""
+    basic_values[removed_key] = removed_value
+
+    with pytest.raises(InputValidationError) as caught:
+        validate_srfm_inputs(basic_values)
+
+    assert (
+        f"{removed_key}: unknown field; {replacement_hint}"
+        in caught.value.issues
+    )
+
+
+def test_iasi_selection_accepts_packaged_ils_default(basic_values):
+    """IASI processing no longer requires an external response file path."""
+    basic_values["convolve"] = "iasi"
+    basic_values["iasi_ils"] = None
+
+    validated = validate_srfm_inputs(basic_values)
+
+    assert validated["iasi_ils"] is None
+
+
+def test_iasi_noise_defaults_are_disabled(basic_values):
+    """Omitted noise inputs use the M03 and IFOV-one defaults."""
+    for key in ("add_noise", "iasi_instrument", "iasi_ifov"):
+        basic_values.pop(key)
+
+    validated = validate_srfm_inputs(basic_values)
+
+    assert validated["add_noise"] is None
+    assert validated["iasi_instrument"] == "M03"
+    assert validated["iasi_ifov"] == 1
+
+
+def test_enabling_iasi_noise_uses_default_instrument_and_ifov(basic_values):
+    """Noise enabled without selectors resolves to the M03 IFOV-one factor."""
+    for key in ("iasi_instrument", "iasi_ifov"):
+        basic_values.pop(key)
+    basic_values["add_noise"] = "iasi"
+    basic_values["convolve"] = "iasi"
+
+    validated = validate_srfm_inputs(basic_values)
+
+    assert validated["iasi_instrument"] == "M03"
+    assert validated["iasi_ifov"] == 1
+
+
+@pytest.mark.parametrize(
+    ("configured", "canonical"),
+    [
+        ("M01", "M01"),
+        ("b", "M01"),
+        ("iasi-b", "M01"),
+        ("M02", "M02"),
+        ("A", "M02"),
+        ("IASI-A", "M02"),
+        ("M03", "M03"),
+        ("c", "M03"),
+        ("IASI-C", "M03"),
+    ],
+)
+def test_iasi_noise_instrument_aliases_are_canonicalized(
+    basic_values, configured, canonical
+):
+    """Every data-product and satellite alias resolves to its M identifier."""
+    basic_values.update(
+        convolve="iasi",
+        add_noise="iasi",
+        iasi_instrument=configured,
+        iasi_ifov=1,
+    )
+
+    validated = validate_srfm_inputs(basic_values)
+
+    assert validated["iasi_instrument"] == canonical
+
+
+def test_iasi_noise_requires_instrument_and_active_ifov(basic_values):
+    """Noise-only settings are checked when the operation is enabled."""
+    basic_values.update(
+        convolve="iasi",
+        add_noise="iasi",
+        iasi_instrument="unknown",
+        iasi_ifov=0,
+    )
+
+    with pytest.raises(InputValidationError) as caught:
+        validate_srfm_inputs(basic_values)
+
+    assert any(issue.startswith("iasi_instrument:") for issue in caught.value.issues)
+    assert any(issue.startswith("iasi_ifov:") for issue in caught.value.issues)
+
+
+def test_iasi_noise_requires_iasi_convolution(basic_values):
+    """Noise cannot be requested without the matching convolution selector."""
+    basic_values.update(convolve=None, add_noise="iasi")
+
+    with pytest.raises(InputValidationError, match="requires convolve='iasi'"):
+        validate_srfm_inputs(basic_values)
+
+
+def test_iasi_convolution_allows_final_grid_fields_to_be_omitted(basic_values):
+    """IASI channels replace every user-configured final-grid parameter."""
+    basic_values["convolve"] = "iasi"
+    for field_name in ("fin_wvnmlo", "fin_wvnmhi", "fin_res"):
+        basic_values.pop(field_name)
+
+    validated = validate_srfm_inputs(basic_values)
+
+    assert "fin_wvnmlo" not in validated
+    assert "fin_wvnmhi" not in validated
+    assert "fin_res" not in validated
+
+
+def test_noninstrument_run_still_requires_final_grid_fields(basic_values):
+    """Ordinary SRFM interpolation retains its existing final-grid contract."""
+    basic_values["convolve"] = None
+    basic_values.pop("fin_res")
+
+    with pytest.raises(InputValidationError, match="fin_res: required unless"):
+        validate_srfm_inputs(basic_values)
 
 
 def test_netcdf_accepts_raw_retained_output_without_primary_spectrum(basic_values):

@@ -260,6 +260,64 @@ def test_complete_netcdf_writer_supports_raw_output_without_radiance_or_bbt(
         np.testing.assert_allclose(dataset.variables["rfldn"][:], model.rfldn)
 
 
+def test_netcdf_serializes_instrument_processing_metadata(tmp_path):
+    """Instrument identity and separate processing history survive serialization."""
+    model = SRFM()
+    model.wvnm = np.array([900.0, 901.0])
+    model.uu = np.ones((2, 1, 1, 1))
+    model.output_format = "altitude"
+    model.output_values = np.array([0.0])
+    model.output_polar_angles = np.array([0.0])
+    model.output_azimuthal_angles = np.array([0.0])
+    model.instrument_name = "iasi"
+    model.iasi_instrument = "M03"
+    model.iasi_ifov = 2
+    model.noise_applied = True
+    model.spectral_representation = "iasi_ils_convolved_noisy_spectral_radiance"
+    model.processing_history = (
+        {"operation": "convolution", "instrument": "iasi"},
+        {
+            "operation": "noise",
+            "instrument": "iasi",
+            "iasi_instrument": "M03",
+            "iasi_ifov": 2,
+        },
+    )
+    filename = tmp_path / "instrument.nc"
+
+    _write_srfm_netcdf(
+        filename,
+        model,
+        ("uu",),
+        {"instrument": "iasi"},
+        model.wvnm,
+        {},
+    )
+
+    with Dataset(filename) as dataset:
+        assert dataset.instrument == "iasi"
+        assert dataset.noise_applied == 1
+        assert dataset.iasi_instrument == "M03"
+        assert dataset.iasi_ifov == 2
+        assert (
+            dataset.spectral_representation
+            == "iasi_ils_convolved_noisy_spectral_radiance"
+        )
+        assert json.loads(dataset.processing_history) == [
+            {"operation": "convolution", "instrument": "iasi"},
+            {
+                "operation": "noise",
+                "instrument": "iasi",
+                "iasi_instrument": "M03",
+                "iasi_ifov": 2,
+            },
+        ]
+        assert (
+            dataset.variables["uu"].spectral_representation
+            == "iasi_ils_convolved_noisy_spectral_radiance"
+        )
+
+
 def test_netcdf_records_layer_types_spectral_arrays_and_compact_provenance(tmp_path):
     """Large source arrays become variables or compact JSON summaries."""
     model = SRFM()
@@ -345,11 +403,27 @@ def test_retained_output_selection_accepts_every_radiance_alias():
         requested, runtime = _resolve_retained_outputs(
             {
                 "retain_outputs": ("bbt", alias, "flup"),
-                "convolve_iasi": False,
+                "convolve": None,
+                "add_noise": None,
             }
         )
         assert requested == {"bbt", "uu", "flup"}
         assert runtime == {"uu", "flup"}
+
+
+def test_instrument_selection_retains_runtime_radiance():
+    """Configured convolution receives radiance even when only a flux is returned."""
+    requested, runtime = _resolve_retained_outputs(
+        {
+            "retain_outputs": ("flup",),
+            "convolve": "iasi",
+            "add_noise": None,
+        },
+        requires_radiance=True,
+    )
+
+    assert requested == {"flup"}
+    assert runtime == {"flup", "uu"}
 
 
 def test_base_plots_include_every_retained_primary_output(tmp_path):

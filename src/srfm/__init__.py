@@ -21,6 +21,7 @@ __all__ = [
     "utilities",
     "disort_functions",
     "forward_model",
+    "instruments",
     "rfm_functions",
     "DISORT",
     "DISORT_dbl",

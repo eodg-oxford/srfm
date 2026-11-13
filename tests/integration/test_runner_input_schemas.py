@@ -48,6 +48,6 @@ def test_iasi_runner_uses_observation_schema_before_side_effects(tmp_path):
         run_iasi_srfm(inputs)
 
     assert "iasi_fl: required field is missing" in caught.value.issues
-    assert "ils: required field is missing" in caught.value.issues
+    assert "ils: required field is missing" not in caught.value.issues
     assert "sun: required field is missing" not in caught.value.issues
     assert not results.exists()

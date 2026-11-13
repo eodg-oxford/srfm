@@ -41,10 +41,14 @@ inputs = {
     "retain_outputs": ("bbt",),
     "scattering_block_size": 10000,  # optional: interpolation block size
     "retain_phase_functions": False,  # optional: retain large phase arrays
-    # instrument line shape (ILS)
-    "convolve_iasi": False,  # if True, convolves spectrum with IASI ILS below
-    "iasi_ils": str(EXAMPLE_DIR / "iasi.ils"),  # optional path to ILS
-    # file
+    # Instrument operations are selected independently by registered name.
+    "convolve": None,  # set to "iasi" to apply the IASI line shape
+    "iasi_ils": None,  # optional override; packaged IASI ILS is the default
+    # IASI convolution derives output channels from the computational range after
+    # removing 2 cm-1 at each edge; configured fin_* values are then ignored.
+    "add_noise": None,  # set to "iasi" to add correlated IASI noise
+    "iasi_instrument": "M03",  # M01/IASI-B, M02/IASI-A, or M03/IASI-C
+    "iasi_ifov": 1,  # select IASI field of view 1, 2, 3, or 4
     ## Grids
     "fin_wvnmlo": FIN_WVNMLO,
     "fin_wvnmhi": FIN_WVNMHI,

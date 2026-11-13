@@ -1015,7 +1015,7 @@ def get_altitude_prf(p, T, z0=0, M=28.965, g=9.81):
 
     where:
         - :math:`p`: atmospheric pressure (Pa)
-        - :math:`z`: altitude (m)
+        - :math:`z`: altitude (km)
         - :math:`\\rho`: air density
         - :math:`g`: gravity (:math:`m s^{-2}`)
         - :math:`M`: air molar mass (:math:`g mol^{-1}`)
@@ -1035,7 +1035,7 @@ def get_altitude_prf(p, T, z0=0, M=28.965, g=9.81):
             Expected sorted from lower to higher altitudes.
         T (list): Atmospheric temperature profile, units [K].
             Expected sorted from lower to higher altitudes.
-        z0 (float): Surface altitude. Units [m]. Default is 0.
+        z0 (float): Surface altitude. Units [km]. Default is 0.
         M (float): Air molar mass. Units [:math:`g mol^{-1}`]. Default
             is :math:`28.97 g mol^{-1}`. Note that air molar mass is considered
             independent of altitude (is constant). THis formula therefore fails above

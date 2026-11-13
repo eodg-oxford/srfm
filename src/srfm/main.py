@@ -28,6 +28,8 @@ from collections.abc import Mapping
 from numbers import Real
 from .spectral_fields import SpectralField
 from .rfm_levels import read_matching_grid, reconcile_levels
+from .instruments.base import ConvolvingInstrument, NoiseInstrument
+from .instruments.registry import create_instrument_from_inputs
 
 
 def _resolve_output_geometry(output_format, requested, include_toa, rfm_output):
@@ -94,11 +96,13 @@ def _resolve_output_geometry(output_format, requested, include_toa, rfm_output):
     return np.asarray(output_values, dtype=float), altitude_rows
 
 
-def _resolve_retained_outputs(values):
+def _resolve_retained_outputs(values, *, requires_radiance=False):
     """Derive the requested and temporary SRFM output arrays.
 
     Args:
         values (Mapping): Validated SRFM input values.
+        requires_radiance (bool): Retain radiance temporarily for selected
+            post-processing even when it is not a requested final output.
 
     Returns:
         tuple[set[str], set[str]]: Publicly retained semantic names and raw DISORT
@@ -124,9 +128,84 @@ def _resolve_retained_outputs(values):
     if unknown:
         raise ValueError("Unknown retained output name(s): " + ", ".join(sorted(unknown)))
     runtime = requested & raw_names
-    if "bbt" in requested or values.get("convolve_iasi"):
+    if "bbt" in requested or requires_radiance:
         runtime.add("uu")
     return requested, runtime
+
+
+def _resolve_convolving_instrument(values):
+    """Resolve the in-place convolution strategy selected by runner inputs.
+
+    The registry and instrument implementation own compatibility selection and
+    instrument-specific input extraction.  This runner helper only verifies
+    the common convolution capability.
+
+    Args:
+        values (Mapping): Validated runner inputs.
+
+    Returns:
+        ConvolvingInstrument | None: Resolved strategy.
+    """
+    instrument = create_instrument_from_inputs(values, selector="convolve")
+    if instrument is None:
+        return None
+    if not isinstance(instrument, ConvolvingInstrument):
+        raise TypeError(
+            "Selected instrument must provide a name and convolve(result) method."
+        )
+    return instrument
+
+
+def _resolve_noise_instrument(values):
+    """Resolve the in-place noise strategy selected by runner inputs.
+
+    Noise is configured independently from convolution so future registered
+    instruments can implement either operation or both operations.
+
+    Args:
+        values (Mapping): Validated runner inputs.
+
+    Returns:
+        NoiseInstrument | None: Configured noise strategy when requested.
+
+    Raises:
+        TypeError: If the selected implementation cannot add noise.
+    """
+    instrument = create_instrument_from_inputs(values, selector="add_noise")
+    if instrument is None:
+        return None
+    if not isinstance(instrument, NoiseInstrument):
+        raise TypeError(
+            "Selected instrument must provide a name and add_noise(result) method."
+        )
+    return instrument
+
+
+def _resolve_final_grid(values, instrument_processor=None):
+    """Return the ordinary final grid or an instrument-defined channel grid.
+
+    Args:
+        values (Mapping): Validated runner inputs.
+        instrument_processor (ConvolvingInstrument | None): Selected
+            convolution strategy. When supplied, the instrument owns the final
+            channel locations.
+
+    Returns:
+        numpy.ndarray: Final output wavenumbers in inverse centimetres.
+    """
+    if instrument_processor is not None:
+        return instrument_processor.output_grid(values)
+
+    point_count = (
+        int(
+            np.floor(
+                (values["fin_wvnmhi"] - values["fin_wvnmlo"])
+                / values["fin_res"]
+            )
+        )
+        + 1
+    )
+    return values["fin_wvnmlo"] + np.arange(point_count) * values["fin_res"]
 
 
 def _interpolate_particle_block(particle_layers, wavenumber_cm_inverse, nmom):
@@ -551,6 +630,9 @@ def _create_netcdf_spectral_dimensions(nc_file, model):
     wavenumber = nc_file.createVariable("wavenumber", "f8", ("wavenumber",))
     wavenumber.units = "cm-1"
     wavenumber.long_name = "Wavenumber"
+    wavenumber.coordinate_role = getattr(
+        model, "spectral_coordinate_role", "wavenumber"
+    )
     wavenumber[:] = model.wvnm
 
     output_level = nc_file.createVariable("output_level", "f8", ("output_level",))
@@ -657,8 +739,20 @@ def _write_retained_netcdf_outputs(nc_file, model, retained_outputs):
         variable.long_name = long_name
         if output_name == "bbt":
             variable.units = "K"
+            variable.conversion_method = getattr(
+                model,
+                "brightness_temperature_method",
+                "planck_inverse_at_wavenumber",
+            )
         elif output_name == "uu":
-            variable.units = "W m-2 sr-1 cm"
+            variable.units = getattr(
+                model, "radiance_units", "W m-2 sr-1 cm"
+            )
+            variable.spectral_representation = getattr(
+                model,
+                "spectral_representation",
+                "monochromatic_spectral_radiance",
+            )
         variable[:] = values
 
 
@@ -759,6 +853,26 @@ def _write_srfm_netcdf(
         )
         nc_file.srfm_params = json.dumps(
             serialized_params,
+            default=utilities.json_handler,
+        )
+        instrument_name = getattr(model, "instrument_name", None)
+        if instrument_name is not None:
+            nc_file.instrument = instrument_name
+        if getattr(model, "noise_applied", False):
+            iasi_instrument = getattr(model, "iasi_instrument", None)
+            iasi_ifov = getattr(model, "iasi_ifov", None)
+            if iasi_instrument is not None:
+                nc_file.iasi_instrument = iasi_instrument
+            if iasi_ifov is not None:
+                nc_file.iasi_ifov = iasi_ifov
+        nc_file.spectral_representation = getattr(
+            model,
+            "spectral_representation",
+            "monochromatic_spectral_radiance",
+        )
+        nc_file.noise_applied = int(getattr(model, "noise_applied", False))
+        nc_file.processing_history = json.dumps(
+            getattr(model, "processing_history", ()),
             default=utilities.json_handler,
         )
 
@@ -1008,21 +1122,13 @@ def run_srfm(inp):
     if not hasattr(inp, "values"):
         raise TypeError("run_srfm expects an Inputs-like object with a values mapping.")
     inp.values = validate_srfm_inputs(inp.values)
+    instrument_processor = _resolve_convolving_instrument(inp.values)
+    noise_processor = _resolve_noise_instrument(inp.values)
 
     ########################################################################################
     # set final grid to interpolate to
     ########################################################################################
-    # this seems to be the most robust way of generating a grid (both np.arange and linspace are prone to failing)
-    npts = (
-        int(
-            np.floor(
-                (inp.values["fin_wvnmhi"] - inp.values["fin_wvnmlo"])
-                / inp.values["fin_res"]
-            )
-        )
-        + 1
-    )  # expected number of points in the grid
-    fin_grid = inp.values["fin_wvnmlo"] + np.arange(npts) * inp.values["fin_res"]
+    fin_grid = _resolve_final_grid(inp.values, instrument_processor)
 
     if "date" in inp.values:
         if isinstance(inp.values["date"], datetime.datetime):
@@ -1432,7 +1538,12 @@ def run_srfm(inp):
     model_SRFM = forward_model.SRFM()
     model_SRFM.set_wvnm(RFM_wvnm)
     model_SRFM.set_wvls(wvls)
-    requested_outputs, runtime_outputs = _resolve_retained_outputs(inp.values)
+    requested_outputs, runtime_outputs = _resolve_retained_outputs(
+        inp.values,
+        requires_radiance=(
+            instrument_processor is not None or noise_processor is not None
+        ),
+    )
     model_SRFM.initialize_srfm_output_arrays_from_disort(
         model_DISORT, retain_outputs=runtime_outputs
     )
@@ -1669,12 +1780,15 @@ def run_srfm(inp):
                 stacklevel=2,
             )
 
-    # convolve final radiance spectrum with iasi instrument line shape
-    if inp.values["convolve_iasi"] == True:
-        model_SRFM.convolve_with_iasi(inp.values["iasi_ils"])
+    # Apply the selected instrument convolution to the high-resolution result.
+    if instrument_processor is not None:
+        instrument_processor.convolve(model_SRFM)
 
     # interpolate resulting bbt and radiances to final grid
     model_SRFM.interp(fin_grid)
+
+    if noise_processor is not None:
+        noise_processor.add_noise(model_SRFM)
 
     if "bbt" in requested_outputs:
         model_SRFM.calc_bbt()

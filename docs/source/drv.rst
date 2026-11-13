@@ -35,10 +35,28 @@ General run and output
   NetCDF output file. Omitting it or setting it to ``None`` selects
   ``srfm.nc``. The value is used as supplied, including its extension, and
   applies only when ``out_mode`` is ``"netcdf"``.
-* ``convolve_iasi`` (``bool``): Convolve every output radiance spectrum with
-  the IASI instrument line shape. Permitted values: ``True`` or ``False``.
+* ``convolve`` (**optional** ``str`` or ``None``): Select a registered
+  instrument convolution. The current accepted value is ``"iasi"``. Omitting
+  the field or setting it to ``None`` disables convolution. IASI convolution
+  samples the result only at IASI channels after removing a 2 cm\ :sup:`-1`
+  margin from each computational boundary. The computational range must be at
+  least 4 cm\ :sup:`-1` wide and must lie within 643--2762 cm\ :sup:`-1`.
 * ``iasi_ils`` (path-like or ``None``): RFM-format IASI instrument-line-shape
-  file; required when ``convolve_iasi`` is ``True``.
+  override. When omitted or ``None``, the ILS distributed with SRFM is used.
+* ``add_noise`` (**optional** ``str`` or ``None``): Select a registered
+  instrument noise model. The current accepted value ``"iasi"`` adds correlated
+  IASI radiance noise after interpolation to the final grid and before
+  brightness-temperature calculation. Omitting the field or setting it to
+  ``None`` disables noise. IASI noise requires ``convolve="iasi"`` and supports
+  the complete grid or any contiguous partial IASI channel range.
+* ``iasi_instrument`` (**optional** ``str``): IASI instrument used by the noise
+  model. The default is ``"M03"``. Accepted identifiers and aliases are
+  ``"M01"``/``"b"``/``"IASI-B"``, ``"M02"``/``"a"``/``"IASI-A"``, and
+  ``"M03"``/``"c"``/``"IASI-C"``. Matching is case-insensitive and validated
+  aliases are stored as ``"M01"``, ``"M02"``, or ``"M03"``.
+* ``iasi_ifov`` (**optional** ``int``): IASI instantaneous field of view used
+  by the noise model. Accepted values are ``1``, ``2``, ``3``, and ``4``. The
+  default is ``1`` when ``add_noise`` selects ``"iasi"``.
 * ``retain_outputs`` (required sequence of ``str``): Full-grid values kept on
   the returned model. Supported names are ``"rad"``/``"radiance"``/``"uu"``,
   ``"bbt"``, ``"rfldir"``, ``"rfldn"``, ``"flup"``, ``"dfdt"``,
@@ -65,11 +83,15 @@ Spectral grids
 --------------
 
 * ``fin_wvnmlo`` (``int`` or ``float``): Lower wavenumber of the final output
-  grid in cm\ :sup:`-1`.
+  grid in cm\ :sup:`-1`. This field is required unless ``convolve`` is
+  ``"iasi"``. IASI convolution ignores a supplied value and emits a warning.
 * ``fin_wvnmhi`` (``int`` or ``float``): Upper wavenumber of the final output
-  grid in cm\ :sup:`-1`; must be greater than ``fin_wvnmlo``.
+  grid in cm\ :sup:`-1`; must be greater than ``fin_wvnmlo``. This field is
+  required unless ``convolve`` is ``"iasi"`` and is ignored with a warning in
+  IASI mode.
 * ``fin_res`` (``int`` or ``float``): Positive final-grid spacing in
-  cm\ :sup:`-1`.
+  cm\ :sup:`-1`. This field is required unless ``convolve`` is ``"iasi"``;
+  IASI mode always uses the 0.25 cm\ :sup:`-1` instrument channels.
 * ``spc_wvnmlo`` (``int`` or ``float``): Lower bound of the computational
   spectral grid, in ``spc_units``. For ``"resolving_power"``, this bound is a
   wavenumber in cm\ :sup:`-1`.

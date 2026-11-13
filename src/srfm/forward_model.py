@@ -14,7 +14,6 @@ import os
 from . import utilities as utils
 from . import units
 import pandas as pd
-from scipy.signal import convolve
 import scipy.constants
 from scipy.interpolate import make_interp_spline
 from dataclasses import dataclass
@@ -1791,6 +1790,13 @@ class SRFM(Fwd_model):
             **parameters: Additional attributes assigned to the model.
         """
         super().__init__(name)
+        self.instrument_name = None
+        self.spectral_representation = "monochromatic_spectral_radiance"
+        self.spectral_coordinate_role = "wavenumber"
+        self.radiance_units = "W m-2 sr-1 cm"
+        self.brightness_temperature_method = "planck_inverse_at_wavenumber"
+        self.noise_applied = False
+        self.processing_history = ()
         for key, val in parameters.items():
             setattr(self, key, val)
 
@@ -1973,67 +1979,12 @@ class SRFM(Fwd_model):
                 kindly provided by Anu Dudhia, in RFM format.)
 
         """
-        uu_unconvolved = np.asarray(self.uu)
-        if uu_unconvolved.ndim < 1 or uu_unconvolved.shape[0] != len(self.wvnm):
-            raise ValueError(
-                "The first radiance dimension must match the wavenumber grid."
-            )
+        # Local import avoids coupling the core result class to all instrument
+        # implementations during module initialization.  This method remains as
+        # an in-place compatibility wrapper for the historical public API.
+        from .instruments.iasi import IASI
 
-        # read instrument line shape
-        ils_x, ils_y, ils_lo, ils_hi = utils.read_ils(filename)
-
-        # check if model grid is regular
-        spacing = np.diff(np.asarray(self.wvnm, dtype=float))
-        if spacing.size == 0 or not np.allclose(
-            spacing, spacing[0], rtol=1e-10, atol=1e-12
-        ):
-            raise ValueError("Wavenumber grid is not regular.")
-
-        # determine resolution from model wavenumber grid
-        num = len(self.wvnm)
-        lo = self.wvnm.min()
-        hi = self.wvnm.max()
-        res = np.round((hi - lo) / (num - 1), decimals=8)
-        # this inadvertently introduces a limit
-        # on the minimum resolution used in the code as 1e-8 cm-1, which should be
-        # enough though, and also this may not be the numerically most stable way to go
-
-        # generate new grid for ils
-        npts = (
-            int(np.floor((ils_hi - ils_lo) / res)) + 1
-        )  # expected number of points in the grid
-        new_x = ils_lo + np.arange(npts) * res
-        #        new_x = np.linspace(ils_lo, ils_hi, int((ils_hi - ils_lo) / res + 1))
-
-        # interpolate ils to new grid
-        new_y = np.interp(new_x, ils_x, ils_y)
-
-        # calculate sum of instrument line shape for normalization later
-        norm = np.sum(new_y)
-        if not np.isfinite(norm) or np.isclose(norm, 0.0):
-            raise ValueError("Instrument line shape has zero or non-finite normalization.")
-
-        # determine shape of uu from DISORT (a set of output spectra at
-        # different optical depths, polar angles, and azimuthal angles)
-        uu_shape = self.uu.shape  # tuple
-        nwv = uu_shape[0]  # first dimension size
-        rest = int(np.prod(uu_shape[1:], dtype=int))
-        # rest basically gives a number of stored spectra in the variable
-
-        # reshape uu (view)
-        uu_flat = uu_unconvolved.reshape(nwv, rest)
-        out_flat = np.empty_like(uu_flat)
-
-        # loop over columns (each column is a spectrum)
-        for j in range(rest):
-            out_flat[:, j] = convolve(uu_flat[:, j], new_y, mode="same") / norm
-
-        # reshape back
-        self.uu = out_flat.reshape(uu_shape)
-
-        if hasattr(self, "bbt"):
-            self.calc_bbt()
-
+        IASI(filename).convolve(self)
         return
 
     def interp(self, new_wvnm):

@@ -21,11 +21,12 @@ pytestmark = pytest.mark.e2e
 # A complete driver-table test below asserts that none is accidentally omitted.
 COMPLETE_RUN_INPUT_KEYS = {
     "adjust_maxcmu",
+    "add_noise",
     "albedo",
     "azi",
     "base_plots",
     "btemp",
-    "convolve_iasi",
+    "convolve",
     "date",
     "deltamplus",
     "disort_precision",
@@ -89,7 +90,8 @@ def _complete_input_values(results, tiny_atmosphere, tiny_altitude_grid, tiny_xs
     """
     return {
         "fwd_model": "SRFM",
-        "instrument": "synthetic",
+        "convolve": None,
+        "add_noise": None,
         "plot_profiles": False,
         "results_fldr": str(results),
         "date": (2025, 3, 23),
@@ -188,7 +190,6 @@ def _complete_input_values(results, tiny_atmosphere, tiny_altitude_grid, tiny_xs
         "saa": 0.0,
         "zen": 0.0,
         "azi": 0.0,
-        "convolve_iasi": False,
         "iasi_ils": None,
         "out_mode": None,
         "retain_outputs": ("bbt", "rad"),
@@ -285,11 +286,26 @@ def _assert_complete_result(result, results, values, num_output_levels=3):
         values: Input mapping used to calculate the expected spectral grid.
     """
     assert result is not None
-    n_points = (
-        int(np.floor((values["fin_wvnmhi"] - values["fin_wvnmlo"]) / values["fin_res"]))
-        + 1
-    )
-    expected_grid = values["fin_wvnmlo"] + np.arange(n_points) * values["fin_res"]
+    if values["convolve"] == "iasi":
+        complete_iasi_grid = 645.0 + np.arange(8461) * 0.25
+        expected_grid = complete_iasi_grid[
+            (complete_iasi_grid >= values["spc_wvnmlo"] + 2.0)
+            & (complete_iasi_grid <= values["spc_wvnmhi"] - 2.0)
+        ]
+        n_points = expected_grid.size
+    else:
+        n_points = (
+            int(
+                np.floor(
+                    (values["fin_wvnmhi"] - values["fin_wvnmlo"])
+                    / values["fin_res"]
+                )
+            )
+            + 1
+        )
+        expected_grid = (
+            values["fin_wvnmlo"] + np.arange(n_points) * values["fin_res"]
+        )
     np.testing.assert_allclose(result["wvnm"], expected_grid)
     retained = {
         "uu" if name in {"rad", "radiance"} else name
@@ -858,12 +874,14 @@ def test_complete_iasi_pathway_with_synthetic_processed_observation(
         pytest.param(
             "solar_iasi_netcdf_bbt_plot",
             {
+                "spc_wvnmlo": 998.0,
+                "spc_wvnmhi": 1002.0,
                 "spc_res": 0.25,
                 "fin_res": 0.25,
                 "sun": True,
                 "sza": 30.0,
                 "saa": 45.0,
-                "convolve_iasi": True,
+                "convolve": "iasi",
                 "out_mode": "netcdf",
                 "out_fname": "solar-output.nc",
                 "base_plots": True,
@@ -915,7 +933,7 @@ def test_driver_table_optional_execution_branches(
         results, tiny_atmosphere, tiny_altitude_grid, tiny_xsc_file
     )
     values.update(updates)
-    if values["convolve_iasi"]:
+    if values["convolve"] == "iasi":
         values["iasi_ils"] = str(tiny_iasi_ils)
     _require_all_native_extensions(require_native, values["disort_precision"])
 
@@ -938,7 +956,8 @@ def test_driver_table_optional_execution_branches(
         np.testing.assert_allclose(radiance[:, 0], expected_wavenumbers)
     else:
         with Dataset(results / "solar-output.nc") as dataset:
-            assert dataset.variables["bbt"].shape == (5, 1, 3, 1)
+            spectral_points = len(result["wvnm"])
+            assert dataset.variables["bbt"].shape == (spectral_points, 1, 3, 1)
             assert dataset.variables["bbt"].dimensions == (
                 "wavenumber",
                 "output_polar_angle",
@@ -951,8 +970,8 @@ def test_driver_table_optional_execution_branches(
                 "wavenumber",
                 "output_level",
             )
-            assert dataset.variables["flup"].shape == (5, 3)
+            assert dataset.variables["flup"].shape == (spectral_points, 3)
             assert np.all(np.isfinite(dataset.variables["flup"][:]))
             np.testing.assert_allclose(dataset.variables["flup"][:], result["flup"])
-            assert dataset.variables["uu"].shape == (5, 1, 3, 1)
+            assert dataset.variables["uu"].shape == (spectral_points, 1, 3, 1)
             assert np.all(np.isfinite(dataset.variables["uu"][:]))

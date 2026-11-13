@@ -137,12 +137,24 @@ and fluxes.
 Instrument and IASI files
 -------------------------
 
-The optional ``iasi_ils`` field and the IASI runner's ``ils`` field name an RFM
-ILS text file. After three comment/header lines, its fourth line contains the
-number of points, first spectral offset, and offset spacing. The following
-whitespace-separated values are the line-shape samples. See the example
-``iasi.ils`` file and the `RFM ILS specification
+The optional ``iasi_ils`` field and the IASI runner's ``ils`` field override
+the IASI response distributed with SRFM. An override is an RFM ILS text file.
+After three comment/header lines, its fourth line contains the number of points,
+first spectral offset, and offset spacing. The following whitespace-separated
+values are the line-shape samples. See the example ``iasi.ils`` file and the
+`RFM ILS specification
 <https://eodg.atm.ox.ac.uk/RFM/sum/ilsfil.html>`_.
+
+SRFM also distributes ``srfm/data/iasi_noise.npz``. The archive contains one
+compact lower-banded radiance-noise factor for every IASI instrument and IFOV,
+plus the corresponding wavenumber coordinate in m\ :sup:`-1`. SRFM converts
+that coordinate to cm\ :sup:`-1` for validation without changing the result's
+``wvnm`` coordinate. Noise application accepts the complete 8461-channel grid
+from 645 to 2760 cm\ :sup:`-1` at 0.25 cm\ :sup:`-1` or a contiguous subset
+created by IASI convolution. The full factor is sampled so correlations at a
+partial range's boundaries are retained. The correlated noise has the same
+``W m-2 sr-1 cm`` units as SRFM radiance. A separate realization is generated
+for every output-angle and output-level spectrum.
 
 The IASI runner's ``nedt`` file is whitespace-delimited text with three header
 rows followed by ``wavenumber_cm-1 NEDT_K`` pairs. Its ``iasi_spc_fldr`` and

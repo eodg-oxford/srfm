@@ -169,6 +169,40 @@ for name, field in get_srfm_input_schema().items():
 deliberately reads an incomplete dictionary; incomplete inputs are never
 accepted by `run_srfm()`.
 
+### Instrument processing
+
+The optional `convolve` and `add_noise` inputs select registered instrument
+processing implementations. Set `convolve="iasi"` to apply the IASI line shape
+and sample the result at IASI channel locations. SRFM removes a 2 cm⁻¹ margin
+from each computational boundary, so a calculation from 950 to 970 cm⁻¹
+returns the 0.25 cm⁻¹ IASI channels from 952 to 968 cm⁻¹. A complete IASI run
+uses a 643–2762 cm⁻¹ computational range and returns all 8461 channels from
+645 to 2760 cm⁻¹. The `fin_wvnmlo`, `fin_wvnmhi`, and `fin_res` inputs are
+ignored in this mode and may be omitted.
+
+Set `add_noise="iasi"` to add correlated radiance noise to the complete or a
+partial IASI channel grid. Noise requires `convolve="iasi"` and is added after
+channel sampling and before an optional brightness-temperature calculation.
+The packaged ILS is used by default and an `iasi_ils` path can override it.
+Select the noise factor with `iasi_instrument` and `iasi_ifov`; instrument
+aliases are normalized as M01/IASI-B, M02/IASI-A, and M03/IASI-C.
+
+Instrument selection is supplied through the input mapping:
+
+```python
+inputs.values["convolve"] = "iasi"
+inputs.values["add_noise"] = "iasi"
+inputs.values["iasi_instrument"] = "IASI-C"
+inputs.values["iasi_ifov"] = 1
+result = run_srfm(inputs)
+```
+
+Standalone convolution remains available as ``IASI().convolve(result)``; pass
+a path to ``IASI(...)`` to override the packaged response. Noise can then be
+applied to that convolved result with
+``IASI(iasi_instrument="M03", iasi_ifov=1).add_noise(result)``. An optional
+NumPy random generator provides reproducible realizations.
+
 Alternatively, the package can be easily imported by
     `from srfm import *`
     or

@@ -49,6 +49,9 @@ from .main import (
     _set_spectral_boundary_inputs,
     _plot_spectral_outputs,
     _resolve_output_geometry,
+    _resolve_convolving_instrument,
+    _resolve_final_grid,
+    _resolve_noise_instrument,
     _resolve_retained_outputs,
     _write_srfm_netcdf,
     _write_spectral_text,
@@ -93,6 +96,8 @@ def run_srfm(inp):
     if not hasattr(inp, "values"):
         raise TypeError("run_srfm expects an Inputs-like object with a values mapping.")
     inp.values = validate_iasi_inputs(inp.values)
+    instrument_processor = _resolve_convolving_instrument(inp.values)
+    noise_processor = _resolve_noise_instrument(inp.values)
     requested_wavenumber, _ = utilities.calc_grids(
         inp.values["spc_wvnmlo"],
         inp.values["spc_wvnmhi"],
@@ -115,16 +120,7 @@ def run_srfm(inp):
     ########################################################################################
     # set iasi grid and final grid to interpolate to
     ########################################################################################
-    npts = (
-        int(
-            np.floor(
-                (inp.values["fin_wvnmhi"] - inp.values["fin_wvnmlo"])
-                / inp.values["fin_res"]
-            )
-        )
-        + 1
-    )  # expected number of points in the grid
-    fin_grid = inp.values["fin_wvnmlo"] + np.arange(npts) * inp.values["fin_res"]
+    fin_grid = _resolve_final_grid(inp.values, instrument_processor)
 
     iasi_npts = int(np.floor((2760 - 645) / 0.25)) + 1
     iasi_grid = 645 + np.arange(iasi_npts) * 0.25
@@ -705,9 +701,12 @@ def run_srfm(inp):
     model_SRFM = forward_model.SRFM()
     model_SRFM.set_wvnm(RFM_wvnm)
     model_SRFM.set_wvls(wvls)
-    requested_outputs, runtime_outputs = _resolve_retained_outputs(inp.values)
-    # IASI always convolves simulated radiance, even when it is not retained.
-    runtime_outputs.add("uu")
+    requested_outputs, runtime_outputs = _resolve_retained_outputs(
+        inp.values,
+        requires_radiance=(
+            instrument_processor is not None or noise_processor is not None
+        ),
+    )
     model_SRFM.initialize_srfm_output_arrays_from_disort(
         model_DISORT, retain_outputs=runtime_outputs
     )
@@ -933,11 +932,14 @@ def run_srfm(inp):
                 stacklevel=2,
             )
 
-    # convolve final radiance spectrum with iasi instrument line shape
-    model_SRFM.convolve_with_iasi(inp.values["ils"])
+    if instrument_processor is not None:
+        instrument_processor.convolve(model_SRFM)
 
     # interpolate resulting bbt and radiances to final grid
     model_SRFM.interp(fin_grid)
+
+    if noise_processor is not None:
+        noise_processor.add_noise(model_SRFM)
 
     if "bbt" in requested_outputs:
         model_SRFM.calc_bbt()

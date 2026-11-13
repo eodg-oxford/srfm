@@ -86,7 +86,7 @@ def legendre_polynomial_expansion(inp, qv, qw, phase):
         n += 1
 
     # Number of coefficients used
-    inlc = n - 1
+    inlc = n
     #    print(f'lc = {lc}')
 
     return lc, inlc
@@ -160,7 +160,7 @@ def normalised_legendre_polynomial_expansion(inp, qv, qw, phase):
         n += 1
 
     # Number of coefficients used
-    inlc = n - 1
+    inlc = n
     #    print(f'lc = {lc}')
     return lc, inlc
 

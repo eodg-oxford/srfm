@@ -16,8 +16,16 @@ from typing import Any
 import numpy as np
 from . import size_distribution as sz
 from .spectral_fields import GRID_UNITS, SOLAR_VALUE_UNITS
+from .instruments.iasi import normalize_iasi_instrument
+from .instruments.registry import INSTRUMENT_NAMES
 
 _MISSING = object()
+
+REMOVED_SELECTOR_HINTS = {
+    "instrument": "use 'convolve' with a registered instrument name instead",
+    "convolve_iasi": "use convolve='iasi' instead",
+    "add_iasi_noise": "use add_noise='iasi' instead",
+}
 
 
 class InputValidationError(ValueError):
@@ -130,7 +138,9 @@ RFM_FLAG_CODES_SET = frozenset(RFM_FLAG_CODES)
 SRFM_INPUT_SCHEMA: dict[str, FieldSpec] = {
     # General/provenance fields retained from existing driver tables.
     "fwd_model": FieldSpec((str,)),
-    "instrument": FieldSpec((str,)),
+    "convolve": FieldSpec(
+        (str,), nullable=True, default=None, choices=INSTRUMENT_NAMES
+    ),
     "plot_profiles": FieldSpec((bool,)),
     "iasi_spc_fldr": FieldSpec(PATH_TYPES, nullable=True),
     "iasi_fl": FieldSpec((str,), nullable=True),
@@ -149,16 +159,20 @@ SRFM_INPUT_SCHEMA: dict[str, FieldSpec] = {
     ),
     "show_plots": FieldSpec((bool,), required=True),
     "out_fname": FieldSpec((str,), nullable=True),
-    "convolve_iasi": FieldSpec((bool,), required=True),
-    "iasi_ils": FieldSpec(PATH_TYPES, required=True, nullable=True),
+    "iasi_ils": FieldSpec(PATH_TYPES, nullable=True, default=None),
+    "add_noise": FieldSpec(
+        (str,), nullable=True, default=None, choices=INSTRUMENT_NAMES
+    ),
+    "iasi_instrument": FieldSpec((str,), default="M03"),
+    "iasi_ifov": FieldSpec(INTEGER_TYPES, default=1),
     # Memory controls.
     "scattering_block_size": FieldSpec(INTEGER_TYPES, default=10000),
     "retain_phase_functions": FieldSpec((bool,), default=False),
     "retain_outputs": FieldSpec((list, tuple, set, frozenset), required=True),
     # Spectral grids.
-    "fin_wvnmlo": FieldSpec(NUMBER_TYPES, required=True),
-    "fin_wvnmhi": FieldSpec(NUMBER_TYPES, required=True),
-    "fin_res": FieldSpec(NUMBER_TYPES, required=True),
+    "fin_wvnmlo": FieldSpec(NUMBER_TYPES, nullable=True),
+    "fin_wvnmhi": FieldSpec(NUMBER_TYPES, nullable=True),
+    "fin_res": FieldSpec(NUMBER_TYPES, nullable=True),
     "spc_wvnmlo": FieldSpec(NUMBER_TYPES, required=True),
     "spc_wvnmhi": FieldSpec(NUMBER_TYPES, required=True),
     "spc_res": FieldSpec(NUMBER_TYPES, required=True),
@@ -375,10 +389,9 @@ IASI_INPUT_SCHEMA: dict[str, FieldSpec] = {
     "iasi_fl": FieldSpec((str,), required=True),
     "px": FieldSpec(INTEGER_TYPES, required=True),
     "g_rtv": FieldSpec(MAPPING_TYPES, nullable=True),
-    "ils": FieldSpec(PATH_TYPES, required=True),
+    "ils": FieldSpec(PATH_TYPES, nullable=True, default=None),
     "nedt": FieldSpec(PATH_TYPES, required=True),
-    "convolve_iasi": FieldSpec((bool,)),
-    "iasi_ils": FieldSpec(PATH_TYPES, nullable=True),
+    "iasi_ils": FieldSpec(PATH_TYPES, nullable=True, default=None),
     "sun": FieldSpec((bool,)),
     "sza": FieldSpec(NUMBER_TYPES),
     "saa": FieldSpec(NUMBER_TYPES),
@@ -588,7 +601,10 @@ def _check_mapping(
     """
     unknown = sorted(set(value) - set(schema))
     for key in unknown:
-        issues.append(f"{path}{key}: unknown field")
+        issue = f"{path}{key}: unknown field"
+        if not path and key in REMOVED_SELECTOR_HINTS:
+            issue += f"; {REMOVED_SELECTOR_HINTS[key]}"
+        issues.append(issue)
 
     for key, spec in schema.items():
         field_path = f"{path}{key}"
@@ -1589,9 +1605,44 @@ def _validate_inputs(
             normalized[key] = spec.default
 
     issues: list[str] = []
+    iasi_convolution_selected = normalized.get("convolve") == "iasi"
+    if normalized.get("add_noise") == "iasi" and not iasi_convolution_selected:
+        issues.append(
+            "add_noise: IASI noise requires convolve='iasi' so the spectrum "
+            "is convolved and sampled at IASI channel locations before noise "
+            "is added"
+        )
+    if not iasi_convolution_selected:
+        for final_grid_field in ("fin_wvnmlo", "fin_wvnmhi", "fin_res"):
+            if normalized.get(final_grid_field) is None:
+                issues.append(
+                    f"{final_grid_field}: required unless convolve is 'iasi'"
+                )
+    if normalized.get("add_noise") == "iasi":
+        configured_instrument = normalized.get("iasi_instrument")
+        if isinstance(configured_instrument, str):
+            try:
+                normalized["iasi_instrument"] = normalize_iasi_instrument(
+                    configured_instrument
+                )
+            except ValueError:
+                issues.append(
+                    "iasi_instrument: expected M01, M02, M03, a, b, c, "
+                    "IASI-A, IASI-B, or IASI-C"
+                )
+        configured_ifov = normalized.get("iasi_ifov")
+        if (
+            type(configured_ifov) is int
+            and configured_ifov not in {1, 2, 3, 4}
+        ):
+            issues.append(
+                "iasi_ifov: expected one of 1, 2, 3, or 4 when "
+                "add_noise is 'iasi'"
+            )
     _check_mapping(normalized, schema, "", issues)
 
-    for prefix in ("fin", "spc"):
+    grid_prefixes = ("spc",) if iasi_convolution_selected else ("fin", "spc")
+    for prefix in grid_prefixes:
         low = normalized.get(f"{prefix}_wvnmlo")
         high = normalized.get(f"{prefix}_wvnmhi")
         resolution = normalized.get(f"{prefix}_res")
@@ -1679,12 +1730,6 @@ def _validate_inputs(
     _validate_disort_inputs(normalized, runner, issues)
     _validate_boundary_spectral_inputs(normalized, issues)
 
-    if (
-        runner != "iasi"
-        and normalized.get("convolve_iasi") is True
-        and not normalized.get("iasi_ils")
-    ):
-        issues.append("iasi_ils: required when convolve_iasi is True")
     retained_outputs = normalized.get("retain_outputs")
     if isinstance(retained_outputs, (list, tuple, set, frozenset)):
         allowed_outputs = {

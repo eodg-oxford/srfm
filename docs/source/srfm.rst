@@ -40,6 +40,20 @@ srfm.input\_schema
    :members:
    :show-inheritance:
 
+srfm.instruments
+----------------
+
+.. automodule:: srfm.instruments
+   :members:
+   :show-inheritance:
+
+srfm.instruments.iasi
+---------------------
+
+.. automodule:: srfm.instruments.iasi
+   :members:
+   :show-inheritance:
+
 srfm.inputs
 -----------
 

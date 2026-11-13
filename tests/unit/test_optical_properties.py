@@ -37,12 +37,38 @@ def test_normalised_and_regular_legendre_coefficients_have_expected_scaling():
     """
     nodes, weights = quadrature.quadrature101("G", 32)
     phase = 1 + 0.6 * nodes + 0.25 * (3 * nodes**2 - 1) / 2
-    regular, _ = optical.legendre_polynomial_expansion(32, nodes, weights, phase)
-    normalised, _ = optical.normalised_legendre_polynomial_expansion(
+    regular, regular_count = optical.legendre_polynomial_expansion(
         32, nodes, weights, phase
     )
+    normalised, normalised_count = optical.normalised_legendre_polynomial_expansion(
+        32, nodes, weights, phase
+    )
+    assert regular_count == normalised_count == 3
     np.testing.assert_allclose(regular[:3], [1, 0.6, 0.25], atol=2e-14)
     np.testing.assert_allclose(normalised[:3], regular[:3] / [1, 3, 5], atol=2e-14)
+
+
+@pytest.mark.parametrize(
+    "expand",
+    [
+        optical.legendre_polynomial_expansion,
+        optical.normalised_legendre_polynomial_expansion,
+    ],
+)
+def test_legendre_expansion_retains_last_quadrature_coefficient(expand):
+    """Retain every coefficient when no moment falls below the threshold."""
+    nodes, weights = quadrature.quadrature101("G", 4)
+    phase = (
+        1
+        + 0.6 * nodes
+        + 0.25 * (3 * nodes**2 - 1) / 2
+        + 0.1 * (5 * nodes**3 - 3 * nodes) / 2
+    )
+
+    coefficients, count = expand(4, nodes, weights, phase)
+
+    assert count == 4
+    assert abs(coefficients[count - 1]) > 1e-9
 
 
 def test_legendre_expansion_size_limit():
