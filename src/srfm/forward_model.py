@@ -300,21 +300,20 @@ class RFM(Fwd_model):
 
         # transfom output_prf lists into arrays (for vectorization)
         for key in self.output_prf.keys():
-            self.output_prf[key] = np.array(self.output_prf[key])
+            self.output_prf[key] = np.array(self.output_prf[key], dtype=float)
 
         # lyr bounds is an array with layer boundaries. The RFM profile is specified in levels and at each level, atmospheric compositino is given.
         # to integrate the amount of gas in the atmosphere we construct atmospheric layers whose bounds in the middle of two adjacent levels
 
         # get layer bounds
-        lyr_bounds = [
-            (self.output_prf["HGT [km]"][i - 1] + self.output_prf["HGT [km]"][i - 1])
-            / 2
-            for i, _ in enumerate(self.output_prf["HGT [km]"][1:])
-        ]
-        lyr_bounds.insert(0, self.output_prf["HGT [km]"][0])
-        lyr_bounds.insert(-1, self.output_prf["HGT [km]"][-1])
-
-        lyr_bounds = np.array(lyr_bounds)
+        heights = self.output_prf["HGT [km]"]
+        if (heights.ndim != 1 or heights.size < 2
+            or not np.all(np.isfinite(heights))
+            or not np.all(np.diff(heights) > 0)):
+            raise ValueError("Profile heights must be finite and strictly increasing.")
+        
+        midpoints = (heights[:-1] + heights[1:]) / 2
+        lyr_bounds = np.concatenate(([heights[0]], midpoints, [heights[-1]]))
 
         lyr_thick = np.diff(lyr_bounds) * 1e3  # layer thicknesses in m
 
